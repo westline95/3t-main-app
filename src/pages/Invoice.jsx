@@ -1,0 +1,1751 @@
+import React, { useState, useEffect, useRef } from 'react';
+import Sidebar from '../parts/Sidebar';
+import Header from '../parts/Header';
+import { DataTable } from 'primereact/datatable';
+import { Column } from 'primereact/column';
+import { Toast } from 'primereact/toast';
+import { CustomSelect } from '../elements/CustomSelect';
+import NumberFormat from '../elements/Masking/NumberFormat';
+import DropzoneFile from '../elements/DropzoneFile';
+import SalesDetailModal from '../elements/Modal/salesDetailModal';
+import SalesEditModal from '../elements/Modal/SalesEditModal';
+import ConfirmModal from '../elements/Modal/ConfirmModal';
+import InputWLabel from '../elements/Input/InputWLabel';
+import CustomToggle from '../elements/Custom/CustomToggle';
+import { Dropdown } from 'react-bootstrap';
+import ConvertDate from '../assets/js/convertFullDate.js';
+import InvoiceModal from '../elements/Modal/InvoiceModal.jsx';
+import ModalTextContent from '../elements/Modal/ModalTextContent.jsx';
+import FetchApi from '../assets/js/fetchApi.js';
+import CreateInv from '../elements/Modal/CreateInvModal.jsx';
+import CreatePayment from '../elements/Modal/CreatePaymentModal.jsx';
+import InputWSelect from '../elements/Input/InputWSelect.jsx';
+import EmptyState from "../../public/vecteezy_box-empty-state-single-isolated-icon-with-flat-style_11537753.jpg"; 
+import useAxiosPrivate from '../hooks/useAxiosPrivate.js';
+import { FilterMatchMode, FilterOperator } from 'primereact/api';
+import EditInv from '../elements/Modal/EditInvModal.jsx';
+
+export default function Invoice({handleSidebar, showSidebar}){
+    const [ isClose, setClose ] = useState(false);
+    const [ deleteInv, setDeleteInv ] = useState(false);
+    const [ invData, setInvData ] = useState(null);
+    const [ receiptData, setReceiptData ] = useState(null);
+    const [ openTab, setOpenTab ] = useState('invListTab');
+    const [ invListObj, setInvList ] = useState(null);
+    const [ showModal, setShowModal ] = useState("");
+    const [ paidData, setPaidData ] = useState(null);
+
+    const [ invFilters, setInvFilters ] = useState(null);
+    const [ receiptFilters, setReceiptFilters ] = useState(null);
+    const [ totalRecords, setTotalRecords ] = useState(0);
+    const [ receiptTotalRecords, setReceiptTotalRecords ] = useState(0);
+    const [ globalFilterValue, setGlobalFilterValue ] = useState("");
+    const [ globalFilterValueReceipt, setGlobalFilterValueReceipt ] = useState("");
+    const [ selectedInvoice, setSelectedInv ] = useState(null);
+
+    const axiosPrivate = useAxiosPrivate();
+    const toast = useRef(null);
+    
+
+    const handleClick = (e) => {
+        switch(e.target.id) {
+            case "invListTab":
+                setOpenTab("invListTab");
+            break;
+            case "receiptListTab":
+                setOpenTab("receiptListTab");
+            break;
+        }
+    };
+
+    const returnSelectVal = (val) => {
+
+    }
+
+    const handleModal = (e, invData, InvRef) => {
+        let data;
+        switch (e.currentTarget.ariaLabel) {
+            case "createInvModal":
+                setShowModal("createInvModal");
+                break;
+            case "viewInvModal":
+                data = {
+                    id: invData.id, 
+                    items: invData.items
+                }
+                console.log(data)
+                setInvList(invData);
+                setShowModal("viewInvModal");
+                break;
+            case "editInvModal":
+                 data = {
+                    id: invData.id, 
+                    items: invData.items
+                }
+                setInvList(invData);
+                setShowModal("editInvModal");
+                break;
+            case "deleteInvModal":
+                setInvList(invData);
+                setShowModal("deleteInvModal");
+                break;
+            case "viewSalesRef":
+                let parseSalesRef = JSON.parse(invData).join(", ");
+                data = {
+                    textContent: parseSalesRef, 
+                    title: "Sales references"
+                }
+                setInvList(data);
+                setShowModal("viewSalesRef");
+                break;
+             case "addPaymentModal":
+                data = {
+                    id: invData.id, 
+                    items: invData.items
+                }
+                setInvList(data);
+                setShowModal("addPaymentModal");
+                break;
+        }
+    }
+
+    const handleCloseModal = () => {
+        setShowModal("");
+    }
+
+    const fetchAllInv = async () => {
+        await axiosPrivate.get("/inv")
+        .then(resp => {
+            // default sort: descending by createdAt
+            let invoices;
+            if(resp.data.length > 1){
+                invoices = resp.data.sort((a, b) => {
+                    let invDateA = new Date(a.createdAt);
+                    let invDateB = new Date(b.createdAt);
+                    // Compare 
+                    if (invDateA > invDateB) return -1;
+                    if (invDateA < invDateB) return 1;
+                    return 0;
+                })
+
+            } else {
+                invoices = resp.data;
+            }
+            console.log(resp.data)
+            // filter invoice status whch not canceled
+            const activeInv = invoices.filter(({status}) => status !== 'canceled');
+            setInvData(activeInv);
+            setTotalRecords(activeInv.length);
+        })
+        .catch(error => {
+            toast.current.show({
+                severity: "error",
+                summary: "Failed",
+                detail: "Error when get invoice data!",
+                life: 3000,
+            });
+        })
+    };
+
+    const fetchAllReceipt = async() => {
+        await axiosPrivate.get("/receipt/all")
+            .then(resp => {
+                setReceiptData(resp.data);
+                setReceiptTotalRecords(resp.data.length);
+            })
+            .catch(error => {
+                toast.current.show({
+                    severity: "error",
+                    summary: "Failed",
+                    detail: "Error when get receipt data!",
+                    life: 3000,
+                });
+            }
+        )
+    };
+
+    const fetchDeletePayment = async (payment_id) => {
+        await axiosPrivate.delete("/payment/del", { params: { id: payment_id } })
+        .then(resp => {
+
+        })
+        .catch(err => {
+            toast.current.show({
+                severity: "error",
+                summary: "Failed",
+                detail: "Failed to add payment",
+                life: 3000,
+            });
+        })
+    };
+
+    const fetchUpdateOrderStatus =  async(reqURL) => {
+        let orderStatus = JSON.stringify({ order_status: "completed" });
+        // check order type first
+        await axiosPrivate.get(`/sales/by?id=${reqURL}`)
+        .then(resp => {
+            if(resp.data.order_type != "delivery"){
+                // if not delivery a.k.a walk-in / dine in then update order_status to completed if invoice is paid true
+                axiosPrivate.patch(`/sales/update/status?id=${reqURL}`, orderStatus)
+                .then(resp => {
+                    toast.current.show({
+                        severity: "success",
+                        summary: "Success",
+                        detail: "Successfully add payment",
+                        life: 3000,
+                    });
+
+                    fetchAllInv();
+                })
+                .catch(err => {
+                    throw new Error("error while updating order_status");
+                })
+            }
+            
+        })
+        .catch(err => {
+            throw new Error("There will be an error for updating order_status");
+        })
+        
+    };
+
+    const fetchInsertPayment = async () => {
+        let paymentModel = {
+            invoice_id: invListObj.items.invoice_id,
+            customer_id: invListObj.items.customer_id,
+            amount_paid: paidData.amountOrigin,
+            note: paidData.note,
+            payment_ref: paidData.payment_ref,
+            payment_date: paidData.payment_date,
+            payment_method: paidData.payment_method,
+        };
+
+        let invModel = {
+            remaining_payment: (invListObj.items.remaining_payment - paidData.amountOrigin) <= 0 ? 0 : (invListObj.items.remaining_payment - paidData.amountOrigin),
+            is_paid: (invListObj.items.remaining_payment - paidData.amountOrigin) <= 0 ? true : false
+        }
+
+        // untuk update order_status
+        let getOrderIds = JSON.parse(invListObj.items.order_id);
+        let reqURL;
+        if(getOrderIds.length > 1){
+            reqURL = getOrderIds.join("&id=");
+        } else {
+            reqURL = getOrderIds[0];
+        }
+
+        await axiosPrivate.post("/payment/write", JSON.stringify(paymentModel))
+        .then(resp => {
+            axiosPrivate.patch("/inv/payment", JSON.stringify(invModel), { params: { id: invListObj.items.invoice_id } })
+            .then(resp2 => {
+                
+                // if invoice paid then check order_type if not delivery then update order_status to completed
+                if(invModel.is_paid){
+                    fetchUpdateOrderStatus(reqURL);
+                } else {
+                    toast.current.show({
+                        severity: "success",
+                        summary: "Success",
+                        detail: "Successfully add payment",
+                        life: 3000,
+                    });
+                    fetchAllInv();
+                }
+            })
+            .catch(err2 => {
+                // undo inserted payment if invoice detail failed to update
+                fetchDeletePayment(resp.data.payment_id);
+                toast.current.show({
+                    severity: "error",
+                    summary: "Failed",
+                    detail: "Error when update invoice payment",
+                    life: 3000,
+                });
+            })
+        })
+        .catch(err => {
+            toast.current.show({
+                severity: "error",
+                summary: "Failed",
+                detail: "Failed to add payment",
+                life: 3000,
+            });
+        })
+    };
+
+    const deleteSelectedInv = async () => {
+        // update sales:invoice_id first
+        let orderIds;
+        let getOrderId = JSON.parse(invListObj.items?.order_id);
+        if(getOrderId.length > 1) {
+            orderIds = getOrderId.join("&id=");
+        } else {
+            orderIds = getOrderId[0];
+        }
+
+        if(orderIds){
+            let invoiceID = JSON.stringify({invoice_id: null});
+            let invoiceIDrelink = JSON.stringify({invoice_id: invListObj.id});
+            
+            if(!invListObj.items.payments && !invListObj.items.is_paid){
+                
+                // update order:invoice_id to null (unlink)
+                await axiosPrivate.patch(`/sales/invs?id=${orderIds}`, invoiceID)
+                .then(resp => {
+    
+                    // delete inv
+                    axiosPrivate.delete(`/inv`, {params: { id: invListObj.id}})
+                    .then(resp2 => {
+                        setShowModal("");
+                        setTimeout(() => {
+                            window.location.reload();
+                        },1300)
+
+                        toast.current.show({
+                            severity: "success",
+                            summary: "Success",
+                            detail: "Successfully delete invoice",
+                            life: 1300,
+                        });
+        
+                    })
+                    .catch(err2 => {
+                        // if failed to delete inv but success to update order:invoice_id => undo update
+                        axiosPrivate.patch(`/sales/invs?id=${orderIds}`, invoiceIDrelink)
+                        .then(resp => {
+                            toast.current.show({
+                                severity: "error",
+                                summary: "Failed",
+                                detail: "Failed to delete invoice",
+                                life: 3000,
+                            });
+                        })
+                        .catch(err3 => {
+                            throw new Error('error: ' + err3)
+                        })
+                        toast.current.show({
+                            severity: "error",
+                            summary: "Failed",
+                            detail: "Failed to delete invoice",
+                            life: 3000,
+                        });
+                    })
+                    
+                })
+                .catch(error => {
+                    toast.current.show({
+                        severity: "error",
+                        summary: "Failed",
+                        detail: "Failed to delete invoice",
+                        life: 3000,
+                    });
+                })
+
+            } else {
+                // unlink first
+                await axiosPrivate.patch(`/sales/invs?id=${orderIds}`, invoiceID)
+                .then(resp => {
+                    // delete inv
+                    axiosPrivate.delete(`/inv`, {params: { id: invListObj.id}})
+                    .then(resp2 => {
+                        setShowModal("");
+                        setTimeout(() => {
+                            window.location.reload();
+                        },1300);
+                        
+                        toast.current.show({
+                            severity: "success",
+                            summary: "Success",
+                            detail: "Successfully delete invoice",
+                            life: 1300,
+                        });
+        
+                    })
+                    .catch(err2 => {
+                        axiosPrivate.patch(`/sales/invs?id=${orderIds}`, invoiceIDrelink)
+                        .then(resp => {
+                            toast.current.show({
+                                severity: "error",
+                                summary: "Failed",
+                                detail: "Failed to delete invoice",
+                                life: 3000,
+                            });
+                        })
+                        .catch(err3 => {
+                            throw new Error('error: ' + err3)
+                        })
+                        toast.current.show({
+                            severity: "error",
+                            summary: "Failed",
+                            detail: "Failed to delete invoice",
+                            life: 3000,
+                        });
+                    })
+                })
+                .catch(error => {
+                    toast.current.show({
+                        severity: "error",
+                        summary: "Failed",
+                        detail: "Failed to delete invoice",
+                        life: 3000,
+                    });
+                })
+            }
+
+        }
+    };
+
+    const emptyStateHandler = () =>{
+        return (
+        <div style={{width: '100%', textAlign: 'center'}}>
+            <img src={EmptyState} style={{width: '165px', height: '170px'}}  />
+            <p style={{marginBottom: ".3rem"}}>No result found</p>
+        </div>
+        )
+    };
+
+    const tableHeader = (rowData) => {
+        return (
+            <div className="flex justify-content-between" style={{ width: "100%" }}>
+                <div className="flex gap-3 align-items-center" style={{ width: "60%" }}>
+                    <div className="input-group-right" style={{ width: "40%" }}>
+                        <span className="input-group-icon input-icon-right">
+                        <i className="zwicon-search"></i>
+                        </span>
+                        <input
+                        type="text"
+                        className="form-control input-w-icon-right"
+                        value={globalFilterValue}
+                        onChange={onGlobalFilterChange}
+                        placeholder="Keyword Search"
+                        />
+                    </div>
+                    <button
+                        type="button"
+                        className="btn btn-primary btn-w-icon"
+                        style={{ fontWeight: 500 }}
+                        onClick={clearFilter}
+                    >
+                        <i className="bx bx-filter-alt" style={{ fontSize: "24px" }}></i>
+                        Clear filter
+                    </button>
+                    <div
+                        className="selected-row-stat"
+                        style={{
+                        height: "inherit",
+                        display:
+                            selectedInvoice && selectedInvoice.length > 0 ? "block" : "none",
+                        }}
+                    >
+                        <p className="total-row-selected"></p>
+                        <button
+                        type="button"
+                        className=" btn btn-danger btn-w-icon"
+                        style={{ height: "100%" }}
+                        onClick={selectedToDelete}
+                        >
+                        <i className="bx bx-trash" style={{ fontSize: "24px" }}></i>Delete
+                        selected row
+                        </button>
+                    </div>
+                    <InputWSelect
+                        name="inv_status"
+                        selectLabel="Select invoice status"
+                        options={[{id: 1, type: "paid"},{id: 2, type: "in-progress"},{id: 3, type: "due"}]}
+                        optionKeys={["id", "type"]}
+                        value={(selected) => setStatusFilter(selected.value)}
+                        width={"220px"}
+                    />
+                </div>
+    
+                <div
+                    className="wrapping-table-btn flex gap-3"
+                    style={{ width: "60%", height: "inherit" }}
+                >
+                    {/* <button
+                    type="button"
+                    className="btn btn-light light"
+                    style={{ height: "100%" }}
+                    >
+                    <i className="bx bx-printer"></i>
+                    </button> */}
+                    <Dropdown drop={"down"}>
+                        <Dropdown.Toggle variant="primary" style={{ height: "100%" }}>
+                            <i className="bx bx-download"></i> export
+                        </Dropdown.Toggle>
+                        <Dropdown.Menu align={"end"}>
+                            <Dropdown.Item
+                                eventKey="1"
+                                as="button"
+                                aria-label="viewInvModal"
+                                onClick={(e) =>
+                                    // console.log(e)
+                                    handleModal(e, { id: inv.invoice_id, items: { ...inv } })
+                                }
+                            >
+                                <i className="bx bx-show"></i> PDF (.pdf)
+                            </Dropdown.Item>
+                            <Dropdown.Item
+                                eventKey="1"
+                                as="button"
+                                aria-label="editInvModal"
+                                onClick={(e) => handleModal(e, inv.invoice_id)}
+                            >
+                                <i className="bx bxs-edit"></i> Microsoft Excel (.xlsx)
+                            </Dropdown.Item>
+                        </Dropdown.Menu>
+                    </Dropdown>
+                    <button
+                        type="button"
+                        className=" btn btn-primary btn-w-icon"
+                        style={{ height: "100%" }}
+                        >
+                        <i className="bx bxs-file-plus"></i> import
+                    </button>
+                    <button type="button" className="add-btn btn btn-primary btn-w-icon" 
+                        aria-label="createInvModal"
+                        onClick={(e) =>
+                            handleModal(e, {
+                                endpoint: "custType",
+                                action: "insert",
+                            })
+                        }
+                    >
+                        <i className="bx bx-plus" style={{ marginTop: -3 }}></i>
+                        Create invoice
+                    </button>
+                </div>
+            </div>
+        );
+    };
+
+    const receiptTableHeader = (rowData) => {
+        return (
+            <div className="flex justify-content-between" style={{ width: "100%" }}>
+            <div className="flex gap-3 align-items-center" style={{ width: "60%" }}>
+                <div className="input-group-right" style={{ width: "40%" }}>
+                    <span className="input-group-icon input-icon-right">
+                        <i className="zwicon-search"></i>
+                    </span>
+                    <input
+                        type="text"
+                        className="form-control input-w-icon-right"
+                        value={globalFilterValueReceipt}
+                        onChange={onGlobalFilterReceiptChange}
+                        placeholder="Keyword Search"
+                    />
+                </div>
+                <button
+                    type="button"
+                    className="btn btn-primary btn-w-icon"
+                    style={{ fontWeight: 500 }}
+                    onClick={clearFilterReceipt}
+                >
+                    <i className="bx bx-filter-alt" style={{ fontSize: "24px" }}></i>
+                    Clear filter
+                </button>
+                <div
+                    className="selected-row-stat"
+                    style={{
+                    height: "inherit",
+                    display:
+                        selectedInvoice && selectedInvoice.length > 0 ? "block" : "none",
+                    }}
+                >
+                    <p className="total-row-selected"></p>
+                    <button
+                    type="button"
+                    className=" btn btn-danger btn-w-icon"
+                    style={{ height: "100%" }}
+                    onClick={selectedToDelete}
+                    >
+                    <i className="bx bx-trash" style={{ fontSize: "24px" }}></i>Delete
+                    selected row
+                    </button>
+                </div>
+            </div>
+    
+            <div
+                className="wrapping-table-btn flex gap-3"
+                style={{ width: "60%", height: "inherit" }}
+            >
+                {/* <button
+                type="button"
+                className="btn btn-light light"
+                style={{ height: "100%" }}
+                >
+                <i className="bx bx-printer"></i>
+                </button> */}
+                <Dropdown drop={"down"}>
+                    <Dropdown.Toggle variant="primary" style={{ height: "100%" }}>
+                        <i className="bx bx-download"></i> export
+                    </Dropdown.Toggle>
+                    <Dropdown.Menu align={"end"}>
+                        <Dropdown.Item
+                            eventKey="1"
+                            as="button"
+                            aria-label="viewInvModal"
+                            onClick={(e) =>
+                                // console.log(e)
+                                handleModal(e, { id: inv.invoice_id, items: { ...inv } })
+                            }
+                        >
+                            <i className="bx bx-show"></i> PDF (.pdf)
+                        </Dropdown.Item>
+                        <Dropdown.Item
+                            eventKey="1"
+                            as="button"
+                            aria-label="editInvModal"
+                            onClick={(e) => handleModal(e, inv.invoice_id)}
+                        >
+                            <i className="bx bxs-edit"></i> Microsoft Excel (.xlsx)
+                        </Dropdown.Item>
+                    </Dropdown.Menu>
+                </Dropdown>
+                <button
+                    type="button"
+                    className=" btn btn-primary btn-w-icon"
+                    style={{ height: "100%" }}
+                    >
+                    <i className="bx bxs-file-plus"></i> import
+                </button>
+
+                <button type="button" className="add-btn btn btn-primary btn-w-icon" 
+                    aria-label="createInvModal"
+                    onClick={(e) =>
+                        handleModal(e, {
+                            endpoint: "custType",
+                            action: "insert",
+                        })
+                    }
+                >
+                    <i className="bx bx-plus" style={{ marginTop: -3 }}></i>
+                    Create Receipt manually
+                </button>
+            </div>
+        </div>
+        );
+    };
+
+    const formatedInvDate = (rowData) => {
+        return <span>{ConvertDate.convertToFullDate(rowData.invoice_date, "/")}</span>;
+    };
+    
+    const formatedReceiptDate = (rowData) => {
+        return <span>{ConvertDate.convertToFullDate(rowData.receipt_date, "/")}</span>;
+    };
+
+    const formatedTotal = (rowData) => {
+        return(
+            <NumberFormat intlConfig={{
+                value: rowData.total_payment, 
+                locale: "id-ID",
+                style: "currency", 
+                currency: "IDR",
+            }} />
+        )
+    };
+
+    const paymentTypeCell = (rowData) => {
+        return(
+            <span className={`badge badge-${
+                rowData.payment_type == "unpaid" ? 'danger'
+                : rowData.payment_type == "paid"? "primary"
+                : rowData.payment_type == "partial"? "warning"
+                : ""} light`}
+            >
+                {rowData.payment_type }                                                                                
+            </span>
+        )
+    };
+    
+    const isPaidCell = (rowData) => {
+        return(
+            <span className={`badge badge-${
+                rowData.is_paid ? "primary" : "danger"} light`}
+            >{rowData.is_paid ? "paid" : "unpaid"}</span>
+        )
+    };
+
+    const invStatus = (rowData) => {
+        return(
+            <span className={`badge badge-${
+                rowData.is_paid ? "success"  : new Date() > new Date(rowData.invoice_due) ?  "danger" : 'warning'} light`}
+            >{rowData.is_paid ? "completed" : new Date() > new Date(rowData.invoice_due) ? "due" : 'in-progress'}</span>
+
+        )
+    };
+
+    const formatedAmountDue = (rowData) => {
+        return(
+          <NumberFormat intlConfig={{
+              value: rowData.amount_due, 
+              locale: "id-ID",
+              style: "currency", 
+              currency: "IDR",
+          }} />
+        )
+    };
+     
+    const formatedRemaining = (rowData) => {
+        return(
+          <NumberFormat intlConfig={{
+              value: rowData.remaining_payment, 
+              locale: "id-ID",
+              style: "currency", 
+              currency: "IDR",
+          }} />
+        )
+    };
+     
+    
+    
+    const clearFilterReceipt = () => {
+        initFiltersReceipt();
+    };
+
+    const clearFilter = () => {
+        initFilters();
+    };
+    
+    const onGlobalFilterChange = (e) => {
+        const value = e.target.value;
+        let _filters = { ...invFilters };
+
+        _filters["global"].value = value;
+
+        setInvFilters(_filters);
+        setGlobalFilterValue(value);
+    };
+    
+    const onGlobalFilterReceiptChange = (e) => {
+        const value = e.target.value;
+        let _filters = { ...receiptFilters };
+
+        _filters["global"].value = value;
+
+        setReceiptFilters(_filters);
+        setGlobalFilterValueReceipt(value);
+    };
+    
+    const initFilters = () => {
+        setInvFilters({
+            global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+            invoice_id: {
+                operator: FilterOperator.AND,
+                constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+            },
+            invoice_date: {
+                operator: FilterOperator.AND,
+                constraints: [{ value: null, matchMode: FilterMatchMode.DATE_IS }],
+            },
+            'customer.name': {
+                operator: FilterOperator.AND,
+                constraints: [{ value: null, matchMode: FilterMatchMode.IN }],
+            },
+            order_type: {
+                operator: FilterOperator.AND,
+                constraints: [{ value: null, matchMode: FilterMatchMode.IN }],
+            },
+            grandtotal: {
+                operator: FilterOperator.AND,
+                constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+            },
+            source: {
+                operator: FilterOperator.AND,
+                constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+            },
+            order_status: { 
+                value: null, matchMode: FilterMatchMode.EQUALS 
+            },
+            payment_type: {
+                operator: FilterOperator.AND,
+                constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+            },
+        });
+        setGlobalFilterValue("");
+    };
+
+     const initFiltersReceipt = () => {
+        setReceiptFilters({
+            global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+            receipt_id: {
+                operator: FilterOperator.AND,
+                constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+            },
+            invoice_id: {
+                operator: FilterOperator.AND,
+                constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+            },
+            receipt_date: {
+                operator: FilterOperator.AND,
+                constraints: [{ value: null, matchMode: FilterMatchMode.DATE_IS }],
+            },
+            customer_id: {
+                operator: FilterOperator.AND,
+                constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+            },
+            'customer.name': {
+                operator: FilterOperator.AND,
+                constraints: [{ value: null, matchMode: FilterMatchMode.IN }],
+            },
+            total_payment: {
+                operator: FilterOperator.AND,
+                constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+            },
+        });
+        setGlobalFilterValueReceipt("");
+    };
+    
+    const selectedToDelete = () => {
+        const getOnlyID = selectedCusts.map(e => {
+            return e.customer_id
+        });
+        // setCustObj({
+        //     endpoint: "customer",
+        //     id: getOnlyID,
+        //     action: "delete",
+        // });
+        setShowModal("confirmModal");
+    };
+
+
+    const invActionCell = (rowData, rowIndex) => {
+        return (
+            <Dropdown drop={rowIndex == invData.length - 1 ? "up" : "down"}>
+                <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components" ></Dropdown.Toggle>
+                <Dropdown.Menu align={"end"}>
+                    <Dropdown.Item eventKey="1" as="button" aria-label="viewInvModal" onClick={(e) => handleModal(e, {id: rowData.invoice_id, items: rowData})}>
+                        <i className='bx bx-show'></i> Preview invoice
+                    </Dropdown.Item> 
+                    {
+                        !rowData.is_paid ?
+                        (
+                            <>
+                            <Dropdown.Item eventKey="1" as="button" aria-label="addPaymentModal" onClick={(e) => handleModal(e, {id: rowData.invoice_id, items:{...rowData}})}>
+                                <i className='bx bx-money'></i> Add payment
+                            </Dropdown.Item>
+                            <Dropdown.Item eventKey="1" as="button" aria-label="editInvModal" onClick={(e) => handleModal(e, {id: rowData.invoice_id, items: rowData})}>
+                                <i className='bx bxs-edit'></i> Edit invoice
+                            </Dropdown.Item>
+                            
+                            </>
+                        ):""
+                    }
+                    <Dropdown.Item eventKey="1" as="button" aria-label="deleteInvModal" onClick={(e) => handleModal(e, {endpoint: "inv", action: 'delete' , id: rowData.invoice_id, items: rowData})}>
+                        <i className='bx bx-trash'></i> Delete invoice
+                    </Dropdown.Item>
+                </Dropdown.Menu>
+            </Dropdown>
+        );
+    };
+
+    const receiptActionCell = (rowData, rowIndex) => {
+        return (
+            <Dropdown drop={rowIndex == receiptData.length - 1 ? "up" : "down"}>
+                <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components" ></Dropdown.Toggle>
+                <Dropdown.Menu align={"end"}>
+                    <Dropdown.Item eventKey="1" as="button" aria-label="viewInvModal" onClick={(e) => handleModal(e, {id: rowData.invoice_id, items:{...rowData.items}})}>
+                        <i className='bx bx-show'></i> Preview receipt
+                    </Dropdown.Item> 
+                    <Dropdown.Item eventKey="1" as="button" aria-label="editInvModal" onClick={(e) => handleModal(e, rowData.invoice_id)}>
+                        <i className='bx bxs-edit'></i> Edit receipt
+                    </Dropdown.Item>
+                    <Dropdown.Item eventKey="1" as="button" aria-label="deleteInvModal" onClick={(e) => handleModal(e, {endpoint: "inv", id: rowData.invoice_id})}>
+                        <i className='bx bx-trash'></i> Delete receipt
+                    </Dropdown.Item>
+                </Dropdown.Menu>
+            </Dropdown>
+        );
+    };
+
+    useEffect(() => {
+        fetchAllInv();
+        fetchAllReceipt();
+    },[]);
+
+    useEffect(() => {
+        initFilters();
+        initFiltersReceipt();
+    }, []);
+
+    useEffect(() => {
+        if(paidData && invListObj){
+            fetchInsertPayment();
+            // console.log(paidData)
+        }
+    },[paidData]);
+
+    useEffect(() => {
+        if(deleteInv){
+            console.log(invListObj)
+            // check first if there is payment but not full in order related to invoice 
+            if(invListObj.items.payments?.length > 0 && !invListObj.items.is_paid){
+                // call info modal
+                let data = {
+                    id: invListObj.id, 
+                    endpoint: 'content',
+                    action: 'info',
+                    items: invListObj.items
+                }
+                setInvList(data);
+                setShowModal("");
+                setShowModal("warningDeleteInvModal");
+            } else if(invListObj.items.is_paid){
+                // delete invoice
+                deleteSelectedInv();
+            } else if(invListObj.items.payments.length == 0 && !invListObj.items.is_paid){
+                console.log("aaha")
+                // delete invoice
+                deleteSelectedInv();
+            }
+        }
+    },[deleteInv])
+
+    return(
+        <>
+        {/* <Sidebar show={isClose} /> */}
+            {/* <main className={`main-content ${showSidebar ? "active" : ""}`}>
+                <Header onClick={() => handleSidebar((p) => !p)} /> */}
+                <div className="container-fluid">
+                    <div className="row mt-4">
+                        <div className="col-lg-12 col-sm-12 col-md-12 col-12">
+                            <div className="basic-tabs">
+                                <div className="tabs">
+                                    <div className={`tab-indicator ${openTab === "invListTab" ? "active" : ""}`}  
+                                        id='invListTab' 
+                                        onClick={(e) => handleClick(e)}
+                                    >
+                                        <span className="tab-title">invoice list</span>
+                                    </div>
+                                     <div className={`tab-indicator ${openTab === "receiptListTab" ? "active" : ""}`}  
+                                        id='receiptListTab' 
+                                        onClick={(e) => handleClick(e)}
+                                    >
+                                        <span className="tab-title">Receipt list</span>
+                                    </div>
+                                    
+                                </div>
+                                <div className="tabs-content" style={openTab === "invListTab" ? {display: "block"} : {display: "none"}}>
+                                    <div className="card card-table add-on-shadow">
+                                        {/* <div className="wrapping-table-btn">
+                                            <span className="selected-row-stat">
+                                                <p className="total-row-selected"></p>
+                                                <button type="button" className=" btn btn-danger btn-w-icon">
+                                                    <i className='bx bx-trash'></i>Delete selected row
+                                                </button>
+                                            </span>
+
+                                            <button type="button" className="btn btn-light light"><i className='bx bx-filter-alt'></i>
+                                            </button>
+                                            <button type="button" className="btn btn-light light"><i className='bx bx-printer'></i>
+                                            </button>
+                                            <div className="btn-group">
+                                                <button type="button" className="btn btn-primary btn-w-icon dropdown-toggle"
+                                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <i className='bx bx-download'></i> export
+                                                </button>
+                                                <ul className="dropdown-menu">
+                                                    <li><a className="dropdown-item" href="#">PDF (.pdf)</a></li>
+                                                    <li><a className="dropdown-item" href="#">Microsoft Excel (.xlsx)</a></li>
+                                                </ul>
+                                            </div>
+                                            <button type="button" className=" btn btn-primary btn-w-icon">
+                                                <i className='bx bxs-file-plus'></i> import
+                                            </button>
+                                            <button type="button" className="add-btn btn btn-primary btn-w-icon" 
+                                                aria-label="createInvModal"
+                                                onClick={(e) =>
+                                                    handleModal(e, {
+                                                    endpoint: "custType",
+                                                    action: "insert",
+                                                    })
+                                                }
+                                            >
+                                                <i className="bx bx-plus" style={{ marginTop: -3 }}></i>
+                                                Create invoice
+                                            </button>
+                                        </div>
+                                        <p className="card-title">filter</p>
+                                        <div className="filter-area">
+                                            <div className="table-search">
+                                                <div className="input-group-right">
+                                                    <span className="input-group-icon input-icon-right"><i
+                                                            className="zwicon-search"></i></span>
+                                                    <input type="text" className="form-control input-w-icon-right"
+                                                        placeholder="Search customer..." />
+                                                </div>
+                                            </div>
+                                            <CustomSelect 
+                                                options={["Status", "pending", "paid", "due"]}
+                                                // defaultValue={}
+                                                id="statusInvFilter"
+                                                selectedOption={returnSelectVal} 
+                                            /> 
+                                        </div> */}
+
+                                        <div className="mt-4">
+                                            <DataTable
+                                                className="p-datatable"
+                                                value={invData}
+                                                size="normal"
+                                                removableSort
+                                                // stripedRows
+                                                selectionMode={"checkbox"}
+                                                // selection={selectedInvoice}
+                                                // onSelectionChange={(e) => {
+                                                //     setSelectedInv(e.value);
+                                                // }}
+                                                dataKey="invoice_id"
+                                                tableStyle={{ minWidth: "50rem", fontSize: '14px' }}
+                                                filters={invFilters}
+                                                filterDisplay='menu'
+                                                globalFilterFields={[
+                                                    "invoice_id",
+                                                    "invoice_date",
+                                                    "customer.name",
+                                                    "customer.customer_id",
+                                                    "amount_due",
+                                                    "remaining_payment",
+                                                    "payment_type",
+                                                    "is_paid",
+                                                    "invoice_due",
+                                                ]}
+                                                
+                                                emptyMessage={emptyStateHandler}
+                                                onFilter={(e) => setInvFilters(e.filters)}
+                                                header={tableHeader}
+                                                paginator
+                                                totalRecords={totalRecords}
+                                                rows={50}
+                                            >
+                                            <Column
+                                                selectionMode="multiple"
+                                                headerStyle={{ width: "3.5rem" }}
+                                            ></Column>
+                                            <Column
+                                                field="invoice_number"
+                                                header="invoice number"
+                                                sortable
+                                                bodyStyle={{ textTransform: "uppercase" }}
+                                                style={{ textTransform: "uppercase" }}
+                                            ></Column>
+                                            <Column
+                                                field="invoice_date"
+                                                header="date"
+                                                body={formatedInvDate}
+                                                dataType='date'
+                                                filter 
+                                                filterPlaceholder="Type a date"
+                                                style={{ textTransform: "uppercase" }}
+                                            ></Column>
+                                            <Column
+                                                field="customer.name"
+                                                header="customer"
+                                                filter 
+                                                filterPlaceholder="Search by customer name"
+                                                style={{ textTransform: "uppercase" }}
+                                                bodyStyle={{ textTransform: "capitalize" }}
+                                            ></Column>
+                                             <Column
+                                                field="customer_id"
+                                                header="customer id"
+                                                sortable
+                                                bodyStyle={{ textTransform: "capitalize" }}
+                                                style={{ textTransform: "uppercase" }}
+                                            ></Column>
+                                            <Column
+                                                field="amount_due"
+                                                header="amount due"
+                                                filter 
+                                                // showFilterMenu={false}
+                                                // filterMenuStyle={{ width: '100%' }}
+                                                body={formatedAmountDue}
+                                                filterPlaceholder={"order type"}
+                                                bodyStyle={{ textTransform: 'capitalize' }}
+                                                style={{ textTransform: 'uppercase' }}
+                                            ></Column>
+                                            <Column
+                                                field="remaining_payment"
+                                                header="remaining"
+                                                filter 
+                                                // showFilterMenu={false}
+                                                // filterMenuStyle={{ width: '100%' }}
+                                                body={formatedRemaining}
+                                                filterPlaceholder={"order type"}
+                                                bodyStyle={{ textTransform: 'capitalize' }}
+                                                style={{ textTransform: 'uppercase' }}
+                                            ></Column>
+                                            <Column
+                                                field="payment_type"
+                                                header="type"
+                                                body={paymentTypeCell}
+                                                bodyStyle={{textTransform: 'capitalize'}}
+                                                filter
+                                                style={{ textTransform: "uppercase" }}
+                                            ></Column>
+                                            <Column
+                                                field="is_paid"
+                                                header="paid"
+                                                body={isPaidCell}
+                                                bodyStyle={{textTransform: 'capitalize'}}
+                                                filter
+                                                // showFilterMenu={false} 
+                                                // filterMenuStyle={{ width: '100%' }}
+                                                // filterElement={statusRowFilter}
+                                                style={{ textTransform: "uppercase" }}
+                                            ></Column>
+                                            <Column
+                                                field="invoice_due"
+                                                header="status"
+                                                body={invStatus}
+                                                bodyStyle={{textTransform: 'capitalize'}}
+                                                filter
+                                                // showFilterMenu={false} 
+                                                // filterMenuStyle={{ width: '100%' }}
+                                                // filterElement={statusRowFilter}
+                                                style={{ textTransform: "uppercase" }}
+                                            ></Column>
+                                            <Column
+                                                field=""
+                                                header="Action"
+                                                body={(rowData, rowIndex) => invActionCell(rowData, rowIndex)}
+                                                style={{ textTransform: "uppercase" }}
+                                            ></Column>
+                                            </DataTable>
+                                        </div>
+                                        {/* <div className="table-responsive mt-4">
+                                            <table className="table" id="advancedTablesWFixedHeader" data-table-search="true"
+                                                data-table-sort="true" data-table-checkbox="true">
+                                                <thead>
+                                                    <tr>
+                                                        <th scope="col">
+                                                            <input className="form-check-input checkbox-primary checkbox-all"
+                                                                type="checkbox" />
+                                                        </th>
+                                                        <th scope="col" className="head-w-icon sorting" aria-label="invoice-number">
+                                                            Invoice Number
+                                                            <span className="sort-icon"></span>
+                                                        </th>
+                                                        <th scope="col" className="head-w-icon sorting" aria-label="invoice-create-date">
+                                                            Date
+                                                            <span className="sort-icon"></span>
+                                                        </th>
+                                                        <th scope="col" className="head-w-icon sorting" aria-label="category">
+                                                            Sales Reference
+                                                            <span className="sort-icon"></span>
+                                                        </th>
+                                                        <th scope="col" className="head-w-icon sorting" aria-label="variant">
+                                                            Customer Name
+                                                            <span className="sort-icon"></span>
+                                                        </th>
+                                                        <th scope="col" className="head-w-icon sorting" aria-label="sub variant">
+                                                            Customer ID
+                                                            <span className="sort-icon"></span>
+                                                        </th> 
+                                                        <th scope="col" className="head-w-icon sorting" aria-label="qty">
+                                                            Amount Due
+                                                            <span className="sort-icon"></span>
+                                                        </th>
+                                                        <th scope="col" className="head-w-icon sorting" aria-label="qty">
+                                                            Remaining
+                                                            <span className="sort-icon"></span>
+                                                        </th>
+                                                        <th scope="col" className="head-w-icon sorting" aria-label="sku">
+                                                            Type
+                                                            <span className="sort-icon"></span>
+                                                        </th>
+                                                        <th scope="col" className="head-w-icon sorting" aria-label="sku">
+                                                            Paid
+                                                            <span className="sort-icon"></span>
+                                                        </th>
+                                                        <th scope="col" className="head-w-icon sorting" aria-label="sku">
+                                                            Status
+                                                            <span className="sort-icon"></span>
+                                                        </th>
+                                                        <th scope="col">Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {invData ? 
+                                                        (invData.map((inv, idx) => {
+                                                            return (
+                                                                <tr key={`inv-list- ${idx}`}>
+                                                                    <th scope="row">
+                                                                        <input className="form-check-input checkbox-primary checkbox-single" type="checkbox" value="" />
+                                                                    </th>
+                                                                    <td>{inv.invoice_id}</td>
+                                                                    <td>{ConvertDate.convertToFullDate(inv.invoice_date,"/")}</td>
+                                                                    <td><p className="view-note" aria-label="viewSalesRef" onClick={(e) => handleModal(e, inv.order_id)}>View sales</p></td>
+                                                                    <td style={{textTransform:'capitalize'}}>{inv.customer.name}</td>
+                                                                    <td>{inv.customer.customer_id}</td>
+                                                                    <td>
+                                                                        <NumberFormat intlConfig={{
+                                                                            value: inv.amount_due, 
+                                                                            locale: "id-ID",
+                                                                            style: "currency", 
+                                                                            currency: "IDR",
+                                                                        }} />
+                                                                    </td>
+                                                                    <td>
+                                                                        <NumberFormat intlConfig={{
+                                                                            value: inv.remaining_payment, 
+                                                                            locale: "id-ID",
+                                                                            style: "currency", 
+                                                                            currency: "IDR",
+                                                                        }} />
+                                                                    </td>
+                                                                    <td style={{textTransform:'capitalize'}}>
+                                                                        <span className={`badge badge-${inv.payment_type == "paid" ? "primary" : inv.payment_type == "partial" ? "warning" : inv.payment_type == "unpaid" ? "danger": "secondary"} light`}>{inv.payment_type}</span>
+                                                                    </td>
+                                                                    <td style={{textTransform:'capitalize'}}><span className={`badge badge-${inv.is_paid ? "primary" : "danger"} light`}>{inv.is_paid ? "paid" : "unpaid"}</span></td>
+                                                                    <td style={{textTransform:'capitalize'}}><span className={`badge badge-${inv.is_paid ? "success"  : new Date() > new Date(inv.invoice_due) ?  "danger" : 'warning'} light`}>{inv.is_paid ? "completed" : new Date() > new Date(inv.invoice_due) ? "due" : 'in-progress'}</span></td>
+                                                                    <td>
+                                                                        <Dropdown drop={idx == invData.length - 1 ? "up" : "down"}>
+                                                                            <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components" ></Dropdown.Toggle>
+                                                                            <Dropdown.Menu align={"end"}>
+                                                                                <Dropdown.Item eventKey="1" as="button" aria-label="viewInvModal" onClick={(e) => handleModal(e, {id: inv.invoice_id, items:{...inv}})}>
+                                                                                    <i className='bx bx-show'></i> Preview invoice
+                                                                                </Dropdown.Item> 
+                                                                                {
+                                                                                    !inv.is_paid ?
+                                                                                    (
+                                                                                    <Dropdown.Item eventKey="1" as="button" aria-label="addPaymentModal" onClick={(e) => handleModal(e, {id: inv.invoice_id, items:{...inv}})}>
+                                                                                        <i className='bx bx-money'></i> Add payment
+                                                                                    </Dropdown.Item>
+                                                                                    ):""
+                                                                                }
+                                                                                <Dropdown.Item eventKey="1" as="button" aria-label="editInvModal" onClick={(e) => handleModal(e, inv.invoice_id)}>
+                                                                                    <i className='bx bxs-edit'></i> Edit invoice
+                                                                                </Dropdown.Item>
+                                                                                <Dropdown.Item eventKey="1" as="button" aria-label="deleteInvModal" onClick={(e) => handleModal(e, {endpoint: "inv", id: inv.invoice_id})}>
+                                                                                    <i className='bx bx-trash'></i> Delete invoice
+                                                                                </Dropdown.Item>
+                                                                            </Dropdown.Menu>
+                                                                        </Dropdown>
+                                                                    </td>
+                                                                </tr>
+                                                            )
+                                                        })):null
+                                                    }
+                                                </tbody>
+                                            </table>
+                                            <div className="table-end d-flex justify-content-between">
+                                                <p className="table-data-capt" id="tableCaption"></p>
+                                                <ul className="basic-pagination" id="paginationBtnRender"></ul>
+                                            </div>
+                                        </div> */}
+                                        {/* <!-- mobile list -->
+                                        <div className="mobile-list-wrap">
+                                            <div className="mobile-list" id="custLists">
+                                                <div className="list-item mt-3">
+                                                    <div className="modal-area" data-bs-toggle="modal"
+                                                        data-bs-target="#custDetailModal">
+                                                        <div className="list-img">
+                                                            <img src="../assets/images/Avatar 1.jpg" alt="user-img">
+                                                        </div>
+                                                        <div className="list-content">
+                                                            <h4 className="list-title">Kiya</h4>
+                                                            <p className="list-sub-title">cust091</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="list-badge primary">
+                                                        <p className="badge-text">Delivery Order</p>
+                                                    </div>
+                                                    <div className="more-opt" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        <i className='bx bx-dots-horizontal-rounded'></i>
+                                                    </div>
+                                                    <ul className="dropdown-menu dropdown-menu-end">
+                                                        <li>
+                                                            <button className="dropdown-item" type="button" data-bs-toggle="modal"
+                                                                data-bs-target="#editCustModal">
+                                                                <i className='bx bxs-edit'></i> Edit
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button className="dropdown-item" type="button" data-bs-toggle="modal"
+                                                                data-bs-target="#dangerModal">
+                                                                <i className='bx bx-trash'></i> Delete
+                                                            </button>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                                <div className="list-item mt-3">
+                                                    <div className="modal-area" data-bs-toggle="modal"
+                                                        data-bs-target="#custDetailModal">
+                                                        <div className="list-img">
+                                                            <img src="../assets/images/Avatar 1.jpg" alt="user-img">
+                                                        </div>
+                                                        <div className="list-content">
+                                                            <h4 className="list-title">Kiya</h4>
+                                                            <p className="list-sub-title">cust091</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="list-badge primary">
+                                                        <p className="badge-text">Delivery Order</p>
+                                                    </div>
+                                                    <div className="more-opt" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        <i className='bx bx-dots-horizontal-rounded'></i>
+                                                    </div>
+                                                    <ul className="dropdown-menu dropdown-menu-end">
+                                                        <li>
+                                                            <button className="dropdown-item" type="button" data-bs-toggle="modal"
+                                                                data-bs-target="#editCustModal">
+                                                                <i className='bx bxs-edit'></i> Edit
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button className="dropdown-item" type="button" data-bs-toggle="modal"
+                                                                data-bs-target="#dangerModal">
+                                                                <i className='bx bx-trash'></i> Delete
+                                                            </button>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                                <div className="list-item mt-3">
+                                                    <div className="modal-area" data-bs-toggle="modal"
+                                                        data-bs-target="#custDetailModal">
+                                                        <div className="list-img">
+                                                            <img src="../assets/images/Avatar 1.jpg" alt="user-img">
+                                                        </div>
+                                                        <div className="list-content">
+                                                            <h4 className="list-title">Kiya</h4>
+                                                            <p className="list-sub-title">cust091</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="list-badge primary">
+                                                        <p className="badge-text">Delivery Order</p>
+                                                    </div>
+                                                    <div className="more-opt" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        <i className='bx bx-dots-horizontal-rounded'></i>
+                                                    </div>
+                                                    <ul className="dropdown-menu dropdown-menu-end">
+                                                        <li>
+                                                            <button className="dropdown-item" type="button" data-bs-toggle="modal"
+                                                                data-bs-target="#editCustModal">
+                                                                <i className='bx bxs-edit'></i> Edit
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button className="dropdown-item" type="button" data-bs-toggle="modal"
+                                                                data-bs-target="#dangerModal">
+                                                                <i className='bx bx-trash'></i> Delete
+                                                            </button>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div> */}
+                                    </div>
+                                </div>
+                                <div className="tabs-content" style={openTab === "receiptListTab" ? {display: "block"} : {display: "none"}}>
+                                    <div className="card card-table add-on-shadow">
+                                        {/* <div className="wrapping-table-btn">
+                                            <span className="selected-row-stat">
+                                                <p className="total-row-selected"></p>
+                                                <button type="button" className=" btn btn-danger btn-w-icon">
+                                                    <i className='bx bx-trash'></i>Delete selected row
+                                                </button>
+                                            </span>
+                                            <button type="button" className="btn btn-light light"><i className='bx bx-filter-alt'></i>
+                                            </button>
+                                            <button type="button" className="btn btn-light light"><i className='bx bx-printer'></i>
+                                            </button>
+                                            <div className="btn-group">
+                                                <button type="button" className="btn btn-primary btn-w-icon dropdown-toggle"
+                                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <i className='bx bx-download'></i> export
+                                                </button>
+                                                <ul className="dropdown-menu">
+                                                    <li><a className="dropdown-item" href="#">PDF (.pdf)</a></li>
+                                                    <li><a className="dropdown-item" href="#">Microsoft Excel (.xlsx)</a></li>
+                                                </ul>
+                                            </div>
+                                            <button type="button" className=" btn btn-primary btn-w-icon">
+                                                <i className='bx bxs-file-plus'></i> import
+                                            </button>
+                                        </div>
+                                        <p className="card-title">filter</p>
+                                        <div className="filter-area">
+                                            <div className="table-search">
+                                                <div className="input-group-right">
+                                                    <span className="input-group-icon input-icon-right"><i
+                                                            className="zwicon-search"></i></span>
+                                                    <input type="text" className="form-control input-w-icon-right"
+                                                        placeholder="Search customer..." />
+                                                </div>
+                                            </div>
+                                            <CustomSelect 
+                                                options={["Status", "pending", "paid", "due"]}
+                                                defaultValue={0}
+                                                id="statusInvFilter"
+                                                selectedOption={returnSelectVal} 
+                                            /> 
+                                        </div> */}
+                                        <div className="mt-4">
+                                            <DataTable
+                                                className="p-datatable"
+                                                value={receiptData}
+                                                size="normal"
+                                                removableSort
+                                                // stripedRows
+                                                selectionMode={"checkbox"}
+                                                // selection={selectedInvoice}
+                                                // onSelectionChange={(e) => {
+                                                //     setSelected(e.value);
+                                                // }}
+                                                dataKey="payment_id"
+                                                tableStyle={{ minWidth: "50rem", fontSize: '14px' }}
+                                                filters={receiptFilters}
+                                                filterDisplay='menu'
+                                                globalFilterFields={[
+                                                    "receipt_id",
+                                                    "invoice_id",
+                                                    "receipt_date",
+                                                    "customer.name",
+                                                    "customer_id",
+                                                    "total_payment",
+                                                ]}
+                                                
+                                                emptyMessage={emptyStateHandler}
+                                                onFilter={(e) => setReceiptFilters(e.filters)}
+                                                header={receiptTableHeader}
+                                                paginator
+                                                totalRecords={receiptTotalRecords}
+                                                rows={50}
+                                            >
+                                            <Column
+                                                selectionMode="multiple"
+                                                headerStyle={{ width: "3.5rem" }}
+                                            ></Column>
+                                            <Column
+                                                field="receipt_id"
+                                                header="Receipt Number"
+                                                sortable
+                                                bodyStyle={{ textTransform: "capitalize" }}
+                                                style={{ textTransform: "uppercase" }}
+                                            ></Column>
+                                             <Column
+                                                field="invoice_id"
+                                                header="invoice Number"
+                                                sortable
+                                                bodyStyle={{ textTransform: "capitalize" }}
+                                                style={{ textTransform: "uppercase" }}
+                                            ></Column>
+                                            <Column
+                                                field="receipt_date"
+                                                header="date"
+                                                body={formatedReceiptDate}
+                                                dataType='date'
+                                                filter 
+                                                filterPlaceholder="Type a date"
+                                                style={{ textTransform: "uppercase" }}
+                                            ></Column>
+                                            <Column
+                                                field="customer_id"
+                                                header="customer id"
+                                                sortable
+                                                bodyStyle={{ textTransform: "capitalize" }}
+                                                style={{ textTransform: "uppercase" }}
+                                            ></Column>
+                                            <Column
+                                                field="customer.name"
+                                                header="customer"
+                                                filter 
+                                                filterPlaceholder="Search by customer name"
+                                                style={{ textTransform: "uppercase" }}
+                                                bodyStyle={{ textTransform: "capitalize" }}
+                                            ></Column>
+                                            <Column
+                                                field="total_payment"
+                                                header="total"
+                                                // filter 
+                                                // showFilterMenu={false}
+                                                // filterMenuStyle={{ width: '100%' }}
+                                                body={formatedTotal}
+                                                sortable
+                                                // filterPlaceholder={"order type"}
+                                                bodyStyle={{ textTransform: 'capitalize' }}
+                                                style={{ textTransform: 'uppercase' }}
+                                            ></Column>
+                                            <Column
+                                                field=""
+                                                header="Action"
+                                                body={(rowData, rowIndex) => receiptActionCell(rowData, rowIndex)}
+                                                style={{ textTransform: "uppercase" }}
+                                            ></Column>
+                                            </DataTable>
+                                        </div>
+                                        {/* <div className="table-responsive mt-4">
+                                            <table className="table" id="advancedTablesWFixedHeader" data-table-search="true"
+                                                data-table-sort="true" data-table-checkbox="true">
+                                                <thead>
+                                                    <tr>
+                                                        <th scope="col">
+                                                            <input className="form-check-input checkbox-primary checkbox-all"
+                                                                type="checkbox" />
+                                                        </th>
+                                                        <th scope="col" className="head-w-icon sorting" aria-label="invoice-number">
+                                                            Receipt Number
+                                                            <span className="sort-icon"></span>
+                                                        </th>
+                                                        <th scope="col" className="head-w-icon sorting" aria-label="category">
+                                                            invoice number
+                                                            <span className="sort-icon"></span>
+                                                        </th>
+                                                        <th scope="col" className="head-w-icon sorting" aria-label="invoice-create-date">
+                                                            Date
+                                                            <span className="sort-icon"></span>
+                                                        </th>
+                                                        <th scope="col" className="head-w-icon sorting" aria-label="variant">
+                                                            Customer Name
+                                                            <span className="sort-icon"></span>
+                                                        </th>
+                                                        <th scope="col" className="head-w-icon sorting" aria-label="sub variant">
+                                                            Customer ID
+                                                            <span className="sort-icon"></span>
+                                                        </th> 
+                                                        <th scope="col" className="head-w-icon sorting" aria-label="qty">
+                                                            Amount Paid
+                                                            <span className="sort-icon"></span>
+                                                        </th>
+                                                        <th scope="col">Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {receiptData ? 
+                                                        (receiptData.map((receipt, idx) => {
+                                                            return (
+                                                                <tr key={`inv-list- ${idx}`}>
+                                                                    <th scope="row">
+                                                                        <input className="form-check-input checkbox-primary checkbox-single" type="checkbox" value="" />
+                                                                    </th>
+                                                                    <td>{receipt.receipt_id}</td>
+                                                                    <td>{receipt.invoice_id}</td>
+                                                                    <td>{ConvertDate.convertToFullDate(receipt.receipt_date,"/")}</td>
+                                                                    <td style={{textTransform:'capitalize'}}>{receipt.customer.name}</td>
+                                                                    <td>{receipt.customer.customer_id}</td>
+                                                                    <td>
+                                                                        <NumberFormat intlConfig={{
+                                                                            value: receipt.total_payment, 
+                                                                            locale: "id-ID",
+                                                                            style: "currency", 
+                                                                            currency: "IDR",
+                                                                        }} />
+                                                                    </td>
+                                                                    {/* <td><span className={`badge badge-${inv.status === "pending" ? "secondary" : inv.status === "paid" ? "primary" : inv.status === "due" ? "danger" : ""} light`}>{inv.status}</span></td> */}
+                                                                    {/* <td>
+                                                                        <Dropdown drop={idx == receiptData.length - 1 ? "up" : "down"}>
+                                                                            <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components" ></Dropdown.Toggle>
+
+                                                                            <Dropdown.Menu align={"end"}>
+                                                                                <Dropdown.Item eventKey="1" as="button" aria-label="viewInvModal" onClick={(e) => handleModal(e, {id: receipt.id, items:{...receipt}})}>
+                                                                                    <i className='bx bx-show'></i> View receipt
+                                                                                </Dropdown.Item>
+                                                                                <Dropdown.Item eventKey="1" as="button">
+                                                                                    <i className='bx bx-download'></i> download PDF
+                                                                                </Dropdown.Item> 
+                                                                                <Dropdown.Item eventKey="1" as="button" aria-label="deleteInvModal" onClick={(e) => handleModal(e, {endpoint: "inv", id: receipt.id})}>
+                                                                                    <i className='bx bx-trash'></i> Delete receipt
+                                                                                </Dropdown.Item>
+                                                                            </Dropdown.Menu>
+                                                                        </Dropdown>
+                                                                    </td>
+                                                                </tr>
+                                                            )
+                                                        })
+                                                    ):null}
+                                                </tbody>
+                                            </table>
+                                            <div className="table-end d-flex justify-content-between">
+                                                <p className="table-data-capt" id="tableCaption"></p>
+                                                <ul className="basic-pagination" id="paginationBtnRender"></ul>
+                                            </div>
+                                        </div> */}
+                                        {/* <!-- mobile list -->
+                                        <div className="mobile-list-wrap">
+                                            <div className="mobile-list" id="custLists">
+                                                <div className="list-item mt-3">
+                                                    <div className="modal-area" data-bs-toggle="modal"
+                                                        data-bs-target="#custDetailModal">
+                                                        <div className="list-img">
+                                                            <img src="../assets/images/Avatar 1.jpg" alt="user-img">
+                                                        </div>
+                                                        <div className="list-content">
+                                                            <h4 className="list-title">Kiya</h4>
+                                                            <p className="list-sub-title">cust091</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="list-badge primary">
+                                                        <p className="badge-text">Delivery Order</p>
+                                                    </div>
+                                                    <div className="more-opt" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        <i className='bx bx-dots-horizontal-rounded'></i>
+                                                    </div>
+                                                    <ul className="dropdown-menu dropdown-menu-end">
+                                                        <li>
+                                                            <button className="dropdown-item" type="button" data-bs-toggle="modal"
+                                                                data-bs-target="#editCustModal">
+                                                                <i className='bx bxs-edit'></i> Edit
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button className="dropdown-item" type="button" data-bs-toggle="modal"
+                                                                data-bs-target="#dangerModal">
+                                                                <i className='bx bx-trash'></i> Delete
+                                                            </button>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                                <div className="list-item mt-3">
+                                                    <div className="modal-area" data-bs-toggle="modal"
+                                                        data-bs-target="#custDetailModal">
+                                                        <div className="list-img">
+                                                            <img src="../assets/images/Avatar 1.jpg" alt="user-img">
+                                                        </div>
+                                                        <div className="list-content">
+                                                            <h4 className="list-title">Kiya</h4>
+                                                            <p className="list-sub-title">cust091</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="list-badge primary">
+                                                        <p className="badge-text">Delivery Order</p>
+                                                    </div>
+                                                    <div className="more-opt" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        <i className='bx bx-dots-horizontal-rounded'></i>
+                                                    </div>
+                                                    <ul className="dropdown-menu dropdown-menu-end">
+                                                        <li>
+                                                            <button className="dropdown-item" type="button" data-bs-toggle="modal"
+                                                                data-bs-target="#editCustModal">
+                                                                <i className='bx bxs-edit'></i> Edit
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button className="dropdown-item" type="button" data-bs-toggle="modal"
+                                                                data-bs-target="#dangerModal">
+                                                                <i className='bx bx-trash'></i> Delete
+                                                            </button>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                                <div className="list-item mt-3">
+                                                    <div className="modal-area" data-bs-toggle="modal"
+                                                        data-bs-target="#custDetailModal">
+                                                        <div className="list-img">
+                                                            <img src="../assets/images/Avatar 1.jpg" alt="user-img">
+                                                        </div>
+                                                        <div className="list-content">
+                                                            <h4 className="list-title">Kiya</h4>
+                                                            <p className="list-sub-title">cust091</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="list-badge primary">
+                                                        <p className="badge-text">Delivery Order</p>
+                                                    </div>
+                                                    <div className="more-opt" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        <i className='bx bx-dots-horizontal-rounded'></i>
+                                                    </div>
+                                                    <ul className="dropdown-menu dropdown-menu-end">
+                                                        <li>
+                                                            <button className="dropdown-item" type="button" data-bs-toggle="modal"
+                                                                data-bs-target="#editCustModal">
+                                                                <i className='bx bxs-edit'></i> Edit
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button className="dropdown-item" type="button" data-bs-toggle="modal"
+                                                                data-bs-target="#dangerModal">
+                                                                <i className='bx bx-trash'></i> Delete
+                                                            </button>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div> */}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>                         
+            {/* </main> */}
+
+            {
+                showModal === "createInvModal" ?
+                (
+                    <CreateInv 
+                        show={showModal === "createInvModal" ? true : false} 
+                        onHide={handleCloseModal} 
+                    />
+                )
+                : showModal === "editInvModal" ?
+                (
+                    <EditInv
+                        show={showModal === "editInvModal" ? true : false} 
+                        onHide={handleCloseModal} 
+                        data={showModal === "editInvModal" ? invListObj : null}
+                    />
+                )
+                : showModal === "viewInvModal" ?
+                (
+                    <InvoiceModal
+                        show={showModal === "viewInvModal" ? true : false} 
+                        onHide={handleCloseModal} 
+                        data={showModal === "viewInvModal" ? invListObj : null} 
+                        callModal={(modal, data) => handleModal(modal, data)}
+                    />
+                )
+                : showModal === "viewSalesRef" ? 
+                (
+                    <ModalTextContent 
+                        show={showModal === "viewSalesRef" ? true : false} 
+                        onHide={handleCloseModal} 
+                        data={showModal === "viewSalesRef" ? invListObj : null} 
+                    />
+                )
+                : showModal === "addPaymentModal" ? 
+                (
+                    <CreatePayment
+                        show={showModal === "addPaymentModal" ? true : false} 
+                        onHide={handleCloseModal} 
+                        source={'invoice'}
+                        totalCart={showModal === "addPaymentModal" && invListObj ? invListObj.items.remaining_payment : ""} 
+                        data={invListObj}
+                        returnValue={(paymentData) => {setPaidData(paymentData);console.log(paymentData)}} 
+                        multiple={true}
+                        stack={1}
+                    />
+                ): showModal === "deleteInvModal" ?
+                    (
+                        <ConfirmModal show={showModal === "deleteInvModal" ? true : false} onHide={handleCloseModal} 
+                            data={showModal === "deleteInvModal" ? invListObj : ""} 
+                            msg={
+                                <p style={{marginBottom: 0}}>
+                                    Yakin ingin menghapus invoice ini?<br /> Data yang ada di invoice ini akan berubah.
+                                </p>
+                            }
+                            returnValue={(confirmVal) => {setDeleteInv(confirmVal); console.log(confirmVal)}}
+                        />
+                    )
+                : showModal === "warningDeleteInvModal" ?
+                    (
+                        <ConfirmModal show={showModal === "warningDeleteInvModal" ? true : false} onHide={handleCloseModal} 
+                            data={showModal === "warningDeleteInvModal" ? invListObj : ""} 
+                            msg={
+                                <p style={{marginBottom: 0}}>
+                                    Tidak dapat menghapus invoice ini karena terdapat pembayaran yang belum penuh.<br />
+                                    Coba hapus pembayaran yang terkait terlebih dahulu lalu coba hapus ulang invoice ini
+                                </p>
+                            }
+                            returnValue={(confirmVal) => setDeleteInv(confirmVal)}
+                        />
+                    )
+                :""
+            }
+            <Toast ref={toast} />
+            {/* <SalesDetailModal show={showModal === "salesDetailModal" ? true : false} onHide={handleCloseModal} data={showModal === "salesDetailModal" ? salesListObj : ""} /> */}
+            {/* <ConfirmModal show={showModal === "deleteSalesModal" ? true : false} onHide={handleCloseModal} data={showModal === "deleteSalesModal" ? salesListObj : ""} /> */}
+        </>
+    )
+}

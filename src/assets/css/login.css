@@ -1,0 +1,141 @@
+* {
+    box-sizing: border-box;
+    /* padding: 0; */
+    margin: 0;
+    /* font-family: 'Poppins', sans-serif; */
+}
+
+body{
+    height: 100vh;
+}
+ 
+.login-area {
+    width: 33%;
+    height: 100vh;
+    background-color: #FFFFFF;
+    padding: 1rem 4rem;
+}
+
+.title {
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+}
+
+.sub-title {
+    margin-bottom: 2rem;
+}
+
+.image-area {
+    width: 67%;
+    height: 100vh;
+    background-image: linear-gradient(258.35deg, #058CE5 7%, #2174D7 93.43%);
+}
+
+label {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: .5rem;
+}
+
+#emailField, #passField {
+    height: 40px;
+    border-radius: 17px;
+    border: .5px solid #878787;
+    text-indent: 1rem;
+    transition: .5s;
+    outline: none;
+}
+
+#emailField:focus, #passField:focus {
+    border: 2px solid #848484;
+}
+
+.login-btn {
+    width: 100%;
+    height: 45px;
+    background: #4195fc;
+    border: 1px solid #109FFF;
+    color: #ffff;
+    font-weight: 600;
+    border-radius: 17px;
+    font-size: 14px;
+    letter-spacing: 1px;
+    margin-top: 1.2rem;
+    margin-bottom: 2rem;
+    filter: drop-shadow(0px 3px 5px rgba(65, 149, 252, 0.25)) drop-shadow(0px 60px 27px rgba(65, 149, 252, 0.01)) drop-shadow(0px 40px 25px rgba(65, 149, 252, 0.04)) drop-shadow(0px 20px 20px rgba(65, 149, 252, 0.14)) drop-shadow(0px 7px 17px rgba(65, 149, 252, 0.23)) drop-shadow(0px 1px 50px rgba(65, 149, 252, 0.27));
+}
+
+.login-btn:hover {
+    background: #2174D7;
+    color: #ffff;
+}
+
+.sign-up-link {
+    text-decoration: none;
+    color: #109FFF;
+}
+
+.sign-up-link:hover {
+    color: #2174D7;
+}
+
+.image-container {
+    width: 550px;
+    height: 600px;
+}
+
+.image-container img {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(-47px 67px 33px rgba(0, 0, 0, 0.01)) drop-shadow(-27px 38px 28px rgba(0, 0, 0, 0.05)) drop-shadow(-12px 17px 20px rgba(0, 0, 0, 0.09)) drop-shadow(-3px 4px 11px rgba(0, 0, 0, 0.1)) drop-shadow(0px 0px 0px rgba(0, 0, 0, 0.1));
+}
+
+.cloud-container {
+    position: absolute;
+    width: 150px;
+    height: 120px;
+}
+
+.cloud1, .cloud2 {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(-47px 67px 33px rgba(0, 0, 0, 0.01)) drop-shadow(-27px 38px 28px rgba(0, 0, 0, 0.05)) drop-shadow(-12px 17px 20px rgba(0, 0, 0, 0.09)) drop-shadow(-3px 4px 11px rgba(0, 0, 0, 0.1)) drop-shadow(0px 0px 0px rgba(0, 0, 0, 0.1));
+    animation-duration: 1100ms;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-in-out;
+}
+
+.cloud1 {
+    transform: translate(-155%, -117%);
+    animation-name: floatingCloud1;
+}
+
+.cloud2 {
+    transform: translate(200%, -30%);
+    animation-name: floatingCloud2;
+}
+
+
+@keyframes floatingCloud1 {
+    0% {
+        transform: translate(-155%,-117%);
+    }
+    50% {
+        transform: translate(-155%,-110%);
+    }
+    100% {
+        transform: translate(-155%,-117%);
+    }
+}
+
+@keyframes floatingCloud2 {
+    0% {
+        transform: translate(200%, -30%);
+    }
+    50% {
+        transform: translate(200%,-37%);
+    }
+    100% {
+        transform: translate(200%, -30%);
+    }
+}

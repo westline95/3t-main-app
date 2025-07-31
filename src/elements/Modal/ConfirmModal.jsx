@@ -1,0 +1,1115 @@
+import React, { useEffect, useState, useRef } from 'react';
+import { Modal, 
+    // Toast, ToastContainer 
+} from 'react-bootstrap';
+import { Toast } from 'primereact/toast';
+import { ProgressBar } from 'primereact/progressbar';
+import propTypes from "prop-types";
+
+import User from "../../assets/images/Avatar 1.jpg";
+import DangerImg from "../../assets/images/danger.png";
+import WarningImg from "../../assets/images/warning.png";
+import InfoImg from "../../assets/images/info.png";
+import SuccessImg from "../../assets/images/success.png";
+import FetchApi from "../../assets/js/fetchApi.js";
+import useAxiosPrivate from '../../hooks/useAxiosPrivate.js';
+
+export default function ConfirmModal({show, onHide, multiple, data, stack, msg, returnValue, resetControl}) {
+    const [ showToast, setShowToast ] = useState(false);
+    const [ continueCancel, setContinueCancel ] = useState(false);
+    const [ toastContent, setToastContent ] = useState({variant: "", msg: "", title: ""});
+    const toast = useRef(null);
+    const toastUpload = useRef(null);
+    const [progress, setProgress] = useState(0);
+    const axiosPrivate = useAxiosPrivate();
+
+    // const handleValue = () => {
+    //     return props.returnValue(props.data.id);
+    // }
+
+    const fetchDelCust = async () => {
+        if(data.id.length !== 0) {
+            let params;
+            if(data.id.length > 1){
+                params = data.id.join("&id=");
+            } else {
+                params = data.id[0];
+            }
+            await axiosPrivate.delete(`/customers?id=${params}`)
+                .then(response => {
+                    setToastContent({variant:"success", msg: "Delete success"});
+                    setShowToast(true);
+                    setTimeout(() => {
+                        window.location.reload();
+                    },1200)
+                })
+                .catch(error => {
+                    setToastContent({variant:"danger", msg: "Delete failed!"});
+                    setShowToast(true);
+                }
+            )
+        }
+    }
+
+    const convertBase64 = (file) => {
+        return new Promise((resolve, reject) => {
+        const fileReader = new FileReader();
+        fileReader.readAsDataURL(file);
+
+        fileReader.onload = () => {
+            resolve(fileReader.result);
+        };
+
+        fileReader.onerror = (error) => {
+            reject(error);
+        };
+        });
+    };
+
+    const fetchUpdateCust = async (custData) => {
+        if(custData) {
+            let dupe = {...custData};
+            delete dupe["id"];
+            let body = JSON.stringify(dupe);
+
+            await axiosPrivate
+            .put("/customers", body, {
+                params: {
+                    id:data.id
+                },
+            })
+            .then((response) => {
+                toast.current.show({
+                    severity: "success",
+                    summary: "Success",
+                    detail: "Sucessfully update customer",
+                    life: 3000,
+                });
+                setTimeout(() => {
+                    window.location.reload();
+                },1200)
+            })
+            .catch((error) => {
+                toast.current.show({
+                    severity: "danger",
+                    summary: "Failed",
+                    detail: "Failed to update customer",
+                    life: 3000,
+                });
+                resetControl();
+            });
+        } else {
+            toast.current.show({
+                severity: "danger",
+                summary: "Failed",
+                detail: "Customer data error",
+                life: 3000,
+            });
+            resetControl();
+        }   
+    };
+
+    const handleUpdateCust = async () => {
+        if (data.data.img && typeof data.data.img != "string") {
+            const imgFile = data.data.img[0];
+            const base64 = await convertBase64(imgFile);
+
+            axiosPrivate
+                .post(
+                "/api/upload/img",
+                { image: base64 },
+                {
+                    onUploadProgress: (progressEvent) => {
+                    const progress = progressEvent.total
+                        ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
+                        : 0;
+                    toastUpload.current.show({
+                        summary: "Uploading your files...",
+                    });
+                    setProgress(progress);
+                    },
+                }
+                )
+                .then((res) => {
+                    let newFormData = {
+                        ...data.data,
+                        img: res.data,
+                    };
+                    setProgress(100);
+                    toastUpload.current.clear();
+                    toast.current.show({
+                        severity: "success",
+                        summary: "Success",
+                        detail: "Sucessfully upload image",
+                        life: 3000,
+                    });
+                    fetchUpdateCust(newFormData);
+                })
+                .catch((err) => {
+                    setProgress(0);
+                    toast.current.show({
+                        severity: "danger",
+                        summary: "Failed",
+                        detail: "Failed to upload image",
+                        life: 3000,
+                    });
+                });
+        } else {
+            fetchUpdateCust(data.data);
+        }
+    }
+
+    const fetchInsertCustType = async () => {
+        await axiosPrivate
+        .put("/type/write", body)
+            .then(response => {
+                setToastContent({variant:"success", msg: "Successfully add new data"});
+                setShowToast(true);
+                setTimeout(() => {
+                    window.location.reload();
+                },1200)
+            })
+            .catch(error => {
+                setToastContent({variant:"danger", msg: "Update failed"});
+                setShowToast(true);
+            }
+        )
+        
+    }
+
+    const fetchDelCustType = async () => {
+        if(data.id && data.id != "") {
+            await axiosPrivate.delete("/type", {params: {id: data.id}})
+                .then(data => {
+                    setToastContent({variant:"success", msg: "Delete success"});
+                    setShowToast(true);
+                    setTimeout(() => {
+                        window.location.reload();
+                    },1200)
+                })
+                .catch(error => {
+                    setToastContent({variant:"danger", msg: "Delete failed!"});
+                    setShowToast(true);
+                }
+            )
+        }
+    };
+
+    const updateTotalSalesCust = async(currentOrderData) => {
+        await axiosPrivate.get("/customers/member", {params: { id: currentOrderData.customer_id }})
+        .then((resp1) => {
+            console.log(resp1.data)
+            if(resp1.data){
+                const updatedTotalOrder = Number(resp1.data.total_sales)-Number(currentOrderData.grandtotal);
+                const updatedTotalDebt = Number(resp1.data.total_debt)-Number(currentOrderData.grandtotal);
+                axiosPrivate.patch(`/customer/sales/${resp1.data.customer_id}/${updatedTotalOrder}`)
+                .then(resp2 => {
+                    if(currentOrderData.payment_type == "unpaid"){
+                        axiosPrivate.patch(`/customer/debt/${resp1.data.customer_id}/${updatedTotalDebt}`)
+                        .then(resp3 => {
+                            setTimeout(() => {
+                                window.location.reload();
+                            },1200);
+                            toast.current.show({
+                                severity: "success",
+                                summary: "Sukses",
+                                detail: `Data pelanggan diperbarui!`,
+                                life: 1700,
+                            });
+                        })
+                        .catch(err3 => {
+                            console.error("Failed to update total debt");
+                        })
+                    }else {
+                        setTimeout(() => {
+                            window.location.reload();
+                        },1200);
+                        toast.current.show({
+                            severity: "success",
+                            summary: "Sukses",
+                            detail: `Data pelanggan diperbarui!`,
+                            life: 1700,
+                        });
+                    }
+
+                })
+                .catch(err2 => {
+                    console.error("Failed to update total sales");
+                })
+            }
+        })
+        .catch(err1 => {
+            if(err1.response.status === 404){
+                toast.current.show({
+                    severity: "error",
+                    summary: "Failed",
+                    detail: `Update detail customer failed, because customer id is not found!`,
+                    life: 3000,
+                });
+            }
+        })
+    }
+
+    const cancelSales = async () => {
+        handleROAndOrderCredit();
+
+        if(!data.items.invoice_id){
+            // let handleROcredit = handleROAndOrderCredit();
+            if(continueCancel == true){
+                let body = JSON.stringify({order_status: 'canceled'});
+                await axiosPrivate.patch("/sales/update/status",body, {params: {id: data.id}})
+                .then(() => {
+                    toast.current.show({
+                        severity: "success",
+                        summary: "Sukses",
+                        detail: "Berhasil membatalkan order",
+                        life: 1500,
+                    });
+    
+                    if(data.items?.delivery){
+                        if(data.items.delivery.delivery_status !== "delivered"){
+                            let delivBody = JSON.stringify({delivery_status: 'canceled'});
+                            axiosPrivate.patch(`/delivery/status/${data.items.delivery.delivery_id}`, delivBody)
+                            .then(() => {
+                                toast.current.show({
+                                    severity: "success",
+                                    summary: "Sukses",
+                                    detail: "Berhasil membatalkan pengiriman",
+                                    life: 1500,
+                                });
+            
+                                // setTimeout(() => {
+                                //     window.location.reload();
+                                // },1500);
+                                updateTotalSalesCust(data.items);
+                            })
+                            .catch(error => {
+                                toast.current.show({
+                                    severity: "error",
+                                    summary: "Gagal",
+                                    detail: "Gagal membatalkan pengiriman!",
+                                    life: 3000,
+                                });
+                            })   
+                        } else {
+                            updateTotalSalesCust(data.items);
+                            // setTimeout(() => {
+                            //     window.location.reload();
+                            // },1500);
+                        }
+                    } else {
+                        updateTotalSalesCust(data.items);
+                        // setTimeout(() => {
+                        //     window.location.reload();
+                        // },1500);
+                    }
+                })
+                .catch(error => {
+                    toast.current.show({
+                        severity: "error",
+                        summary: "Gagal",
+                        detail: "Gagal mengupdate order!",
+                        life: 3000,
+                    });
+                })     
+
+            }
+        } else {
+            const parsedOrderIds = JSON.parse(data.items.invoice.order_id);
+            if(parsedOrderIds.length > 1){
+                // let handleROcredit = handleROAndOrderCredit();
+
+                if(continueCancel == true){
+                    let body = JSON.stringify({order_status: "canceled"});
+                    await axiosPrivate.patch(`/sales/update/status?id=${data.id}`, body)
+                    .then((resp1) => {
+                        if(resp1.data.length > 1 && resp1.data[0] > 0){
+                            toast.current.show({
+                                severity: "success",
+                                summary: "Sukses",
+                                detail: "Berhasil Mengupdate data order",
+                                life: 3000,
+                            });
+
+                            // check if order type is delivery
+                            if(data.items?.delivery){
+                                if(data.items.delivery.delivery_status !== "delivered"){
+                                    let delivBody = JSON.stringify({delivery_status: 'canceled'});
+                                    axiosPrivate.patch(`/delivery/status/${data.items.delivery.delivery_id}`, delivBody)
+                                    .then(() => {
+                                        toast.current.show({
+                                            severity: "success",
+                                            summary: "Sukses",
+                                            detail: "Berhasil membatalkan pengiriman",
+                                            life: 1500,
+                                        });
+                                    })
+                                    .catch(error => {
+                                        toast.current.show({
+                                            severity: "error",
+                                            summary: "Gagal",
+                                            detail: "Gagal membatalkan pengiriman!",
+                                            life: 3000,
+                                        });
+                                    })
+                                }   
+                                
+                            } 
+        
+                            let getIndex = parsedOrderIds.indexOf(data.id);
+                            if (getIndex !== -1) {
+                                parsedOrderIds.splice(getIndex, 1);
+                            }
+        
+                            // update invoice
+                            let oldInv = {
+                                ...data.items.invoice
+                            };
+                            delete oldInv.invoice_id;
+        
+                            let newInvModel = {
+                                // ...oldInv,
+                                order_id: JSON.stringify(parsedOrderIds),
+                                subtotal: data.items.invoice.subtotal - data.items.subtotal,
+                                amount_due: data.items.invoice.amount_due - data.items.grandtotal,
+                                remaining_payment: data.items.invoice.remaining_payment - data.items.grandtotal,
+                                total_discount: data.items.invoice.total_discount - data.items.order_discount,
+                            };
+
+                            newInvModel.is_paid = newInvModel.remaining_payment <= 0 ? true:false;
+
+                            let toStr = JSON.stringify(newInvModel);
+                            axiosPrivate.patch("/inv/payment", toStr, {params: {id: data.items.invoice.invoice_id}})
+                            .then(res2 => {
+                                toast.current.show({
+                                    severity: "success",
+                                    summary: "Sukses",
+                                    detail: "Berhasil Mengupdate invoice",
+                                    life: 1500,
+                                });
+
+                                updateTotalSalesCust(data.items);
+
+                                // setTimeout(() => {
+                                //     window.location.reload();
+                                // },1500);
+                                
+                            }) 
+                            .catch(error2 => {
+                                toast.current.show({
+                                    severity: "error",
+                                    summary: "Gagal",
+                                    detail: "Gagal mengupdate invoice!",
+                                    life: 3000,
+                                });
+                                // undo update order_status
+                                body = JSON.stringify({order_status: data.items.order_status});
+                                axiosPrivate.patch(`/sales/update/status?id=${data.id}`, body);
+                            })
+                        } else {
+                            console.error("no row affected");
+                        }
+                    })
+                    .catch(error1 => {
+                        console.log(error1)
+                        toast.current.show({
+                            severity: "error",
+                            summary: "Gagal",
+                            detail: "Gagal mengupdate order!",
+                            life: 3000,
+                        });
+                    })
+                }
+            }  
+            else {
+                if(data.items.invoice?.payments?.length > 0){
+                    console.error("minimal 1 order pada invoice dan terdapat pembayaran invoice")
+                    return returnValue(true);
+                    // coming soon => control return payment customer either by credit or cash
+                    
+                    // await axiosPrivate.patch(`/customer/${data.items.customer_id}/credit`, )
+                    // .then((resp1) => {
+                    //     if(resp1.data.length > 0 && resp1.data[0] > 0){
+                    //         // check if order type is delivery
+                    //         if(data.items?.delivery){
+                    //             if(data.items.delivery.delivery_status !== "delivered"){
+                    //                 let delivBody = JSON.stringify({delivery_status: 'canceled'});
+                    //                 axiosPrivate.patch(`/delivery/status/${data.items.delivery.delivery_id}`, delivBody)
+                    //                 .then(() => {
+                    //                     toast.current.show({
+                    //                         severity: "success",
+                    //                         summary: "Sukses",
+                    //                         detail: "Berhasil membatalkan pengiriman",
+                    //                         life: 1500,
+                    //                     });
+                    //                 })
+                    //                 .catch(error => {
+                    //                     toast.current.show({
+                    //                         severity: "error",
+                    //                         summary: "Gagal",
+                    //                         detail: "Gagal membatalkan pengiriman!",
+                    //                         life: 3000,
+                    //                     });
+                    //                 })
+                    //             }   
+                                
+                    //         } 
+
+                    //         axiosPrivate.patch("/inv/status",invBody, {params: {id: data.items.invoice.invoice_id}})
+                    //         .then((resp2) => {
+                    //             toast.current.show({
+                    //                 severity: "success",
+                    //                 summary: "Success",
+                    //                 detail: "Order updated",
+                    //                 life: 3000,
+                    //             });
+                                
+                    //             setTimeout(() => {
+                    //                 window.location.reload();
+                    //             },1200)
+                    //         })
+                    //         .catch(error2 => {
+                    //             toast.current.show({
+                    //                 severity: "error",
+                    //                 summary: "Failed",
+                    //                 detail: "Failure for update sales",
+                    //                 life: 3000,
+                    //             });
+    
+                    //             // undo update order_status bcs failed to update invoice
+                    //             axiosPrivate.patch("/sales/update/status", salesBodyUndo, {params: {id: data.id}})
+                    //             .then((resp1) => {
+                                    
+                    //             })
+                    //             .catch(error2 => {
+                    //                 toast.current.show({
+                    //                     severity: "error",
+                    //                     summary: "Failed",
+                    //                     detail: "Fatal error update order",
+                    //                     life: 3000,
+                    //                 });
+                    //             })
+                    //         })
+    
+                    //     }
+                    // })
+                    // .catch(error1 => {
+                    //     toast.current.show({
+                    //         severity: "error",
+                    //         summary: "Failed",
+                    //         detail: "Failed to update order",
+                    //         life: 3000,
+                    //     });
+                        
+                    // })
+                } else {
+                    // let handleROcredit = handleROAndOrderCredit();
+
+                    if(continueCancel == true){
+                        // canceled order and update invoice:status = canceled
+                        let salesBodyUpdate = JSON.stringify({order_status: "canceled"});
+                        let salesBodyUndo = JSON.stringify({order_status: data.items.order_status});
+                        let invBody = JSON.stringify({status: "canceled"});
+                        await axiosPrivate.patch(`/sales/update/status?id=${data.id}`, salesBodyUpdate)
+                        .then((resp1) => {
+                            if(resp1.data.length > 0 && resp1.data[0] > 0){
+                                // check if order type is delivery
+                                if(data.items?.delivery){
+                                    if(data.items.delivery.delivery_status !== "delivered"){
+                                        let delivBody = JSON.stringify({delivery_status: 'canceled'});
+                                        axiosPrivate.patch(`/delivery/status/${data.items.delivery.delivery_id}`, delivBody)
+                                        .then(() => {
+                                            toast.current.show({
+                                                severity: "success",
+                                                summary: "Sukses",
+                                                detail: "Berhasil membatalkan pengiriman",
+                                                life: 1500,
+                                            });
+                                        })
+                                        .catch(error => {
+                                            toast.current.show({
+                                                severity: "error",
+                                                summary: "Gagal",
+                                                detail: "Gagal membatalkan pengiriman!",
+                                                life: 3000,
+                                            });
+                                        })
+                                    }   
+                                    
+                                } 
+    
+                                axiosPrivate.patch("/inv/status",invBody, {params: {id: data.items.invoice.invoice_id}})
+                                .then((resp2) => {
+                                    toast.current.show({
+                                        severity: "success",
+                                        summary: "Success",
+                                        detail: "Order updated",
+                                        life: 3000,
+                                    });
+                                    
+                                     updateTotalSalesCust(data.items);
+                                    // setTimeout(() => {
+                                    //     window.location.reload();
+                                    // },1200)
+                                })
+                                .catch(error2 => {
+                                    toast.current.show({
+                                        severity: "error",
+                                        summary: "Failed",
+                                        detail: "Failure for update sales",
+                                        life: 3000,
+                                    });
+        
+                                    // undo update order_status bcs failed to update invoice
+                                    axiosPrivate.patch("/sales/update/status", salesBodyUndo, {params: {id: data.id}})
+                                    .then((resp1) => {
+                                        
+                                    })
+                                    .catch(error2 => {
+                                        toast.current.show({
+                                            severity: "error",
+                                            summary: "Failed",
+                                            detail: "Fatal error update order",
+                                            life: 3000,
+                                        });
+                                    })
+                                })
+        
+                            }
+                        })
+                        .catch(error1 => {
+                            toast.current.show({
+                                severity: "error",
+                                summary: "Failed",
+                                detail: "Failed to update order",
+                                life: 3000,
+                            });
+                            
+                        })
+
+                    }
+
+                }
+            }
+        }
+    }; 
+    
+    const handleROAndOrderCredit = async () => {
+        // checking order credit
+        if(data.items.return_order_id && data.items.orders_credit){
+            console.log("return order & order credit")
+            await axiosPrivate.delete(`/order-credit/ro?ro_id=${data.items.return_order_id}`)
+            .then(() => {
+                // delete RO
+                axiosPrivate.delete(`/ro?id=${data.items.return_order_id}`)
+                .then(() => {
+                    //update roID in order to null
+                    let roIDNull = JSON.stringify({return_order_id: null});
+                    axiosPrivate.patch(`/sales/update/ro/${data.items.order_id}`, roIDNull)
+                    .then(() => {
+                        // delete ROITEM
+                        axiosPrivate.delete(`/ro-item/ro?ro_id=${data.items.return_order_id}`)
+                        .then(() => {
+                            // // unlink order credit
+                            let orderIDNull = JSON.stringify({order_id: null});
+                            axiosPrivate.patch(`/order-credit/${data.items.orders_credit.order_credit_id}`,orderIDNull)
+                            .then(() => {
+                                
+                                console.log("sampe sini")
+                                setContinueCancel(true);
+                            })  
+                            .catch(err5 => {
+                                console.error("gagal men-null kan order kredit!")
+                                setContinueCancel(false);
+                            })
+                        })  
+                        .catch(err4 => {
+                            console.error("gagal menghapus return order items!")
+                             setContinueCancel(false);
+                        })
+                    })
+                    .catch((err3) => {
+                        console.error("gagal men-nullkan return order id!")
+                         setContinueCancel(false);
+                    })
+                })  
+                .catch(err2 => {
+                    console.error("gagal menghapus return order!")
+                     setContinueCancel(false);
+                })
+
+            })  
+            .catch(err1 => {
+                console.error("gagal menghapus kan order kredit!")
+                 setContinueCancel(false);
+            })
+        } else {
+            if(data.items.orders_credit){
+                console.log("order credit")
+                let orderIDNull = JSON.stringify({order_id: null});
+                await axiosPrivate.patch(`/order-credit/${data.items.orders_credit.order_credit_id}`,orderIDNull)
+                .then(() => {
+                    setContinueCancel(true);
+                })  
+                .catch(err => {
+                    console.error("gagal men-null kan order kredit!")
+                    setContinueCancel(false);
+                })
+    
+            } else if(data.items.return_order_id){
+                console.log("return order")
+                await axiosPrivate.delete(`/order-credit/ro?ro_id=${data.items.return_order_id}`)
+                .then(() => {
+                    // delete RO
+                    axiosPrivate.delete(`/ro?id=${data.items.return_order_id}`)
+                    .then(() => {
+                        //update roID in order to null
+                        let roIDNull = JSON.stringify({return_order_id: null});
+                        axiosPrivate.patch(`/sales/update/ro/${data.items.order_id}`, roIDNull)
+                        .then(() => {
+                            // delete ROITEM
+                            axiosPrivate.delete(`/ro-item/ro?ro_id=${data.items.return_order_id}`)
+                            .then(() => {
+                                setContinueCancel(true);
+                            })  
+                            .catch(err4 => {
+                                console.error("gagal menghapus return order items!")
+                                setContinueCancel(false);
+                            })
+                        })
+                        .catch((err3) => {
+                            console.error("gagal men-nullkan return order id!")
+                            setContinueCancel(false);
+                        })
+                    })  
+                    .catch(err2 => {
+                        console.error("gagal menghapus return order!")
+                        setContinueCancel(false);
+                    })
+
+                })  
+                .catch(err1 => {
+                    console.error("gagal menghapus kan order kredit!")
+                    setContinueCancel(false);
+                })
+                // await axiosPrivate.delete(`/order-credit/ro?ro_id=${data.items.return_order_id}`)
+                // .then(() => {
+                //     // delete RO
+                //     axiosPrivate.delete(`/ro?id=${data.items.return_order_id}`)
+                //     .then(() => {
+                //         // delete ROITEM
+                //         axiosPrivate.delete(`/ro-item/ro?ro_id=${data.items.return_order_id}`)
+                //         .then(() => {
+                //             cancelSales2();
+                //         })  
+                //         .catch(err3 => {
+                //             console.error("gagal menghapus return order items!")
+                //         })
+                        
+                //     })  
+                //     .catch(err2 => {
+                //         console.error("gagal menghapus return order!")
+                //     })
+
+                // })  
+                // .catch(err1 => {
+                //     console.error("gagal menghapus kan order kredit!")
+                // })
+            } else {
+                console.log("none")
+                setContinueCancel(true);
+            }
+
+        }
+    };
+    console.log(data)
+
+    const fetchInsertMultipleOrderItem = async (body) => {
+        let bodyData = JSON.stringify(body);
+        await axiosPrivate.post("/order-item/writes", bodyData)
+        .then(res => {
+            if(res.data){
+                if(data.data && data.data.order){
+                    let body = JSON.stringify(data.data.order);
+
+                    axiosPrivate.patch(`/sales/update-minor/${data.id}`, body )
+                    .then(resp => {
+                        if(resp.data){
+                            if(data.old_data.invoice){
+                                const getTotalPayment = data.old_data.invoice?.payments ? data.old_data.invoice.payments.reduce((prevValue, currValue) => Number(prevValue) + Number(currValue.amount_paid),0) : 0;
+                                const totalDisc = Number(data.old_data.invoice.total_discount) == 0 ? (Number(data.old_data.invoice.total_discount) + Number(data.data.order.order_discount)) : ((Number(data.old_data.invoice.total_discount) - Number(data.old_data.order_discount)) + Number(data.data.order.order_discount));
+                                const subtotal = (Number(data.old_data.invoice.subtotal) - Number(data.old_data.subtotal) + Number(data.data.order.subtotal));
+                                const amount_due = ((Number(data.old_data.grandtotal) - Number(data.old_data.invoice.amount_due)) + (subtotal-totalDisc));
+                                console.log(data.old_data)
+                                let forInvoiceUpdate = {
+                                    total_discount: totalDisc,
+                                    subtotal: subtotal,
+                                    amount_due: amount_due,
+                                    remaining_payment: amount_due - getTotalPayment,
+                                    is_paid: (amount_due - getTotalPayment) == 0 ? true : false
+                                }
+    
+                                const invBody = JSON.stringify(forInvoiceUpdate);
+    
+                                axiosPrivate.patch(`/inv/payment?id=${data.old_data.invoice_id}`, invBody )
+                                .then(resp2 => {
+                                    setTimeout(() => {
+                                        window.location.reload();
+                                    },1200)
+                                    
+                                    toast.current.show({
+                                        severity: "success",
+                                        summary: "Sukses",
+                                        detail: "Berhasil memeperbarui data!",
+                                        life:1200,
+                                    });
+                                })
+                                .catch(err2 => {
+                                    console.error(err2)
+                                })
+                                
+                            } else {
+                                setTimeout(() => {
+                                    window.location.reload();
+                                },1200)
+                                
+                                toast.current.show({
+                                    severity: "success",
+                                    summary: "Sukses",
+                                    detail: "Berhasil memeperbarui data!",
+                                    life:1200,
+                                });
+                            }
+
+                        }
+                    })
+                    .catch(error => {
+                        toast.current.show({
+                            severity: "error",
+                            summary: "Gagal",
+                            detail: "Gagal memeperbarui data!",
+                            life: 3000,
+                        });
+                        console.log(error)
+                    })
+                }
+            }
+        })
+        .catch(error => {
+            setAddOrderItem(false);
+            setToastContent({variant:"danger", msg: "Failed to add order items!"});
+            setShowToast(true);
+        })
+    };
+
+    const fetchDelOrderItem = async () => {
+        console.log(data)
+        if(data.id && data.id != "") {
+            await axiosPrivate.delete("/order-item/order", { params: {id: data.id} })
+            // FetchApi.fetchDelOrderItem(data.id)
+                .then(res => {
+                    console.log(res.data)
+                    if(res.data){
+                        if(data.data && data.data.order_items){
+                            fetchInsertMultipleOrderItem(data.data.order_items);
+                        } else {
+                            setTimeout(() => {
+                                window.location.reload();
+                            },1200)
+                           
+                            toast.current.show({
+                                severity: "success",
+                                summary: "Sukses",
+                                detail: "Berhasil memeperbarui data!",
+                                life:1200,
+                            });
+                        }
+                    }
+                })
+                .catch(error => {
+                    toast.current.show({
+                        severity: "error",
+                        summary: "Gagal",
+                        detail: "Gagal memeperbarui data!",
+                        life: 3000,
+                    });
+                }
+            )
+        }
+    };
+
+    const fetchDelSales = () => {
+        if(data.id && data.id != "") {
+            FetchApi.fetchDelOrder(data.id)
+                .then(res => {
+                    setToastContent({variant:"success", msg: "Delete success"});
+                    setShowToast(true);
+                    setTimeout(() => {
+                        window.location.reload();
+                    },1200)
+                })
+                .catch(error => {
+                    setToastContent({variant:"danger", msg: "Delete failed!"});
+                    setShowToast(true);
+                }
+            )
+        }
+    }
+
+    const fetchDelRO = async() => {
+        if(data.id && data.id != "" && data.items) {
+            // delete RO item 
+            const orderBody = JSON.stringify({return_order_id: null});
+            await axiosPrivate.patch(`/sales/update/ro/${data.items.order_id}`,orderBody)
+            .then(res1 => {
+                if(res1.data){
+                    axiosPrivate.delete("/ro-item/ro", { params: {ro_id: data.id} })
+                    .then(res2 => {
+                        // delete RO
+                        if(res2.data){
+                            axiosPrivate.delete("/ro", { params: {id: data.id} })
+                            .then(res3 => {
+                                if(res3.data){
+                                    // update RoID in order
+                                    toast.current.show({
+                                        severity: "success",
+                                        summary: "Sukses",
+                                        detail: "Berhasil menghapus data",
+                                        life: 1500,
+                                    });
+                                    setTimeout(() => {
+                                        window.location.reload();
+                                    },1500)
+                                } 
+                            })
+                            .catch(error3 => {
+                                toast.current.show({
+                                    severity: "error",
+                                    summary: "Gagal",
+                                    detail: "Gagal menghapus data!",
+                                    life: 3000,
+                                });
+                            })
+                        } 
+                    })
+                    .catch(error2 => {
+                        toast.current.show({
+                            severity: "error",
+                            summary: "Gagal",
+                            detail: "Gagal menghapus item pengembalian",
+                            life: 3000,
+                        });
+                    })
+                }
+            })
+            .catch(error1 => {
+                toast.current.show({
+                    severity: "error",
+                    summary: "Error",
+                    detail: "Terjadi error saat menghapus pengembalian",
+                    life: 3000,
+                });
+            })
+        }
+    }
+
+
+    const handleAction = () => {
+        console.log(data)
+        if(data !== "" || data !== null){
+            switch(data.endpoint){
+                case "customer":
+                    if(data.action === "delete"){
+                        fetchDelCust();
+                    } else if(data.action === "update"){
+                        // fetchUpdateCust();
+                        handleUpdateCust();
+                    }
+                break;
+                case "custType":
+                    if(data.action === "delete"){
+                        fetchDelCustType();
+                    } else if(data.action === "update"){
+                        fetchUpdateCust();
+                    } else if(data.action === "insert"){
+                        fetchInsertCustType();
+                    }
+                break;
+                case "sales":
+                    if(data.action === "canceled"){
+                        console.log(data)
+                        // update order_status to canceled
+                        cancelSales();
+                        // fetchGetInv(data.data.invoice_id)
+                        // fetchDelOrderItem();
+                        // fetchDelSales();
+                    } else if(data.action === "update"){
+                        // delete order item -> insert order item -> update order detail
+                        fetchDelOrderItem();
+                    } else if(data.action === "insert"){
+                        // fetchInsertCustType();
+                    }
+                    else if(data.action === "warning"){
+                        console.log('warning')
+                        // fetchInsertCustType();
+                    }
+                break;
+                case "inv":
+                    if(data.action === "delete"){
+                        if(returnValue){
+                            return returnValue(true);
+                        } 
+                        // update order_status to canceled
+                        // cancelSales();
+                        // fetchGetInv(data.data.invoice_id)
+                        // fetchDelOrderItem();
+                        // fetchDelSales();
+                    } else if(data.action === "update"){
+                        // delete order item -> insert order item -> update order detail
+                        fetchDelOrderItem();
+                    } else if(data.action === "insert"){
+                        // fetchInsertCustType();
+                    } else if(data.action === "warning"){
+                        return returnValue(true);
+                        // fetchInsertCustType();
+                    }
+                break;
+                case "product":
+                    if(data.action === "delete"){
+                        if(returnValue){
+                            return returnValue(true);
+                        }
+                    }
+                break;
+                case "category":
+                    if(data.action === "delete"){
+                        if(returnValue){
+                            return returnValue(true);
+                        }
+                    }
+                break;
+                case "ro":
+                    if(data.action === "delete"){
+                        fetchDelRO();
+                    }
+                break;
+            }
+
+        } 
+    };
+
+    useEffect(() => {
+        if(multiple === true){
+            document.querySelectorAll(".modal-backdrop").forEach((e,idx) => {
+                e.style.zIndex = 1055 + (idx * stack);
+            })
+            document.querySelectorAll(".modal").forEach((e,idx) => {
+                e.style.zIndex = 1056 + (idx * stack);
+            })
+        }
+    },[show])
+
+    if(!data){
+        return;
+    }
+
+    return(
+        <>
+        <Modal show={show} onHide={onHide} scrollable={true} centered={true} className={`${data.action == 'info' ? 'info':'danger'}-modal`}
+        style={{justifyContent: "center !important"}}>
+            <Modal.Header style={{paddingBottom: 0, paddingTop: '1.5rem'}}>
+                <div className="modal-bg-circle">
+                    <img 
+                        src={
+                            data.action === 'delete' || data.action === 'canceled' ? DangerImg
+                            : data.action === 'update' || data.action === 'warning' ? WarningImg
+                            : data.action === 'info' ? InfoImg
+                            : data.action === 'success' ? SuccessImg
+                            :""
+                        } 
+                        alt="img" 
+                    />
+                </div>
+            </Modal.Header>
+            <Modal.Body>
+                {/* <div style={{wordBreak: 'break-word'}}> */}
+                    {msg}
+                {/* </div> */}
+            </Modal.Body>
+            <Modal.Footer>
+                {data.action === 'info' ?
+                    (
+                        <button type="button" className="btn btn-primary" onClick={() => {onHide();returnValue && returnValue(false)}}>mengerti</button>
+                    )
+                : 
+                (
+                    <>
+                    <button type="button" className="btn btn-secondary light" onClick={() => {onHide(); returnValue && returnValue(false)}}>{data.endpoint == 'inv' && data.endpoint == 'warning' ? 'Tidak' : 'Batal'}</button>
+                    <button 
+                        type="button" 
+                        className={`btn btn-${
+                            data.action === 'delete' || data.action === 'canceled' ? 'danger'
+                            : data.action === 'update' || data.action === 'warning' ? 'warning'
+                            : data.action === 'info' ? 'info'
+                            : data.action === 'success' ? 'success'
+                            :""
+                        }`} 
+                        aria-label="confirm-btn" 
+                        onClick={() => {handleAction()}}
+                    >Ya</button>
+                    </>
+
+                )
+                }
+            </Modal.Footer>
+        </Modal>
+
+        {/* toast area */}
+        {/* <ToastContainer
+            className="p-3 custom-toast"
+        >
+            <Toast onClose={() => setShowToast(false)} show={showToast} delay={3000} autohide bg={toastContent.variant}>
+                <Toast.Body>{toastContent.msg}</Toast.Body>
+            </Toast>
+        </ToastContainer> */}
+        <Toast ref={toast} />
+        <Toast
+        ref={toastUpload}
+        content={({ message }) => (
+            <section
+            className="flex p-3 gap-3 w-full shadow-2 fadeindown"
+            style={{
+                borderRadius: "10px",
+                backgroundColor: "#262626",
+                color: "#ffffff",
+            }}
+            >
+            <i className="bx bx-cloud-upload" style={{ fontSize: 24 }}></i>
+            <div className="flex flex-column gap-3 w-full">
+                <p className="m-0 font-semibold text-base text-white">
+                {message.summary}
+                </p>
+                <p className="m-0 text-base text-700">{message.detail}</p>
+                <div className="flex flex-column gap-2">
+                <ProgressBar value={progress} showValue="false"></ProgressBar>
+                <label className="text-right text-xs text-white">
+                    {progress}% uploaded...
+                </label>
+                </div>
+            </div>
+            </section>
+        )}
+        ></Toast>
+        
+        </>
+    )
+}
+
+ConfirmModal.propTypes = {
+    show: propTypes.bool, 
+    onHide: propTypes.func, 
+    multiple: propTypes.bool,
+    stack: propTypes.number, 
+    msg: propTypes.any, 
+    returnValue: propTypes.func
+}

@@ -1,0 +1,95 @@
+@import url('https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css');
+@import url('https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css');
+@import url('https://fonts.googleapis.com/css2?family=Inter&display=swap"');
+
+
+* {
+  box-sizing: border-box;
+  /* padding: 0; */
+  margin: 0;
+  /* font-family: 'Poppins', sans-serif; */
+  /* font-family: 'Questrial', sans-serif; */
+  font-family: 'Inter', sans-serif;
+}
+
+:root {
+  --sa-body-bg: #f8f9fd;
+  --sa-color-white: #ffffff;
+
+  --sa-color-primary: #42C0FB;
+  --sa-color-secondary: #9ca7b1;
+  --sa-color-success: #00c58df1;
+  --sa-color-warning: #f6945f;
+  --sa-color-danger: #f05d53;
+  --sa-color-info: #29a7fc;
+  --sa-color-success-2: #6ab55d;
+  --sa-color-yellow: #edc842;
+  --sa-color-red: #B00054;
+  --sa-color-pink: #FB9AC8;
+  --sa-color-light-purple: #da89ff;
+  --sa-color-purple: #da89ff;
+  --sa-color-black: #252525;
+  --sa-color-pure-black: #000;
+  --sa-color-light-blue: #E8F6FD;
+  --sa-color-text-blue-black: #344050;
+
+  --sa-color-primary-hover: #14b4ff;
+  --sa-color-secondary-hover: #787f86;
+  --sa-color-success-hover: #00b380;
+  --sa-color-danger-hover: #e73c2f;
+  --sa-color-warning-hover: #f37c3b;
+  --sa-color-info-hover: #0099FF;
+  --sa-color-light-hover: #eeeeee;
+  --sa-color-dark-hover: #3d3d3d;
+
+  --sa-color-primary-light: #2e89b3;
+  --sa-color-primary-light-2: #ECF9FF;
+  --sa-bg-color-primary-light: #b2e6ff40;
+  --sa-color-secondary-light: #5b5e60;
+  --sa-bg-color-secondary-light: #9ca7b140;
+  --sa-color-secondary-light-acc: #9ca7b133;
+  --sa-color-secondary-light-hover: #9ca7b1;
+  --sa-color-success-light: #009a6e;
+  --sa-bg-color-success-light: #d4ffedd6;
+  --sa-color-success-light-hover: #00c38c;
+  --sa-color-danger-light: #c95148;
+  --sa-bg-color-danger-light: #ffeae9;
+  --sa-color-danger-light-hover: #f05d53;
+  --sa-color-warning-light: #d07d50;
+  --sa-bg-color-warning-light: #fff2eb;
+  --sa-color-warning-light-hover: #f6945f;
+  --sa-color-info-light: #008fee;
+  --sa-bg-color-info-light: #e8f6ff;
+  --sa-bg-color-black-light: #25252540;
+  --sa-bg-color-light-light: #f8f9fa40;
+  --sa-color-outline-light: #f8f9fa;
+
+  --sa-bg-color-thead: #F5F6F9;
+
+  --sa-form-focus: #124157;
+  --sa-form-invalid: #FF5630;
+  --sa-color-link: #007acc;
+  --sa-color-icon: #8f9399;
+  --sa-border-color: #d6d6d6;
+  --sa-bg-red-icon-acc: #ffd2e7;
+  --sa-bg-red-icon: #CF3F54;
+  --sa-item-menu: #e8f6fd;
+
+  --sa-sidebar-color: #42C0FB3C;
+  --sa-sidebar-color-hover: #42C0FBDD;
+
+  --sa-yellow-light: #faf9e8;
+  --sa-black-blue: #233b46;
+
+  --sa-form-wizard-line-width: 0%;
+
+  --sa-hovered-color: #f8f8fa;
+}
+
+body {
+  background-color: var(--sa-body-bg);
+}
+
+.icon {
+  font-weight: 600;
+}
