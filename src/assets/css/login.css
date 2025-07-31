@@ -139,3 +139,43 @@ label {
         transform: translate(200%, -30%);
     }
 }
+
+@media (min-width: 320px) and (max-width: 480px) {
+    .login-area {
+        width: 100%;
+        display: block;
+    }
+
+    .image-area {
+        display: none;
+    }
+
+
+}
+
+
+@media (min-width: 481px) and (max-width: 767px) {
+    .login-area {
+        width: 100%;
+        display: block;
+    }
+
+    .image-area {
+        display: none;
+    }
+
+}
+
+
+@media (min-width: 768px) and (max-width: 1024px) {
+    .login-area {
+        width: 100%;
+        display: block;
+    }
+
+    .image-area {
+        display: none;
+    }
+
+
+}

@@ -1,8 +1,9 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useRef} from 'react';
 import useAuth from '../hooks/useAuth';
 import { useForm } from 'react-hook-form';
 import axios from '../api/axios';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Toast } from 'primereact/toast';
 
 import Kiwest from "../assets/images/kiwest.png";
 import Cloud1 from "../assets/images/cloud1.png";
@@ -11,6 +12,7 @@ import PhoneImage from "../assets/images/image1.png";
 
 export default function Login() {
     const { setAuth, persist, setPersist } = useAuth();
+    const toast = useRef(null);
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -66,10 +68,28 @@ export default function Login() {
         } catch(err) {
             if(!err?.response){
                 console.error('No server response');
+                toast.current.show({
+                    severity: "error",
+                    summary: "Error Server",
+                    detail: "No server response",
+                    life: 1500,
+                }); 
             } else if(err.response?.status == 401){
-                 console.error('Unauthorized');
+                console.error('Unauthorized');
+                toast.current.show({
+                    severity: "error",
+                    summary: "Unauthorized",
+                    detail: "Tidak diizinkan",
+                    life: 1500,
+                }); 
             } else {
                 console.error('login failed');
+                toast.current.show({
+                    severity: "error",
+                    summary: "Gagal",
+                    detail: "Data tidak valid",
+                    life: 1500,
+                }); 
             }
         }
     };
@@ -85,6 +105,7 @@ export default function Login() {
     }
 
     return(
+        <>
         <div className="d-flex login login-wrapper">
             <div className="login-area">
                 <div className="d-flex justify-content-left mt-md-5 mb-3" style={{height: '80px'}}>
@@ -140,5 +161,8 @@ export default function Login() {
                 </div>
             </div>
         </div>
+        
+        <Toast ref={toast} />
+        </>
     )
 }
