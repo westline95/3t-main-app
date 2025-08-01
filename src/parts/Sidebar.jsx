@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import Brand from './Brand';
 import "../assets/zwicon/zwicon.css";
 import "../assets/css/sidebar.css";
+import Wave from "../assets/images/wave.png";
 import { Collapse } from 'react-bootstrap';
 
 export default function Sidebar({show, children}){
@@ -15,7 +16,7 @@ export default function Sidebar({show, children}){
     return(
         <>
         <nav className={`sidebar offcanvas-start ${show ? "active show" : ""}`} data-bs-scroll="true" data-bs-backdrop="false">
-            <div className="d-flex justify-content-center align-items-center logo-wrapper">
+            <div className="d-flex justify-content-start align-items-center logo-wrapper">
                 <Brand />
             </div>
             <div className="pt-2 sidebar-in">
@@ -350,6 +351,9 @@ export default function Sidebar({show, children}){
                         </li>
                     </ul>
                 </div>
+            </div>
+            <div className='wave-img' style={{width:"100%", height:'150px', position:'absolute', bottom:0}}>
+                <img src={Wave} style={{width: '100%', height:'100%'}} />
             </div>
         </nav>
         </>

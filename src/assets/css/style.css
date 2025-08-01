@@ -4220,6 +4220,19 @@ tr.hover-row:hover > * {
   text-transform: capitalize;
 }
 
+.vertical-background {
+  display: none;
+  position: absolute;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 999;
+  background-color: color-mix(in oklab, var(--sa-color-pure-black) 30%, transparent);
+  backdrop-filter: blur(4px);
+  opacity: 1 !important;
+}
+
+
 /* media queries for responsiveness */
 /* for mobile */
 
@@ -4233,11 +4246,21 @@ tr.hover-row:hover > * {
       z-index: 999999;
       display: none;
       height: 100%;
+      box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+      animation: 0.15s forwards ease-out slideRight;
   }
 
   .sidebar.active {
       display: block;
       margin-left: 0;
+  }
+
+  .vertical-background.active {
+    display: block;
+  }
+
+  .brand-icon img {
+    width: 7rem;
   }
 
   .overlay {
@@ -4786,11 +4809,21 @@ tr.hover-row:hover > * {
       z-index: 999999;
       display: none;
       height: 100%;
+      box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+      animation: 0.15s forwards ease-out slideRight;
   }
 
   .sidebar.active {
       display: block;
       margin-left: 0;
+  }
+
+  .vertical-background.active {
+    display: block;
+  }
+
+  .brand-icon img {
+    width: 7rem;
   }
 
   .overlay {
@@ -5336,11 +5369,21 @@ tr.hover-row:hover > * {
       z-index: 999999;
       display: none;
       height: 100%;
+      box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+      animation: 0.15s forwards ease-out slideRight;
   }
 
   .sidebar.active {
       display: block;
       margin-left: 0;
+  }
+
+   .vertical-background.active {
+    display: block;
+  }
+
+  .brand-icon img {
+    width: 7.5rem;
   }
 
   .overlay {
@@ -5881,11 +5924,21 @@ tr.hover-row:hover > * {
       z-index: 999999;
       display: none;
       height: 100%;
+      box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+      animation: 0.15s forwards ease-out slideRight;
   }
 
   .sidebar.active {
       display: block;
       margin-left: 0;
+  }
+
+   .vertical-background.active {
+    display: block;
+  }
+
+  .brand-icon img {
+    width: 7.5rem;
   }
 
   .overlay {
@@ -6400,5 +6453,25 @@ tr.hover-row:hover > * {
   .input-caption-bottom,
   .label-tag-wrap .label-tag p {
       font-size: 11px;
+  }
+}
+
+
+
+@keyframes fadein {
+ 0% {
+  opacity: 0;
+ }
+ 100% {
+  opacity: 1;
+ }
+}
+
+@keyframes slideRight {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(0);
   }
 }

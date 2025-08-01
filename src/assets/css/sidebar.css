@@ -5,12 +5,14 @@
     height: 100%;
     padding-bottom: 40px;
     transition: all 0.5s ease;
+    /* box-shadow: rgba(136, 165, 191, 0.48) 6px 2px 16px 0px, rgba(255, 255, 255, 0.8) -6px -2px 16px 0px; */
 }
 
 .sidebar-in {
     z-index: 0;
     height: 100%;
     overflow-y: scroll;
+    padding-bottom: 210px;
 }
 
 .sidebar.active {
@@ -51,6 +53,10 @@
     top: 0;
     z-index: 99999;
     padding: 0 25px;
+}
+
+.brand-icon img {
+    width: 8rem;
 }
 
 ul {
