@@ -26,6 +26,7 @@
   transition: all 0.5s ease;
   padding: 0 2rem 3rem 2rem;
   background-color: #F4FBFE;
+  overflow-y: scroll;
 }
 
 .main-content.active {
@@ -35,8 +36,8 @@
 
 .main-content.freeze {
   height: 100vh;
-  overflow-y: hidden;
-  overflow-x: hidden;
+  overflow-y: hidden !important;
+  overflow-x: hidden !important;
 }
 
 .main-content .fries-menu {
