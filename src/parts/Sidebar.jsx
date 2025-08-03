@@ -6,7 +6,7 @@ import "../assets/css/sidebar.css";
 import Wave from "../assets/images/wave.png";
 import { Collapse } from 'react-bootstrap';
 
-export default function Sidebar({show, children}){
+export default function Sidebar({show}){
     const location = useLocation();
     const getNavLinkClass = (path) => {
         return location.pathname === path ? " active" : "";

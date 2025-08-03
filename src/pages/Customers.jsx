@@ -35,11 +35,15 @@ import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import CustomToggle from "../elements/Custom/CustomToggle";
 import NumberFormat from "../elements/Masking/NumberFormat";
+import { DataView } from "primereact/dataview";
+import { classNames } from "primereact/utils";
+import { Menu } from "primereact/menu";
 
 export default function Customers({handleSidebar, showSidebar}) {
   const getUserRef = useRef(false);
   const toast = useRef(null);
   const toastUpload = useRef(null);
+  const mobileMoreOpt = useRef(null);
   const [progress, setProgress] = useState(0);
   const [isClose, setClose] = useState(false);
   const [openTab, setOpenTab] = useState("custTab");
@@ -640,6 +644,171 @@ export default function Customers({handleSidebar, showSidebar}) {
     );
   };
 
+  const dataviewMoreItems = [
+    {
+      // label: 'Options',
+      items: [
+        {
+          label: 'Ubah data',
+          icon: 'bx bxs-edit',
+          command: (e) => {
+            console.log(e)
+          }
+        //   aria-label="editCustModal"
+        //   onClick={(e) => {
+        //     handleModal(e, {
+        //       endpoint: "customer",
+        //       id: rowData.customer_id,
+        //       action: "update",
+        //       ...rowData,
+        //     });
+        //   }}
+        // >
+          // <i className="bx bxs-edit"></i>
+        },
+        {
+          label: 'Hapus data',
+          icon: 'bx bx-trash'
+        }
+      ]
+    }
+  ];
+
+  // list setting
+  const itemTemplate = (rowData, index) => {
+    return (
+      <div className="col-12" key={rowData.id} style={{position:'relative'}}>
+        <div className={classNames('flex flex-column xl:align-items-start gap-3')} 
+          style={{
+            backgroundColor: '#F8F9FD',
+            padding: '1.5rem',
+            boxShadow: '1px 1px 7px #9a9acc1a',
+            borderRadius: '9px',
+            position:'relative'
+          }}
+          aria-label="custDetailModal"
+          onClick={(e) => handleModal(e, rowData)}
+        >
+          
+          <div className="flex align-items-center gap-3" 
+              style={{
+                textTransform: 'capitalize', 
+                paddingBottom: '1rem',
+                borderBottom: '1px solid rgba(146, 146, 146, .2509803922)'
+              }}
+          >
+            <span className="user-img" style={{marginRight: 0}}>
+              <img
+                src={
+                  rowData.img && rowData.img != ""
+                    ? rowData.img
+                    : "../src/assets/images/Avatar 2.jpg"
+                }
+                alt=""
+              />
+            </span>
+            <div style={{width: '80%'}}>
+              <p style={{marginBottom: 0, fontSize: 15, fontWeight: 600}}>{rowData.name}</p>
+              <p style={{marginBottom: 0, fontSize: 13, color: '#7d8086'}}>{rowData.customer_id}</p>
+            </div>
+          </div>
+          <div className="flex flex-column gap-1" 
+              style={{
+                textTransform: 'capitalize', 
+                // paddingBottom: '1rem',
+                // borderBottom: '1px solid rgba(146, 146, 146, .2509803922)'
+              }}
+          >
+            <div className="flex flex-row justify-content-between">
+              <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>limit:</p>
+              <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>
+                <NumberFormat intlConfig={{
+                    value: rowData.debt_limit, 
+                    locale: "id-ID",
+                    style: "currency", 
+                    currency: "IDR",
+                  }} 
+                />
+              </p>
+            </div>
+            <div className="flex flex-row justify-content-between">
+              <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Total hutang:</p>
+              <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>
+                <NumberFormat intlConfig={{
+                    value: rowData.total_debt, 
+                    locale: "id-ID",
+                    style: "currency", 
+                    currency: "IDR",
+                  }} 
+                />
+              </p>
+            </div>
+            <div className="flex flex-row justify-content-between">
+              <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Total order:</p>
+              <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>
+                <NumberFormat intlConfig={{
+                    value: rowData.total_sales, 
+                    locale: "id-ID",
+                    style: "currency", 
+                    currency: "IDR",
+                  }} 
+                />
+              </p>
+            </div>
+          </div>
+          {/* <Button label="Show Right" icon="pi pi-align-right" className="mr-2" onClick={(event) => menuRight.current.toggle(event)} aria-controls="popup_menu_right" aria-haspopup /> */}
+        </div>
+          {/* more opt */}
+          {/* <Menu model={dataviewMoreItems} popup ref={mobileMoreOpt} id="popup_menu_right" popupAlignment="right" style={{textDecoration: 'none'}} />
+          <div onClick={(event) => {mobileMoreOpt.current.toggle(event);console.log(event)}} 
+               aria-controls="popup_menu_right" 
+               aria-haspopup
+               style={{position: 'absolute', top: 10, right: 16, padding: '1rem 1rem .5rem 1rem'}}
+          >
+            <i class='bx bx-dots-horizontal-rounded' style={{fontSize: 20}}></i>
+          </div> */}
+          <Dropdown drop={index == custData.length - 1 ? "up" : "down"}  style={{position: 'absolute', top: 10, right: 9, padding: '1rem 1rem .5rem 1rem'}}>
+            <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components" ></Dropdown.Toggle>
+            <Dropdown.Menu align={"end"}>
+              <Dropdown.Item eventKey="1" as="button" aria-label="editCustModal"
+                  onClick={(e) => {
+                    handleModal(e, {
+                      endpoint: "customer",
+                      id: rowData.customer_id,
+                      action: "update",
+                      ...rowData,
+                    });
+                  }} 
+                >
+                  <i className='bx bxs-edit'></i> Ubah data
+              </Dropdown.Item>
+              <Dropdown.Item eventKey="1" as="button" aria-label="confirmModal"
+                onClick={(e) =>
+                  handleModal(e, {
+                    endpoint: "customer",
+                    id: [rowData.customer_id],
+                    action: "delete",
+                  })
+                } 
+              >
+                <i className='bx bx-trash'></i> Hapus data
+              </Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown>
+      </div>
+    );
+  };
+
+  const listTemplate = (items) => {
+    if (!items || items.length === 0) return null;
+
+    let list = items.map((product, index) => {
+        return itemTemplate(product, index);
+    });
+
+    return <div className="grid gap-1">{list}</div>;
+  };
+
 
   useEffect(() => {
     initFilters();
@@ -720,7 +889,7 @@ export default function Customers({handleSidebar, showSidebar}) {
                         }}
                       />
                     </div> */}
-                    <div className="mt-4">
+                    {/* <div className="mt-4"> */}
                       <DataTable
                         className="p-datatable"
                         value={dupeCustData}
@@ -733,7 +902,8 @@ export default function Customers({handleSidebar, showSidebar}) {
                           setSelectedCusts(e.value);
                         }}
                         dataKey="customer_id"
-                        tableStyle={{ minWidth: "50rem", fontSize: '14px' }}
+                        style={{marginTop: '1.5rem' }}
+                        tableStyle={{ minWidth: "50rem", fontSize: '14px'}}
                         filters={custFilters}
                         globalFilterFields={[
                           "name",
@@ -747,7 +917,7 @@ export default function Customers({handleSidebar, showSidebar}) {
                         header={custHeader}
                         paginator
                         totalRecords={totalRecords}
-                        rows={50}
+                        rows={25}
                       >
                         <Column
                           selectionMode="multiple"
@@ -804,7 +974,14 @@ export default function Customers({handleSidebar, showSidebar}) {
                           style={{ textTransform: "uppercase" }}
                         ></Column>
                       </DataTable>
-                    </div>
+                    {/* </div> */}
+
+                    {/* <div className="card" style={{backgroundColor: '#F4FBFE'}}> */}
+                    {/* list view */}
+                    {/* <div className="card"> */}
+                      <DataView value={dupeCustData} listTemplate={listTemplate} style={{marginTop: '1.5rem'}} />
+                    {/* </div> */}
+                  {/* </div> */}
                     {/* <div className="table-responsive mt-4">
                       <table
                         className="table"
@@ -1041,6 +1218,7 @@ export default function Customers({handleSidebar, showSidebar}) {
                                             </div>
                                         </div> */}
                   </div>
+                  
                 </div>
                 <div
                   className="tabs-content"

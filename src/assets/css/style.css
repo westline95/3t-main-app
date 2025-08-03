@@ -35,9 +35,8 @@
 }
 
 .main-content.freeze {
-  height: 100vh;
-  overflow-y: hidden !important;
-  overflow-x: hidden !important;
+  height: 100%;
+  overflow: hidden !important;
 }
 
 .main-content .fries-menu {
@@ -2308,6 +2307,8 @@ table[data-table-sort="true"] thead th {
 
 .dropzone-file .preview-area .file-info {
   display: block;
+  text-align: center;
+  margin-bottom: 0;
 }
 
 .dropzone-file.active .preview-area .file-info {
@@ -3704,6 +3705,10 @@ table td .view-note {
   width: 350px;
 }
 
+.danger-modal .modal-dialog .modal-content {
+  align-self: center;
+}
+
 .info-modal .modal-content{
   min-width: 350px;
   max-width: 400px;
@@ -4233,6 +4238,14 @@ tr.hover-row:hover > * {
   opacity: 1 !important;
 }
 
+.p-datatable {
+  display: block;
+}
+
+.p-dataview {
+  display: none;
+}
+
 
 /* media queries for responsiveness */
 /* for mobile */
@@ -4254,6 +4267,11 @@ tr.hover-row:hover > * {
   .sidebar.active {
       display: block;
       margin-left: 0;
+  }
+
+  body.freeze {
+    height: 100%;
+    overflow: hidden;
   }
 
   .vertical-background.active {
@@ -4798,6 +4816,24 @@ tr.hover-row:hover > * {
   .dropzone-btn i {
       font-size: 18px;
   }
+
+  .p-datatable {
+    display: none;
+  }
+
+  .p-dataview {
+    display: block;
+  }
+
+  .cust-group-stat .card .row>*:not(:last-of-type):after {
+    border-right: unset;
+  }
+
+  .dropzone-file {
+    width: 150px;
+    height: 150px;
+  }
+
 }
 
 @media (min-width: 481px) and (max-width: 767px) {
@@ -4817,6 +4853,11 @@ tr.hover-row:hover > * {
   .sidebar.active {
       display: block;
       margin-left: 0;
+  }
+
+   body.freeze {
+    height: 100%;
+    overflow: hidden;
   }
 
   .vertical-background.active {
@@ -5357,6 +5398,12 @@ tr.hover-row:hover > * {
       font-size: 18px;
   }
 
+  .dropzone-file {
+    width: 170px;
+    height: 170px;
+  }
+
+
 }
 
 /* for tablets or ipad */
@@ -5377,6 +5424,11 @@ tr.hover-row:hover > * {
   .sidebar.active {
       display: block;
       margin-left: 0;
+  }
+
+   body.freeze {
+    height: 100%;
+    overflow: hidden;
   }
 
    .vertical-background.active {
@@ -5932,6 +5984,11 @@ tr.hover-row:hover > * {
   .sidebar.active {
       display: block;
       margin-left: 0;
+  }
+
+   body.freeze {
+    height: 100%;
+    overflow: hidden;
   }
 
    .vertical-background.active {

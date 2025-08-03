@@ -20,7 +20,7 @@ export default function CustDetailModal({show, onHide, data}) {
                     (<Modal.Body>
                         <div className="cards-header">
                             <div className="cards-detail">
-                                <h3 className="cards-title">customer <br/> information</h3>
+                                <h3 className="cards-title" style={{textTransform: 'capitalize'}}>{data.name}</h3>
                                 <div className="cards-info-group">
                                     <p className="label-text">customer ID</p>
                                     <p className="cards-text">{data.customer_id}</p>

@@ -9,10 +9,11 @@ export default function BaseLayout({children}){
 
     useEffect(() => {
         if(sidebarOverlayResp.current.classList.contains("active")){
-            mainOverlayResp.current.classList.add("freeze");
-            console.log(mainOverlayResp)
+            document.querySelector('body').classList.add("freeze");
+            
             sidebarOverlayResp.current.addEventListener("click", () => {
                 setOpen(false);
+                document.querySelector('body').classList.remove("freeze");
             })
         }
     },[sidebarOverlayResp.current])
@@ -26,7 +27,7 @@ export default function BaseLayout({children}){
                     {/* //components from all routes */}
                     {children} 
                 </main>
-            <div ref={sidebarOverlayResp} className={`vertical-background ${isOpen ? "active " : ''}`}></div>
+            <div ref={sidebarOverlayResp} className={`vertical-background ${isOpen ? "active " : ''}`} style={{overflowY:'hidden'}}></div>
             </div>
         </div>
     )

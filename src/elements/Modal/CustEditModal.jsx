@@ -261,7 +261,7 @@ export default function CustEditModal({ show, onHide, data }) {
                                             // watch={watch('custTypeId')}
                                         />
                                     </div> */}
-                    <div className="col-lg-3 col-sm-3 col-6">
+                    <div className="col-lg-3 col-sm-3 col-12">
                       <label className="mb-1">gender</label>
                       <div className="d-flex form-check-control">
                         <InputWLabel
@@ -286,7 +286,7 @@ export default function CustEditModal({ show, onHide, data }) {
                         />
                       </div>
                     </div>
-                    <div className="col-lg-3 col-sm-3 col-6">
+                    <div className="col-lg-3 col-sm-3 col-12">
                       <InputWLabel
                         label="date of birth"
                         type="date"

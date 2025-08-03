@@ -1015,8 +1015,7 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
 
     return(
         <>
-        <Modal show={show} onHide={onHide} scrollable={true} centered={true} className={`${data.action == 'info' ? 'info':'danger'}-modal`}
-        style={{justifyContent: "center !important"}}>
+        <Modal show={show} onHide={onHide} scrollable={true} centered className={`${data.action == 'info' ? 'info':'danger'}-modal`} >
             <Modal.Header style={{paddingBottom: 0, paddingTop: '1.5rem'}}>
                 <div className="modal-bg-circle">
                     <img 
