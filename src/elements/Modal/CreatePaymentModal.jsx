@@ -454,8 +454,8 @@ console.log(totalCart)
                                                         mask="currency"
                                                         defaultValue={value}
                                                         require={true}
-                                                        register={register}
-                                                        errors={errors}
+                                                        // register={register}
+                                                        // errors={errors}
                                                         placeholder={"0"}
                                                         returnValue={(value) => {
                                                             setChange(value.origin >= totalCart ? (value.origin - totalCart) : 0);
@@ -498,7 +498,7 @@ console.log(totalCart)
                                                         mask="currency"
                                                         value={value}
                                                         defaultValue={getValues('paid_amount')}
-                                                        // require={true}
+                                                        require={true}
                                                         // register={register}
                                                         // errors={errors}
                                                         placeholder={"0"}

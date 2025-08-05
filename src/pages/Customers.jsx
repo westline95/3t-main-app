@@ -17,7 +17,7 @@ import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { InputSwitch } from "primereact/inputswitch";
 import { ProgressSpinner } from "primereact/progressspinner";
-import { useForm, useController } from "react-hook-form";
+import { useForm, useController, Controller } from "react-hook-form";
 import CustDetailModal from "../elements/Modal/CustDetailModal";
 import CustEditModal from "../elements/Modal/CustEditModal";
 import ConfirmModal from "../elements/Modal/ConfirmModal";
@@ -93,6 +93,9 @@ export default function Customers({handleSidebar, showSidebar}) {
 
   const femaleAvatar = `https://res.cloudinary.com/du3qbxrmb/image/upload/v1749183325/Avatar_1_hhww7p.jpg`;
   const maleAvatar = `https://res.cloudinary.com/du3qbxrmb/image/upload/v1749183333/Avatar_2_zebyeg.jpg`;
+  const noImg = `https://res.cloudinary.com/du3qbxrmb/image/upload/v1751378806/no-img_u5jpuh.jpg`;
+
+  
 
   const accordionClick = (eventKey) => {
     useAccordionButton(0);
@@ -106,17 +109,20 @@ export default function Customers({handleSidebar, showSidebar}) {
     reset,
     setValue,
     getValues,
+    clearErrors,
     formState: { errors },
   } = useForm({
     defaultValues: {
       name: "",
       phonenumber: "",
       email: "",
+      debt_limit_formated: "0",
       debtLimit: "",
       gender: "",
       address: "",
       img: "",
     },
+    mode:'onChange'
   });
 
   const handleAvatar = (e) => {
@@ -127,10 +133,7 @@ export default function Customers({handleSidebar, showSidebar}) {
     } else if(e.target.value == 'male' && e.target.checked){
       setDefaultAvatar(maleAvatar);
       setValue('img', maleAvatar);
-    } else {
-      setDefaultAvatar(null); 
-      setValue('img', '');
-    }
+    } 
   };
 
   const handleClick = (e) => {
@@ -266,7 +269,7 @@ export default function Customers({handleSidebar, showSidebar}) {
 
   const onSubmit = async (formData) => {
     setProgress(0);
-    if (formData.img && formData.img.length > 0) {
+    if (formData.imgDrop && formData.imgDrop.length > 0) {
       const imgFile = formData.img[0];
       const base64 = await convertBase64(imgFile);
 
@@ -311,7 +314,8 @@ export default function Customers({handleSidebar, showSidebar}) {
           });
         });
     } else {
-      fetchInsertCust(formData);
+      let newFormData = {...formData, img: noImg};
+      fetchInsertCust(newFormData);
     }
   };
 
@@ -915,6 +919,12 @@ export default function Customers({handleSidebar, showSidebar}) {
     );
   };
 
+  useEffect(() => {
+    if(getValues('debt_limit_formated') !== '0') {
+      clearErrors('debt_limit_formated')
+    }
+  },[watch('debt_limit_formated')])
+
 
   useEffect(() => {
     initFilters();
@@ -1352,7 +1362,7 @@ export default function Customers({handleSidebar, showSidebar}) {
                               <div className="add-prod-img-wrap">
                                 <label className="mb-1">customer image</label>
                                 <DropzoneFile
-                                  name={"img"}
+                                  name={"imgDrop"}
                                   register={register}
                                   require={false}
                                   errors={errors}
@@ -1360,7 +1370,7 @@ export default function Customers({handleSidebar, showSidebar}) {
                                 />
                               </div>
                               <div className="add-prod-detail-wrap">
-                                <div className="row sm:gap-2 md:gap-0 md:row-gap-3 lg:gap-4 xl:gap-4">
+                                <div className="row sm:gap-3 md:gap-0 md:row-gap-3 lg:gap-4 xl:gap-4">
                                   <div className="col-lg-4 col-sm-12 col-md-6 col-12">
                                     <InputWLabel
                                       label="customer name"
@@ -1429,22 +1439,40 @@ export default function Customers({handleSidebar, showSidebar}) {
                                     />
                                   </div>
                                   <div className="col-lg-4 col-sm-12 col-md-6 col-12">
-                                    <InputGroup
-                                      label="credit/debt limit"
-                                      groupLabel="Rp"
-                                      type="text"
-                                      position="left"
+                                    <Controller
+                                      control={control}
                                       name="debt_limit_formated"
-                                      mask={"currency"}
-                                      returnValue={(value) =>
-                                        setValue("debt_limit", value.origin)
-                                      }
-                                      require={true}
-                                      register={register}
-                                      errors={errors}
+                                      rules={{validate:{
+                                          condition1: (value) => value !== '0' || `Debt limit can't be 0`,
+                                      }, required: true}}
+                                      render={({
+                                          field: {ref, name, onChange, value}, fieldState
+                                      }) => (
+                                          <div>
+                                              <InputGroup
+                                                  inputRef={ref}
+                                                  label="credit/debt limit"
+                                                  groupLabel="Rp"
+                                                  type="text"
+                                                  onChange={onChange}
+                                                  position="left"
+                                                  name={name}
+                                                  inputMode="numeric" 
+                                                  mask="currency"
+                                                  defaultValue={value}
+                                                  require={true}
+                                                  placeholder={"0"}
+                                                  returnValue={(value) => {
+                                                      setValue("debt_limit", value.origin);
+                                                      setValue("debt_limit_formated", value.formatted);
+                                                  }}                                                  
+                                              />
+                                              {fieldState.error && <span className="field-msg-invalid">{fieldState.error.message}</span>}
+                                          </div>
+                                      )}
                                     />
                                   </div>
-                                  <div className="col-lg-4 col-sm-12 col-md-6 col-12 sm:mt-2 md:mt-0 lg:mt-0 xl:mt-0">
+                                  <div className="col-lg-4 col-sm-12 col-md-6 col-12 sm:mt-3 md:mt-0 lg:mt-0 xl:mt-0">
                                     <label className=" mb-1">Gender</label>
                                     <div className="d-flex form-check-control">
                                       <div className="form-check">

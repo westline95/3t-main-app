@@ -139,7 +139,7 @@ export default function CustDetailModal({show, onHide, data}) {
                                 </div>
                                 <div className="cards-info-group d-flex justify-content-between">
                                     <p className="label-text">date of birth</p>
-                                    <p className="cards-text">{FriendlyDate(data.dob)}</p>
+                                    <p className="cards-text">{data.dob ? FriendlyDate(data.dob) : "-"}</p>
                                 </div>
                                 <div className="cards-info-group d-flex justify-content-between">
                                     <p className="label-text">gender</p>

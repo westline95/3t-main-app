@@ -1,13 +1,13 @@
-import React, {useEffect, useRef, useState } from 'react';
+import React, {forwardRef, useEffect, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import propTypes from "prop-types";
 import { Form } from "react-bootstrap";
 import { InputNumber } from 'primereact/inputnumber';
 
-export default function InputGroup(props) {
+const InputGroup = forwardRef((props, ref) => {
     const { position, label, groupLabel, type, placeholder, inputMode, name, 
         value, onChange, mask, require, register, defaultValue, validateValue, validateMsg,
-        errors, returnValue, validateData, disabled, min, max } = props;
+        errors, returnValue, validateData, disabled, min, max, onBlur } = props;
    
     // const [ defaultValues, setDefaultValues] = useState(defaultValue ? defaultValue.toString() : '0');
     const [ masked, setMask ] = useState("");
@@ -158,11 +158,15 @@ export default function InputGroup(props) {
             return true;
         }
 
-        if(e.keyCode == 65){
-            return true;
+        if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+          e.preventDefault(); // Prevent default browser behavior (e.g., selecting all text on the page)
+          if (e.target) {
+            e.target.select(); // Select all text within the input
+          }
         }
 
         e.preventDefault(); // Prevent all other characters
+        return false;
     }
     
     const onKeyDownPhone = (e) => {
@@ -207,8 +211,11 @@ export default function InputGroup(props) {
             return true;
         }
 
-        if(e.keyCode == 65){
-            return true;
+         if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+          e.preventDefault(); // Prevent default browser behavior (e.g., selecting all text on the page)
+          if (e.target) {
+            e.target.select(); // Select all text within the input
+          }
         }
 
         e.preventDefault(); // Prevent all other characters
@@ -238,7 +245,6 @@ export default function InputGroup(props) {
             <div className={`input-group-${position}`}>
                 <span className="input-group-w-text fw-semibold" style={{textAlign:'center'}}>{groupLabel}</span>
                 <Form.Control 
-                    // ref={(e) => {inputGroup.ref(e)}}
                     type={type} 
                     name={name}
                     className={`input-w-text-${position}`}
@@ -250,12 +256,13 @@ export default function InputGroup(props) {
                     // defaultValue={defaultValue}
                     disabled={disabled}
                     style={{borderTopLeftRadius: "0 !important", borderTopRightRadius: "0 !important"}} 
-                    // {...register != null ? {...register(name, { 
-                    //     required: require ? "This field is required" :'', 
-                    //     onChange: handleMask,
-                    //     // value: checkValue   
-                    //     ref: inputEl 
-                    // })} : ""}
+                    {...register ? 
+                        {...register(name, { 
+                            required: require ? "This field is required" :'',  
+                            onBlur: onBlur, 
+                            onChange: onChangeInput,
+                        })} 
+                    : ""}
                 />
                 {/* <InputNumber 
                     inputId="currency-us" 
@@ -268,13 +275,14 @@ export default function InputGroup(props) {
                     locale="en-US" 
                 /> */}
             </div>
-            {errors && errors[name]
-             ?
-                <span className="field-msg-invalid">{errors[name].message}</span>
-             : ""}
+           {register && errors 
+                ? errors[name] && <span className="field-msg-invalid">{errors[name].message}</span>
+                : ""}
         </div>
     )
-}
+})
+
+export default InputGroup;
 
 InputGroup.propTypes = {
     position: propTypes.oneOf(["left", "right"]).isRequired,
