@@ -14,8 +14,7 @@ export default function InputGroup(props) {
     let locale = "id-ID";
     const formatedNumber = new Intl.NumberFormat(locale);
     const inputEl = useRef();
-    const [ inputValue, setVal] = useState('0');
-    const [value1, setValue1] = useState(0);
+    const [ inputValue, setVal] = useState(mask == 'currency' ? '0' : '');
    
 
     const handleMask = (e) => {
@@ -64,36 +63,38 @@ export default function InputGroup(props) {
                 break;
         }
     };
-    console.log(Number(defaultValue))
+
     const onChangeInput = (e) => {
         let val = e.target.value;
         console.log(val)
         const minimum = min ? min : 0;
         const maximum = max ? max : 0;
-        // console.log(inputValue)
-        // // const patternNumeric = /^\d*\.?\d*$/;
-        // // const patternNumeric = new RegExp ("[0-9]*$");
-        // // const isNumeric = patternNumeric.test(val);
-        // let newVal;
-        if(val.includes('.')){
-            val = val.replace(/[.,]/g,"");
-        }
 
-        if(val == ""){
-            setVal(minimum.toString());
-        } else {
-            let newVal = formatedNumber.format(+val);
-            setVal(newVal.toString());
+        if(mask == "currency"){
+            if(val.includes('.')){
+                val = val.replace(/[.,]/g,"");
+            }
+    
+            if(val == ""){
+                setVal(minimum.toString());
+            } else {
+                let newVal = formatedNumber.format(+val);
+                setVal(newVal.toString());
+            }
+    
+            returnValue && returnValue({origin: Number(val.replace(/[.,]/g,"")), formatted: formatedNumber.format(val)});
+            
+        } else if(mask == "phone"){
+             setVal(val.toString());
+            returnValue && returnValue({origin: val, formatted: val});
+            
         }
-
-        returnValue && returnValue({origin: Number(val.replace(/[.,]/g,"")), formatted: formatedNumber.format(val)});
     }
 
-     const onKeyDown= (e) => {
+    const onKeyDownCurrency = (e) => {
         const key = e.key;
         let value = e.target.value;
         let join;
-        console.log(value + key)
 
         if(value.includes('.')){
             value = e.target.value.replace(/[.,]/g,"");
@@ -157,8 +158,62 @@ export default function InputGroup(props) {
             return true;
         }
 
+        if(e.keyCode == 65){
+            return true;
+        }
+
         e.preventDefault(); // Prevent all other characters
     }
+    
+    const onKeyDownPhone = (e) => {
+        const key = e.key;
+        let value = e.target.value;
+        let join;
+        // console.log(value + key)
+        
+        // if(value.includes('.')){
+            //     value = e.target.value.replace(/[.,]/g,"");
+            // } 
+            
+        const maximum = 12;
+        
+        // Allow digits (0-9)
+        if (key >= '0' && key <= '9') {
+            if((value+key).length <= maximum){
+                return true;
+            } else {
+                e.preventDefault();
+            }
+        }
+            
+
+        // // Allow a single dot
+        // if (key === '.') {
+        //     if (value.includes('.')) {
+        //         e.preventDefault(); // Prevent adding another dot if one already exists
+        //     } 
+        //     // setInputValue(Number(value));
+        //     return true;
+        // }
+        // Allow Backspace, Delete, Tab, Arrow keys, etc. for editing
+        if (['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(key)) {
+            let newValue = value;
+            onChangeInput({ 
+                target: {
+                    name: name,
+                    value: newValue,
+                },
+            });
+            return true;
+        }
+
+        if(e.keyCode == 65){
+            return true;
+        }
+
+        e.preventDefault(); // Prevent all other characters
+    }
+
 
     // const inputGroup = register(name,  { required: require ? "This field is required" :'', onChange: handleMask, ref: inputEl });
 
@@ -189,7 +244,7 @@ export default function InputGroup(props) {
                     className={`input-w-text-${position}`}
                     placeholder={placeholder} 
                     // inputMode={inputMode}  
-                    onKeyDown={onKeyDown}
+                    onKeyDown={mask == "currency" ? onKeyDownCurrency : mask == "phone" ? onKeyDownPhone : null}
                     onChange={onChangeInput}
                     value={inputValue}
                     // defaultValue={defaultValue}

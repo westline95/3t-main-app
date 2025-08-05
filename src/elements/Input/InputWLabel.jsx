@@ -38,6 +38,9 @@ const InputWLabel =  forwardRef((props, ref) => {
         inputWidth,
         display
     } = props;
+
+    const [ switched, setSwitch ] = useState(false);
+    const [ dateValue, setDateValue ] = useState(type == 'date' ? defaultValue ? defaultValue : null : null);
      
     // const elRef = useRef(null);
     // if(inputRef){
@@ -45,7 +48,6 @@ const InputWLabel =  forwardRef((props, ref) => {
     // }
 
 
-    const [ switched, setSwitch ] = useState(false);
     // console.log(errors[name]?.ref, errors[name]?.message)
     // const field = {...register ? register(`${name}`, { required: require }): ""}
 
@@ -118,9 +120,11 @@ const InputWLabel =  forwardRef((props, ref) => {
                         baseZIndex={999999} 
                         name={name}
                         dateFormat="dd/mm/yy"
-                        value={new Date(defaultValue)}
+                        value={dateValue}
+                        // value={new Date(defaultValue)}
                         disabled={disabled}
-                        {...register ? {...register(name, { required: require, onBlur: onBlur, ref: inputRef, onChange:onChange})} : ""}
+                        // onChange={(e) => setDateValue(e.value)}
+                        {...register ? {...register(name, { required: require, onBlur: onBlur, ref: inputRef, onChange:(e) => setDateValue(e.value)})} : ""}
                     />
                     
                 </>

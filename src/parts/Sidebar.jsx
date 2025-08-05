@@ -5,8 +5,9 @@ import "../assets/zwicon/zwicon.css";
 import "../assets/css/sidebar.css";
 import Wave from "../assets/images/wave.png";
 import { Collapse } from 'react-bootstrap';
+import propTypes from 'prop-types';
 
-export default function Sidebar({show}){
+export default function Sidebar({show, clickedMenu}){
     const location = useLocation();
     const getNavLinkClass = (path) => {
         return location.pathname === path ? " active" : "";
@@ -41,14 +42,12 @@ export default function Sidebar({show}){
                             <a className="menu-title" onClick={() => setCollapseToggle('peopleMenus')}>
                                 <span className="menu-label">people</span>
                             </a>
-                            
                             <div className="collapse show" data-bs-parent="peopleMenus" id="peopleMenu">
                                 <ul className="sidebar-menu">
                                     <li className="menus dropdown-control">
                                         <Link to={"/people/customers"} className={`item-menu ${getNavLinkClass("/people/customers")}`}>
                                             <i className='bx bx-user'></i>
                                             <span className="menu-label">customers</span>
-                                        
                                         </Link>
                                     </li>
                                 </ul>
@@ -358,4 +357,9 @@ export default function Sidebar({show}){
         </nav>
         </>
     )
+}
+
+Sidebar.propTypes = {
+    show: propTypes.bool,
+    clickedMenu: propTypes.func
 }

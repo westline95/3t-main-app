@@ -44,6 +44,7 @@ export default function Customers({handleSidebar, showSidebar}) {
   const toast = useRef(null);
   const toastUpload = useRef(null);
   const mobileMoreOpt = useRef(null);
+  const mobileSearchInput = useRef(null);
   const [progress, setProgress] = useState(0);
   const [isClose, setClose] = useState(false);
   const [openTab, setOpenTab] = useState("custTab");
@@ -61,6 +62,8 @@ export default function Customers({handleSidebar, showSidebar}) {
   const [dupeCustData, setDupeCustData] = useState(null);
   const [totalRecords, setTotalRecords] = useState(0);
   const [custTypeData, setCustType] = useState(null);
+  const [mobileSearchMode, setMobileSearchMode] = useState(false);
+  const [mobileFilterValue, setMobileFilterValue] = useState("");
   // const [isLoading, setLoading] = useState(true);
   const [custObj, setCustObj] = useState({});
   const [custID, setCustID] = useState(null);
@@ -715,8 +718,6 @@ export default function Customers({handleSidebar, showSidebar}) {
           <div className="flex flex-column gap-1" 
               style={{
                 textTransform: 'capitalize', 
-                // paddingBottom: '1rem',
-                // borderBottom: '1px solid rgba(146, 146, 146, .2509803922)'
               }}
           >
             <div className="flex flex-row justify-content-between">
@@ -756,17 +757,7 @@ export default function Customers({handleSidebar, showSidebar}) {
               </p>
             </div>
           </div>
-          {/* <Button label="Show Right" icon="pi pi-align-right" className="mr-2" onClick={(event) => menuRight.current.toggle(event)} aria-controls="popup_menu_right" aria-haspopup /> */}
         </div>
-          {/* more opt */}
-          {/* <Menu model={dataviewMoreItems} popup ref={mobileMoreOpt} id="popup_menu_right" popupAlignment="right" style={{textDecoration: 'none'}} />
-          <div onClick={(event) => {mobileMoreOpt.current.toggle(event);console.log(event)}} 
-               aria-controls="popup_menu_right" 
-               aria-haspopup
-               style={{position: 'absolute', top: 10, right: 16, padding: '1rem 1rem .5rem 1rem'}}
-          >
-            <i class='bx bx-dots-horizontal-rounded' style={{fontSize: 20}}></i>
-          </div> */}
           <Dropdown drop={index == custData.length - 1 ? "up" : "down"}  style={{position: 'absolute', top: 10, right: 9, padding: '1rem 1rem .5rem 1rem'}}>
             <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components" ></Dropdown.Toggle>
             <Dropdown.Menu align={"end"}>
@@ -799,6 +790,11 @@ export default function Customers({handleSidebar, showSidebar}) {
     );
   };
 
+  const mobileFilterFunc = (e) => {
+    setMobileFilterValue(e.target.value);
+    e.target.value == "" ? setMobileSearchMode(false):setMobileSearchMode(true)
+  }
+
   const listTemplate = (items) => {
     if (!items || items.length === 0) return null;
 
@@ -806,7 +802,117 @@ export default function Customers({handleSidebar, showSidebar}) {
         return itemTemplate(product, index);
     });
 
-    return <div className="grid gap-1">{list}</div>;
+    return (
+      <>
+      <div className="flex flex-column gap-2" style={{ width: "100%" }}>
+        <div
+          className="wrapping-table-btn flex gap-3 justify-content-end"
+          style={{ width: "100%", height: "inherit" }}
+        >
+          {/* <button
+            type="button"
+            className="btn btn-light light"
+            style={{ height: "100%" }}
+          >
+            <i className="bx bx-printer"></i>
+          </button> */}
+          <Dropdown drop={"down"}>
+            <Dropdown.Toggle variant="primary" style={{ height: "100%" }}>
+              <i className="bx bx-download"></i> export
+            </Dropdown.Toggle>
+            <Dropdown.Menu align={"end"}>
+              <Dropdown.Item
+                eventKey="1"
+                as="button"
+                aria-label="viewInvModal"
+                onClick={(e) =>
+                  handleModal(e, { id: inv.invoice_id, items: { ...inv } })
+                }
+              >
+                <i className="bx bx-show"></i> PDF (.pdf)
+              </Dropdown.Item>
+              <Dropdown.Item
+                eventKey="1"
+                as="button"
+                aria-label="editInvModal"
+                onClick={(e) => handleModal(e, inv.invoice_id)}
+              >
+                <i className="bx bxs-edit"></i> Microsoft Excel (.xlsx)
+              </Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown>
+          <button
+            type="button"
+            className=" btn btn-primary btn-w-icon"
+            style={{ height: "100%" }}
+          >
+            <i className="bx bxs-file-plus"></i> import
+          </button>
+        </div>
+        <div className="flex gap-3 align-items-center mb-4" style={{ width: "100%" }}>
+          <div className="input-group-right" style={{ width: "100%" }}>
+            {mobileSearchMode ?
+              (
+              <span className="input-group-icon input-icon-right" 
+                onClick={() => {
+                  setMobileFilterValue('');
+                  setMobileSearchMode(false);
+                  mobileSearchInput.current.focus();
+                }}
+              >
+                <i class='bx bx-x'></i>
+              </span>
+              ):(
+              <span className="input-group-icon input-icon-right">
+                <i className="zwicon-search"></i>
+              </span>
+              )
+            }
+            <input
+              ref={mobileSearchInput}
+              type="text"
+              className="form-control input-w-icon-right"
+              value={mobileFilterValue}
+              onChange={mobileFilterFunc}
+              placeholder="Keyword Search"
+              // onKeyDown={() => setMobileSearchMode(true)}
+            />
+          </div>
+          {/* <button
+            type="button"
+            className="btn btn-primary btn-w-icon"
+            style={{ fontWeight: 500 }}
+            onClick={clearFilter}
+          >
+            <i className="bx bx-filter-alt" style={{ fontSize: "24px" }}></i>
+            Clear filter
+          </button> */}
+          {/* <div
+            className="selected-row-stat"
+            style={{
+              height: "inherit",
+              display:
+                selectedCusts && selectedCusts.length > 0 ? "block" : "none",
+            }}
+          >
+            <p className="total-row-selected"></p>
+            <button
+              type="button"
+              className=" btn btn-danger btn-w-icon"
+              style={{ height: "100%" }}
+              onClick={selectedToDelete}
+            >
+              <i className="bx bx-trash" style={{ fontSize: "24px" }}></i>Delete
+              selected row
+            </button>
+          </div> */}
+        </div>
+
+        
+      </div>
+      <div className="grid gap-1">{list}</div>
+      </>
+    );
   };
 
 
@@ -979,7 +1085,7 @@ export default function Customers({handleSidebar, showSidebar}) {
                     {/* <div className="card" style={{backgroundColor: '#F4FBFE'}}> */}
                     {/* list view */}
                     {/* <div className="card"> */}
-                      <DataView value={dupeCustData} listTemplate={listTemplate} style={{marginTop: '1.5rem'}} />
+                      <DataView value={dupeCustData} listTemplate={listTemplate} style={{marginTop: '.5rem'}} />
                     {/* </div> */}
                   {/* </div> */}
                     {/* <div className="table-responsive mt-4">
@@ -1304,6 +1410,7 @@ export default function Customers({handleSidebar, showSidebar}) {
                                       groupLabel="+62"
                                       type="text"
                                       position="left"
+                                      mask={'phone'}
                                       name="phonenumber"
                                       register={register}
                                       require={true}
