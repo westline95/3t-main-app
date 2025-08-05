@@ -1360,8 +1360,8 @@ export default function Customers({handleSidebar, showSidebar}) {
                                 />
                               </div>
                               <div className="add-prod-detail-wrap">
-                                <div className="row gy-4">
-                                  <div className="col-lg-4 col-sm-6 col-md-6 col-12">
+                                <div className="row sm:gap-2 md:gap-0 md:row-gap-3 lg:gap-4 xl:gap-4">
+                                  <div className="col-lg-4 col-sm-12 col-md-6 col-12">
                                     <InputWLabel
                                       label="customer name"
                                       type="text"
@@ -1392,7 +1392,7 @@ export default function Customers({handleSidebar, showSidebar}) {
                                       // watch={watch('custTypeId')}
                                     />
                                   </div> */}
-                                  <div className="col-lg-4 col-sm-6 col-md-6 col-12">
+                                  <div className="col-lg-4 col-sm-12 col-md-6 col-12">
                                     <InputWLabel
                                       label="date of birth"
                                       type="date"
@@ -1404,7 +1404,7 @@ export default function Customers({handleSidebar, showSidebar}) {
                                       errors={errors}
                                     />
                                   </div>
-                                  <div className="col-lg-4 col-sm-6 col-md-6 col-12">
+                                  <div className="col-lg-4 col-sm-12 col-md-6 col-12">
                                     <InputGroup
                                       label="phonenumber"
                                       groupLabel="+62"
@@ -1417,7 +1417,7 @@ export default function Customers({handleSidebar, showSidebar}) {
                                       errors={errors}
                                     />
                                   </div>
-                                  <div className="col-lg-4 col-sm-6 col-md-6 col-12">
+                                  <div className="col-lg-4 col-sm-12 col-md-6 col-12">
                                     <InputWLabel
                                       label="email"
                                       type="email"
@@ -1428,7 +1428,7 @@ export default function Customers({handleSidebar, showSidebar}) {
                                       errors={errors}
                                     />
                                   </div>
-                                  <div className="col-lg-4 col-sm-6 col-md-6 col-12">
+                                  <div className="col-lg-4 col-sm-12 col-md-6 col-12">
                                     <InputGroup
                                       label="credit/debt limit"
                                       groupLabel="Rp"
@@ -1444,7 +1444,7 @@ export default function Customers({handleSidebar, showSidebar}) {
                                       errors={errors}
                                     />
                                   </div>
-                                  <div className="col-lg-4 col-sm-6 col-md-6 col-12 mt-4">
+                                  <div className="col-lg-4 col-sm-12 col-md-6 col-12 sm:mt-2 md:mt-0 lg:mt-0 xl:mt-0">
                                     <label className=" mb-1">Gender</label>
                                     <div className="d-flex form-check-control">
                                       <div className="form-check">
@@ -1505,7 +1505,7 @@ export default function Customers({handleSidebar, showSidebar}) {
                             <i className="bx bx-home-alt"></i>customer address
                           </Accordion.Header>
                           <Accordion.Body>
-                            <div className="row gy-2 mt-1">
+                            <div className="row gy-2 mt-0">
                               {/* <div className="col-lg-3 col-sm-6 col-md-6 col-12">
                                                                 <InputWSelect
                                                                     label="country" 
@@ -1556,7 +1556,7 @@ export default function Customers({handleSidebar, showSidebar}) {
                                                                     errors={errors}
                                                                 />
                                                             </div> */}
-                              <div className="col-lg-4 col-sm-6 col-12">
+                              <div className="col-lg-4 col-sm-12 col-md-12 col-12">
                                 <InputWLabel
                                   label="address"
                                   as="textarea"

@@ -4259,18 +4259,24 @@ tr.hover-row:hover > * {
   }
 
   .sidebar {
-      position: fixed;
-      z-index: 999999;
-      display: none;
-      height: 100%;
-      box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
-      animation: 0.15s forwards ease-out slideRight;
-    }
+    position: fixed;
+    z-index: 999999;
+    display: none;
+    height: 100%;
+    box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
     
-    .sidebar.active {
-      display: block;
-      margin-left: 0;
-      animation: 0.15s forwards ease-out slideRight;
+  }
+
+  .sidebar.slideLeft {
+    display: block;
+    margin-left: 0;
+    animation: .15s forwards ease-out slideLeft;
+  }
+    
+  .sidebar.active {
+    display: block;
+    margin-left: 0;
+    animation: .15s forwards ease-out slideRight;
   }
 
   body.freeze {
@@ -4614,7 +4620,7 @@ tr.hover-row:hover > * {
       flex-direction: column;
       width: 100%;
       align-items: center;
-      gap: 3.5rem;
+      gap: 2.5rem;
   }
 
   label {
@@ -5229,7 +5235,7 @@ tr.hover-row:hover > * {
       flex-direction: column;
       width: 100%;
       align-items: center;
-      gap: 3.5rem;
+      gap: 2.5rem;
   }
 
   label {
@@ -6021,7 +6027,7 @@ tr.hover-row:hover > * {
       display: none;
       height: 100%;
       box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
-      animation: 0.15s forwards ease-out slideRight;
+      animation: 0.15s forwards ease-out slideLeft;
   }
 
   .sidebar.active {

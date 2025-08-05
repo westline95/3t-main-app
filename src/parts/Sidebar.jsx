@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { forwardRef, useCallback, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Brand from './Brand';
 import "../assets/zwicon/zwicon.css";
@@ -7,16 +7,28 @@ import Wave from "../assets/images/wave.png";
 import { Collapse } from 'react-bootstrap';
 import propTypes from 'prop-types';
 
-export default function Sidebar({show, clickedMenu}){
+const Sidebar = forwardRef(({show, clickedMenu}, ref) => {
     const location = useLocation();
     const getNavLinkClass = (path) => {
-        return location.pathname === path ? " active" : "";
+        if(location.pathname === path){
+            return " active";
+        } else {
+            return "";
+        }
+        // return location.pathname === path ? " active" : "";
     };
     const [ collapseToggle, setCollapseToggle ] = useState(null);
 
+    // const handleSidebar = (e) => {
+    //     if(e.classList.contains("active")){
+    //         clickedMenu(true);
+    //         e.preventDefault();
+    //     }
+    // }
+
     return(
         <>
-        <nav className={`sidebar offcanvas-start ${show ? "active show" : ""}`} data-bs-scroll="true" data-bs-backdrop="false">
+        <nav ref={ref} className={`sidebar offcanvas-start ${show ? "active show" : ""}`} data-bs-scroll="true" data-bs-backdrop="false">
             <div className="d-flex justify-content-start align-items-center logo-wrapper">
                 <Brand />
             </div>
@@ -30,10 +42,11 @@ export default function Sidebar({show, clickedMenu}){
                             <div className="collapse show" data-bs-parent="mainMenus" id="mainMenu">
                                 <ul className="sidebar-menu">
                                     <li className="menus dropdown-control">
-                                        <a href="/" className={`item-menu ${getNavLinkClass("/")}`}>
+                                        <Link to="/" className={`item-menu ${getNavLinkClass("/")}`} onClick={() => clickedMenu(true)} 
+                                        >
                                             <i className='bx bx-home-alt'></i>
                                             <span className="menu-label">dashboard</span>
-                                        </a>
+                                        </Link>
                                     </li>
                                 </ul>
                             </div>
@@ -45,7 +58,7 @@ export default function Sidebar({show, clickedMenu}){
                             <div className="collapse show" data-bs-parent="peopleMenus" id="peopleMenu">
                                 <ul className="sidebar-menu">
                                     <li className="menus dropdown-control">
-                                        <Link to={"/people/customers"} className={`item-menu ${getNavLinkClass("/people/customers")}`}>
+                                        <Link to={"/people/customers"} className={`item-menu ${getNavLinkClass("/people/customers")}`} onClick={() => clickedMenu(true)}>
                                             <i className='bx bx-user'></i>
                                             <span className="menu-label">customers</span>
                                         </Link>
@@ -60,13 +73,13 @@ export default function Sidebar({show, clickedMenu}){
                             <div className="collapse show" data-bs-parent="inventoryMenu" id="inventoryMenus">
                                 <ul className="sidebar-menu">
                                     <li className="menus dropdown-control">
-                                        <Link to={"/inventory/products"} className={`item-menu ${getNavLinkClass("/inventory/products")}`}>
+                                        <Link to={"/inventory/products"} className={`item-menu ${getNavLinkClass("/inventory/products")}`} onClick={() => clickedMenu(true)}>
                                             <i className='bx bx-cube-alt'></i>
                                             <span className="menu-label">products</span>
                                         </Link>
                                     </li>
                                     <li className="menus dropdown-control" id="categoriesMenus">
-                                        <Link to={"/inventory/categories"} className={`item-menu ${getNavLinkClass("/inventory/categories")}`}>
+                                        <Link to={"/inventory/categories"} className={`item-menu ${getNavLinkClass("/inventory/categories")}`} onClick={() => clickedMenu(true)}>
                                             <i className='bx bx-git-branch'></i>
                                             <span className="menu-label">categories</span>
                                         </Link>
@@ -87,13 +100,13 @@ export default function Sidebar({show, clickedMenu}){
                             <div className="collapse show" data-bs-parent="stockMenu" id="stockMenus">
                                 <ul className="sidebar-menu">
                                     <li className="menus dropdown-control">
-                                        <Link to={"/stock/manage"} className={`item-menu ${getNavLinkClass("/stock/manage")}`}>
+                                        <Link to={"/stock/manage"} className={`item-menu ${getNavLinkClass("/stock/manage")}`} onClick={() => clickedMenu(true)}>
                                             <i className='bx bx-package'></i>
                                             <span className="menu-label">manage stock</span>
                                         </Link>
                                     </li>
                                     <li className="menus dropdown-control">
-                                        <Link to={"/stock/adjust"} className={`item-menu ${getNavLinkClass("/stock/adjust")}`}>
+                                        <Link to={"/stock/adjust"} className={`item-menu ${getNavLinkClass("/stock/adjust")}`} onClick={() => clickedMenu(true)}>
                                             <i className='bx bx-box'></i>
                                             <span className="menu-label">stock adjustment</span>
                                         </Link>
@@ -114,19 +127,19 @@ export default function Sidebar({show, clickedMenu}){
                                         </Link>
                                     </li>
                                     <li className="menus dropdown-control">
-                                        <Link to={"/sales/order"} className={`item-menu ${getNavLinkClass("/sales/order")}`}>
+                                        <Link to={"/sales/order"} className={`item-menu ${getNavLinkClass("/sales/order")}`} onClick={() => clickedMenu(true)}>
                                             <i className='bx bx-cart-alt'></i>
                                             <span className="menu-label">sales</span>
                                         </Link>
                                     </li>
                                     <li className="menus dropdown-control">
-                                        <Link to={"/sales/invoice"} className={`item-menu ${getNavLinkClass("/sales/invoice")}`}>
+                                        <Link to={"/sales/invoice"} className={`item-menu ${getNavLinkClass("/sales/invoice")}`} onClick={() => clickedMenu(true)}>
                                             <i className='bx bx-receipt'></i>
                                             <span className="menu-label">billing</span>
                                         </Link>
                                     </li>
                                     <li className="menus dropdown-control">
-                                        <Link to={"/sales/payment"} className={`item-menu ${getNavLinkClass("/sales/payment")}`}>
+                                        <Link to={"/sales/payment"} className={`item-menu ${getNavLinkClass("/sales/payment")}`} onClick={() => clickedMenu(true)}>
                                             <i className='bx bx-wallet'></i>
                                             <span className="menu-label">payment</span>
                                         </Link>
@@ -141,13 +154,13 @@ export default function Sidebar({show, clickedMenu}){
                             <div className="collapse show" data-bs-parent="salesMenu" id="salesMenus">
                                 <ul className="sidebar-menu">
                                     <li className="menus dropdown-control">
-                                        <Link to={"/logistic/delivery"} className={`item-menu ${getNavLinkClass("/logistic/delivery")}`}>
+                                        <Link to={"/logistic/delivery"} className={`item-menu ${getNavLinkClass("/logistic/delivery")}`} onClick={() => clickedMenu(true)}>
                                              <i className='bx bxs-truck'></i>
                                             <span className="menu-label">delivery</span>
                                         </Link>
                                     </li>
                                     <li className="menus dropdown-control">
-                                        <Link to={"/logistic/tracking"} className={`item-menu ${getNavLinkClass("/logistic/tracking")}`}>
+                                        <Link to={"/logistic/tracking"} className={`item-menu ${getNavLinkClass("/logistic/tracking")}`} onClick={() => clickedMenu(true)}>
                                             <i className='bx bx-receipt'></i>
                                             <span className="menu-label">tracking</span>
                                         </Link>
@@ -262,7 +275,7 @@ export default function Sidebar({show, clickedMenu}){
                                         </Link>
                                     </li>
                                     <li className="menus dropdown-control">
-                                        <Link to={"/setting/app"} className='item-menu'>
+                                        <Link to={"/setting/app"} className={`item-menu ${getNavLinkClass("/setting/app")}`} onClick={() => clickedMenu(true)}>
                                             <i className='bx bx-grid-alt'></i>
                                             <span className="menu-label">app</span>
                                         </Link>
@@ -357,7 +370,9 @@ export default function Sidebar({show, clickedMenu}){
         </nav>
         </>
     )
-}
+})
+
+export default Sidebar;
 
 Sidebar.propTypes = {
     show: propTypes.bool,

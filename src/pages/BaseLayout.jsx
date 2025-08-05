@@ -5,15 +5,29 @@ import Header from '../parts/Header';
 export default function BaseLayout({children}){
     const [ isOpen, setOpen ] = useState(false);
     const sidebarOverlayResp = useRef(null);
+    const sidebarEl = useRef(null);
     const mainOverlayResp = useRef(null);
+
+    const handleClickedSidebar = (value) => {
+        if(value && sidebarEl.current.classList.contains('active')){
+            sidebarEl.current.classList.replace('active', 'slideLeft');
+            document.querySelector('body').classList.remove("freeze");
+            setTimeout(() => {
+                setOpen(false);
+            },150)
+        }
+    }
 
     useEffect(() => {
         if(sidebarOverlayResp.current.classList.contains("active")){
             document.querySelector('body').classList.add("freeze");
             
             sidebarOverlayResp.current.addEventListener("click", () => {
-                setOpen(false);
+                sidebarEl.current.classList.replace('active', 'slideLeft');
                 document.querySelector('body').classList.remove("freeze");
+                setTimeout(() => {
+                    setOpen(false);
+                },150)
             })
         }
     },[sidebarOverlayResp.current])
@@ -21,7 +35,7 @@ export default function BaseLayout({children}){
     return(
         <div className="wrapper" style={{overflowY:'unset'}}>
             <div className="d-flex position-relative" style={{overflowY:'unset'}}>
-                <Sidebar show={isOpen} />
+                <Sidebar ref={sidebarEl} show={isOpen} clickedMenu={(value) => handleClickedSidebar(value)} />
                 <main ref={mainOverlayResp} className={`main-content ${isOpen ? "active" : ""}`} style={{overflowY:'unset'}}>
                     <Header onClick={() => setOpen((p) => !p)} />
                     {/* //components from all routes */}
