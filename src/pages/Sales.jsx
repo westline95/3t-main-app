@@ -2002,9 +2002,8 @@ export default function Sales({handleSidebar, showSidebar}){
                             <span className="user-img" style={{marginRight: 0}}>
                             <img
                                 src={
-                                rowData.img && rowData.img != ""
-                                    ? rowData.img
-                                    : "../src/assets/images/Avatar 2.jpg"
+                                rowData.img ? rowData.img
+                                    : `https://res.cloudinary.com/du3qbxrmb/image/upload/v1751378806/no-img_u5jpuh.jpg`
                                 }
                                 alt=""
                             />
