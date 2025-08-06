@@ -7,7 +7,7 @@ import Button from "../Button";
 import InputWLabel from "../Input/InputWLabel";
 
 export default function QtyButton(props) {
-    const { data, value, placeholder, name, min, max, returnValue, width, disabled, label } = props;
+    const { data, value, placeholder, name, min, max, returnValue, width, disabled, label, size } = props;
     const [ inputValue, setInputValue ] = useState(value ? value : 0 );
     const [ joinVal, setJoinVal ] = useState(inputValue ? inputValue.toString() : '');
     const [ delBtn, setDelBtn ] = useState(false);
@@ -198,15 +198,15 @@ export default function QtyButton(props) {
     },[inputValue])
     
     return(
-        <div style={{display: 'flex', flexDirection:'column'}}>
+        <div style={{display: 'flex', flexDirection:'column', width: size ? size : 'auto'}} >
             {label ? 
                 (
                     <Form.Label className="mb-1">{label}</Form.Label>
                 ):''
             }
 
-            <div className="btn-group" role="group" style={{width: width ? width : "270px", marginTop:'.1rem'}}>
-                <button type="button" className="btn btn-secondary light" onClick={minus}>
+            <div className="btn-group" role="group" style={{width: width ? width : size ? '100%' : "270px" , marginTop:'.1rem'}}>
+                <button type="button" className="btn btn-secondary light" onClick={minus} >
                     <i className="bx bx-minus"></i>
                 </button>
                 <NumericFormat 
@@ -220,7 +220,7 @@ export default function QtyButton(props) {
                     value={inputValue} 
                     disabled={disabled} 
                 />
-                <button type="button" className="btn btn-secondary light" onClick={plus}>
+                <button type="button" className="btn btn-secondary light" onClick={plus} style={{borderLeft: 0}}>
                     <i className="bx bx-plus"></i>
                 </button>
             </div>
@@ -264,5 +264,6 @@ QtyButton.propTypes = {
     data: propTypes.object,
     returnValue: propTypes.func,
     width: propTypes.any,
-    disabled: propTypes.bool
+    disabled: propTypes.bool,
+    size: propTypes.number
 }

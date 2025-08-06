@@ -28,17 +28,25 @@ import AutoComplete from '../elements/AutoComplete';
 import QtyButton from '../elements/QtyButton';
 import DiscountModal from '../elements/Modal/DiscModal';
 import CreatePayment from '../elements/Modal/CreatePaymentModal';
-import ConvertDate from '../assets/js/convertFullDate.js';
+import ConvertDate from '../assets/js/ConvertDate.js';
 import CustomToggle from '../elements/Custom/CustomToggle.jsx';
 import EmptyState from "../../public/vecteezy_box-empty-state-single-isolated-icon-with-flat-style_11537753.jpg"; 
 import ReturnOrderModal from '../elements/Modal/ReturnOrderModal.jsx';
 import ModalTextContent from '../elements/Modal/ModalTextContent.jsx';
 import EditReturnOrderModal from '../elements/Modal/EditReturnOrderModal.jsx';
+import { DataView } from 'primereact/dataview';
+import { Swiper, SwiperSlide } from 'swiper/react';
+
+// Import Swiper styles
+import 'swiper/css';
 
 export default function Sales({handleSidebar, showSidebar}){
     const toast = useRef(null);
     const toastUpload = useRef(null);
+    const mobileSearchInput = useRef(null);
     const [progress, setProgress] = useState(0);
+    const [mobileSearchMode, setMobileSearchMode] = useState(false);
+    const [mobileFilterValue, setMobileFilterValue] = useState("");
     const [ isLoading, setLoading ] = useState(true);
     const [ isClicked, setClicked ] = useState(false);
     const [ isClickedProd, setClickedProd ] = useState(false);
@@ -1659,7 +1667,7 @@ export default function Sales({handleSidebar, showSidebar}){
                     <Dropdown.Item eventKey="handleBg"  as="button" aria-label="salesEditModal" 
                         onClick={(e) => handleModalWData(e, {endpoint: "sales", id: rowData.order_id, action: 'update', ...rowData})}
                     >
-                        <i className='bx bxs-edit'></i> Edit sales
+                        <i className='bx bxs-edit'></i> Ubah order
                     </Dropdown.Item>
                     <Dropdown.Item eventKey="handleBg" as="button" aria-label="cancelSalesModal" onClick={(e) => handleModalWData(
                         e, 
@@ -1669,7 +1677,7 @@ export default function Sales({handleSidebar, showSidebar}){
                             action: 'canceled',
                             items: {...rowData}
                         })}>
-                        <i className='bx bx-trash'></i> Cancel sales
+                        <i className='bx bx-trash'></i> Batalkan order
                     </Dropdown.Item>
                 </Dropdown.Menu>
             </Dropdown>
@@ -1832,7 +1840,386 @@ export default function Sales({handleSidebar, showSidebar}){
             <p style={{marginBottom: ".3rem"}}>No result found</p>
         </div>
         )
+    };
+
+    // list setting
+    const itemTemplate = (rowData, index) => {
+        return (
+        <div className="col-12" key={rowData.id} style={{position:'relative'}}>
+            <div className='flex flex-column xl:align-items-start gap-2'
+            style={{
+                backgroundColor: '#F8F9FD',
+                padding: '1rem',
+                boxShadow: '1px 1px 7px #9a9acc1a',
+                borderRadius: '9px',
+                position:'relative'
+            }}
+            aria-label="custDetailModal"
+            onClick={(e) => handleModal(e, rowData)}
+            >
+            
+            <div className="flex align-items-center gap-3" 
+                style={{
+                    textTransform: 'capitalize', 
+                    paddingBottom: '.75rem',
+                    borderBottom: '1px solid rgba(146, 146, 146, .2509803922)'
+                }}
+            >
+                <span className="user-img" style={{marginRight: 0}}>
+                <img
+                    src={
+                    rowData.img && rowData.img != ""
+                        ? rowData.img
+                        : "../src/assets/images/Avatar 2.jpg"
+                    }
+                    alt=""
+                />
+                </span>
+                <div style={{width: '80%'}}>
+                    <p style={{marginBottom: 0, fontSize: 15, fontWeight: 600}}>{rowData.order_id}</p>
+                    <p style={{marginBottom: 0, fontSize: 13, color: '#7d8086'}}>{ConvertDate.LocaleStringDate(rowData.order_date)}</p>
+                    <div className='flex flex-row gap-2' style={{fontSize: 13, marginTop: '.5rem'}}>
+                        <span className={`badge badge-${
+                            rowData.order_type == "walk-in" ? 'primary'
+                            : rowData.order_type == "delivery" ? "warning" 
+                            : ""} light`}
+                        >
+                            {
+                                rowData.order_type
+                            }                                                                                
+                        </span>
+                        <span className={`badge badge-${
+                            rowData.order_status == "completed" ? 'success'
+                            : rowData.order_status == "pending" ? "secondary" 
+                            : rowData.order_status == "in-delivery" ? "warning" 
+                            : rowData.order_status == "canceled" ? "danger" 
+                            : ""} light`}
+                        >
+                            {
+                                rowData.order_status == "completed" ? 'completed'
+                                : rowData.order_status == "pending" ? 'pending'
+                                : rowData.order_status == "in-delivery" ? 'in-delivery'
+                                : rowData.order_status == "canceled" ? 'canceled'
+                                : ""
+                            }                                                                                
+                        </span>
+                        
+                    </div>
+                </div>
+            </div>
+            <div className="flex flex-column gap-1" 
+                style={{
+                    textTransform: 'capitalize', 
+                }}
+            >
+                {/* <div className="flex flex-row justify-content-between">
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Pelanggan:</p>
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>{rowData.customer_id ? `${rowData.customer?.name} (${rowData.customer_id})` : `guest.name (non-member)`}</p>
+                </div> */}
+                <div className="flex flex-row justify-content-between">
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Total order:</p>
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>
+                        <NumberFormat intlConfig={{
+                            value: rowData.grandtotal, 
+                            locale: "id-ID",
+                            style: "currency", 
+                            currency: "IDR",
+                        }} 
+                        />
+                    </p>
+                </div>
+                <div className="flex flex-row justify-content-between">
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Tipe pembayaran:</p>
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>
+                        <span className={`badge badge-${
+                            rowData.payment_type == "unpaid" ? 'danger'
+                            : rowData.payment_type == "paid"? "primary"
+                            : rowData.payment_type == "partial"? "warning"
+                            : ""} light`}
+                        >
+                            {rowData.payment_type }                                                                                
+                        </span>
+                    </p>
+                </div>
+            </div>
+            </div>
+            <Dropdown drop={index == custData.length - 1 ? "up" : "down"}  style={{position: 'absolute', top: 10, right: 9, padding: '1rem 1rem .5rem 1rem'}}>
+                <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components" ></Dropdown.Toggle>
+                <Dropdown.Menu align={"end"}>
+                    <Dropdown.Item eventKey="1" as="button" 
+                        aria-label="salesEditModal" 
+                        onClick={(e) => handleModalWData(e, {endpoint: "sales", id: rowData.order_id, action: 'update', ...rowData})}
+                    >
+                        <i className='bx bxs-edit'></i> Ubah order
+                    </Dropdown.Item>
+                    <Dropdown.Item eventKey="1" as="button" 
+                        aria-label="cancelSalesModal" 
+                        onClick={(e) => handleModalWData(
+                            e, 
+                            {
+                                endpoint: "sales", 
+                                id: rowData.order_id, 
+                                action: 'canceled',
+                                items: {...rowData}
+                            }
+                        )}
+                    >
+                        <i className='bx bx-trash'></i> Batalkan order
+                    </Dropdown.Item>
+                </Dropdown.Menu>
+            </Dropdown>
+        </div>
+        );
+    };
+    
+    const orderTemplate = (rowData, index) => {
+        console.log(rowData)
+        return (
+        <div className="flex flex-row col-12" key={rowData.product_id} style={{position:'relative', backgroundColor:'#F8F9FD', padding: '.9rem', borderRadius:'7px'}}>
+            <Swiper slidesPerView={'auto'} style={{width:'100%'}}>
+                <SwiperSlide style={{width: '100%'}}>
+                    <div className='flex flex-column xl:align-items-start gap-1 order-list-mobile'
+                        style={{
+                            backgroundColor: '#ffffff',
+                            padding: '1rem',
+                            boxShadow: '1px 1px 7px #9a9acc1a',
+                            borderRadius: '9px',
+                            position:'relative',
+                            width:'100%',
+                            height:'100%',
+                        }}
+                        aria-label="custDetailModal"
+                        onClick={(e) => handleModal(e, rowData)}
+                    >
+                    
+                        <div className="flex align-items-center gap-3" 
+                            style={{
+                                textTransform: 'capitalize', 
+                                // paddingBottom: '.75rem',
+                                // borderBottom: '1px solid rgba(146, 146, 146, .2509803922)'
+                            }}
+                        >
+                            <span className="user-img" style={{marginRight: 0}}>
+                            <img
+                                src={
+                                rowData.img && rowData.img != ""
+                                    ? rowData.img
+                                    : "../src/assets/images/Avatar 2.jpg"
+                                }
+                                alt=""
+                            />
+                            </span>
+                            <div className='flex flex-column' style={{width: '80%'}}>
+                                <div className='mb-1'>
+                                    <p style={{marginBottom: 0, fontSize: 15, fontWeight: 600, maxWidth: '130px'}}>{`${rowData.product_name} ${rowData.variant}`}</p>
+                                    <p style={{marginBottom: 0, fontSize: 13, color: '#7d8086', maxWidth: '130px'}}>
+                                        <NumberFormat intlConfig={{
+                                                value: rowData.sell_price, 
+                                                locale: "id-ID",
+                                                style: "currency", 
+                                                currency: "IDR",
+                                            }} 
+                                        />
+                                    </p>
+                                    {/* <p style={{marginBottom: 0, fontSize: 13, color: '#7d8086'}}>{`Disc: ${rowData.discProd}`}</p> */}
+                                </div>
+                                <div className="order-qty-btn">
+                                    <QtyButton 
+                                        min={1} 
+                                        max={999} 
+                                        name={`qty-product`} 
+                                        id="qtyItem" 
+                                        value={rowData.quantity} 
+                                        returnValue={(e) => {handleEdit(e,index);handleUpdateEndNote()}} 
+                                        size={100} 
+                                    />
+
+                                </div>
+                                
+                                {/* <div className='flex flex-row gap-2' style={{fontSize: 13, marginTop: '.5rem'}}>
+                                    <span className={`badge badge-${
+                                        rowData.order_type == "walk-in" ? 'primary'
+                                        : rowData.order_type == "delivery" ? "warning" 
+                                        : ""} light`}
+                                    >
+                                        {
+                                            rowData.order_type
+                                        }                                                                                
+                                    </span>
+                                    <span className={`badge badge-${
+                                        rowData.order_status == "completed" ? 'success'
+                                        : rowData.order_status == "pending" ? "secondary" 
+                                        : rowData.order_status == "in-delivery" ? "warning" 
+                                        : rowData.order_status == "canceled" ? "danger" 
+                                        : ""} light`}
+                                    >
+                                        {
+                                            rowData.order_status == "completed" ? 'completed'
+                                            : rowData.order_status == "pending" ? 'pending'
+                                            : rowData.order_status == "in-delivery" ? 'in-delivery'
+                                            : rowData.order_status == "canceled" ? 'canceled'
+                                            : ""
+                                        }                                                                                
+                                    </span>
+                                    
+                                </div> */}
+                            </div>
+
+                        </div>
+                        <div style={{position:'absolute',right:24, bottom: 60}}>
+                            <div style={{textAlign:'center', marginBottom:'.3rem', fontSize:'16px', fontWeight: 600}}>
+                                <NumberFormat intlConfig={{
+                                        value: (rowData.sell_price*rowData.quantity) - (rowData.discProd), 
+                                        locale: "id-ID",
+                                        style: "currency", 
+                                        currency: "IDR",
+                                    }} 
+                                />
+                            </div>
+                        
+                        </div>
+                    </div>
+                </SwiperSlide>
+                <SwiperSlide style={{width: '70px'}}>
+                    <div className='mobile-swiper-content danger'>
+                        <i className='bx bx-trash'></i>
+                    </div>
+                </SwiperSlide>
+            </Swiper>
+            
+        </div>
+        );
+    };
+
+    const mobileFilterFunc = (e) => {
+        setMobileFilterValue(e.target.value);
+        e.target.value == "" ? setMobileSearchMode(false):setMobileSearchMode(true)
     }
+
+    const listTemplate = (items) => {
+        if (!items || items.length === 0) return null;
+
+        let list = items.map((sales, index) => {
+            return itemTemplate(sales, index);
+        });
+
+        return (
+        <>
+        <div className="flex flex-column gap-2" style={{ width: "100%" }}>
+            <div
+            className="wrapping-table-btn flex gap-3 justify-content-end"
+            style={{ width: "100%", height: "inherit" }}
+            >
+            <Dropdown drop={"down"}>
+                <Dropdown.Toggle variant="primary" style={{ height: "100%" }}>
+                <i className="bx bx-download"></i> export
+                </Dropdown.Toggle>
+                <Dropdown.Menu align={"end"}>
+                <Dropdown.Item
+                    eventKey="1"
+                    as="button"
+                    aria-label="viewInvModal"
+                    onClick={(e) =>
+                        handleModal(e, { id: inv.invoice_id, items: { ...inv } })
+                    }
+                >
+                    <i className="bx bx-show"></i> PDF (.pdf)
+                </Dropdown.Item>
+                <Dropdown.Item
+                    eventKey="1"
+                    as="button"
+                    aria-label="editInvModal"
+                    onClick={(e) => handleModal(e, inv.invoice_id)}
+                >
+                    <i className="bx bxs-edit"></i> Microsoft Excel (.xlsx)
+                </Dropdown.Item>
+                </Dropdown.Menu>
+            </Dropdown>
+            <button
+                type="button"
+                className=" btn btn-primary btn-w-icon"
+                style={{ height: "100%" }}
+            >
+                <i className="bx bxs-file-plus"></i> import
+            </button>
+            </div>
+            <div className="flex gap-3 align-items-center mb-4" style={{ width: "100%" }}>
+            <div className="input-group-right" style={{ width: "100%" }}>
+                {mobileSearchMode ?
+                (
+                <span className="input-group-icon input-icon-right" 
+                    onClick={() => {
+                        setMobileFilterValue('');
+                        setMobileSearchMode(false);
+                        mobileSearchInput.current.focus();
+                    }}
+                >
+                    <i class='bx bx-x'></i>
+                </span>
+                ):(
+                <span className="input-group-icon input-icon-right">
+                    <i className="zwicon-search"></i>
+                </span>
+                )
+                }
+                <input
+                    ref={mobileSearchInput}
+                    type="text"
+                    className="form-control input-w-icon-right"
+                    value={mobileFilterValue}
+                    onChange={mobileFilterFunc}
+                    placeholder="Keyword Search"
+                    // onKeyDown={() => setMobileSearchMode(true)}
+                />
+            </div>
+            {/* <button
+                type="button"
+                className="btn btn-primary btn-w-icon"
+                style={{ fontWeight: 500 }}
+                onClick={clearFilter}
+            >
+                <i className="bx bx-filter-alt" style={{ fontSize: "24px" }}></i>
+                Clear filter
+            </button> */}
+            {/* <div
+                className="selected-row-stat"
+                style={{
+                height: "inherit",
+                display:
+                    selectedCusts && selectedCusts.length > 0 ? "block" : "none",
+                }}
+            >
+                <p className="total-row-selected"></p>
+                <button
+                type="button"
+                className=" btn btn-danger btn-w-icon"
+                style={{ height: "100%" }}
+                onClick={selectedToDelete}
+                >
+                <i className="bx bx-trash" style={{ fontSize: "24px" }}></i>Delete
+                selected row
+                </button>
+            </div> */}
+            </div>
+
+            
+        </div>
+        <div className="grid gap-1">{list}</div>
+        </>
+        );
+    };
+    
+    const orderListTemplate = (items) => {
+        if (!items || items.length === 0) return null;
+
+        let list = items.map((order, index) => {
+            return orderTemplate(order, index);
+        });
+
+        return (
+            <div className="grid gap-1">{list}</div>
+        );
+    };
 
     useEffect(() => {
         initFilters();
@@ -1942,40 +2329,40 @@ export default function Sales({handleSidebar, showSidebar}){
                                                 value={(selected) => setCustTypeFilter(selected)}
                                             />
                                         </div> */}
-                                        <div className="mt-4">
-                                            <DataTable
-                                                className="p-datatable"
-                                                value={salesMain}
-                                                size="normal"
-                                                removableSort
-                                                // stripedRows
-                                                // selectionMode={"checkbox"}
-                                                // selection={selectedSales}
-                                                // onSelectionChange={(e) => {
-                                                //     setSelectedSales(e.value);
-                                                // }}
-                                                dataKey="order_id"
-                                                tableStyle={{ minWidth: "50rem", fontSize: '14px' }}
-                                                filters={salesFilters}
-                                                filterDisplay='menu'
-                                                globalFilterFields={[
-                                                    "order_id",
-                                                    "order_date",
-                                                    "customer.name",
-                                                    "order_type",
-                                                    "grandtotal",
-                                                    "source",
-                                                    "order_status",
-                                                    "payment_type",
-                                                ]}
-                                                
-                                                emptyMessage={emptyStateHandler}
-                                                onFilter={(e) => setSalesFilters(e.filters)}
-                                                header={tableHeader}
-                                                paginator
-                                                totalRecords={totalRecords}
-                                                rows={50}
-                                            >
+                                        <DataTable
+                                            className="p-datatable"
+                                            value={salesMain}
+                                            size="normal"
+                                            removableSort
+                                            // stripedRows
+                                            // selectionMode={"checkbox"}
+                                            // selection={selectedSales}
+                                            // onSelectionChange={(e) => {
+                                            //     setSelectedSales(e.value);
+                                            // }}
+                                            dataKey="order_id"
+                                            style={{marginTop: '1.5rem' }}
+                                            tableStyle={{ minWidth: "50rem", fontSize: '14px' }}
+                                            filters={salesFilters}
+                                            filterDisplay='menu'
+                                            globalFilterFields={[
+                                                "order_id",
+                                                "order_date",
+                                                "customer.name",
+                                                "order_type",
+                                                "grandtotal",
+                                                "source",
+                                                "order_status",
+                                                "payment_type",
+                                            ]}
+                                            
+                                            emptyMessage={emptyStateHandler}
+                                            onFilter={(e) => setSalesFilters(e.filters)}
+                                            header={tableHeader}
+                                            paginator
+                                            totalRecords={totalRecords}
+                                            rows={50}
+                                        >
                                             {/* <Column
                                                 selectionMode="multiple"
                                                 headerStyle={{ width: "3.5rem" }}
@@ -2056,8 +2443,9 @@ export default function Sales({handleSidebar, showSidebar}){
                                                 body={(rowData, rowIndex) => actionCell(rowData, rowIndex)}
                                                 style={{ textTransform: "uppercase" }}
                                             ></Column>
-                                            </DataTable>
-                                        </div>
+                                        </DataTable>
+
+                                        <DataView value={salesMain} listTemplate={listTemplate} style={{marginTop: '.5rem'}} />
                                         {/* <div className="table-responsive mt-4">
                                             <table className="table" id="advancedTablesWFixedHeader" data-table-search="true"
                                                 data-table-sort="true" data-table-checkbox="true">
@@ -2304,9 +2692,8 @@ export default function Sales({handleSidebar, showSidebar}){
                                                     </Accordion.Header>
                                                     <Accordion.Body className='mt-1'>
                                                         <div className='mt-3 mb-4'>
-                                                            <Row className='mb-4'>
+                                                            <Row className='mb-4' style={{gap: '1.5rem'}}>
                                                                 <Col lg={3} sm={12}>
-
                                                                     {/* start: this is helper */}
                                                                     <InputWLabel 
                                                                         type="text"
@@ -2380,7 +2767,7 @@ export default function Sales({handleSidebar, showSidebar}){
                                                                 </Col>
                                                             </Row>
                                                             <Collapse in={getValues('order_type') == 'delivery'}>
-                                                                <Row>
+                                                                <Row style={{gap: '1.5rem'}}>
                                                                     <Col lg={3} sm={12}>
                                                                         <InputWLabel 
                                                                             label={"Tentukan pengiriman sekarang"}
@@ -2397,7 +2784,7 @@ export default function Sales({handleSidebar, showSidebar}){
                                                                 </Row>
                                                             </Collapse>
                                                             <Collapse in={delivSwitch == true}>
-                                                                <Row className='mt-4'>
+                                                                <Row className='mt-4' style={{gap: '1.5rem'}}>
                                                                     <Col lg={3} sm={12}>
                                                                         <div style={{position:'relative'}}>
                                                                             <InputWLabel 
@@ -2537,254 +2924,312 @@ export default function Sales({handleSidebar, showSidebar}){
                                                 </Accordion.Item>
                                                 <Accordion.Item eventKey="1">
                                                     <Accordion.Header>
-                                                        <i className='bx bx-cube-alt'></i>Sales products
+                                                        <i className='bx bx-cube-alt'></i>Tambah produk
                                                     </Accordion.Header>
                                                     <Accordion.Body>
                                                         {/* <p className="card-title mb-3 mt-1">Sales products</p> */}
-                                                        <div className="row gy-2 mt-1">
-                                                            <div className="col-lg-6 col-sm-12 col-md-12 col-12">
-                                                                <div className="d-flex flex-fill gap-3" >
-                                                                    <div style={{position:'relative', width: 500}}>
-                                                                        <InputWLabel 
-                                                                            label="add product"
-                                                                            type="text"
-                                                                            name="salesProduct" 
-                                                                            placeholder="Search product name..." 
-                                                                            onChange={handleSearchProd}
-                                                                            onFocus={handleSearchProd}
-                                                                            onKeyDown={keyDownSearchProd}
-                                                                            style={{width: '100%', textTransform:'capitalize'}}
-                                                                            register={register}
-                                                                            require={false}
-                                                                            errors={errors}
-                                                                            
-                                                                        />
-                                                                        {/* popup autocomplete */}
-                                                                        <div className="popup-element" aria-expanded={openPopupProd} ref={refToProd}>
-                                                                            {filterProd && filterProd.length > 0 ? 
-                                                                                filterProd.map((e,idx) => {
-                                                                                    return (
-                                                                                        <div key={`cust-${idx}`} className="res-item" onClick={() => 
-                                                                                            handleChooseProd({ 
-                                                                                                product_id: e.product_id, 
-                                                                                                product_name: e.product_name, 
-                                                                                                variant: e.variant, 
-                                                                                                img:e.img, 
-                                                                                                product_cost: e.product_cost , 
-                                                                                                sell_price: e.sell_price, 
-                                                                                                discount: e.discount 
-                                                                                            })}
-                                                                                        >{e. variant !== "" ? e.product_name + " " + e.variant : e.product_name}</div>
-                                                                                    )
-                                                                                }) : ""
-                                                                            }
-                                                                        </div>  
-                                                                    </div>
+                                                        {/* <div className="col-lg-6 col-sm-12 col-md-12 col-12">
+                                                            <div className="d-flex flex-fill gap-3 flex-wrap">
+                                                                <div>
+                                                                    <InputWLabel 
+                                                                        label="add product"
+                                                                        type="text"
+                                                                        name="salesProduct" 
+                                                                        placeholder="Search product name..." 
+                                                                        onChange={handleSearchProd}
+                                                                        onFocus={handleSearchProd}
+                                                                        onKeyDown={keyDownSearchProd}
+                                                                        style={{width: '100%', textTransform:'capitalize'}}
+                                                                        register={register}
+                                                                        require={false}
+                                                                        errors={errors}
+                                                                        
+                                                                    />
+                                                                    <div className="popup-element" aria-expanded={openPopupProd} ref={refToProd}>
+                                                                        {filterProd && filterProd.length > 0 ? 
+                                                                            filterProd.map((e,idx) => {
+                                                                                return (
+                                                                                    <div key={`cust-${idx}`} className="res-item" onClick={() => 
+                                                                                        handleChooseProd({ 
+                                                                                            product_id: e.product_id, 
+                                                                                            product_name: e.product_name, 
+                                                                                            variant: e.variant, 
+                                                                                            img:e.img, 
+                                                                                            product_cost: e.product_cost , 
+                                                                                            sell_price: e.sell_price, 
+                                                                                            discount: e.discount 
+                                                                                        })}
+                                                                                    >{e. variant !== "" ? e.product_name + " " + e.variant : e.product_name}</div>
+                                                                                )
+                                                                            }) : ""
+                                                                        }
+                                                                    </div>  
+                                                                </div>
 
-                                                                    {/* <div> */}
-                                                                        {/* <Form.Label className="mb-1">qty</Form.Label> */}
-                                                                        <QtyButton min={0} max={999} label={"qty"}  name={`qty-product`} id="qtyItem" width={"180px"} returnValue={(e) => {setQtyVal(Number(e)); console.log(e)}} value={qtyVal} />
-                                                                    {/* </div> */}
-                                                                    <div>
-                                                                        <label className="mb-1" style={{color:'#ffffff'}}>button</label>
-                                                                        <span className="btn btn-primary" onClick={() => {addToSalesData(); setQtyVal(0)}}><i className="bx bx-plus" style={{width:24, height:24}}></i></span>
-                                                                    </div>
+                                                                    <QtyButton min={0} max={999} label={"qty"}  name={`qty-product`} id="qtyItem" width={"180px"} returnValue={(e) => {setQtyVal(Number(e)); console.log(e)}} value={qtyVal} />
+                                                                <div className='align-self-end mt-1'>
+                                                                    <span className="btn btn-primary" onClick={() => {addToSalesData(); setQtyVal(0)}}><i className="bx bx-plus" style={{width:24, height:24}}></i></span>
                                                                 </div>
                                                             </div>
-                                                            <div className="table-responsive mt-4">
-                                                                <table className="table">
-                                                                    <thead>
-                                                                        <tr>
-                                                                            <th scope="col" aria-label="product desc">
-                                                                                product
-                                                                            </th> 
-                                                                            <th scope="col" aria-label="product variant">
-                                                                                variant
-                                                                            </th>
-                                                                            <th scope="col" aria-label="qty">
-                                                                                qty
-                                                                            </th>
-                                                                            <th scope="col" aria-label="product price">
-                                                                                price
-                                                                            </th>
-                                                                            <th scope="col" aria-label="product price">
-                                                                                discount
-                                                                            </th>
-                                                                            <th scope="col" aria-label="total">
-                                                                                total
-                                                                            </th>
-                                                                            <th scope="col" aria-label="action">
-                                                                                action
-                                                                            </th>
-                                                                        </tr>
-                                                                    </thead>
-                                                                    <tbody>
-                                                                        {salesItems && salesItems.length > 0 ? 
-                                                                            salesItems.map((item, idx) => {
-                                                                            return(
-                                                                            <tr key={idx}>
-                                                                                <td className="data-img" style={{textTransform: 'capitalize'}}>
-                                                                                    <span className="user-img">
-                                                                                        <img src={item.img} alt="prod-img"/>
-                                                                                    </span>{item.product_name}
-                                                                                </td>
-                                                                                <td>{item.variant}</td>
-                                                                                <td>
-                                                                                    <QtyButton 
-                                                                                        min={1} 
-                                                                                        max={999} 
-                                                                                        name={`qty-product`} 
-                                                                                        id="qtyItem" 
-                                                                                        value={item.quantity} 
-                                                                                        returnValue={(e) => {handleEdit(e,idx);handleUpdateEndNote()}} 
-                                                                                        width={'150px'} 
-                                                                                    />
-                                                                                </td>
-                                                                                <td>
-                                                                                    <NumberFormat intlConfig={{
-                                                                                        value: item.sell_price, 
-                                                                                        locale: "id-ID",
-                                                                                        style: "currency", 
-                                                                                        currency: "IDR",
-                                                                                        }} 
-                                                                                    />
-                                                                                </td>
-                                                                                <td>
-                                                                                    <NumberFormat intlConfig={{
-                                                                                        value: item.discount, 
-                                                                                        locale: "id-ID",
-                                                                                        style: "currency", 
-                                                                                        currency: "IDR",
-                                                                                        }}                                                                                                                                     v
-                                                                                    />
-                                                                                </td>
-                                                                                <td>
-                                                                                    <NumberFormat intlConfig={{
-                                                                                        value: (Number(item.quantity)*Number(item.sell_price))-(Number(item.quantity)*Number(item.discount)), 
-                                                                                        locale: "id-ID",
-                                                                                        style: "currency", 
-                                                                                        currency: "IDR",
-                                                                                        }} 
-                                                                                    />
-                                                                                </td>
-                                                                                <td>
-                                                                                    <span className="table-btn del-table-data" onClick={() => {delSalesItems(idx)}}>
-                                                                                        <i className='bx bx-trash'></i>
-                                                                                    </span>
-                                                                                </td>
-                                                                            </tr>
+                                                        </div> */}
+                                                        <div className="flex sm:flex-column md:flex-column lg:flex-row xl:flex-row xl:gap-3 lg:gap-0 md:gap-3 sm:flex-wrap add-product-control mt-3 mb-4" >
+                                                            <div className='sm:w-12 lg:w-5'>
+                                                                <InputWLabel 
+                                                                    label="add product"
+                                                                    type="text"
+                                                                    name="salesProduct" 
+                                                                    placeholder="Search product name..." 
+                                                                    onChange={handleSearchProd}
+                                                                    onFocus={handleSearchProd}
+                                                                    onKeyDown={keyDownSearchProd}
+                                                                    style={{width: 'inherit', textTransform:'capitalize'}}
+                                                                    register={register}
+                                                                    require={false}
+                                                                    errors={errors}
+                                                                    autoComplete={"off"}
+                                                                    // disabled={editMode ? false : true}  
+                                                                />
+                                                                {/* popup autocomplete */}
+                                                                <div className="popup-element" aria-expanded={openPopupProd} ref={refToProd}>
+                                                                    {filterProd && filterProd.length > 0 ? 
+                                                                        filterProd.map((e,idx) => {
+                                                                            return (
+                                                                                <div key={`product-${e.product_id}`} className="res-item" onClick={() => 
+                                                                                    
+                                                                                    handleChooseProd({ 
+                                                                                    product_id: e.product_id, 
+                                                                                    product_name: e.product_name, 
+                                                                                    variant: e.variant, 
+                                                                                    img:e.img, 
+                                                                                    product_cost: e.product_cost , 
+                                                                                    sell_price: e.sell_price,
+                                                                                    discount: e.discount
+                                                                                })}
+                                                                                >{e. variant !== "" ? e.product_name + " " + e.variant : e.product_name}</div>
                                                                             )
-                                                                            })
-                                                                        :""}
-                                                                        {salesItems && salesItems.length > 0 && salesEndNote ?
-                                                                        <>
-                                                                        <tr className="endnote-row">
-                                                                            <td colSpan="2" className="endnote-row-title">items</td>
-                                                                            <td colSpan="4">{salesEndNote.totalQty}</td>
-                                                                        </tr>
-                                                                        <tr className="endnote-row">
-                                                                            <td colSpan="5" className="endnote-row-title">subtotal</td>
-                                                                            <td colSpan="2" style={{fontWeight: 500}}>
-                                                                                <NumberFormat intlConfig={{
-                                                                                    value: salesEndNote.subtotal, 
-                                                                                    locale: "id-ID",
-                                                                                    style: "currency", 
-                                                                                    currency: "IDR",
-                                                                                    }} 
-                                                                                />
-                                                                            </td>
-                                                                        </tr>
-                                                                        <tr className="endnote-row">
-                                                                            <td colSpan="5" className="endnote-row-title">add more discount</td>
-                                                                            <td colSpan="2" style={{fontWeight: 500}}>
-                                                                                {salesDisc  ?
-                                                                                    salesDisc.discType == "percent" ?
-                                                                                (
-                                                                                    <>
-                                                                                    <NumberFormat intlConfig={{
-                                                                                        value: salesDisc ? (salesDisc.value*Number(salesEndNote.subtotal)/100) : 0, 
-                                                                                        locale: "id-ID",
-                                                                                        style: "currency", 
-                                                                                        currency: "IDR",
-                                                                                    }}
-                                                                                    />
-                                                                                    <span>{`(${salesDisc.value}%)`}</span>
-                                                                                    </>
-                                                                                ) : 
-                                                                                (
-                                                                                    <NumberFormat intlConfig={{
-                                                                                        value: salesDisc.value, 
-                                                                                        locale: "id-ID",
-                                                                                        style: "currency", 
-                                                                                        currency: "IDR",
-                                                                                    }} 
-                                                                                    />
-                                                                                )
-                                                                                :  (
-                                                                                    <NumberFormat intlConfig={{
-                                                                                        value: 0, 
-                                                                                        locale: "id-ID",
-                                                                                        style: "currency", 
-                                                                                        currency: "IDR",
-                                                                                    }} 
-                                                                                    />
-                                                                                )
-                                                                                }
-                                                                                <span className="endnote-row-action">
-                                                                                    <span className="table-btn edit-table-data" aria-label='addDiscount' onClick={(e) => handleModal(e)}>
-                                                                                        <i className='bx bx-cog'></i>
-                                                                                    </span>
-                                                                                </span>
-                                                                            </td>
-                                                                        </tr>
-                                                                        <tr className="endnote-row">
-                                                                            <td colSpan="5" className="endnote-row-title">total</td>
-                                                                            <td colSpan="2" >
-                                                                                <NumberFormat intlConfig={{
-                                                                                    value: salesEndNote.grandtotal, 
-                                                                                    locale: "id-ID",
-                                                                                    style: "currency", 
-                                                                                    currency: "IDR",
-                                                                                    }} 
-                                                                                />
-                                                                            </td>
-                                                                        </tr>
-                                                                         <tr className="endnote-row">
-                                                                            <td colSpan="5" className="endnote-row-title">paid & payment type</td>
-                                                                            <td colSpan="2">
-                                                                                <NumberFormat intlConfig={{
-                                                                                    value: paidData ? paidData.amountOrigin : 0, 
-                                                                                    locale: "id-ID",
-                                                                                    style: "currency", 
-                                                                                    currency: "IDR",
-                                                                                    }} 
-                                                                                />
-                                                                                <span style={{textTransform: 'capitalize', fontWeight: 500}}>{`${paidData ? '~ ' + paidData.payment_type : ""}`}</span>
-                                                                                <span className="endnote-row-action">
-                                                                                    <span className="table-btn edit-table-data" aria-label="createPayment" onClick={handleModal}>
-                                                                                        <i className='bx bx-cog'></i>
-                                                                                    </span>
-                                                                                </span>
-                                                                            </td>
-                                                                        </tr>
-                                                                        <tr className="endnote-row">
-                                                                            <td colSpan="5" className="endnote-row-title">remaining payment</td>
-                                                                            <td colSpan="2">
-                                                                                <NumberFormat intlConfig={{
-                                                                                    value: salesEndNote.remaining_payment, 
-                                                                                    locale: "id-ID",
-                                                                                    style: "currency", 
-                                                                                    currency: "IDR",
-                                                                                    }} 
-                                                                                />
-                                                                            </td>
-                                                                        </tr>
-                                                                        </>
-                                                                        :""}
-                                                                    </tbody>
-                                                                </table>
+                                                                        }) : ""
+                                                                    }
+                                                                </div>  
+                                                            </div>
+                                    
+                                                            <div className='flex sm:flex-row lg:flex-row gap-3'>
+                                                                {/* <div> */}
+                                                                    {/* <Form.Label className="mb-1">qty</Form.Label> */}
+                                                                    <QtyButton 
+                                                                        min={0} 
+                                                                        max={999} 
+                                                                        name={`qty-add-product`} 
+                                                                        width={"180px"} 
+                                                                        returnValue={(e) => setQtyVal(e)}
+                                                                        value={qtyVal} 
+                                                                        // disabled={editMode ? false : true}  
+                                                                        label={"qty"}
+                                                                    />
+                                                                {/* </div> */}
+                                                                {/* <div className='align-self-end'> */}
+                                                                    <div className={`btn btn-primary qty-add-btn align-self-end`} onClick={addToSalesData}><i className="bx bx-plus"></i></div>
+                                                                {/* </div> */}
                                                             </div>
                                                         </div>
+
+                                                        {/* large view */}
+                                                        <div className="table-responsive mt-4">
+                                                            <table className="table">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th scope="col" aria-label="product desc">
+                                                                            product
+                                                                        </th> 
+                                                                        <th scope="col" aria-label="product variant">
+                                                                            variant
+                                                                        </th>
+                                                                        <th scope="col" aria-label="qty">
+                                                                            qty
+                                                                        </th>
+                                                                        <th scope="col" aria-label="product price">
+                                                                            price
+                                                                        </th>
+                                                                        <th scope="col" aria-label="product price">
+                                                                            discount
+                                                                        </th>
+                                                                        <th scope="col" aria-label="total">
+                                                                            total
+                                                                        </th>
+                                                                        <th scope="col" aria-label="action">
+                                                                            action
+                                                                        </th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    {salesItems && salesItems.length > 0 ? 
+                                                                        salesItems.map((item, idx) => {
+                                                                        return(
+                                                                        <tr key={idx}>
+                                                                            <td className="data-img" style={{textTransform: 'capitalize'}}>
+                                                                                <span className="user-img">
+                                                                                    <img src={item.img} alt="prod-img"/>
+                                                                                </span>{item.product_name}
+                                                                            </td>
+                                                                            <td>{item.variant}</td>
+                                                                            <td>
+                                                                                <QtyButton 
+                                                                                    min={1} 
+                                                                                    max={999} 
+                                                                                    name={`qty-product`} 
+                                                                                    id="qtyItem" 
+                                                                                    value={item.quantity} 
+                                                                                    returnValue={(e) => {handleEdit(e,idx);handleUpdateEndNote()}} 
+                                                                                    width={'150px'} 
+                                                                                />
+                                                                            </td>
+                                                                            <td>
+                                                                                <NumberFormat intlConfig={{
+                                                                                    value: item.sell_price, 
+                                                                                    locale: "id-ID",
+                                                                                    style: "currency", 
+                                                                                    currency: "IDR",
+                                                                                    }} 
+                                                                                />
+                                                                            </td>
+                                                                            <td>
+                                                                                <NumberFormat intlConfig={{
+                                                                                    value: item.discount, 
+                                                                                    locale: "id-ID",
+                                                                                    style: "currency", 
+                                                                                    currency: "IDR",
+                                                                                    }}                                                                                                                                     v
+                                                                                />
+                                                                            </td>
+                                                                            <td>
+                                                                                <NumberFormat intlConfig={{
+                                                                                    value: (Number(item.quantity)*Number(item.sell_price))-(Number(item.quantity)*Number(item.discount)), 
+                                                                                    locale: "id-ID",
+                                                                                    style: "currency", 
+                                                                                    currency: "IDR",
+                                                                                    }} 
+                                                                                />
+                                                                            </td>
+                                                                            <td>
+                                                                                <span className="table-btn del-table-data" onClick={() => {delSalesItems(idx)}}>
+                                                                                    <i className='bx bx-trash'></i>
+                                                                                </span>
+                                                                            </td>
+                                                                        </tr>
+                                                                        )
+                                                                        })
+                                                                    :""}
+                                                                    {salesItems && salesItems.length > 0 && salesEndNote ?
+                                                                    <>
+                                                                    <tr className="endnote-row">
+                                                                        <td colSpan="2" className="endnote-row-title">items</td>
+                                                                        <td colSpan="4">{salesEndNote.totalQty}</td>
+                                                                    </tr>
+                                                                    <tr className="endnote-row">
+                                                                        <td colSpan="5" className="endnote-row-title">subtotal</td>
+                                                                        <td colSpan="2" style={{fontWeight: 500}}>
+                                                                            <NumberFormat intlConfig={{
+                                                                                value: salesEndNote.subtotal, 
+                                                                                locale: "id-ID",
+                                                                                style: "currency", 
+                                                                                currency: "IDR",
+                                                                                }} 
+                                                                            />
+                                                                        </td>
+                                                                    </tr>
+                                                                    <tr className="endnote-row">
+                                                                        <td colSpan="5" className="endnote-row-title">add more discount</td>
+                                                                        <td colSpan="2" style={{fontWeight: 500}}>
+                                                                            {salesDisc  ?
+                                                                                salesDisc.discType == "percent" ?
+                                                                            (
+                                                                                <>
+                                                                                <NumberFormat intlConfig={{
+                                                                                    value: salesDisc ? (salesDisc.value*Number(salesEndNote.subtotal)/100) : 0, 
+                                                                                    locale: "id-ID",
+                                                                                    style: "currency", 
+                                                                                    currency: "IDR",
+                                                                                }}
+                                                                                />
+                                                                                <span>{`(${salesDisc.value}%)`}</span>
+                                                                                </>
+                                                                            ) : 
+                                                                            (
+                                                                                <NumberFormat intlConfig={{
+                                                                                    value: salesDisc.value, 
+                                                                                    locale: "id-ID",
+                                                                                    style: "currency", 
+                                                                                    currency: "IDR",
+                                                                                }} 
+                                                                                />
+                                                                            )
+                                                                            :  (
+                                                                                <NumberFormat intlConfig={{
+                                                                                    value: 0, 
+                                                                                    locale: "id-ID",
+                                                                                    style: "currency", 
+                                                                                    currency: "IDR",
+                                                                                }} 
+                                                                                />
+                                                                            )
+                                                                            }
+                                                                            <span className="endnote-row-action">
+                                                                                <span className="table-btn edit-table-data" aria-label='addDiscount' onClick={(e) => handleModal(e)}>
+                                                                                    <i className='bx bx-cog'></i>
+                                                                                </span>
+                                                                            </span>
+                                                                        </td>
+                                                                    </tr>
+                                                                    <tr className="endnote-row">
+                                                                        <td colSpan="5" className="endnote-row-title">total</td>
+                                                                        <td colSpan="2" >
+                                                                            <NumberFormat intlConfig={{
+                                                                                value: salesEndNote.grandtotal, 
+                                                                                locale: "id-ID",
+                                                                                style: "currency", 
+                                                                                currency: "IDR",
+                                                                                }} 
+                                                                            />
+                                                                        </td>
+                                                                    </tr>
+                                                                        <tr className="endnote-row">
+                                                                        <td colSpan="5" className="endnote-row-title">paid & payment type</td>
+                                                                        <td colSpan="2">
+                                                                            <NumberFormat intlConfig={{
+                                                                                value: paidData ? paidData.amountOrigin : 0, 
+                                                                                locale: "id-ID",
+                                                                                style: "currency", 
+                                                                                currency: "IDR",
+                                                                                }} 
+                                                                            />
+                                                                            <span style={{textTransform: 'capitalize', fontWeight: 500}}>{`${paidData ? '~ ' + paidData.payment_type : ""}`}</span>
+                                                                            <span className="endnote-row-action">
+                                                                                <span className="table-btn edit-table-data" aria-label="createPayment" onClick={handleModal}>
+                                                                                    <i className='bx bx-cog'></i>
+                                                                                </span>
+                                                                            </span>
+                                                                        </td>
+                                                                    </tr>
+                                                                    <tr className="endnote-row">
+                                                                        <td colSpan="5" className="endnote-row-title">remaining payment</td>
+                                                                        <td colSpan="2">
+                                                                            <NumberFormat intlConfig={{
+                                                                                value: salesEndNote.remaining_payment, 
+                                                                                locale: "id-ID",
+                                                                                style: "currency", 
+                                                                                currency: "IDR",
+                                                                                }} 
+                                                                            />
+                                                                        </td>
+                                                                    </tr>
+                                                                    </>
+                                                                    :""}
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+
+                                                        {/* mobile view */}
+                                                        <DataView value={salesItems} listTemplate={orderListTemplate} ></DataView>
+                                                        
                                                     </Accordion.Body>
                                                 </Accordion.Item>
                                                 <div className="wrapping-table-btn mt-5">

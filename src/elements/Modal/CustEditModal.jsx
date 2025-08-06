@@ -5,7 +5,7 @@ import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 import FetchApi from "../../assets/js/fetchApi";
 import User from "../../assets/images/Avatar 1.jpg";
 import { CustomSelect } from "../CustomSelect";
-import FriendlyDate from "../Date/FriendlyDate";
+import ConvertDate from "../../assets/js/ConvertDate";
 import ConfirmModal from "./ConfirmModal";
 import InputWLabel from "../Input/InputWLabel";
 import InputGroup from "../Input/InputGroup";

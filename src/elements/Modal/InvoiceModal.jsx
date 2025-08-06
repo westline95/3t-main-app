@@ -6,7 +6,7 @@ import { PDFDownloadLink } from '@react-pdf/renderer';
 import { useReactToPrint } from 'react-to-print';
 import FetchApi from '../../assets/js/fetchApi';
 import InvoiceDoc from '../../parts/InvoiceDoc.jsx';
-import ConvertDate from "../../assets/js/convertFullDate.js";
+import ConvertDate from '../../assets/js/ConvertDate.js';
 import InputWLabel from '../Input/InputWLabel';
 import { CustomSelect } from '../CustomSelect';
 import User from "../../assets/images/Avatar 1.jpg";
@@ -34,7 +34,6 @@ export default function InvoiceModal({show, onHide, data}) {
     const [ invDupe, setInvDupe ] = useState(data ? {...data} : null); 
     const axiosPrivate = useAxiosPrivate();
     const toast = useRef();
-console.log(data)
     const componentRef = useRef(null);
     const handlePrint = useReactToPrint({
         contentRef: componentRef,

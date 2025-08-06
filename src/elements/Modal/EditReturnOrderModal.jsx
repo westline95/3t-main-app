@@ -5,7 +5,7 @@ import InputWLabel from '../Input/InputWLabel.jsx';
 import InputWSelect from '../Input/InputWSelect.jsx';
 import { useForm } from 'react-hook-form';
 import FetchApi from '../../assets/js/fetchApi.js';
-import ConvertDate from "../../assets/js/convertFullDate.js";
+import ConvertDate from "../../assets/js/ConvertDate.js";
 import NumberFormat from '../Masking/NumberFormat.jsx';
 import useAxiosPrivate from '../../hooks/useAxiosPrivate.js';
 import axios from '../../api/axios.js';

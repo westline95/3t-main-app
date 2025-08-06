@@ -14,20 +14,11 @@ const InputGroup = forwardRef((props, ref) => {
     let locale = "id-ID";
     const formatedNumber = new Intl.NumberFormat(locale);
     const inputEl = useRef();
-    const [ inputValue, setVal] = useState(mask == 'currency' ? '0' : '');
+    const [ inputValue, setVal] = useState(mask == 'phone' ? '' : '0');
    
 
     const handleMask = (e) => {
         let val = e;
-        console.log(e)
-        // if(e){
-        //     console.log(e.target)
-        //     console.log(e)
-        //     // val = e.replace(/[.,]/g,"");
-        //     // console.log(val)
-        //     // val = e.target.value.replace(/[.,]/g,"") || e.target.value;
-        // } 
-        // const disc = e.target.value.replace(/[.,]/g,"") || e.target.value;s
         switch(mask) {
             case "currency":
                 let pattern = new RegExp("[0-9]*");
@@ -66,23 +57,34 @@ const InputGroup = forwardRef((props, ref) => {
 
     const onChangeInput = (e) => {
         let val = e.target.value;
-        console.log(val)
-        const minimum = min ? min : 0;
-        const maximum = max ? max : 0;
 
         if(mask == "currency"){
+            let unformatted;
+            let newVal
+            const minimum = min ? min : 0;
+            const maximum = max ? max : 999999999;
+
             if(val.includes('.')){
-                val = val.replace(/[.,]/g,"");
-            }
-    
-            if(val == ""){
-                setVal(minimum.toString());
+                unformatted = Number(val.replace(/[.,]/g,""));
             } else {
-                let newVal = formatedNumber.format(+val);
-                setVal(newVal.toString());
+                unformatted = Number(+val);
             }
-    
-            returnValue && returnValue({origin: Number(val.replace(/[.,]/g,"")), formatted: formatedNumber.format(val)});
+                
+            if(unformatted >= minimum && unformatted <= maximum){
+                newVal = formatedNumber.format(unformatted).toString();
+                unformatted = Number(unformatted);
+                setVal(newVal);
+            } else if(unformatted < minimum){
+                unformatted = Number(minimum);
+                newVal = formatedNumber.format(minimum).toString();
+                setVal(newVal);
+            } else if(unformatted > maximum) {
+                unformatted = Number(maximum);
+                newVal = formatedNumber.format(maximum).toString();
+                setVal(newVal);
+            } 
+
+            returnValue && returnValue({origin: unformatted, formatted: newVal});
             
         } else if(mask == "phone"){
              setVal(val.toString());
@@ -95,66 +97,14 @@ const InputGroup = forwardRef((props, ref) => {
         const key = e.key;
         let value = e.target.value;
         let join;
-
-        if(value.includes('.')){
-            value = e.target.value.replace(/[.,]/g,"");
-        } 
-
-        const minimum = min ? min : 0;
-        const maximum = max ? max : 0;
         
         // Allow digits (0-9)
         if (key >= '0' && key <= '9') {
-            if(maximum !== 0){
-                if(Number(value+key) >= minimum && Number(value+key) <= maximum){
-                    if(value == ""){
-                        setVal(minimum.toString());
-                    } else {
-                        setVal(value.toString());
-                    }
-                    return true;
-                } else if(Number(value+key) < minimum){
-                    setVal(minimum.toString());
-                } else if(Number(value+key) > maximum) {
-                    setVal(maximum.toString());
-                } else {
-                    e.preventDefault();
-                }
-            } else {
-                if(Number(value+key) >= minimum){
-                    if(value == ""){
-                        setVal(minimum.toString());
-                    } else {
-                        console.log("hahahahah")
-                        setVal(value.toString());
-                    }
-                    return true;
-                } else if(Number(value+key) < minimum){
-                    setVal(minimum.toString());
-                    return true;
-                } else {
-                    e.preventDefault();
-                }
-            }
+            return true;
         }
 
-        // // Allow a single dot
-        // if (key === '.') {
-        //     if (value.includes('.')) {
-        //         e.preventDefault(); // Prevent adding another dot if one already exists
-        //     } 
-        //     // setInputValue(Number(value));
-        //     return true;
-        // }
         // Allow Backspace, Delete, Tab, Arrow keys, etc. for editing
         if (['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(key)) {
-            let newValue = value;
-            onChangeInput({ 
-                target: {
-                    name: name,
-                    value: newValue,
-                },
-            });
             return true;
         }
 
@@ -166,18 +116,12 @@ const InputGroup = forwardRef((props, ref) => {
         }
 
         e.preventDefault(); // Prevent all other characters
-        return false;
     }
     
     const onKeyDownPhone = (e) => {
         const key = e.key;
         let value = e.target.value;
         let join;
-        // console.log(value + key)
-        
-        // if(value.includes('.')){
-            //     value = e.target.value.replace(/[.,]/g,"");
-            // } 
             
         const maximum = 12;
         
@@ -189,16 +133,7 @@ const InputGroup = forwardRef((props, ref) => {
                 e.preventDefault();
             }
         }
-            
-
-        // // Allow a single dot
-        // if (key === '.') {
-        //     if (value.includes('.')) {
-        //         e.preventDefault(); // Prevent adding another dot if one already exists
-        //     } 
-        //     // setInputValue(Number(value));
-        //     return true;
-        // }
+          
         // Allow Backspace, Delete, Tab, Arrow keys, etc. for editing
         if (['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(key)) {
             let newValue = value;
@@ -221,19 +156,47 @@ const InputGroup = forwardRef((props, ref) => {
         e.preventDefault(); // Prevent all other characters
     }
 
+    const handleKeyDown = (e) => {
+        switch (mask) {
+            case 'currency':
+                onKeyDownCurrency(e);
+                break;
+            case 'phone':
+                onKeyDownPhone(e);
+                break;
+        
+            default:
+                break;
+        }
+    }
+
 
     // const inputGroup = register(name,  { required: require ? "This field is required" :'', onChange: handleMask, ref: inputEl });
 
     useEffect(() => {
-        if(mask == "currency" && defaultValue){
-            let DefValue = Number(defaultValue);
-            onChangeInput({ 
-                target: {
-                    name: name,
-                    value: DefValue.toString(),
-                },
-            });
-        } 
+        if(defaultValue){
+            switch (mask) {
+                case 'currency':
+                    onChangeInput({ 
+                        target: {
+                            name: name,
+                            value: defaultValue.toString(),
+                        },
+                    });
+                    break;
+                case 'phone':
+                    onChangeInput({ 
+                        target: {
+                            name: name,
+                            value: defaultValue.toString(),
+                        },
+                    });
+                    break;
+            
+                default:
+                    break;
+            }
+        }
     },[defaultValue]);
 
 
@@ -250,7 +213,7 @@ const InputGroup = forwardRef((props, ref) => {
                     className={`input-w-text-${position}`}
                     placeholder={placeholder} 
                     // inputMode={inputMode}  
-                    onKeyDown={mask == "currency" ? onKeyDownCurrency : mask == "phone" ? onKeyDownPhone : null}
+                    onKeyDown={handleKeyDown}
                     onChange={onChangeInput}
                     value={inputValue}
                     // defaultValue={defaultValue}

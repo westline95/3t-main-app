@@ -388,9 +388,8 @@ table tr:last-of-type td .dropdown-menu {
 }
 
 .form-control:disabled{
-  border: var(--bs-border-width) solid var(--bs-border-color);
-  border-width: 1px;
-  height: 38px;
+  border: 1px solid var(--bs-border-color);
+  height: 39px;
 }
 
 .field-msg-invalid {
@@ -1185,8 +1184,8 @@ label {
   height: 35px !important;
 }
 
-.order-qty-btn .btn-group, .product-qty-wrap .btn-group {
-  height: 35px !important;
+.product-qty-wrap .btn-group {
+  height: 39px !important;
 }
 
 .btn-group {
@@ -1195,6 +1194,14 @@ label {
 
 .btn-group input {
   margin-bottom: 0 !important;
+}
+
+.btn-group button {
+  height: 39px !important;
+}
+
+.product-qty-wrap .btn-group button {
+  height: 37px !important;
 }
 
 .order-qty-btn .btn-group button:first-of-type,
@@ -2640,6 +2647,7 @@ button i {
 .btn-group input {
   border-radius: unset;
   text-align: center;
+  height: 39px;
 }
 
 .modal-table-wrap {
@@ -2659,7 +2667,7 @@ td .btn-group button {
 }
 
 td .btn-group button i {
-  font-size: 14px;
+  font-size: 18px;
   height: 100%;
 }
 
@@ -2979,6 +2987,7 @@ tr.grand-total>* {
   display: inline-flex;
   right: 0;
   justify-content: flex-end;
+  flex-wrap: wrap;
   right: 5rem;
 }
 
@@ -4250,6 +4259,36 @@ tr.hover-row:hover > * {
   border: var(--bs-border-width) solid var(--bs-border-color);
 }
 
+.qty-add-btn {
+  height: 39px;
+}
+
+.modal-btn-wrap-mobile {
+  display: none !important;
+}
+
+.mobile-swiper-content {
+  max-width: 70px;
+  height: 100%;
+  border-top-right-radius: 17px;
+  border-bottom-right-radius: 17px;
+  background-color: #0099FF;
+  padding: 3rem 1.35rem;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.mobile-swiper-content i {
+  font-size: 24px;
+  color: #ffffff;
+  position: relative;
+  top: calc(100% - 65%);
+}
+
+.mobile-swiper-content.danger {
+  background-color: var(--sa-color-danger);
+}
+
 /* media queries for responsiveness */
 /* for mobile */
 
@@ -4491,11 +4530,11 @@ tr.hover-row:hover > * {
   }
 
   .basic-tabs .tab-title {
-      font-size: 12px;
+      font-size: 14px;
   }
 
   #addDiscount .basic-tabs .tab-title {
-      font-size: 10px;
+      font-size: 10px !important;
       vertical-align: middle;
   }
 
@@ -4561,11 +4600,11 @@ tr.hover-row:hover > * {
 
   .custom-select-opt .same-as-select,
   .custom-select-opt .select-items {
-      font-size: 12px;
+      font-size: 14px;
   }
 
   .custom-select-opt .same-as-select {
-      height: 32px;
+      height: 38px;
       background-size: 12px 14px;
   }
 
@@ -4600,15 +4639,28 @@ tr.hover-row:hover > * {
   }
 
   .modal-btn-wrap {
-      right: 3.9rem;
+      display: none !important;
   }
+  
+  .modal-btn-wrap-mobile {
+      display: inline-flex !important ;
+      width: 100%;
+      gap: .5rem;
+    }
+    
+    .modal-btn-wrap-mobile>button {
+      width: 50%;
+      padding: 7px 13px;
+      font-size: 14px !important;
+    }
+    
+    .modal-btn-wrap-mobile>i {
+      font-size: 16px !important;
+    }
+    
+   .btn-w-icon i {
+    vertical-align: text-top !important;
 
-  .modal-btn-wrap .modal-btn {
-      padding: 3px 5px;
-  }
-
-  .modal-btn-wrap .modal-btn i {
-      font-size: 16px;
   }
 
   .inv-table-title {
@@ -4645,14 +4697,13 @@ tr.hover-row:hover > * {
       width: 90%;
   }
 
-  .btn,
   .modal-footer button {
-      font-size: 12px;
+      font-size: 14px;
   }
 
   .form-switch .form-check-input {
       width: 2rem;
-      height: 1rem;
+      height: 1.25rem;
   }
 
   .view-note-text {
@@ -4677,11 +4728,11 @@ tr.hover-row:hover > * {
   }
 
   .btn-group button {
-      padding: 3px 6px;
+    padding: 5px 13px;
   }
 
   .modal i {
-      font-size: 12px;
+      font-size: 16px;
   }
 
   .invoice-header,
@@ -4867,8 +4918,56 @@ tr.hover-row:hover > * {
     font-size: 14px;
   }
 
+  .p-calendar {
+    height: 38px;
+  }
+
   .p-calendar input {
     font-size: 14px;
+  }
+
+  .add-product-control {
+    flex-direction: column !important;
+    gap: 1.5rem;
+  }
+
+  .qty-add-btn {
+    position: relative;
+    bottom: -2px;
+  }
+
+  .order-qty-btn .btn-group input {
+    height: 30px;
+  }
+
+  .order-qty-btn .btn-group button:last-of-type {
+    padding: 0px 12px !important;
+  }
+   .order-qty-btn .btn-group button:first-of-type {
+    padding: 0px 12px !important;
+  }
+
+  .order-qty-btn .btn-group>button {
+    height: 30px !important;
+    
+  }
+
+  .order-list-mobile .btn-group>button i {
+    font-size: 13px;
+  }
+
+  .order-list-mobile .user-img {
+    width: 61px;
+    height: 59.21px;
+    border-radius: 17px;
+  }
+
+  .accordion-body {
+    padding: .5rem;
+  }
+
+  .mobile-swiper-content i {
+    font-size: 22px;
   }
 
 }
@@ -5179,9 +5278,13 @@ tr.hover-row:hover > * {
       font-size: 14px;
   }
 
+  .custom-select-opt {
+    --height-select: 38px;
+  }
+
   .custom-select-opt .same-as-select,
   .custom-select-opt .select-items {
-      font-size: 12px;
+      font-size: 14px;
   }
 
   .dropdown-menu {
@@ -5214,16 +5317,17 @@ tr.hover-row:hover > * {
       font-size: 14px;
   }
 
-  .modal-btn-wrap {
-      right: 3.9rem;
+   .modal-btn-wrap {
+      display: none !important;
+  }
+  
+  .modal-btn-wrap-mobile {
+      display: block;
+      width: 100%;
   }
 
-  .modal-btn-wrap .modal-btn {
-      padding: 3px 5px;
-  }
-
-  .modal-btn-wrap .modal-btn i {
-      font-size: 16px;
+  .modal-btn-wrap-mobile>button {
+    width: 50%;
   }
 
   .inv-table-title {
@@ -5260,7 +5364,6 @@ tr.hover-row:hover > * {
       width: 90%;
   }
 
-  .btn,
   .modal-footer button {
       font-size: 12px;
   }
@@ -5292,11 +5395,16 @@ tr.hover-row:hover > * {
   }
 
   .btn-group button {
-      padding: 3px 6px;
+      padding: 9px 12px;
   }
 
   .modal i {
-      font-size: 12px;
+      font-size: 14px;
+  }
+
+  .qty-add-btn i {
+    padding: 3px 2px;
+    font-size: 20px !important;
   }
 
   .invoice-header,
@@ -5423,7 +5531,7 @@ tr.hover-row:hover > * {
   .info-modal .modal-body,
   .warning-modal .modal-body,
   .danger-modal .modal-body {
-      font-size: 15px;
+    font-size: 15px;
   }
 
   .input-caption-bottom,
@@ -5448,6 +5556,19 @@ tr.hover-row:hover > * {
     font-size: 14px;
   }
 
+  .p-calendar {
+    height: 38px;
+  }
+
+  .custom-select-opt .same-as-select,
+  .custom-select-opt .select-items {
+      font-size: 14px;
+  }
+
+  .custom-select-opt .same-as-select {
+      height: 38px;
+      background-size: 12px 14px;
+  }
 
 }
 
@@ -5752,7 +5873,7 @@ tr.hover-row:hover > * {
 
   .custom-select-opt .same-as-select,
   .custom-select-opt .select-items {
-      font-size: 12px;
+      font-size: 14px;
   }
 
   .dropdown-menu {
@@ -5786,15 +5907,16 @@ tr.hover-row:hover > * {
   }
 
   .modal-btn-wrap {
-      right: 3.9rem;
+      display: none !important;
+  }
+  
+  .modal-btn-wrap-mobile {
+      display: block;
+      width: 100%;
   }
 
-  .modal-btn-wrap .modal-btn {
-      padding: 3px 5px;
-  }
-
-  .modal-btn-wrap .modal-btn i {
-      font-size: 16px;
+  .modal-btn-wrap-mobile>button {
+    width: 50%;
   }
 
   .inv-table-title {
@@ -5831,7 +5953,6 @@ tr.hover-row:hover > * {
       width: 90%;
   }
 
-  .btn,
   .modal-footer button {
       font-size: 12px;
   }
@@ -6003,14 +6124,22 @@ tr.hover-row:hover > * {
   }
 
   .dropzone-file .dropzone-btn {
-      padding: 2px 5px;
+    padding: 2px 5px;
   }
 
   .dropzone-btn i {
-      font-size: 18px;
+    font-size: 18px;
   }
 
-   .p-calendar input {
+  .p-calendar {
+    height: 36px;
+  }
+
+  .custom-select-opt {
+    --height-select: 36px;
+  }
+
+  .p-calendar input {
     font-size: 14px;
   }
 }
@@ -6307,12 +6436,12 @@ tr.hover-row:hover > * {
 
   .card .card-title,
   .modal .modal-section-title {
-      font-size: 12px;
+    font-size: 12px;
   }
 
   .custom-select-opt .same-as-select,
   .custom-select-opt .select-items {
-      font-size: 12px;
+      font-size: 15px;
   }
 
   .dropdown-menu {
@@ -6346,15 +6475,11 @@ tr.hover-row:hover > * {
   }
 
   .modal-btn-wrap {
-      right: 3.9rem;
+      display: inline-flex;
   }
-
-  .modal-btn-wrap .modal-btn {
-      padding: 3px 5px;
-  }
-
-  .modal-btn-wrap .modal-btn i {
-      font-size: 16px;
+  
+  .modal-btn-wrap-mobile {
+    display: none !important;
   }
 
   .inv-table-title {
@@ -6560,6 +6685,10 @@ tr.hover-row:hover > * {
   .input-caption-bottom,
   .label-tag-wrap .label-tag p {
       font-size: 11px;
+  }
+
+  .p-calendar {
+    height: 36px;
   }
 }
 

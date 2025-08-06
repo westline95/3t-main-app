@@ -24,12 +24,11 @@ import ConfirmModal from "../elements/Modal/ConfirmModal";
 import CustTypeModal from "../elements/Modal/CustTypeModal";
 import { CustomSelect } from "../elements/CustomSelect";
 import DropzoneFile from "../elements/DropzoneFile";
-import FriendlyDate from "../elements/Date/FriendlyDate";
+import convertFullDate from "../assets/js/ConvertDate";
 import FetchApi from "../assets/js/fetchApi";
 import InputWLabel from "../elements/Input/InputWLabel";
 import InputWSelect from "../elements/Input/InputWSelect";
 import InputGroup from "../elements/Input/InputGroup";
-import ConvertDate from "../assets/js/convertFullDate";
 import useAxiosPrivate from "../hooks/useAxiosPrivate";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -415,7 +414,7 @@ export default function Customers({handleSidebar, showSidebar}) {
   };
 
   const formatedDateCell = (rowData) => {
-    return <span>{ConvertDate.convertToFullDate(rowData.createdAt, "/")}</span>;
+    return <span>{convertFullDate.convertToFullDate(rowData.createdAt, "/")}</span>;
   };
   
   const formatedCurrencySales = (rowData) => {
@@ -688,7 +687,7 @@ export default function Customers({handleSidebar, showSidebar}) {
         <div className={classNames('flex flex-column xl:align-items-start gap-3')} 
           style={{
             backgroundColor: '#F8F9FD',
-            padding: '1.5rem',
+            padding: '1rem',
             boxShadow: '1px 1px 7px #9a9acc1a',
             borderRadius: '9px',
             position:'relative'
@@ -700,7 +699,7 @@ export default function Customers({handleSidebar, showSidebar}) {
           <div className="flex align-items-center gap-3" 
               style={{
                 textTransform: 'capitalize', 
-                paddingBottom: '1rem',
+                paddingBottom: '.75rem',
                 borderBottom: '1px solid rgba(146, 146, 146, .2509803922)'
               }}
           >
@@ -1457,7 +1456,7 @@ export default function Customers({handleSidebar, showSidebar}) {
                                                   onChange={onChange}
                                                   position="left"
                                                   name={name}
-                                                  inputMode="numeric" 
+                                                  // inputMode="numeric" 
                                                   mask="currency"
                                                   defaultValue={value}
                                                   require={true}

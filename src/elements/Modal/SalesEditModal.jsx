@@ -6,7 +6,6 @@ import { Calendar } from 'primereact/calendar';
 import useAxiosPrivate from '../../hooks/useAxiosPrivate.js';
 
 import User from "../../assets/images/Avatar 1.jpg";
-import FriendlyDate from '../Date/FriendlyDate';
 import NumberFormat from '../Masking/NumberFormat';
 import InputWLabel from '../Input/InputWLabel';
 import InputWSelect from '../Input/InputWSelect';
@@ -16,7 +15,7 @@ import QtyButton from '../QtyButton';
 import CreatePayment from './CreatePaymentModal';
 import FetchApi from '../../assets/js/fetchApi.js';
 import { useForm } from 'react-hook-form';
-import ConvertDate from '../../assets/js/convertFullDate.js';
+import ConvertDate from '../../assets/js/ConvertDate.js';
 import DataStatic from '../../assets/js/dataStatic.js';
 import dataStatic from '../../assets/js/dataStatic.js';
 
@@ -616,10 +615,13 @@ export default function SalesEditModal({show, onHide, data}) {
                 </div>
             </Modal.Header>
             <Modal.Body>
+                 <div className="modal-btn-wrap-mobile flex flex-row md:row-gap-3">
+                    <button type="button" className="btn btn-warning btn-w-icon" onClick={checkEditPermit}><i className='bx bx-pencil'></i>Edit order</button>
+                    <button type="button" className={`btn btn-danger btn-w-icon ${editMode ? 'disabled' : ''}`} aria-label='cancelSales' onClick={handleModal}><i className='bx bx-trash'></i>cancel order</button>
+                </div>
                 <form autoComplete='off'>
-                    <div className="row gy-4 mb-4">
-                        <div className="col-lg-3 col-sm-12 col-md-12 col-12">
-
+                    <div className="row xl:gap-0 lg:gap-0 md:gap-3 sm:row-gap-2 mb-4">
+                        <div className="col-lg-4 col-sm-12 col-md-12 col-12">
                             {/* start: this is helper */}
                             <InputWLabel 
                                 type="text"
@@ -712,7 +714,7 @@ export default function SalesEditModal({show, onHide, data}) {
                                 disabled={data.delivery ? true : editMode ? false : true}  
                             />
                         </div>
-                        <div className="col-lg-2 col-sm-6 col-md-6 col-6">
+                        <div className="col-lg-2 col-sm-12 col-md-12 col-6">
                             <InputWLabel 
                                 label="note" 
                                 as="textarea"
@@ -726,50 +728,51 @@ export default function SalesEditModal({show, onHide, data}) {
                         </div>
                     </div>
                 </form>
-                <div className="row gy-2 mt-1">
-                    <div className="col-lg-12 col-sm-12 col-md-12 col-12 mt-3 mb-4">
-                        <div className="d-flex flex-fill gap-3" >
-                            <div style={{position:'relative', width: 500}}>
-                                <InputWLabel 
-                                    label="add product"
-                                    type="text"
-                                    name="salesProduct" 
-                                    placeholder="Search product name..." 
-                                    onChange={handleSearchProd}
-                                    onFocus={handleSearchProd}
-                                    onKeyDown={keyDownSearchProd}
-                                    style={{width: '100%', textTransform:'capitalize'}}
-                                    register={register}
-                                    require={false}
-                                    errors={errors}
-                                    autoComplete={"off"}
-                                    disabled={editMode ? false : true}  
-                                />
-                                {/* popup autocomplete */}
-                                <div className="popup-element" aria-expanded={openPopupProd} ref={refToProd}>
-                                    {filterProd && filterProd.length > 0 ? 
-                                        filterProd.map((e,idx) => {
-                                            return (
-                                                <div key={`product-${e.product_id}`} className="res-item" onClick={() => 
-                                                    
-                                                    handleChooseProd({ 
-                                                    product_id: e.product_id, 
-                                                    product_name: e.product_name, 
-                                                    variant: e.variant, 
-                                                    img:e.img, 
-                                                    product_cost: e.product_cost , 
-                                                    sell_price: e.sell_price,
-                                                    discount: e.discount
-                                                })}
-                                                >{e. variant !== "" ? e.product_name + " " + e.variant : e.product_name}</div>
-                                            )
-                                        }) : ""
-                                    }
-                                </div>  
-                            </div>
+                {/* <div className="row gy-1 mt-1"> */}
+                    {/* <div className="col-lg-12 col-sm-12 col-md-12 col-12 mt-3 mb-4"> */}
+                    <div className="flex sm:flex-column md:flex-column lg:flex-row xl:flex-row xl:gap-3 lg:gap-0 md:gap-3 sm:flex-wrap add-product-control" >
+                        <div className='sm:w-12 lg:w-5'>
+                            <InputWLabel 
+                                label="add product"
+                                type="text"
+                                name="salesProduct" 
+                                placeholder="Search product name..." 
+                                onChange={handleSearchProd}
+                                onFocus={handleSearchProd}
+                                onKeyDown={keyDownSearchProd}
+                                style={{width: 'inherit', textTransform:'capitalize'}}
+                                register={register}
+                                require={false}
+                                errors={errors}
+                                autoComplete={"off"}
+                                disabled={editMode ? false : true}  
+                            />
+                            {/* popup autocomplete */}
+                            <div className="popup-element" aria-expanded={openPopupProd} ref={refToProd}>
+                                {filterProd && filterProd.length > 0 ? 
+                                    filterProd.map((e,idx) => {
+                                        return (
+                                            <div key={`product-${e.product_id}`} className="res-item" onClick={() => 
+                                                
+                                                handleChooseProd({ 
+                                                product_id: e.product_id, 
+                                                product_name: e.product_name, 
+                                                variant: e.variant, 
+                                                img:e.img, 
+                                                product_cost: e.product_cost , 
+                                                sell_price: e.sell_price,
+                                                discount: e.discount
+                                            })}
+                                            >{e. variant !== "" ? e.product_name + " " + e.variant : e.product_name}</div>
+                                        )
+                                    }) : ""
+                                }
+                            </div>  
+                        </div>
 
-                            <div className='d-flex flex-column'>
-                                <Form.Label className="mb-1">qty</Form.Label>
+                        <div className='flex sm:flex-row lg:flex-row gap-3'>
+                            {/* <div> */}
+                                {/* <Form.Label className="mb-1">qty</Form.Label> */}
                                 <QtyButton 
                                     min={0} 
                                     max={999} 
@@ -778,14 +781,15 @@ export default function SalesEditModal({show, onHide, data}) {
                                     returnValue={(e) => setQtyVal(e)}
                                     value={qtyVal} 
                                     disabled={editMode ? false : true}  
+                                    label={"qty"}
                                 />
-                            </div>
-                            <div className='d-flex flex-column'>
-                                <label className="mb-1" style={{color:'#ffffff'}}>button</label>
-                                <span className={`btn btn-primary ${editMode ? "" : "disabled"}`} onClick={addToSalesData}><i className="bx bx-plus" style={{width:24, height:24}}></i></span>
-                            </div>
+                            {/* </div> */}
+                            {/* <div className='align-self-end'> */}
+                                <div className={`btn btn-primary ${editMode ? "" : "disabled"} qty-add-btn align-self-end`} onClick={addToSalesData}><i className="bx bx-plus"></i></div>
+                            {/* </div> */}
                         </div>
                     </div>
+                    {/* </div> */}
 
                     <div className="table-responsive mt-3">
                         <table className="table">
@@ -982,7 +986,7 @@ export default function SalesEditModal({show, onHide, data}) {
                             </tbody>
                         </table>
                     </div>
-                </div>
+                {/* </div> */}
 
                 
             </Modal.Body>

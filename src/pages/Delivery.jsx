@@ -28,7 +28,7 @@ import AutoComplete from '../elements/AutoComplete';
 import QtyButton from '../elements/QtyButton';
 import DiscountModal from '../elements/Modal/DiscModal';
 import CreatePayment from '../elements/Modal/CreatePaymentModal';
-import ConvertDate from '../assets/js/convertFullDate.js';
+import ConvertDate from '../assets/js/ConvertDate.js';
 import CustomToggle from '../elements/Custom/CustomToggle.jsx';
 import EmptyState from "../../public/vecteezy_box-empty-state-single-isolated-icon-with-flat-style_11537753.jpg"; 
 import ModalTextContent from '../elements/Modal/ModalTextContent.jsx';

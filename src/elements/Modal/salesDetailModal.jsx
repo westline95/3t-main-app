@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, Toast, ToastContainer } from 'react-bootstrap';
 import User from "../../assets/images/Avatar 1.jpg";
-import FriendlyDate from '../Date/FriendlyDate';
+import ConvertDate from '../../assets/js/ConvertDate';
 import NumberFormat from '../Masking/NumberFormat';
 import InputWLabel from '../Input/InputWLabel';
 import { CustomSelect } from '../CustomSelect';
 import FetchApi from '../../assets/js/fetchApi';
 import { useForm } from 'react-hook-form';
-import ConvertDate from '../../assets/js/convertFullDate.js';
 
 
 export default function SalesDetailModal({show, onHide, data}) {

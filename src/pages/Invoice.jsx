@@ -13,7 +13,7 @@ import ConfirmModal from '../elements/Modal/ConfirmModal';
 import InputWLabel from '../elements/Input/InputWLabel';
 import CustomToggle from '../elements/Custom/CustomToggle';
 import { Dropdown } from 'react-bootstrap';
-import ConvertDate from '../assets/js/convertFullDate.js';
+import ConvertDate from '../assets/js/ConvertDate.js';
 import InvoiceModal from '../elements/Modal/InvoiceModal.jsx';
 import ModalTextContent from '../elements/Modal/ModalTextContent.jsx';
 import FetchApi from '../assets/js/fetchApi.js';

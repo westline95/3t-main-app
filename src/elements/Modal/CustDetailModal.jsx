@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Modal } from 'react-bootstrap';
 import User from "../../assets/images/Avatar 1.jpg";
-import FriendlyDate from '../Date/FriendlyDate';
+import ConvertDate from '../../assets/js/ConvertDate';
 import NumberFormat from '../Masking/NumberFormat';
 
 export default function CustDetailModal({show, onHide, data}) {
@@ -139,7 +139,7 @@ export default function CustDetailModal({show, onHide, data}) {
                                 </div>
                                 <div className="cards-info-group d-flex justify-content-between">
                                     <p className="label-text">date of birth</p>
-                                    <p className="cards-text">{data.dob ? FriendlyDate(data.dob) : "-"}</p>
+                                    <p className="cards-text">{data.dob ? ConvertDate.FriendlyDate(data.dob) : "-"}</p>
                                 </div>
                                 <div className="cards-info-group d-flex justify-content-between">
                                     <p className="label-text">gender</p>

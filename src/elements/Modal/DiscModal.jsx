@@ -126,11 +126,11 @@ export default function DiscountModal({ show, onHide, totalCart, returnVal, mult
     return ( 
         <>
         
-        <Modal size="md" show={show} onHide={onHide} style={{zIndex: 9999999}}>
+        <Modal size="md" show={show} onHide={onHide} style={{zIndex: 9999999}} centered>
             <Modal.Header closeButton>
                 <Modal.Title>add discount</Modal.Title>
             </Modal.Header>
-            <Modal.Body>
+            <Modal.Body id="addDiscount">
                 <div className="basic-tabs mt-3">
                     <div className="tabs-sm">
                         <div 
