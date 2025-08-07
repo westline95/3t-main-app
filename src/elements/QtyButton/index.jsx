@@ -206,7 +206,7 @@ export default function QtyButton(props) {
             }
 
             <div className="btn-group" role="group" style={{width: width ? width : size ? '100%' : "270px" , marginTop:'.1rem'}}>
-                <button type="button" className="btn btn-secondary light" onClick={minus} >
+                <button type="button" className="btn btn-secondary light" onClick={minus}  disabled={disabled} >
                     <i className="bx bx-minus"></i>
                 </button>
                 <NumericFormat 
@@ -220,7 +220,7 @@ export default function QtyButton(props) {
                     value={inputValue} 
                     disabled={disabled} 
                 />
-                <button type="button" className="btn btn-secondary light" onClick={plus} style={{borderLeft: 0}}>
+                <button type="button" className="btn btn-secondary light" onClick={plus} style={{borderLeft: 0}} disabled={disabled} >
                     <i className="bx bx-plus"></i>
                 </button>
             </div>

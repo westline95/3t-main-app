@@ -1847,15 +1847,15 @@ export default function Sales({handleSidebar, showSidebar}){
         return (
         <div className="col-12" key={rowData.id} style={{position:'relative'}}>
             <div className='flex flex-column xl:align-items-start gap-2'
-            style={{
-                backgroundColor: '#F8F9FD',
-                padding: '1rem',
-                boxShadow: '1px 1px 7px #9a9acc1a',
-                borderRadius: '9px',
-                position:'relative'
-            }}
-            aria-label="custDetailModal"
-            onClick={(e) => handleModal(e, rowData)}
+                style={{
+                    backgroundColor: '#F8F9FD',
+                    padding: '1rem',
+                    boxShadow: '1px 1px 7px #9a9acc1a',
+                    borderRadius: '9px',
+                    position:'relative'
+                }}
+                aria-label="salesEditModal" 
+                onClick={(e) => handleModalWData(e, {endpoint: "sales", id: rowData.order_id, action: 'update', ...rowData})}
             >
             
             <div className="flex align-items-center gap-3" 
@@ -1868,9 +1868,8 @@ export default function Sales({handleSidebar, showSidebar}){
                 <span className="user-img" style={{marginRight: 0}}>
                 <img
                     src={
-                    rowData.img && rowData.img != ""
-                        ? rowData.img
-                        : "../src/assets/images/Avatar 2.jpg"
+                    rowData.img ? rowData.img
+                        : `https://res.cloudinary.com/du3qbxrmb/image/upload/v1751378806/no-img_u5jpuh.jpg`
                     }
                     alt=""
                 />
@@ -1973,7 +1972,6 @@ export default function Sales({handleSidebar, showSidebar}){
     };
     
     const orderTemplate = (rowData, index) => {
-        console.log(rowData)
         return (
         <div className="flex flex-row col-12" key={rowData.product_id} style={{position:'relative', backgroundColor:'#F8F9FD', padding: '.9rem', borderRadius:'7px'}}>
             <Swiper slidesPerView={'auto'} style={{width:'100%'}}>
@@ -2080,7 +2078,7 @@ export default function Sales({handleSidebar, showSidebar}){
                     </div>
                 </SwiperSlide>
                 <SwiperSlide style={{width: '70px'}}>
-                    <div className='mobile-swiper-content danger'>
+                    <div className='mobile-swiper-content danger' onClick={() => {delSalesItems(index)}}>
                         <i className='bx bx-trash'></i>
                     </div>
                 </SwiperSlide>
@@ -3227,7 +3225,7 @@ export default function Sales({handleSidebar, showSidebar}){
                                                         </div>
 
                                                         {/* mobile view */}
-                                                        <DataView value={salesItems} listTemplate={orderListTemplate} ></DataView>
+                                                        <DataView value={salesItems} listTemplate={orderListTemplate}  ></DataView>
                                                         
                                                     </Accordion.Body>
                                                 </Accordion.Item>

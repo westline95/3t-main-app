@@ -18,10 +18,13 @@ import { useForm } from 'react-hook-form';
 import ConvertDate from '../../assets/js/ConvertDate.js';
 import DataStatic from '../../assets/js/dataStatic.js';
 import dataStatic from '../../assets/js/dataStatic.js';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { DataView } from 'primereact/dataview';
 
 export default function SalesEditModal({show, onHide, data}) {
     const toast = useRef(null);
     const toastUpload = useRef(null);
+    const orderCardLeft = useRef(null);
 
     const [ showToast, setShowToast ] = useState(false);
     const [ isLoading, setLoading ] = useState(true);
@@ -401,7 +404,6 @@ export default function SalesEditModal({show, onHide, data}) {
     };
 
     const onError = (errors) => {
-        
         if(getValues('name') != "" && errors.customer_id){
             setError("name", { type: 'required', message: 'Choose customer name correctly!' });
         }
@@ -474,7 +476,6 @@ export default function SalesEditModal({show, onHide, data}) {
     };
 
     const checkEditPermit = async() => {
-        console.log(data)
         await axiosPrivate.get("/ro/by", { params: { id: data.order_id }})
         .then(resp => {
             if(resp.data.length > 0){
@@ -493,6 +494,192 @@ export default function SalesEditModal({show, onHide, data}) {
 
         })
     }
+
+     const orderTemplate = (rowData, index) => {
+        return (
+            <div key={rowData.product_id} >
+                <Swiper slidesPerView={'auto'} style={{width:'100%', height:'auto'}} allowSlideNext={editMode ? true:false}>
+                    <SwiperSlide style={{width: '100%', height:'inherit'}}>
+                        <div className='flex flex-column xl:align-items-start gap-1'
+                            style={{
+                                backgroundColor: '#ffffff',
+                                padding: '1rem',
+                                boxShadow: '1px 1px 7px #9a9acc1a',
+                                borderRadius: '9px',
+                                position:'relative',
+                                width:'100%',
+                                minHeight:'125px'
+                            }}
+                            aria-label="custDetailModal"
+                            onClick={(e) => handleModal(e, rowData)}
+                        >
+                            <div className="flex align-items-center gap-3" 
+                                style={{
+                                    textTransform: 'capitalize', 
+                                }}
+                            >
+                                <span className="user-img" style={{marginRight: 0}}>
+                                <img
+                                    src={
+                                    rowData.img ? rowData.img
+                                        : `https://res.cloudinary.com/du3qbxrmb/image/upload/v1751378806/no-img_u5jpuh.jpg`
+                                    }
+                                    alt=""
+                                />
+                                </span>
+                                <div className='flex flex-column' style={{width: '80%'}}>
+                                    <div className='mb-1'>
+                                        <p style={{marginBottom: 0, fontSize: 15, fontWeight: 600, maxWidth: '130px'}}>{`${rowData.product_name} ${rowData.variant}`}</p>
+                                        <p style={{marginBottom: 0, fontSize: 13, color: '#7d8086', maxWidth: '130px'}}>
+                                            <NumberFormat intlConfig={{
+                                                    value: rowData.sell_price, 
+                                                    locale: "id-ID",
+                                                    style: "currency", 
+                                                    currency: "IDR",
+                                                }} 
+                                            />
+                                        </p>
+                                        {rowData.discProd != 0 ?
+                                        (
+                                            <p style={{marginBottom: 0, fontSize: 13, color: '#7d8086', maxWidth: '130px'}}>
+                                                -<NumberFormat intlConfig={{
+                                                        value: rowData.discProd, 
+                                                        locale: "id-ID",
+                                                        style: "currency", 
+                                                        currency: "IDR",
+                                                    }} 
+                                                />
+                                            </p>
+
+                                        ):''}
+                                        {/* <p style={{marginBottom: 0, fontSize: 13, color: '#7d8086'}}>{`Disc: ${rowData.discProd}`}</p> */}
+                                    </div>
+                                    <div className="order-qty-btn">
+                                        <QtyButton 
+                                            min={1} 
+                                            max={999} 
+                                            name={`qty-product`} 
+                                            id="qtyItem" 
+                                            value={rowData.quantity} 
+                                            returnValue={(e) => {handleEdit(e,index);handleUpdateEndNote()}} 
+                                            size={100} 
+                                            disabled={editMode ? false : true}
+                                        />
+
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div style={{position:'absolute',right:24, bottom: 60}}>
+                                <div style={{textAlign:'center', marginBottom:'.3rem', fontSize:'16px', fontWeight: 600}}>
+                                    <NumberFormat intlConfig={{
+                                            value: (rowData.sell_price*rowData.quantity) - (rowData.discProd), 
+                                            locale: "id-ID",
+                                            style: "currency", 
+                                            currency: "IDR",
+                                        }} 
+                                    />
+                                </div>
+                            
+                            </div>
+                        </div>
+                    </SwiperSlide>
+                    <SwiperSlide style={{width: '70px', height:'auto'}}>
+                        <div className='mobile-swiper-content danger' onClick={() => {delSalesItems(index)}}>
+                            <i className='bx bx-trash'></i>
+                        </div>
+                    </SwiperSlide>
+                </Swiper>
+
+            </div>
+        );
+    };
+
+    const orderListTemplate = (items) => {
+        if (!items || items.length === 0) return null;
+
+        let list = items.map((order, index) => {
+            return orderTemplate(order, index);
+        });
+        // const totalItem = items.reduce((prevValue, currValue) => Number(prevValue) + Number(currValue.quantity), 0);
+        // console.log(salesEndNote)
+        return (
+            <>
+            <div className="order-list-mobile flex flex-column gap-2 col-12" 
+                style={{
+                    position:'relative', 
+                    backgroundColor:'#F8F9FD', 
+                    padding: '.9rem', 
+                    borderRadius:'7px',
+                    marginTop: '2rem'
+                }}
+            >
+                {list}
+            </div>
+            <div className='order-cost-wrap'>
+                <div class="order-cost-items">
+                    <p class="cost-text">{`items (${salesEndNote.totalQty})`}</p>
+                    <p class="cost-price">
+                        <NumberFormat intlConfig={{
+                            value: salesEndNote.subtotal, 
+                            locale: "id-ID",
+                            style: "currency", 
+                            currency: "IDR",
+                        }}
+                        />
+                    </p>
+                </div>
+                <div class="order-cost-addon">
+                    <p class="cost-addon-text">Diskon order</p>
+                    <span class="d-flex gap-2">
+                        {salesDisc && salesDisc.discType == "percent" ?
+                        (
+                            <>
+                            <NumberFormat intlConfig={{
+                                value: salesDisc ? (salesDisc.value*Number(salesEndNote.subtotal)/100) : "0", 
+                                locale: "id-ID",
+                                style: "currency", 
+                                currency: "IDR",
+                            }}
+                            />
+                            <span>{`(${salesDisc.value}%)`}</span>
+                            </>
+                        ) : 
+                        (
+                            <NumberFormat intlConfig={{
+                                value: salesDisc.value, 
+                                locale: "id-ID",
+                                style: "currency", 
+                                currency: "IDR",
+                            }} 
+                            />
+                        )
+                        }
+                        {editMode ? 
+                            (
+                                <span class="order-sett" aria-label='addDiscount' onClick={(e) => handleModal(e)}>
+                                    <i class="bx bx-cog"></i>
+                                </span>
+                            ):""
+                        }
+                    </span>
+                </div>
+                <div class="order-cost-total">
+                    <p class="order-cost-total-text">total</p>
+                    <p class="order-cost-total-price">
+                        <NumberFormat intlConfig={{
+                            value: salesEndNote.grandtotal, 
+                            locale: "id-ID",
+                            style: "currency", 
+                            currency: "IDR",
+                        }} 
+                        />
+                    </p>
+                </div>
+            </div>
+            </>
+        );
+    };
 
     useEffect(() => {
         if(!chooseCust){
@@ -521,38 +708,6 @@ export default function SalesEditModal({show, onHide, data}) {
         }
     },[salesDisc, orderDetail]);
 
-    // useEffect(() => {
-    //     if(orderDetail){
-    //         if(orderDetail && orderDetail.length > 0) {
-    //             handleUpdateEndNote();
-    //         } else {
-    //             // setPaidData(null);
-    //             setSalesDisc(null);
-    //         }
-    //     }
-    // },[orderDetail]);
-    //  useEffect(() => {
-    //     if(salesEndNote && salesDisc){
-    //         let updateTotal = 0;
-    //         let discount = 0;
-
-    //         if(salesDisc.discType === "nominal"){
-    //             updateTotal = salesEndNote.totalSales - salesDisc.value;
-    //             discount = salesDisc.value;
-    //         } else if(salesDisc.discType === "percent"){
-    //             discount = salesEndNote.totalSales*salesDisc.value/100;
-    //             updateTotal = salesEndNote.totalSales - discount;
-    //         }
-
-    //         let endNote = {
-    //             ...salesEndNote,
-    //             grandTotal: updateTotal.toString(),
-    //             discount: discount
-    //         }
-    //         setSalesEndNote(endNote);
-    //         setDiscVal(discount);
-    //     }
-    // },[salesDisc]);
 
     useEffect(() => {
         setAddedValue(null)
@@ -791,7 +946,7 @@ export default function SalesEditModal({show, onHide, data}) {
                     </div>
                     {/* </div> */}
 
-                    <div className="table-responsive mt-3">
+                    <div className="order-list-table table-responsive mt-3">
                         <table className="table">
                             <thead>
                                 <tr>
@@ -911,15 +1066,6 @@ export default function SalesEditModal({show, onHide, data}) {
                                                 }} 
                                                 />
                                             )
-                                        // :  (
-                                        //     <NumberFormat intlConfig={{
-                                        //         value: salesEndNote.order_discount, 
-                                        //         locale: "id-ID",
-                                        //         style: "currency", 
-                                        //         currency: "IDR",
-                                        //     }} 
-                                        //     />
-                                        // )
                                         }
                                         {editMode ? 
                                             (
@@ -986,6 +1132,8 @@ export default function SalesEditModal({show, onHide, data}) {
                             </tbody>
                         </table>
                     </div>
+
+                    <DataView value={orderDetail} listTemplate={orderListTemplate}  ></DataView>
                 {/* </div> */}
 
                 
