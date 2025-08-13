@@ -36,7 +36,7 @@ const InputWLabel =  forwardRef((props, ref) => {
         textStyle,
         autoComplete,
         inputWidth,
-        display
+        display,
     } = props;
 
     const [ switched, setSwitch ] = useState(false);
@@ -73,11 +73,17 @@ const InputWLabel =  forwardRef((props, ref) => {
         <div className={`input-label d-flex flex-wrap 
             ${inlineForm ? "flex-row justify-content-between horizontal-form-control" : "flex-column"}
             ${type === "switch" ? "form-switch" : "" }`} 
-            style={{position: 'relative', width: inputWidth ? inputWidth : ''}}>
+            style={{position: 'relative', width: inputWidth ? inputWidth : ''}}
+        >
             {type === "checkbox" ? 
-                (<Form.Check 
-                    type={type}
-                    className="form-check-input"
+                (<input
+                    type="checkbox"
+                    className={`form-check-input ${theme ? `checkbox-${theme}` : 'checkbox-primary'}`}
+                    name={name}
+                    checked={checked}
+                    onChange={onChange}
+                    disabled={disabled}
+                    {...register != null ? {...register(name, { required: require, onChange: onChange })} : ""}
                 />)
             : type == "customRadio" ?
             (<>

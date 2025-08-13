@@ -18,9 +18,14 @@ import EmptyState from "../../../public/vecteezy_box-empty-state-single-isolated
 import { ListBox } from 'primereact/listbox';
 import { Dropdown } from 'primereact/dropdown';
 import { Checkbox } from 'primereact/checkbox';
+import useMediaQuery from '../../hooks/useMediaQuery.js';
+import { DataView } from 'primereact/dataview';
+import { Swiper,SwiperSlide } from 'swiper/react';
 
 
 export default function ReturnOrderModal({ show, onHide }){
+    const isMobile = useMediaQuery('(max-width: 767px)');
+    const isMediumScr = useMediaQuery('(min-width: 768px) and (max-width: 1024px)');
     const [ custData, setCustData ] = useState(null);
     const [ selectedOpt, setSelectedOpt ] = useState(null);
     const [ isLoading, setIsLoading ] = useState(true);
@@ -29,6 +34,7 @@ export default function ReturnOrderModal({ show, onHide }){
     const [ ordersByCust, setOrdersByCust] = useState(null);
     const [ choosedRow, setChoosedRow] = useState(null);
     const [ choosedRowItem, setChoosedRowItem] = useState(null);
+    const [ editableMobile, setEditableMobile] = useState(false);
     const [ choosedRowProduct, setChoosedRowProduct] = useState(null);
     const [selectedProducts, setSelectedProducts] = useState(null);
     const [ filterCust, setFilteredCust ] = useState([]);
@@ -40,6 +46,8 @@ export default function ReturnOrderModal({ show, onHide }){
     const [ orderSum, setOrderSum ] = useState(null);
     const [ totalRecords, setTotalRecords ] = useState(0);
     const [ qtyVal, setQtyVal ] = useState(0);
+    const [reasonVal, setReasonVal] = useState(false);
+        
     // const [ controlledCheckAll, setControlledCheckAll ] = useState(false);
     const [ toastContent, setToastContent ] = useState({variant: "", msg: "", title: ""});
     
@@ -191,7 +199,6 @@ export default function ReturnOrderModal({ show, onHide }){
                     } else {
                         setOrdersByCust(filteringOrder);
                     }
-                    console.log(filteringOrder)
                 } else {
                     setOrdersByCust(null);
                     toast.current.show({
@@ -250,7 +257,6 @@ export default function ReturnOrderModal({ show, onHide }){
                                     axiosPrivate.post("/order-credit", nextOrderBody)
                                     .then(resp4 => {
                                         if(resp4.data){
-                                            console.log(resp4.data);
                                             toast.current.show({
                                                 severity: "success",
                                                 summary: "Sukses",
@@ -292,7 +298,6 @@ export default function ReturnOrderModal({ show, onHide }){
                 .catch(err2 => {
                     axiosPrivate.delete(`/ro?id=${resp1.data.return_order_id}`)
                     .then(resp4 => {
-                        console.log(resp4)
                         toast.current.show({
                             severity: "error",
                             summary: "Gagal",
@@ -334,7 +339,6 @@ export default function ReturnOrderModal({ show, onHide }){
         let invUpdateBody = JSON.stringify(invUpdate);
         await axiosPrivate.put("/inv", invUpdateBody, {params: {id: invID}})
         .then(resp => {
-            console.log(resp.data);
             toast.current.show({
                 severity: "success",
                 summary: "Sukses",
@@ -381,6 +385,7 @@ export default function ReturnOrderModal({ show, onHide }){
         let returnOrderModel = {
             ...formData,
         }
+        console.log(formData)
         
         let refundTotal = 0;
         selectedProducts?.map(product => {
@@ -400,7 +405,6 @@ export default function ReturnOrderModal({ show, onHide }){
         returnOrderModel.refund_total = refundTotal;
 
         let order_discount_change;
-        console.log(choosedRow)
         if(choosedRow.order_items.length == selectedProducts.length){
             let checkMaxQty = [];
             selectedProducts.map(product => {
@@ -418,37 +422,37 @@ export default function ReturnOrderModal({ show, onHide }){
         }
 
         // do by method return
-        // if(formData.return_method_id === 3){
-        //     let toDate = choosedRow.order_date;
-        //     let nextOrderAddOn = {};
-        //     await axiosPrivate.get(`/sales/next?id=${formData.customer_id}&order_date=${toDate}`)
-        //     .then(resp1 => {
+        if(formData.return_method_id === 3){
+            let toDate = choosedRow.order_date;
+            let nextOrderAddOn = {};
+            await axiosPrivate.get(`/sales/next?id=${formData.customer_id}&order_date=${toDate}`)
+            .then(resp1 => {
                 
-        //         if(resp1.data.length > 0){
-        //             let placedOrderToRO;
+                if(resp1.data.length > 0){
+                    let placedOrderToRO;
                     
-        //             if(resp1.data.length > 1){
-        //                 let findCurrent = resp1.data.findIndex(({order_id}) => returnOrderModel.order_id == order_id);
-        //                 placedOrderToRO = resp1.data[findCurrent+1];
-        //                 nextOrderAddOn.customer_id = formData.customer_id;
-        //                 nextOrderAddOn.order_id = placedOrderToRO.order_id;
+                    if(resp1.data.length > 1){
+                        let findCurrent = resp1.data.findIndex(({order_id}) => returnOrderModel.order_id == order_id);
+                        placedOrderToRO = resp1.data[findCurrent+1];
+                        nextOrderAddOn.customer_id = formData.customer_id;
+                        nextOrderAddOn.order_id = placedOrderToRO.order_id;
                         
-        //                 fetchAddReturnOrder(returnOrderModel, roItemModel, nextOrderAddOn, order_discount_change);
-        //             } else {
-        //                 // placedOrderToRO = resp1.data[0];
-        //                 fetchAddReturnOrder(returnOrderModel, roItemModel, null, order_discount_change);
-        //             }
-        //         } else {
-        //             nextOrderAddOn.customer_id = formData.customer_id;
-        //             fetchAddReturnOrder(returnOrderModel, roItemModel, nextOrderAddOn, order_discount_change);
-        //         }
-        //     })
-        //     .catch(err1 => {
-                
-        //     })
-        // } else {
-        //     fetchAddReturnOrder(returnOrderModel, roItemModel, null, order_discount_change);
-        // }
+                        fetchAddReturnOrder(returnOrderModel, roItemModel, nextOrderAddOn, order_discount_change);
+                    } else {
+                        // placedOrderToRO = resp1.data[0];
+                        fetchAddReturnOrder(returnOrderModel, roItemModel, null, order_discount_change);
+                    }
+                } else {
+                    nextOrderAddOn.customer_id = formData.customer_id;
+                    fetchAddReturnOrder(returnOrderModel, roItemModel, nextOrderAddOn, order_discount_change);
+                }
+            })
+            .catch(err1 => {
+                console.error(err1)
+            })
+        } else {
+            fetchAddReturnOrder(returnOrderModel, roItemModel, null, order_discount_change);
+        }
         
 
         if(choosedRow.invoice){
@@ -477,8 +481,8 @@ export default function ReturnOrderModal({ show, onHide }){
                 }
 
             }
-            console.log(order_discount_change)
-            console.log(invUpdate)
+            // console.log(order_discount_change)
+            // console.log(invUpdate)
             // console.log("amount due => ", Number(choosedRow.invoice.amount_due))
             // console.log("order disc => ", Number(choosedRow.order_discount))
             // console.log("ro => ", Number(returnOrderModel.refund_total))
@@ -486,7 +490,7 @@ export default function ReturnOrderModal({ show, onHide }){
             // console.log(totalPaid)
             if(Object.keys(invUpdate).length > 0){
                 // fetchUpdateInv(data.ro.order.invoice.invoice_id, invUpdate);
-                // fetchUpdateInv(choosedRow.invoice.invoice_id, invUpdate);
+                fetchUpdateInv(choosedRow.invoice.invoice_id, invUpdate);
             } 
         }
     };
@@ -653,7 +657,7 @@ export default function ReturnOrderModal({ show, onHide }){
     // },[ordersByCust])
 
     const handleClickRow = (rowData) => {
-        console.log(rowData)
+        // console.log(rowData)
         setChoosedRow(rowData);
         rowData?.order_items?.map(e => {
             e.returnValue = 0;
@@ -757,7 +761,6 @@ export default function ReturnOrderModal({ show, onHide }){
         }
         if(dupeReturnItem.length > 0){
             let findDupe = dupeReturnItem.find(({item_id}) => rowData.item_id == item_id);
-            console.log(findDupe)
             if(findDupe < 0){
                 dupeReturnItem.push(returnItemObj);
             } else {
@@ -831,6 +834,400 @@ export default function ReturnOrderModal({ show, onHide }){
         }
         setChoosedRowItem(_products);
     };
+    
+    const handleChoosedRO = (data) => {
+        const { originalEvent, checked, value } = data
+        let _selected_products = selectedProducts ? [...selectedProducts] : null;
+        let rowObj = value;
+        
+
+        if(!rowObj.reason || rowObj.returnValue === 0){
+            originalEvent.target.checked = false;
+            if(!rowObj.reason && rowObj.returnValue === 0){
+                toast.current.show({
+                    severity: "error",
+                    summary: "Error",
+                    detail: "Alasan dan jumlah pengembalian tidak boleh kosong!",
+                    life: 3000,
+                });
+
+            } else if(!rowObj.reason){
+                toast.current.show({
+                    severity: "error",
+                    summary: "Error",
+                    detail: "Alasan pengembalian tidak boleh kosong",
+                    life: 3000,
+                });
+            } else if(rowObj.returnValue == 0){
+                toast.current.show({
+                    severity: "error",
+                    summary: "Error",
+                    detail: "Jumlah pengembalian tidak boleh 0!",
+                    life: 3000,
+                });
+            } 
+            return null;
+        }
+
+        if(_selected_products){
+            if(checked){
+                _selected_products.map((selectProd, idx) => {
+                    if(rowObj.item_id == selectProd.item_id){
+                        _selected_products[idx] = rowObj;
+                    } else {
+                        _selected_products.push(rowObj); 
+                    }
+                })
+            } else {
+                let findIdx = _selected_products.findIndex(({item_id}) => rowObj.item_id == item_id);
+                if(findIdx >= 0) {
+                    _selected_products.splice(findIdx, 1);
+                } 
+            }
+        } else {
+            if(checked){
+                _selected_products = [rowObj]; 
+            }
+        }
+        setSelectedProducts(_selected_products);
+        // return;
+        // let { rowData } = e;
+        // console.log(rowData)
+        // let _products = [...choosedRowItem];
+        // let _selected_products =  selectedProducts ? [...selectedProducts] : null;
+        
+        // // console.log(_products)
+        // // console.log(_products)
+        // // if(checked){
+        //     _products[index] = rowData;
+
+        //     // if(selectedProducts) {
+        //         // if(selectedProducts.length > 0){
+        //             // let findDupe = selectedProducts.find((selected) => selected.item_id == rowData.item_id);
+        //             // if(!findDupe){
+        //             //     let arr = [...selectedProducts];
+        //             //     arr.push(rowData);
+        //             //     setSelectedProducts(arr);
+        //             // }
+                    
+        //         // } else {
+        //         //     let arr = [];
+        //         //     arr.push(rowData);
+        //         //     setSelectedProducts(arr);
+        //         // }
+
+        //         if(_selected_products){
+        //             _products.map((product, i) => {
+        //                 _selected_products.map((selectProd, idx) => {
+        //                     if(product.item_id == selectProd.item_id){
+        //                         _selected_products[idx] = _products[i];
+        //                     }
+        //                 })
+        //             })
+        //             setSelectedProducts(_selected_products);
+        //         }
+        //     // } else {
+        //     //     let arr = [];
+        //     //     arr.push(rowData);
+        //     //     setSelectedProducts(arr);
+        //     // }
+        //     setChoosedRowItem(_products);
+             
+        //     // console.log(selectedProducts)
+        // // } else {
+        // //     if(selectedProducts) {
+        // //         if(selectedProducts.length > 0){
+        // //             let findDupe = selectedProducts.findIndex((row) => row.item_id == rowData.item_id);
+        // //             console.log(findDupe)
+        // //             if(findDupe >= 0){
+        // //                 let arr = [...selectedProducts];
+        // //                 arr.splice(findDupe, 1);
+        // //                 setSelectedProducts(arr);
+        // //             }
+        // //         } 
+        // //     } 
+        // //     else {
+        // //         console.log('err')
+        // //     }
+        // // }
+    };
+
+    const handleCheckboxClick = (e) => {
+            // if(!reasonVal){
+            e.preventDefault();
+                console.log("hhh")
+                toast.current.show({
+                    severity: "error",
+                    summary: "Error",
+                    detail: "Alasan dan jumlah pengembalian tidak boleh kosong!",
+                    life: 3000,
+                });
+                // return null;
+            // }
+    }
+
+    // console.log(selectedProducts)
+
+    const orderTemplate = (rowData, index, editableData) => {
+        // let newData = [...editableData];
+        // newData.push(rowData);
+        // console.log(newData)
+        // if(!reasonVal){
+        //     // console.log(getValues('ro_item'))
+        //     if(getValues('ro_item') && getValues('ro_item')[0] == "on"){
+        //         setValue("ro_item", ["off"]);
+        //         handleChoosedRO(false);
+        //     }
+        // }
+
+        return (
+        <div className='card static-shadow' key={index} >
+            <Swiper initialSlide={0} slidesPerView={'auto'} preventClicks={false} preventClicksPropagation={false} simulateTouch={false} style={{width:'100%', height:'auto'}}>
+                {/* <SwiperSlide style={{width: '70px'}}>
+                    <div className='mobile-swiper-content-left warning' onClick={() => {setEditableMobile((p) => !p)}}>
+                        <i className='bx bx-pencil'></i>
+                    </div>
+                </SwiperSlide> */}
+                <SwiperSlide style={{width: '100%'}}>
+                    <div className='flex flex-column xl:align-items-start gap-3'
+                        style={{
+                            backgroundColor: '#ffffff',
+                            padding: '1rem',
+                            boxShadow: '1px 1px 7px #9a9acc1a',
+                            borderRadius: '9px',
+                            position:'relative',
+                            width:'100%',
+                            minHeight:'125px'
+                        }}
+                    >
+                    
+                        <div className="flex align-items-center gap-3" 
+                            style={{
+                                textTransform: 'capitalize', 
+                            }}
+                        >
+                            {/* checkbox */}
+                            <InputWLabel 
+                                type="checkbox"
+                                name={`ro_item-${index}`}
+                                onChange={(e) => {handleChoosedRO({originalEvent: e, checked: e.target.checked, value: rowData})}} 
+                                // disabled={editableData[index].reason ? false : true}
+                                register={register}
+                                require={false}
+                                // errors={errors}
+                            />
+                            <div className='flex flex-column' style={{width: '80%'}}>
+                                <div className='mb-1'>
+                                    <p style={{marginBottom: 0, fontSize: 14, fontWeight: 600, maxWidth: '100px'}}>{`${rowData.product.product_name}`}</p>
+                                    <p style={{marginBottom: 0, fontSize: 11, color: '#7d8086', maxWidth: '100px'}}>
+                                        {`Variant: ${rowData.product.variant}`}
+                                    </p>
+                                    {/* <p style={{marginBottom: 0, fontSize: 13, color: '#7d8086'}}>{`Disc: ${rowData.discProd}`}</p> */}
+                                </div>
+                            </div>
+                              
+
+                        </div>
+                         <div className="return-reason" style={{width:'100%'}}>
+                            <InputWSelect
+                                // label={'alasan pengembalian'}
+                                name={`reason-${index}`}
+                                // position={choosedRowItem.length - 1 > 1 ? row.rowIndex == choosedRowItem.length - 1 ? "top" : "bottom" : "bottom"}
+                                selectLabel="Alasan pengembalian"
+                                options={dataStatic.returnReasonList}
+                                optionKeys={["id", "type"]}
+                                value={(selected) => {
+                                    setValue(`reason-${index}`, selected.value);
+                                    setValue(`reason_id-${index}`, selected.id);
+                                    // selected.value != "" ? clearErrors("reason") : null;
+                                    rowData.reason = selected.value;
+                                    rowData.reason_id = selected.id;
+                                    // console.log(editableData)
+                                    selected.value != null ? setReasonVal(true):setReasonVal(false);
+                                }}
+                                // disabled={editableMobile ? false : true}
+                                // onChange={(e) => editorCallback(e.value)}
+                                require={false}
+                                register={register}
+                                errors={errors}
+                            />
+                            {/* <Dropdown value={getValues('reason')} onChange={(e) => setValue('reason', e.value)} options={dataStatic.returnReasonList} optionLabel="type" placeholder="Select a reason" 
+                                 className="w-full" 
+                                /> */}
+                           
+                            {/* <InputWSelect
+                                // label={'alasan pengembalian'}
+                                name="reason"
+                                // position={choosedRowItem.length - 1 > 1 ? row.rowIndex == choosedRowItem.length - 1 ? "top" : "bottom" : "bottom"}
+                                selectLabel="Pilih alasan pengembalian"
+                                options={dataStatic.returnReasonList}
+                                optionKeys={["id", "type"]}
+                                value={(selected) => {
+                                    setValue('reason', selected.value);
+                                    setValue('reason_id', selected.id);
+                                    selected.value != "" ? clearErrors("reason") : null;
+                                    options.rowData.reason = selected.value;
+                                    options.rowData.reason_id = selected.id;
+                                }}
+                                onChange={(e) => options.editorCallback(e.value)}
+                                require={false}
+                                register={register}
+                                errors={errors}
+                            /> */}
+                        </div>
+                        <div className='mb-2' style={{position:'absolute',right:16, bottom: 60}}>
+                            <div className="order-qty-btn">
+                                <QtyButton 
+                                    min={0} 
+                                    max={Number(rowData.quantity)} 
+                                    name={`qty-product-${index}`} 
+                                    // id="qtyItem" 
+                                    value={rowData.returnValue && rowData.returnValue} 
+                                    returnValue={(e) => {rowData.returnValue = e}} 
+                                    size={100} 
+                                    // disabled={editableMobile ? false : true}
+                                />
+                            </div>
+                            {/* <button type="button" className="btn btn-warning btn-w-icon"><i className='bx bx-pencil'></i>Edit order</button> */}
+                        
+                        </div>
+
+                    </div>
+                </SwiperSlide>
+                <SwiperSlide style={{width: '70px'}}>
+                    <div className='mobile-swiper-content-right danger' onClick={() => {delSalesItems(index)}}>
+                        <i className='bx bx-trash'></i>
+                    </div>
+                </SwiperSlide>
+            </Swiper>
+            
+        </div>
+        );
+    };
+    
+
+    const orderListTemplate = (items) => {
+        if (!items || items.length === 0) return null;
+
+        let list = items.map((order, index) => {
+            return orderTemplate(order, index, items);
+        });
+
+        return (
+            <>
+            
+            <div className="order-list-mobile">
+                <p className="card-title mb-3">pilih Pengembalian Produk</p>
+                {/* <div className="w-full" 
+                    style={{
+                        // position:'relative', 
+                        backgroundColor:'#F8F9FD', 
+                        padding: '.9rem', 
+                        borderRadius:'7px',
+                        // marginTop: '2rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '.7rem',
+                        maxHeight: '418px',
+                        overflowY: 'scroll',
+                        overflowX: 'hidden'
+                    }}
+                >
+                </div> */}
+                <div className="flex flex-column gap-3">
+                    {list}
+
+                </div>
+
+                {/* {salesEndNote ?
+                (
+                <div className='w-full order-cost-wrap'>
+                    <div class="order-cost-items">
+                        <p class="cost-text">{`items (${salesEndNote?.totalQty})`}</p>
+                        <p class="cost-price">
+                            <NumberFormat intlConfig={{
+                                value: salesEndNote?.subtotal, 
+                                locale: "id-ID",
+                                style: "currency", 
+                                currency: "IDR",
+                            }}
+                            />
+                        </p>
+                    </div>
+                    <div class="order-cost-addon">
+                        <p class="cost-addon-text">Diskon order</p>
+                        <span class="d-flex gap-2">
+                            {salesDisc && salesDisc.discType == "percent" ?
+                            (
+                                <>
+                                <NumberFormat intlConfig={{
+                                    value: salesDisc ? (salesDisc.value*Number(salesEndNote?.subtotal)/100) : "0", 
+                                    locale: "id-ID",
+                                    style: "currency", 
+                                    currency: "IDR",
+                                }}
+                                />
+                                <span>{`(${salesDisc?.value}%)`}</span>
+                                </>
+                            ) : salesDisc && salesDisc.discType != "percent" ?
+                            (
+                                <NumberFormat intlConfig={{
+                                    value: salesDisc?.value, 
+                                    locale: "id-ID",
+                                    style: "currency", 
+                                    currency: "IDR",
+                                }} 
+                                />
+                            ):'Rp 0'
+                            }
+                            <span class="order-sett" aria-label='addDiscount' onClick={(e) => handleModal(e)}>
+                                <i class="bx bx-cog"></i>
+                            </span>
+                        </span>
+                    </div>
+                    <div class="order-cost-total mt-2">
+                        <p class="order-cost-total-text">total</p>
+                        <p class="order-cost-total-price">
+                            <NumberFormat intlConfig={{
+                                value: salesEndNote.grandtotal, 
+                                locale: "id-ID",
+                                style: "currency", 
+                                currency: "IDR",
+                            }} 
+                            />
+                        </p>
+                    </div>
+                    <div class="order-cost-total">
+                        <p class="order-cost-total-text">Metode pembayaran</p>
+                        <div>
+                            <span style={{textTransform: 'capitalize', fontWeight: 500, marginRight: '.7rem', fontSize:14}}>{`${paidData ?  paidData.payment_type : ""}`}</span>
+                            <span className="edit-table-data" aria-label="createPayment" onClick={handleModal}>
+                                <i className='bx bx-plus'></i>
+                            </span>
+                        </div>
+                    </div>
+                        <div class="order-cost-total">
+                        <p class="order-cost-total-text">Total bayar</p>
+                        <p class="order-cost-total-text">
+                            <NumberFormat intlConfig={{
+                                value: paidData ? paidData.amountOrigin : 0, 
+                                locale: "id-ID",
+                                style: "currency", 
+                                currency: "IDR",
+                            }} 
+                        />     
+                        </p>
+                                            
+                    </div>
+                </div>
+
+                ):''
+                } */}
+            </div>
+            </>
+        );
+    };
+// console.log(selectedProducts)
 
     useEffect(() => {
         if(chooseCust && chooseCust != ""){
@@ -839,10 +1236,6 @@ export default function ReturnOrderModal({ show, onHide }){
             fetchSalesbyCust();
         }
     },[chooseCust]);
-
-    useEffect(() => {
-        console.log(returnItem)
-    },[returnItem])
     
     useEffect(() => {
         fetchAllCust();
@@ -863,13 +1256,13 @@ export default function ReturnOrderModal({ show, onHide }){
 
     return(
         <>
-        <Modal dialogClassName="modal-90w" show={show} onHide={onHide} scrollable={false} centered={true} style={{overflowY:'unset'}}>
+        <Modal dialogClassName={isMobile ? 'modal-md' : 'modal-90w'} show={show} onHide={onHide} scrollable={true} centered={true} style={{overflowY:'unset'}}>
             <Modal.Header closeButton>
                 <Modal.Title>tambah pengembalian barang</Modal.Title>
             </Modal.Header>
             <Modal.Body style={{height: '100%'}}>
-                <form className="row gy-3 mb-4">
-                    <div className="col-lg-3 col-sm-6 col-md-6 col-6">
+                <form className="row mb-4" style={{gap: isMobile ? '.5rem' : 0}}>
+                    <div className="col-lg-3 col-sm-12 col-md-12 col-12">
                         <div style={{position:'relative'}}>
                             <InputWLabel 
                                 label="Nama Pelanggan" 
@@ -900,7 +1293,7 @@ export default function ReturnOrderModal({ show, onHide }){
                             </div>   
                         </div>
                     </div>
-                    <div className="col-lg-3 col-sm-6 col-md-6 col-6">
+                    <div className="col-lg-3 col-sm-12 col-md-12 col-12">
                         <InputWLabel 
                             label={'tanggal pengembalian'}
                             type={'date'}
@@ -911,7 +1304,7 @@ export default function ReturnOrderModal({ show, onHide }){
                             defaultValue={getValues('return_date')}
                         />
                     </div>
-                    <div className="col-lg-3 col-sm-6 col-md-6 col-6">
+                    <div className="col-lg-3 col-sm-12 col-md-12 col-12">
                         <InputWSelect
                             label={'metode pengembalian'}
                             name="return_method"
@@ -929,7 +1322,7 @@ export default function ReturnOrderModal({ show, onHide }){
                             disabled={choosedRow ? false : true}
                         />
                     </div>
-                    <div className="col-lg-3 col-sm-6 col-md-6 col-6">
+                    <div className="col-lg-3 col-sm-12 col-md-12 col-12">
                         <InputWSelect
                             label={'Status pengembalian'}
                             name="status"
@@ -960,8 +1353,8 @@ export default function ReturnOrderModal({ show, onHide }){
                     </Collapse> */}
 
                 <Collapse in={ordersByCust != null && choosedRow == null}>
-                    <div className="modal-table-wrap mt-2">
-                        <div className="table-responsive" style={{height: '350px'}}>
+                    <div className="modal-table-wrap mt-3">
+                        <div className="table-responsive" style={{height: isMobile ? '200px' :'350px'}}>
                             <table className="table" id="salesList" data-table-search="true" data-table-sort="true"
                                 data-table-checkbox="true">
                                 <thead>
@@ -1278,10 +1671,14 @@ export default function ReturnOrderModal({ show, onHide }){
                             </div>
                         </div>    
                         
-                        <div className="card card-table static-shadow" style={{minHeight: 400}}>
-                            <p className="card-title mb-3">pilih Pengembalian Produk</p>
                             {/* <div className="mt-4 " style={{height:'100%'}}> */}
+                            {!isMobile && !isMediumScr? 
+                            (
+                            <div className="card card-table static-shadow" style={{minHeight: 400}}>
+                                <p className="card-title mb-3">pilih Pengembalian Produk</p>
+                                
                                 <DataTable
+                                    id='returnOrderTable'
                                     className="p-datatable freeze-overflow"
                                     value={choosedRowItem}
                                     size="normal"
@@ -1292,7 +1689,10 @@ export default function ReturnOrderModal({ show, onHide }){
                                     selectionMode={'checkbox'} 
                                     selection={selectedProducts} 
                                     onSelectionChange={(e) => {
-                                        setSelectedProducts(e.value); 
+                                        // handleChoosedRO(e);
+                                        setSelectedProducts(e.value);
+                                        // setValue(`ro-item-${e.value[0].item_id}`, e.originalEvent.checked ? "on" : "off")
+                                        // console.log(e)
                                     }} 
                                     isDataSelectable={isRowSelectable}
                                     scrollable={false}
@@ -1335,6 +1735,12 @@ export default function ReturnOrderModal({ show, onHide }){
                                     ></Column>
                                     <Column rowEditor={true} headerStyle={{ width: '10%', minWidth: '8rem' }} bodyStyle={{ textAlign: 'center' }}></Column>
                                 </DataTable>
+                            </div>
+                            ) :
+                            (
+                                <DataView value={choosedRowItem} listTemplate={orderListTemplate} emptyMessage=' '></DataView>
+                            )   
+                            }                      
                             {/* </div> */}
                             {/* <div className='mt-3 mb-4'>
                                 <Row className='mb-4'>
@@ -1375,7 +1781,7 @@ export default function ReturnOrderModal({ show, onHide }){
                                     </Col>
                                 </Row>
                             </div> */}
-                        </div>
+                        
 
                     </div>
                     {/* </> */}

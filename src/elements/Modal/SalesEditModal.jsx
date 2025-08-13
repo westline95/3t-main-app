@@ -529,8 +529,8 @@ export default function SalesEditModal({show, onHide, data}) {
                                 </span>
                                 <div className='flex flex-column' style={{width: '80%'}}>
                                     <div className='mb-1'>
-                                        <p style={{marginBottom: 0, fontSize: 15, fontWeight: 600, maxWidth: '130px'}}>{`${rowData.product_name} ${rowData.variant}`}</p>
-                                        <p style={{marginBottom: 0, fontSize: 13, color: '#7d8086', maxWidth: '130px'}}>
+                                        <p style={{marginBottom: 0, fontSize: 14, fontWeight: 600, maxWidth: '130px'}}>{`${rowData.product_name} ${rowData.variant}`}</p>
+                                        <p style={{marginBottom: 0, fontSize: 11, color: '#7d8086', maxWidth: '130px'}}>
                                             <NumberFormat intlConfig={{
                                                     value: rowData.sell_price, 
                                                     locale: "id-ID",
@@ -541,7 +541,7 @@ export default function SalesEditModal({show, onHide, data}) {
                                         </p>
                                         {rowData.discProd != 0 ?
                                         (
-                                            <p style={{marginBottom: 0, fontSize: 13, color: '#7d8086', maxWidth: '130px'}}>
+                                            <p style={{marginBottom: 0, fontSize: 11, color: '#7d8086', maxWidth: '130px'}}>
                                                 -<NumberFormat intlConfig={{
                                                         value: rowData.discProd, 
                                                         locale: "id-ID",
@@ -571,7 +571,7 @@ export default function SalesEditModal({show, onHide, data}) {
 
                             </div>
                             <div style={{position:'absolute',right:24, bottom: 60}}>
-                                <div style={{textAlign:'center', marginBottom:'.3rem', fontSize:'16px', fontWeight: 600}}>
+                                <div style={{textAlign:'center', marginBottom:'.3rem', fontSize:14, fontWeight: 600}}>
                                     <NumberFormat intlConfig={{
                                             value: (rowData.sell_price*rowData.quantity) - (rowData.discProd), 
                                             locale: "id-ID",
@@ -605,76 +605,84 @@ export default function SalesEditModal({show, onHide, data}) {
         // console.log(salesEndNote)
         return (
             <>
-            <div className="order-list-mobile flex flex-column gap-2 col-12" 
-                style={{
-                    position:'relative', 
-                    backgroundColor:'#F8F9FD', 
-                    padding: '.9rem', 
-                    borderRadius:'7px',
-                    marginTop: '2rem'
-                }}
-            >
-                {list}
-            </div>
-            <div className='order-cost-wrap'>
-                <div class="order-cost-items">
-                    <p class="cost-text">{`items (${salesEndNote.totalQty})`}</p>
-                    <p class="cost-price">
-                        <NumberFormat intlConfig={{
-                            value: salesEndNote.subtotal, 
-                            locale: "id-ID",
-                            style: "currency", 
-                            currency: "IDR",
-                        }}
-                        />
-                    </p>
+            <div className='order-list-mobile'>
+                <div className="w-full" 
+                    style={{
+                        // position:'relative', 
+                        backgroundColor:'#F8F9FD', 
+                        padding: '.9rem', 
+                        borderRadius:'7px',
+                        marginTop: '2rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '.7rem',
+                        maxHeight: '418px',
+                        overflowY: 'scroll',
+                        overflowX: 'hidden'
+                    }}
+                >
+                    {list}
                 </div>
-                <div class="order-cost-addon">
-                    <p class="cost-addon-text">Diskon order</p>
-                    <span class="d-flex gap-2">
-                        {salesDisc && salesDisc.discType == "percent" ?
-                        (
-                            <>
+                <div className='w-full order-cost-wrap'>
+                    <div class="order-cost-items">
+                        <p class="cost-text">{`items (${salesEndNote.totalQty})`}</p>
+                        <p class="cost-price">
                             <NumberFormat intlConfig={{
-                                value: salesDisc ? (salesDisc.value*Number(salesEndNote.subtotal)/100) : "0", 
+                                value: salesEndNote.subtotal, 
                                 locale: "id-ID",
                                 style: "currency", 
                                 currency: "IDR",
                             }}
                             />
-                            <span>{`(${salesDisc.value}%)`}</span>
-                            </>
-                        ) : 
-                        (
+                        </p>
+                    </div>
+                    <div class="order-cost-addon">
+                        <p class="cost-addon-text">Diskon order</p>
+                        <span class="d-flex gap-2">
+                            {salesDisc && salesDisc.discType == "percent" ?
+                            (
+                                <>
+                                <NumberFormat intlConfig={{
+                                    value: salesDisc ? (salesDisc.value*Number(salesEndNote.subtotal)/100) : "0", 
+                                    locale: "id-ID",
+                                    style: "currency", 
+                                    currency: "IDR",
+                                }}
+                                />
+                                <span>{`(${salesDisc.value}%)`}</span>
+                                </>
+                            ) : 
+                            (
+                                <NumberFormat intlConfig={{
+                                    value: salesDisc.value, 
+                                    locale: "id-ID",
+                                    style: "currency", 
+                                    currency: "IDR",
+                                }} 
+                                />
+                            )
+                            }
+                            {editMode ? 
+                                (
+                                    <span class="order-sett" aria-label='addDiscount' onClick={(e) => handleModal(e)}>
+                                        <i class="bx bx-cog"></i>
+                                    </span>
+                                ):""
+                            }
+                        </span>
+                    </div>
+                    <div class="order-cost-total">
+                        <p class="order-cost-total-text">total</p>
+                        <p class="order-cost-total-price">
                             <NumberFormat intlConfig={{
-                                value: salesDisc.value, 
+                                value: salesEndNote.grandtotal, 
                                 locale: "id-ID",
                                 style: "currency", 
                                 currency: "IDR",
                             }} 
                             />
-                        )
-                        }
-                        {editMode ? 
-                            (
-                                <span class="order-sett" aria-label='addDiscount' onClick={(e) => handleModal(e)}>
-                                    <i class="bx bx-cog"></i>
-                                </span>
-                            ):""
-                        }
-                    </span>
-                </div>
-                <div class="order-cost-total">
-                    <p class="order-cost-total-text">total</p>
-                    <p class="order-cost-total-price">
-                        <NumberFormat intlConfig={{
-                            value: salesEndNote.grandtotal, 
-                            locale: "id-ID",
-                            style: "currency", 
-                            currency: "IDR",
-                        }} 
-                        />
-                    </p>
+                        </p>
+                    </div>
                 </div>
             </div>
             </>

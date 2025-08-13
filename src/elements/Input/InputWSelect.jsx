@@ -21,6 +21,7 @@ export default function InputWSelect(props) {
     const [selected2, selectedVal2] = useState({id: "", value: ""});
     const returnValue = (data) => {
         selectedVal2(data);
+        console.log(data)
         if(typeof props.value === "function"){
             return props.value(data);
         } else {
@@ -53,7 +54,7 @@ export default function InputWSelect(props) {
                 position={props.position}
             /> 
             <Form.Select 
-            id='tess'
+            // id='tess'
             // onChange={selectOrigin} 
             name={props.name}
             defaultValue={selected2.value}

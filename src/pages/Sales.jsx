@@ -39,8 +39,11 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 
 // Import Swiper styles
 import 'swiper/css';
+import useMediaQuery from '../hooks/useMediaQuery.js';
 
 export default function Sales({handleSidebar, showSidebar}){
+    const isMobile = useMediaQuery('(max-width: 768px)');
+    const isMediumScr = useMediaQuery('(min-width: 768px) and (max-width: 1024px)');
     const toast = useRef(null);
     const toastUpload = useRef(null);
     const mobileSearchInput = useRef(null);
@@ -133,6 +136,7 @@ export default function Sales({handleSidebar, showSidebar}){
             order_type: ''
         }
     });
+    
 
     const fetchAllSales = async () => {
         await axiosPrivate.get("/sales")
@@ -181,7 +185,6 @@ export default function Sales({handleSidebar, showSidebar}){
     const fetchAllRO = async() => {
         await axiosPrivate.get("/ro")
         .then(resp => {
-            console.log(resp.data)
             setROData(resp.data);
         })
         .catch(err => {
@@ -213,7 +216,6 @@ export default function Sales({handleSidebar, showSidebar}){
     const fetchAllCourier = async () => {
         await axiosPrivate.get("/user/courier")
             .then(response => {
-                console.log(response)
                 setCourierList(response.data);
             })
             .catch(error => {
@@ -1917,7 +1919,7 @@ export default function Sales({handleSidebar, showSidebar}){
                 </div> */}
                 <div className="flex flex-row justify-content-between">
                     <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Total order:</p>
-                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right'}}>
                         <NumberFormat intlConfig={{
                             value: rowData.grandtotal, 
                             locale: "id-ID",
@@ -1929,7 +1931,7 @@ export default function Sales({handleSidebar, showSidebar}){
                 </div>
                 <div className="flex flex-row justify-content-between">
                     <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Tipe pembayaran:</p>
-                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right'}}>
                         <span className={`badge badge-${
                             rowData.payment_type == "unpaid" ? 'danger'
                             : rowData.payment_type == "paid"? "primary"
@@ -1971,12 +1973,141 @@ export default function Sales({handleSidebar, showSidebar}){
         );
     };
     
+    const roItemTemplate = (rowData, index) => {
+        console.log(rowData)
+        return (
+        <div className="col-12" key={rowData.id} style={{position:'relative'}}>
+            <div className='flex flex-column xl:align-items-start gap-2'
+                style={{
+                    backgroundColor: '#F8F9FD',
+                    padding: '1rem',
+                    boxShadow: '1px 1px 7px #9a9acc1a',
+                    borderRadius: '9px',
+                    position:'relative'
+                }}
+                aria-label="salesEditModal" 
+                onClick={(e) => handleModalWData(e, {endpoint: "sales", id: rowData.order_id, action: 'update', ...rowData})}
+            >
+            
+            <div className="flex align-items-center gap-3" 
+                style={{
+                    textTransform: 'capitalize', 
+                    paddingBottom: '.75rem',
+                    borderBottom: '1px solid rgba(146, 146, 146, .2509803922)'
+                }}
+            >
+                <span className="user-img" style={{marginRight: 0}}>
+                <img
+                    src={
+                    rowData.img ? rowData.img
+                        : `https://res.cloudinary.com/du3qbxrmb/image/upload/v1751378806/no-img_u5jpuh.jpg`
+                    }
+                    alt=""
+                />
+                </span>
+                <div style={{width: '80%'}}>
+                    <p style={{marginBottom: 0, fontSize: 15, fontWeight: 600}}>{rowData.order_id}</p>
+                    <p style={{marginBottom: 0, fontSize: 13, color: '#7d8086'}}>{ConvertDate.LocaleStringDate(rowData.return_date)}</p>
+                    <div className='flex flex-row gap-2' style={{fontSize: 13, marginTop: '.5rem'}}>
+                        <span className={`badge badge-${
+                            rowData.order_type == "walk-in" ? 'primary'
+                            : rowData.order_type == "delivery" ? "warning" 
+                            : ""} light`}
+                        >
+                            {
+                                rowData.order_type
+                            }                                                                                
+                        </span>
+                        <span className={`badge badge-${
+                            rowData.order_status == "completed" ? 'success'
+                            : rowData.order_status == "pending" ? "secondary" 
+                            : rowData.order_status == "in-delivery" ? "warning" 
+                            : rowData.order_status == "canceled" ? "danger" 
+                            : ""} light`}
+                        >
+                            {
+                                rowData.order_status == "completed" ? 'completed'
+                                : rowData.order_status == "pending" ? 'pending'
+                                : rowData.order_status == "in-delivery" ? 'in-delivery'
+                                : rowData.order_status == "canceled" ? 'canceled'
+                                : ""
+                            }                                                                                
+                        </span>
+                        
+                    </div>
+                </div>
+            </div>
+            <div className="flex flex-column gap-1" 
+                style={{
+                    textTransform: 'capitalize', 
+                }}
+            >
+                {/* <div className="flex flex-row justify-content-between">
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Pelanggan:</p>
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>{rowData.customer_id ? `${rowData.customer?.name} (${rowData.customer_id})` : `guest.name (non-member)`}</p>
+                </div> */}
+                <div className="flex flex-row justify-content-between">
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Total refund:</p>
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right'}}>
+                        <NumberFormat intlConfig={{
+                            value: rowData.refund_total, 
+                            locale: "id-ID",
+                            style: "currency", 
+                            currency: "IDR",
+                        }} 
+                        />
+                    </p>
+                </div>
+                <div className="flex flex-row justify-content-between">
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Metode pengembalian:</p>
+                    <p className="view-note" aria-label="viewReturnMethod" style={{marginBottom: 0, fontSize: 14, textAlign: 'right'}}> 
+                        {/* <span className={`badge badge-${
+                            rowData.payment_type == "unpaid" ? 'danger'
+                            : rowData.payment_type == "paid"? "primary"
+                            : rowData.payment_type == "partial"? "warning"
+                            : ""} light`}
+                        > */}
+                        {rowData.return_method}                                                                           
+                        {/* </span> */}
+                    </p>
+                </div>
+            </div>
+            </div>
+            <Dropdown drop={index == custData.length - 1 ? "up" : "down"}  style={{position: 'absolute', top: 10, right: 9, padding: '1rem 1rem .5rem 1rem'}}>
+                <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components" ></Dropdown.Toggle>
+                <Dropdown.Menu align={"end"}>
+                    <Dropdown.Item eventKey="1" as="button" 
+                        aria-label="salesEditModal" 
+                        onClick={(e) => handleModalWData(e, {endpoint: "sales", id: rowData.order_id, action: 'update', ...rowData})}
+                    >
+                        <i className='bx bxs-edit'></i> Ubah order
+                    </Dropdown.Item>
+                    <Dropdown.Item eventKey="1" as="button" 
+                        aria-label="cancelSalesModal" 
+                        onClick={(e) => handleModalWData(
+                            e, 
+                            {
+                                endpoint: "sales", 
+                                id: rowData.order_id, 
+                                action: 'canceled',
+                                items: {...rowData}
+                            }
+                        )}
+                    >
+                        <i className='bx bx-trash'></i> Batalkan order
+                    </Dropdown.Item>
+                </Dropdown.Menu>
+            </Dropdown>
+        </div>
+        );
+    };
+    
     const orderTemplate = (rowData, index) => {
         return (
-        <div className="flex flex-row col-12" key={rowData.product_id} style={{position:'relative', backgroundColor:'#F8F9FD', padding: '.9rem', borderRadius:'7px'}}>
-            <Swiper slidesPerView={'auto'} style={{width:'100%'}}>
+        <div key={rowData.product_id} >
+            <Swiper slidesPerView={'auto'} style={{width:'100%', height:'auto'}}>
                 <SwiperSlide style={{width: '100%'}}>
-                    <div className='flex flex-column xl:align-items-start gap-1 order-list-mobile'
+                    <div className='flex flex-column xl:align-items-start gap-1'
                         style={{
                             backgroundColor: '#ffffff',
                             padding: '1rem',
@@ -1984,7 +2115,7 @@ export default function Sales({handleSidebar, showSidebar}){
                             borderRadius: '9px',
                             position:'relative',
                             width:'100%',
-                            height:'100%',
+                            minHeight:'125px'
                         }}
                         aria-label="custDetailModal"
                         onClick={(e) => handleModal(e, rowData)}
@@ -1993,8 +2124,6 @@ export default function Sales({handleSidebar, showSidebar}){
                         <div className="flex align-items-center gap-3" 
                             style={{
                                 textTransform: 'capitalize', 
-                                // paddingBottom: '.75rem',
-                                // borderBottom: '1px solid rgba(146, 146, 146, .2509803922)'
                             }}
                         >
                             <span className="user-img" style={{marginRight: 0}}>
@@ -2008,8 +2137,8 @@ export default function Sales({handleSidebar, showSidebar}){
                             </span>
                             <div className='flex flex-column' style={{width: '80%'}}>
                                 <div className='mb-1'>
-                                    <p style={{marginBottom: 0, fontSize: 15, fontWeight: 600, maxWidth: '130px'}}>{`${rowData.product_name} ${rowData.variant}`}</p>
-                                    <p style={{marginBottom: 0, fontSize: 13, color: '#7d8086', maxWidth: '130px'}}>
+                                    <p style={{marginBottom: 0, fontSize: 14, fontWeight: 600, maxWidth: '130px'}}>{`${rowData.product_name} ${rowData.variant}`}</p>
+                                        <p style={{marginBottom: 0, fontSize: 11, color: '#7d8086', maxWidth: '130px'}}>
                                         <NumberFormat intlConfig={{
                                                 value: rowData.sell_price, 
                                                 locale: "id-ID",
@@ -2018,6 +2147,19 @@ export default function Sales({handleSidebar, showSidebar}){
                                             }} 
                                         />
                                     </p>
+                                    {rowData.discProd != 0 ?
+                                    (
+                                        <p style={{marginBottom: 0, fontSize: 11, color: '#7d8086', maxWidth: '130px'}}>
+                                            -<NumberFormat intlConfig={{
+                                                    value: rowData.discProd, 
+                                                    locale: "id-ID",
+                                                    style: "currency", 
+                                                    currency: "IDR",
+                                                }} 
+                                            />
+                                        </p>
+
+                                    ):''}
                                     {/* <p style={{marginBottom: 0, fontSize: 13, color: '#7d8086'}}>{`Disc: ${rowData.discProd}`}</p> */}
                                 </div>
                                 <div className="order-qty-btn">
@@ -2063,8 +2205,8 @@ export default function Sales({handleSidebar, showSidebar}){
                             </div>
 
                         </div>
-                        <div style={{position:'absolute',right:24, bottom: 60}}>
-                            <div style={{textAlign:'center', marginBottom:'.3rem', fontSize:'16px', fontWeight: 600}}>
+                        <div style={{position:'absolute',right:16, bottom: 60}}>
+                            <div style={{textAlign:'center', marginBottom:'.3rem', fontSize:'15px', fontWeight: 600}}>
                                 <NumberFormat intlConfig={{
                                         value: (rowData.sell_price*rowData.quantity) - (rowData.discProd), 
                                         locale: "id-ID",
@@ -2103,72 +2245,83 @@ export default function Sales({handleSidebar, showSidebar}){
         return (
         <>
         <div className="flex flex-column gap-2" style={{ width: "100%" }}>
-            <div
-            className="wrapping-table-btn flex gap-3 justify-content-end"
-            style={{ width: "100%", height: "inherit" }}
-            >
-            <Dropdown drop={"down"}>
-                <Dropdown.Toggle variant="primary" style={{ height: "100%" }}>
-                <i className="bx bx-download"></i> export
-                </Dropdown.Toggle>
-                <Dropdown.Menu align={"end"}>
-                <Dropdown.Item
-                    eventKey="1"
-                    as="button"
-                    aria-label="viewInvModal"
-                    onClick={(e) =>
-                        handleModal(e, { id: inv.invoice_id, items: { ...inv } })
-                    }
-                >
-                    <i className="bx bx-show"></i> PDF (.pdf)
-                </Dropdown.Item>
-                <Dropdown.Item
-                    eventKey="1"
-                    as="button"
-                    aria-label="editInvModal"
-                    onClick={(e) => handleModal(e, inv.invoice_id)}
-                >
-                    <i className="bx bxs-edit"></i> Microsoft Excel (.xlsx)
-                </Dropdown.Item>
-                </Dropdown.Menu>
-            </Dropdown>
-            <button
-                type="button"
-                className=" btn btn-primary btn-w-icon"
-                style={{ height: "100%" }}
-            >
-                <i className="bx bxs-file-plus"></i> import
-            </button>
-            </div>
             <div className="flex gap-3 align-items-center mb-4" style={{ width: "100%" }}>
-            <div className="input-group-right" style={{ width: "100%" }}>
-                {mobileSearchMode ?
-                (
-                <span className="input-group-icon input-icon-right" 
-                    onClick={() => {
-                        setMobileFilterValue('');
-                        setMobileSearchMode(false);
-                        mobileSearchInput.current.focus();
-                    }}
-                >
-                    <i class='bx bx-x'></i>
-                </span>
-                ):(
-                <span className="input-group-icon input-icon-right">
-                    <i className="zwicon-search"></i>
-                </span>
-                )
-                }
-                <input
-                    ref={mobileSearchInput}
-                    type="text"
-                    className="form-control input-w-icon-right"
-                    value={mobileFilterValue}
-                    onChange={mobileFilterFunc}
-                    placeholder="Keyword Search"
-                    // onKeyDown={() => setMobileSearchMode(true)}
-                />
+                <div className="input-group-right" style={{ width: "100%" }}>
+                    {mobileSearchMode ?
+                    (
+                    <span className="input-group-icon input-icon-right" 
+                        onClick={() => {
+                            setMobileFilterValue('');
+                            setMobileSearchMode(false);
+                            mobileSearchInput.current.focus();
+                        }}
+                    >
+                        <i class='bx bx-x'></i>
+                    </span>
+                    ):(
+                    <span className="input-group-icon input-icon-right">
+                        <i className="zwicon-search"></i>
+                    </span>
+                    )
+                    }
+                    <input
+                        ref={mobileSearchInput}
+                        type="text"
+                        className="form-control input-w-icon-right"
+                        value={mobileFilterValue}
+                        onChange={mobileFilterFunc}
+                        placeholder="Keyword Search"
+                        // onKeyDown={() => setMobileSearchMode(true)}
+                    />
+                </div>
             </div>
+        </div>
+        <div className="grid gap-1">{list}</div>
+        </>
+        );
+    };
+
+
+    const listROTemplate = (items) => {
+        if (!items || items.length === 0) return null;
+
+        let list = items.map((sales, index) => {
+            return roItemTemplate(sales, index);
+        });
+
+        return (
+        <>
+        <div className="flex flex-column gap-2" style={{ width: "100%" }}>
+            
+            <div className="flex gap-3 align-items-center mb-4" style={{ width: "100%" }}>
+                <div className="input-group-right" style={{ width: "100%" }}>
+                    {mobileSearchMode ?
+                    (
+                    <span className="input-group-icon input-icon-right" 
+                        onClick={() => {
+                            setMobileFilterValue('');
+                            setMobileSearchMode(false);
+                            mobileSearchInput.current.focus();
+                        }}
+                    >
+                        <i class='bx bx-x'></i>
+                    </span>
+                    ):(
+                    <span className="input-group-icon input-icon-right">
+                        <i className="zwicon-search"></i>
+                    </span>
+                    )
+                    }
+                    <input
+                        ref={mobileSearchInput}
+                        type="text"
+                        className="form-control input-w-icon-right"
+                        value={mobileFilterValue}
+                        onChange={mobileFilterFunc}
+                        placeholder="Keyword Search"
+                        // onKeyDown={() => setMobileSearchMode(true)}
+                    />
+                </div>
             {/* <button
                 type="button"
                 className="btn btn-primary btn-w-icon"
@@ -2206,6 +2359,7 @@ export default function Sales({handleSidebar, showSidebar}){
         );
     };
     
+    
     const orderListTemplate = (items) => {
         if (!items || items.length === 0) return null;
 
@@ -2214,7 +2368,112 @@ export default function Sales({handleSidebar, showSidebar}){
         });
 
         return (
-            <div className="grid gap-1">{list}</div>
+            <>
+            <div className="order-list-mobile">
+               <div className="w-full" 
+                    style={{
+                        // position:'relative', 
+                        backgroundColor:'#F8F9FD', 
+                        padding: '.9rem', 
+                        borderRadius:'7px',
+                        marginTop: '2rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '.7rem',
+                        maxHeight: '418px',
+                        overflowY: 'scroll',
+                        overflowX: 'hidden'
+                    }}
+                >
+                    {list}
+                </div>
+
+                {salesEndNote ?
+                (
+                <div className='w-full order-cost-wrap'>
+                    <div class="order-cost-items">
+                        <p class="cost-text">{`items (${salesEndNote?.totalQty})`}</p>
+                        <p class="cost-price">
+                            <NumberFormat intlConfig={{
+                                value: salesEndNote?.subtotal, 
+                                locale: "id-ID",
+                                style: "currency", 
+                                currency: "IDR",
+                            }}
+                            />
+                        </p>
+                    </div>
+                    <div class="order-cost-addon">
+                        <p class="cost-addon-text">Diskon order</p>
+                        <span class="d-flex gap-2">
+                            {salesDisc && salesDisc.discType == "percent" ?
+                            (
+                                <>
+                                <NumberFormat intlConfig={{
+                                    value: salesDisc ? (salesDisc.value*Number(salesEndNote?.subtotal)/100) : "0", 
+                                    locale: "id-ID",
+                                    style: "currency", 
+                                    currency: "IDR",
+                                }}
+                                />
+                                <span>{`(${salesDisc?.value}%)`}</span>
+                                </>
+                            ) : salesDisc && salesDisc.discType != "percent" ?
+                            (
+                                <NumberFormat intlConfig={{
+                                    value: salesDisc?.value, 
+                                    locale: "id-ID",
+                                    style: "currency", 
+                                    currency: "IDR",
+                                }} 
+                                />
+                            ):'Rp 0'
+                            }
+                            <span class="order-sett" aria-label='addDiscount' onClick={(e) => handleModal(e)}>
+                                <i class="bx bx-cog"></i>
+                            </span>
+                        </span>
+                    </div>
+                    <div class="order-cost-total mt-2">
+                        <p class="order-cost-total-text">total</p>
+                        <p class="order-cost-total-price">
+                            <NumberFormat intlConfig={{
+                                value: salesEndNote.grandtotal, 
+                                locale: "id-ID",
+                                style: "currency", 
+                                currency: "IDR",
+                            }} 
+                            />
+                        </p>
+                    </div>
+                    <div class="order-cost-total">
+                        <p class="order-cost-total-text">Metode pembayaran</p>
+                        <div>
+                            <span style={{textTransform: 'capitalize', fontWeight: 500, marginRight: '.7rem', fontSize:14}}>{`${paidData ?  paidData.payment_type : ""}`}</span>
+                            <span className="edit-table-data" aria-label="createPayment" onClick={handleModal}>
+                                <i className='bx bx-plus'></i>
+                            </span>
+                        </div>
+                    </div>
+                     <div class="order-cost-total">
+                        <p class="order-cost-total-text">Total bayar</p>
+                        <p class="order-cost-total-text">
+                            <NumberFormat intlConfig={{
+                                value: paidData ? paidData.amountOrigin : 0, 
+                                locale: "id-ID",
+                                style: "currency", 
+                                currency: "IDR",
+                            }} 
+                        />     
+                        </p>
+                                          
+                    </div>
+                </div>
+
+                ):''
+                }
+            </div>
+            </>
         );
     };
 
@@ -2326,123 +2585,169 @@ export default function Sales({handleSidebar, showSidebar}){
                                                 value={(selected) => setCustTypeFilter(selected)}
                                             />
                                         </div> */}
-                                        <DataTable
-                                            className="p-datatable"
-                                            value={salesMain}
-                                            size="normal"
-                                            removableSort
-                                            // stripedRows
-                                            // selectionMode={"checkbox"}
-                                            // selection={selectedSales}
-                                            // onSelectionChange={(e) => {
-                                            //     setSelectedSales(e.value);
-                                            // }}
-                                            dataKey="order_id"
-                                            style={{marginTop: '1.5rem' }}
-                                            tableStyle={{ minWidth: "50rem", fontSize: '14px' }}
-                                            filters={salesFilters}
-                                            filterDisplay='menu'
-                                            globalFilterFields={[
-                                                "order_id",
-                                                "order_date",
-                                                "customer.name",
-                                                "order_type",
-                                                "grandtotal",
-                                                "source",
-                                                "order_status",
-                                                "payment_type",
-                                            ]}
-                                            
-                                            emptyMessage={emptyStateHandler}
-                                            onFilter={(e) => setSalesFilters(e.filters)}
-                                            header={tableHeader}
-                                            paginator
-                                            totalRecords={totalRecords}
-                                            rows={50}
-                                        >
-                                            {/* <Column
-                                                selectionMode="multiple"
-                                                headerStyle={{ width: "3.5rem" }}
-                                            ></Column> */}
-                                            <Column
-                                                field="order_id"
-                                                header="Order ID"
-                                                sortable
-                                                bodyStyle={{ textTransform: "capitalize" }}
-                                                style={{ textTransform: "uppercase" }}
-                                            ></Column>
-                                            <Column
-                                                field="order_date"
-                                                header="order date"
-                                                body={formatedOrderDate}
-                                                dataType='date'
-                                                filter 
-                                                filterPlaceholder="Type a date"
-                                                style={{ textTransform: "uppercase" }}
-                                            ></Column>
-                                            <Column
-                                                field="customer.name"
-                                                header="customer"
-                                                filter 
-                                                filterPlaceholder="Search by customer name"
-                                                style={{ textTransform: "uppercase" }}
-                                                bodyStyle={{ textTransform: "capitalize" }}
-                                            ></Column>
-                                            <Column
-                                                field="order_type"
-                                                header="Order type"
-                                                filter 
-                                                showFilterMenu={false}
-                                                filterMenuStyle={{ width: '100%' }}
-                                                filterPlaceholder={"order type"}
-                                                bodyStyle={{ textTransform: 'capitalize' }}
-                                                style={{ textTransform: 'uppercase' }}
-                                            ></Column>
-                                            <Column
-                                                field="grandtotal"
-                                                header="Total"
-                                                body={formatedGrandtotal}
-                                                bodyStyle={{textTransform: 'capitalize'}}
-                                                sortable 
-                                                style={{ textTransform: "uppercase" }}
-                                            ></Column>
-                                            <Column
-                                                field="source"
-                                                header="source"
-                                                bodyStyle={{textTransform: 'capitalize'}}
-                                                filter
-                                                showFilterMenu={false}
-                                                filterMenuStyle={{ width: 'inherit' }}
-                                                style={{ textTransform: "uppercase" }}
-                                            ></Column>
-                                            <Column
-                                                field="payment_type"
-                                                header="type"
-                                                body={paymentTypeCell}
-                                                bodyStyle={{textTransform: 'capitalize'}}
-                                                filter
-                                                style={{ textTransform: "uppercase" }}
-                                            ></Column>
-                                            <Column
-                                                field="order_status"
-                                                header="status"
-                                                body={statusCell}
-                                                bodyStyle={{textTransform: 'capitalize'}}
-                                                filter
-                                                showFilterMenu={false} 
-                                                filterMenuStyle={{ width: '100%' }}
-                                                filterElement={statusRowFilter}
-                                                style={{ textTransform: "uppercase" }}
-                                            ></Column>
-                                            <Column
-                                                field=""
-                                                header="Action"
-                                                body={(rowData, rowIndex) => actionCell(rowData, rowIndex)}
-                                                style={{ textTransform: "uppercase" }}
-                                            ></Column>
-                                        </DataTable>
-
-                                        <DataView value={salesMain} listTemplate={listTemplate} style={{marginTop: '.5rem'}} />
+                                         
+                                        {!isMobile && !isMediumScr ?
+                                            (
+                                            <DataTable
+                                                className="p-datatable"
+                                                value={salesMain}
+                                                size="normal"
+                                                removableSort
+                                                // stripedRows
+                                                // selectionMode={"checkbox"}
+                                                // selection={selectedSales}
+                                                // onSelectionChange={(e) => {
+                                                //     setSelectedSales(e.value);
+                                                // }}
+                                                dataKey="order_id"
+                                                style={{marginTop: '1.5rem' }}
+                                                tableStyle={{ minWidth: "50rem", fontSize: '14px' }}
+                                                filters={salesFilters}
+                                                filterDisplay='menu'
+                                                globalFilterFields={[
+                                                    "order_id",
+                                                    "order_date",
+                                                    "customer.name",
+                                                    "order_type",
+                                                    "grandtotal",
+                                                    "source",
+                                                    "order_status",
+                                                    "payment_type",
+                                                ]}
+                                                
+                                                emptyMessage={emptyStateHandler}
+                                                onFilter={(e) => setSalesFilters(e.filters)}
+                                                header={tableHeader}
+                                                paginator
+                                                totalRecords={totalRecords}
+                                                rows={50}
+                                            >
+                                                {/* <Column
+                                                    selectionMode="multiple"
+                                                    headerStyle={{ width: "3.5rem" }}
+                                                ></Column> */}
+                                                <Column
+                                                    field="order_id"
+                                                    header="Order ID"
+                                                    sortable
+                                                    bodyStyle={{ textTransform: "capitalize" }}
+                                                    style={{ textTransform: "uppercase" }}
+                                                ></Column>
+                                                <Column
+                                                    field="order_date"
+                                                    header="order date"
+                                                    body={formatedOrderDate}
+                                                    dataType='date'
+                                                    filter 
+                                                    filterPlaceholder="Type a date"
+                                                    style={{ textTransform: "uppercase" }}
+                                                ></Column>
+                                                <Column
+                                                    field="customer.name"
+                                                    header="customer"
+                                                    filter 
+                                                    filterPlaceholder="Search by customer name"
+                                                    style={{ textTransform: "uppercase" }}
+                                                    bodyStyle={{ textTransform: "capitalize" }}
+                                                ></Column>
+                                                <Column
+                                                    field="order_type"
+                                                    header="Order type"
+                                                    filter 
+                                                    showFilterMenu={false}
+                                                    filterMenuStyle={{ width: '100%' }}
+                                                    filterPlaceholder={"order type"}
+                                                    bodyStyle={{ textTransform: 'capitalize' }}
+                                                    style={{ textTransform: 'uppercase' }}
+                                                ></Column>
+                                                <Column
+                                                    field="grandtotal"
+                                                    header="Total"
+                                                    body={formatedGrandtotal}
+                                                    bodyStyle={{textTransform: 'capitalize'}}
+                                                    sortable 
+                                                    style={{ textTransform: "uppercase" }}
+                                                ></Column>
+                                                <Column
+                                                    field="source"
+                                                    header="source"
+                                                    bodyStyle={{textTransform: 'capitalize'}}
+                                                    filter
+                                                    showFilterMenu={false}
+                                                    filterMenuStyle={{ width: 'inherit' }}
+                                                    style={{ textTransform: "uppercase" }}
+                                                ></Column>
+                                                <Column
+                                                    field="payment_type"
+                                                    header="type"
+                                                    body={paymentTypeCell}
+                                                    bodyStyle={{textTransform: 'capitalize'}}
+                                                    filter
+                                                    style={{ textTransform: "uppercase" }}
+                                                ></Column>
+                                                <Column
+                                                    field="order_status"
+                                                    header="status"
+                                                    body={statusCell}
+                                                    bodyStyle={{textTransform: 'capitalize'}}
+                                                    filter
+                                                    showFilterMenu={false} 
+                                                    filterMenuStyle={{ width: '100%' }}
+                                                    filterElement={statusRowFilter}
+                                                    style={{ textTransform: "uppercase" }}
+                                                ></Column>
+                                                <Column
+                                                    field=""
+                                                    header="Action"
+                                                    body={(rowData, rowIndex) => actionCell(rowData, rowIndex)}
+                                                    style={{ textTransform: "uppercase" }}
+                                                ></Column>
+                                            </DataTable>
+                                            ): 
+                                            (
+                                            <>
+                                            <div
+                                                className="wrapping-table-btn flex gap-3 justify-content-end"
+                                                style={{ width: "100%", height: "inherit" }}
+                                            >
+                                                <Dropdown drop={"down"}>
+                                                    <Dropdown.Toggle variant="primary" style={{ height: "100%" }}>
+                                                        <i className="bx bx-download"></i> export
+                                                    </Dropdown.Toggle>
+                                                    <Dropdown.Menu align={"end"}>
+                                                    <Dropdown.Item
+                                                        eventKey="1"
+                                                        as="button"
+                                                        aria-label="viewInvModal"
+                                                        onClick={(e) =>
+                                                            handleModal(e, { id: inv.invoice_id, items: { ...inv } })
+                                                        }
+                                                    >
+                                                        <i className="bx bx-show"></i> PDF (.pdf)
+                                                    </Dropdown.Item>
+                                                    <Dropdown.Item
+                                                        eventKey="1"
+                                                        as="button"
+                                                        aria-label="editInvModal"
+                                                        onClick={(e) => handleModal(e, inv.invoice_id)}
+                                                    >
+                                                        <i className="bx bxs-edit"></i> Microsoft Excel (.xlsx)
+                                                    </Dropdown.Item>
+                                                    </Dropdown.Menu>
+                                                </Dropdown>
+                                                <button
+                                                    type="button"
+                                                    className=" btn btn-primary btn-w-icon"
+                                                    style={{ height: "100%" }}
+                                                >
+                                                    <i className="bx bxs-file-plus"></i> import
+                                                </button>
+                                            </div>
+                                            <DataView value={salesMain} listTemplate={listTemplate} style={{marginTop: '.5rem'}} />         
+                                            </>
+                                            )
+                                        }
+                                   
                                         {/* <div className="table-responsive mt-4">
                                             <table className="table" id="advancedTablesWFixedHeader" data-table-search="true"
                                                 data-table-sort="true" data-table-checkbox="true">
@@ -3029,207 +3334,210 @@ export default function Sales({handleSidebar, showSidebar}){
                                                             </div>
                                                         </div>
 
-                                                        {/* large view */}
-                                                        <div className="table-responsive mt-4">
-                                                            <table className="table">
-                                                                <thead>
-                                                                    <tr>
-                                                                        <th scope="col" aria-label="product desc">
-                                                                            product
-                                                                        </th> 
-                                                                        <th scope="col" aria-label="product variant">
-                                                                            variant
-                                                                        </th>
-                                                                        <th scope="col" aria-label="qty">
-                                                                            qty
-                                                                        </th>
-                                                                        <th scope="col" aria-label="product price">
-                                                                            price
-                                                                        </th>
-                                                                        <th scope="col" aria-label="product price">
-                                                                            discount
-                                                                        </th>
-                                                                        <th scope="col" aria-label="total">
-                                                                            total
-                                                                        </th>
-                                                                        <th scope="col" aria-label="action">
-                                                                            action
-                                                                        </th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    {salesItems && salesItems.length > 0 ? 
-                                                                        salesItems.map((item, idx) => {
-                                                                        return(
-                                                                        <tr key={idx}>
-                                                                            <td className="data-img" style={{textTransform: 'capitalize'}}>
-                                                                                <span className="user-img">
-                                                                                    <img src={item.img} alt="prod-img"/>
-                                                                                </span>{item.product_name}
-                                                                            </td>
-                                                                            <td>{item.variant}</td>
-                                                                            <td>
-                                                                                <QtyButton 
-                                                                                    min={1} 
-                                                                                    max={999} 
-                                                                                    name={`qty-product`} 
-                                                                                    id="qtyItem" 
-                                                                                    value={item.quantity} 
-                                                                                    returnValue={(e) => {handleEdit(e,idx);handleUpdateEndNote()}} 
-                                                                                    width={'150px'} 
-                                                                                />
-                                                                            </td>
-                                                                            <td>
+                                                         
+                                                        {!isMobile && !isMediumScr?
+                                                            (
+                                                            <div className="table-responsive mt-4">
+                                                                <table className="table">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th scope="col" aria-label="product desc">
+                                                                                product
+                                                                            </th> 
+                                                                            <th scope="col" aria-label="product variant">
+                                                                                variant
+                                                                            </th>
+                                                                            <th scope="col" aria-label="qty">
+                                                                                qty
+                                                                            </th>
+                                                                            <th scope="col" aria-label="product price">
+                                                                                price
+                                                                            </th>
+                                                                            <th scope="col" aria-label="product price">
+                                                                                discount
+                                                                            </th>
+                                                                            <th scope="col" aria-label="total">
+                                                                                total
+                                                                            </th>
+                                                                            <th scope="col" aria-label="action">
+                                                                                action
+                                                                            </th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        {salesItems && salesItems.length > 0 ? 
+                                                                            salesItems.map((item, idx) => {
+                                                                            return(
+                                                                            <tr key={idx}>
+                                                                                <td className="data-img" style={{textTransform: 'capitalize'}}>
+                                                                                    <span className="user-img">
+                                                                                        <img src={item.img} alt="prod-img"/>
+                                                                                    </span>{item.product_name}
+                                                                                </td>
+                                                                                <td>{item.variant}</td>
+                                                                                <td>
+                                                                                    <QtyButton 
+                                                                                        min={1} 
+                                                                                        max={999} 
+                                                                                        name={`qty-product`} 
+                                                                                        id="qtyItem" 
+                                                                                        value={item.quantity} 
+                                                                                        returnValue={(e) => {handleEdit(e,idx);handleUpdateEndNote()}} 
+                                                                                        width={'150px'} 
+                                                                                    />
+                                                                                </td>
+                                                                                <td>
+                                                                                    <NumberFormat intlConfig={{
+                                                                                        value: item.sell_price, 
+                                                                                        locale: "id-ID",
+                                                                                        style: "currency", 
+                                                                                        currency: "IDR",
+                                                                                        }} 
+                                                                                    />
+                                                                                </td>
+                                                                                <td>
+                                                                                    <NumberFormat intlConfig={{
+                                                                                        value: item.discount, 
+                                                                                        locale: "id-ID",
+                                                                                        style: "currency", 
+                                                                                        currency: "IDR",
+                                                                                        }}                                                                                                                                     v
+                                                                                    />
+                                                                                </td>
+                                                                                <td>
+                                                                                    <NumberFormat intlConfig={{
+                                                                                        value: (Number(item.quantity)*Number(item.sell_price))-(Number(item.quantity)*Number(item.discount)), 
+                                                                                        locale: "id-ID",
+                                                                                        style: "currency", 
+                                                                                        currency: "IDR",
+                                                                                        }} 
+                                                                                    />
+                                                                                </td>
+                                                                                <td>
+                                                                                    <span className="table-btn del-table-data" onClick={() => {delSalesItems(idx)}}>
+                                                                                        <i className='bx bx-trash'></i>
+                                                                                    </span>
+                                                                                </td>
+                                                                            </tr>
+                                                                            )
+                                                                            })
+                                                                        :""}
+                                                                        {salesItems && salesItems.length > 0 && salesEndNote ?
+                                                                        <>
+                                                                        <tr className="endnote-row">
+                                                                            <td colSpan="2" className="endnote-row-title">items</td>
+                                                                            <td colSpan="4">{salesEndNote.totalQty}</td>
+                                                                        </tr>
+                                                                        <tr className="endnote-row">
+                                                                            <td colSpan="5" className="endnote-row-title">subtotal</td>
+                                                                            <td colSpan="2" style={{fontWeight: 500}}>
                                                                                 <NumberFormat intlConfig={{
-                                                                                    value: item.sell_price, 
+                                                                                    value: salesEndNote.subtotal, 
                                                                                     locale: "id-ID",
                                                                                     style: "currency", 
                                                                                     currency: "IDR",
                                                                                     }} 
                                                                                 />
                                                                             </td>
-                                                                            <td>
-                                                                                <NumberFormat intlConfig={{
-                                                                                    value: item.discount, 
-                                                                                    locale: "id-ID",
-                                                                                    style: "currency", 
-                                                                                    currency: "IDR",
-                                                                                    }}                                                                                                                                     v
-                                                                                />
-                                                                            </td>
-                                                                            <td>
-                                                                                <NumberFormat intlConfig={{
-                                                                                    value: (Number(item.quantity)*Number(item.sell_price))-(Number(item.quantity)*Number(item.discount)), 
-                                                                                    locale: "id-ID",
-                                                                                    style: "currency", 
-                                                                                    currency: "IDR",
+                                                                        </tr>
+                                                                        <tr className="endnote-row">
+                                                                            <td colSpan="5" className="endnote-row-title">add more discount</td>
+                                                                            <td colSpan="2" style={{fontWeight: 500}}>
+                                                                                {salesDisc  ?
+                                                                                    salesDisc.discType == "percent" ?
+                                                                                (
+                                                                                    <>
+                                                                                    <NumberFormat intlConfig={{
+                                                                                        value: salesDisc ? (salesDisc.value*Number(salesEndNote.subtotal)/100) : 0, 
+                                                                                        locale: "id-ID",
+                                                                                        style: "currency", 
+                                                                                        currency: "IDR",
+                                                                                    }}
+                                                                                    />
+                                                                                    <span>{`(${salesDisc.value}%)`}</span>
+                                                                                    </>
+                                                                                ) : 
+                                                                                (
+                                                                                    <NumberFormat intlConfig={{
+                                                                                        value: salesDisc.value, 
+                                                                                        locale: "id-ID",
+                                                                                        style: "currency", 
+                                                                                        currency: "IDR",
                                                                                     }} 
-                                                                                />
-                                                                            </td>
-                                                                            <td>
-                                                                                <span className="table-btn del-table-data" onClick={() => {delSalesItems(idx)}}>
-                                                                                    <i className='bx bx-trash'></i>
+                                                                                    />
+                                                                                )
+                                                                                :  (
+                                                                                    <NumberFormat intlConfig={{
+                                                                                        value: 0, 
+                                                                                        locale: "id-ID",
+                                                                                        style: "currency", 
+                                                                                        currency: "IDR",
+                                                                                    }} 
+                                                                                    />
+                                                                                )
+                                                                                }
+                                                                                <span className="endnote-row-action">
+                                                                                    <span className="table-btn edit-table-data" aria-label='addDiscount' onClick={(e) => handleModal(e)}>
+                                                                                        <i className='bx bx-cog'></i>
+                                                                                    </span>
                                                                                 </span>
                                                                             </td>
                                                                         </tr>
-                                                                        )
-                                                                        })
-                                                                    :""}
-                                                                    {salesItems && salesItems.length > 0 && salesEndNote ?
-                                                                    <>
-                                                                    <tr className="endnote-row">
-                                                                        <td colSpan="2" className="endnote-row-title">items</td>
-                                                                        <td colSpan="4">{salesEndNote.totalQty}</td>
-                                                                    </tr>
-                                                                    <tr className="endnote-row">
-                                                                        <td colSpan="5" className="endnote-row-title">subtotal</td>
-                                                                        <td colSpan="2" style={{fontWeight: 500}}>
-                                                                            <NumberFormat intlConfig={{
-                                                                                value: salesEndNote.subtotal, 
-                                                                                locale: "id-ID",
-                                                                                style: "currency", 
-                                                                                currency: "IDR",
-                                                                                }} 
-                                                                            />
-                                                                        </td>
-                                                                    </tr>
-                                                                    <tr className="endnote-row">
-                                                                        <td colSpan="5" className="endnote-row-title">add more discount</td>
-                                                                        <td colSpan="2" style={{fontWeight: 500}}>
-                                                                            {salesDisc  ?
-                                                                                salesDisc.discType == "percent" ?
-                                                                            (
-                                                                                <>
-                                                                                <NumberFormat intlConfig={{
-                                                                                    value: salesDisc ? (salesDisc.value*Number(salesEndNote.subtotal)/100) : 0, 
-                                                                                    locale: "id-ID",
-                                                                                    style: "currency", 
-                                                                                    currency: "IDR",
-                                                                                }}
-                                                                                />
-                                                                                <span>{`(${salesDisc.value}%)`}</span>
-                                                                                </>
-                                                                            ) : 
-                                                                            (
-                                                                                <NumberFormat intlConfig={{
-                                                                                    value: salesDisc.value, 
-                                                                                    locale: "id-ID",
-                                                                                    style: "currency", 
-                                                                                    currency: "IDR",
-                                                                                }} 
-                                                                                />
-                                                                            )
-                                                                            :  (
-                                                                                <NumberFormat intlConfig={{
-                                                                                    value: 0, 
-                                                                                    locale: "id-ID",
-                                                                                    style: "currency", 
-                                                                                    currency: "IDR",
-                                                                                }} 
-                                                                                />
-                                                                            )
-                                                                            }
-                                                                            <span className="endnote-row-action">
-                                                                                <span className="table-btn edit-table-data" aria-label='addDiscount' onClick={(e) => handleModal(e)}>
-                                                                                    <i className='bx bx-cog'></i>
-                                                                                </span>
-                                                                            </span>
-                                                                        </td>
-                                                                    </tr>
-                                                                    <tr className="endnote-row">
-                                                                        <td colSpan="5" className="endnote-row-title">total</td>
-                                                                        <td colSpan="2" >
-                                                                            <NumberFormat intlConfig={{
-                                                                                value: salesEndNote.grandtotal, 
-                                                                                locale: "id-ID",
-                                                                                style: "currency", 
-                                                                                currency: "IDR",
-                                                                                }} 
-                                                                            />
-                                                                        </td>
-                                                                    </tr>
                                                                         <tr className="endnote-row">
-                                                                        <td colSpan="5" className="endnote-row-title">paid & payment type</td>
-                                                                        <td colSpan="2">
-                                                                            <NumberFormat intlConfig={{
-                                                                                value: paidData ? paidData.amountOrigin : 0, 
-                                                                                locale: "id-ID",
-                                                                                style: "currency", 
-                                                                                currency: "IDR",
-                                                                                }} 
-                                                                            />
-                                                                            <span style={{textTransform: 'capitalize', fontWeight: 500}}>{`${paidData ? '~ ' + paidData.payment_type : ""}`}</span>
-                                                                            <span className="endnote-row-action">
-                                                                                <span className="table-btn edit-table-data" aria-label="createPayment" onClick={handleModal}>
-                                                                                    <i className='bx bx-cog'></i>
+                                                                            <td colSpan="5" className="endnote-row-title">total</td>
+                                                                            <td colSpan="2" >
+                                                                                <NumberFormat intlConfig={{
+                                                                                    value: salesEndNote.grandtotal, 
+                                                                                    locale: "id-ID",
+                                                                                    style: "currency", 
+                                                                                    currency: "IDR",
+                                                                                    }} 
+                                                                                />
+                                                                            </td>
+                                                                        </tr>
+                                                                            <tr className="endnote-row">
+                                                                            <td colSpan="5" className="endnote-row-title">paid & payment type</td>
+                                                                            <td colSpan="2">
+                                                                                <NumberFormat intlConfig={{
+                                                                                    value: paidData ? paidData.amountOrigin : 0, 
+                                                                                    locale: "id-ID",
+                                                                                    style: "currency", 
+                                                                                    currency: "IDR",
+                                                                                    }} 
+                                                                                />
+                                                                                <span style={{textTransform: 'capitalize', fontWeight: 500}}>{`${paidData ? '~ ' + paidData.payment_type : ""}`}</span>
+                                                                                <span className="endnote-row-action">
+                                                                                    <span className="table-btn edit-table-data" aria-label="createPayment" onClick={handleModal}>
+                                                                                        <i className='bx bx-cog'></i>
+                                                                                    </span>
                                                                                 </span>
-                                                                            </span>
-                                                                        </td>
-                                                                    </tr>
-                                                                    <tr className="endnote-row">
-                                                                        <td colSpan="5" className="endnote-row-title">remaining payment</td>
-                                                                        <td colSpan="2">
-                                                                            <NumberFormat intlConfig={{
-                                                                                value: salesEndNote.remaining_payment, 
-                                                                                locale: "id-ID",
-                                                                                style: "currency", 
-                                                                                currency: "IDR",
-                                                                                }} 
-                                                                            />
-                                                                        </td>
-                                                                    </tr>
-                                                                    </>
-                                                                    :""}
-                                                                </tbody>
-                                                            </table>
-                                                        </div>
-
-                                                        {/* mobile view */}
-                                                        <DataView value={salesItems} listTemplate={orderListTemplate}  ></DataView>
-                                                        
+                                                                            </td>
+                                                                        </tr>
+                                                                        <tr className="endnote-row">
+                                                                            <td colSpan="5" className="endnote-row-title">remaining payment</td>
+                                                                            <td colSpan="2">
+                                                                                <NumberFormat intlConfig={{
+                                                                                    value: salesEndNote.remaining_payment, 
+                                                                                    locale: "id-ID",
+                                                                                    style: "currency", 
+                                                                                    currency: "IDR",
+                                                                                    }} 
+                                                                                />
+                                                                            </td>
+                                                                        </tr>
+                                                                        </>
+                                                                        :""}
+                                                                    </tbody>
+                                                                </table>
+                                                            </div> 
+                                                            ): 
+                                                            (
+                                                            <DataView value={salesItems} listTemplate={orderListTemplate} emptyMessage=' '></DataView>
+                                                            )
+                                                        }
                                                     </Accordion.Body>
                                                 </Accordion.Item>
-                                                <div className="wrapping-table-btn mt-5">
+                                                <div className={`wrapping-table-btn ${isMobile && isMediumScr ? 'mt-4':'mt-5'}`}>
                                                     <button type="button" className="add-btn btn btn-primary btn-w-icon" onClick={handleSubmit(onSubmitSales, onError)}>
                                                         submit
                                                     </button>
@@ -3240,7 +3548,7 @@ export default function Sales({handleSidebar, showSidebar}){
                                 </div>
                                 <div className="tabs-content" style={openTab === "completeTab" ? {display: "block"} : {display: "none"}}>
                                     <div className="card card-table add-on-shadow">
-                                        
+                                        {!isMobile && !isMediumScr ? (
                                         <div className="mt-4">
                                             <DataTable
                                                 className="p-datatable"
@@ -3355,6 +3663,49 @@ export default function Sales({handleSidebar, showSidebar}){
                                             ></Column>
                                             </DataTable>
                                         </div>
+                                        ):(
+                                            <>
+                                            <div
+                                                className="wrapping-table-btn flex gap-3 justify-content-end"
+                                                style={{ width: "100%", height: "inherit" }}
+                                            >
+                                                <Dropdown drop={"down"}>
+                                                    <Dropdown.Toggle variant="primary" style={{ height: "100%" }}>
+                                                        <i className="bx bx-download"></i> export
+                                                    </Dropdown.Toggle>
+                                                    <Dropdown.Menu align={"end"}>
+                                                    <Dropdown.Item
+                                                        eventKey="1"
+                                                        as="button"
+                                                        aria-label="viewInvModal"
+                                                        onClick={(e) =>
+                                                            handleModal(e, { id: inv.invoice_id, items: { ...inv } })
+                                                        }
+                                                    >
+                                                        <i className="bx bx-show"></i> PDF (.pdf)
+                                                    </Dropdown.Item>
+                                                    <Dropdown.Item
+                                                        eventKey="1"
+                                                        as="button"
+                                                        aria-label="editInvModal"
+                                                        onClick={(e) => handleModal(e, inv.invoice_id)}
+                                                    >
+                                                        <i className="bx bxs-edit"></i> Microsoft Excel (.xlsx)
+                                                    </Dropdown.Item>
+                                                    </Dropdown.Menu>
+                                                </Dropdown>
+                                                <button
+                                                    type="button"
+                                                    className=" btn btn-primary btn-w-icon"
+                                                    style={{ height: "100%" }}
+                                                >
+                                                    <i className="bx bxs-file-plus"></i> import
+                                                </button>
+                                            </div>
+                                            <DataView value={salesComplete} listTemplate={listTemplate} style={{marginTop: '.5rem'}} emptyMessage=' ' />
+                                            </>
+
+                                        )}
                                         {/* <div className="table-responsive mt-4">
                                             <table className="table" id="custTypeList" data-table-search="true"
                                                 data-table-sort="true" data-table-checkbox="true">
@@ -3455,6 +3806,8 @@ export default function Sales({handleSidebar, showSidebar}){
                                 </div>
                                 <div className="tabs-content" style={openTab === "returnTab" ? {display: "block"} : {display: "none"}}>
                                     <div className="card card-table add-on-shadow">
+                                        {!isMobile && !isMediumScr ? 
+                                        (
                                         <div className="mt-4">
                                             <DataTable
                                                 className="p-datatable"
@@ -3554,12 +3907,68 @@ export default function Sales({handleSidebar, showSidebar}){
                                             ></Column>
                                             </DataTable>
                                         </div>
+                                        ):
+                                        (
+                                        <>
+                                        <div
+                                            className="wrapping-table-btn flex gap-3 justify-content-end"
+                                            style={{ width: "100%", height: "inherit" }}
+                                        >
+                                            <Dropdown drop={"down"}>
+                                                <Dropdown.Toggle variant="primary" style={{ height: "100%" }}>
+                                                <i className="bx bx-download"></i> export
+                                                </Dropdown.Toggle>
+                                                <Dropdown.Menu align={"end"}>
+                                                <Dropdown.Item
+                                                    eventKey="1"
+                                                    as="button"
+                                                    aria-label="viewInvModal"
+                                                    onClick={(e) =>
+                                                        handleModal(e, { id: inv.invoice_id, items: { ...inv } })
+                                                    }
+                                                >
+                                                    <i className="bx bx-show"></i> PDF (.pdf)
+                                                </Dropdown.Item>
+                                                <Dropdown.Item
+                                                    eventKey="1"
+                                                    as="button"
+                                                    aria-label="editInvModal"
+                                                    onClick={(e) => handleModal(e, inv.invoice_id)}
+                                                >
+                                                    <i className="bx bxs-edit"></i> Microsoft Excel (.xlsx)
+                                                </Dropdown.Item>
+                                                </Dropdown.Menu>
+                                            </Dropdown>
+                                            <button
+                                                type="button"
+                                                className=" btn btn-primary btn-w-icon"
+                                                style={{ height: "100%" }}
+                                            >
+                                                <i className="bx bxs-file-plus"></i> import
+                                            </button>
+                                            <button type="button" className="add-btn btn btn-primary btn-w-icon" 
+                                                aria-label="returnOrderModal"
+                                                onClick={(e) =>
+                                                    handleModal(e)
+                                                }
+                                            >
+                                                <i className="bx bx-plus"></i>
+                                                pengembalian
+                                            </button>
+                                        </div>
+                                        <DataView value={roData} listTemplate={listROTemplate} style={{marginTop: '.5rem'}} emptyMessage=' ' />
+                                        </>
+                                        )
+                                        }
                                         
+                                        
+
                                         
                                     </div>
                                 </div>
                                 <div className="tabs-content" style={openTab === "canceledTab" ? {display: "block"} : {display: "none"}}>
                                     <div className="card card-table add-on-shadow">
+                                        {!isMobile && !isMediumScr ? (
                                         <div className="mt-4">
                                             <DataTable
                                                 className="p-datatable"
@@ -3674,6 +4083,49 @@ export default function Sales({handleSidebar, showSidebar}){
                                             ></Column>
                                             </DataTable>
                                         </div>
+
+                                        ):(
+                                        <>
+                                        <div
+                                            className="wrapping-table-btn flex gap-3 justify-content-end"
+                                            style={{ width: "100%", height: "inherit" }}
+                                        >
+                                            <Dropdown drop={"down"}>
+                                                <Dropdown.Toggle variant="primary" style={{ height: "100%" }}>
+                                                    <i className="bx bx-download"></i> export
+                                                </Dropdown.Toggle>
+                                                <Dropdown.Menu align={"end"}>
+                                                <Dropdown.Item
+                                                    eventKey="1"
+                                                    as="button"
+                                                    aria-label="viewInvModal"
+                                                    onClick={(e) =>
+                                                        handleModal(e, { id: inv.invoice_id, items: { ...inv } })
+                                                    }
+                                                >
+                                                    <i className="bx bx-show"></i> PDF (.pdf)
+                                                </Dropdown.Item>
+                                                <Dropdown.Item
+                                                    eventKey="1"
+                                                    as="button"
+                                                    aria-label="editInvModal"
+                                                    onClick={(e) => handleModal(e, inv.invoice_id)}
+                                                >
+                                                    <i className="bx bxs-edit"></i> Microsoft Excel (.xlsx)
+                                                </Dropdown.Item>
+                                                </Dropdown.Menu>
+                                            </Dropdown>
+                                            <button
+                                                type="button"
+                                                className=" btn btn-primary btn-w-icon"
+                                                style={{ height: "100%" }}
+                                            >
+                                                <i className="bx bxs-file-plus"></i> import
+                                            </button>
+                                        </div>
+                                        <DataView value={salesCanceled} listTemplate={listTemplate} style={{marginTop: '.5rem'}} emptyMessage=' ' />
+                                        </>
+                                        )}
 
                                         {/* <div className="table-responsive mt-4">
                                             <table className="table" id="custTypeList" data-table-search="true"

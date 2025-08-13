@@ -194,7 +194,9 @@ export default function QtyButton(props) {
     },[value])
 
     useEffect(() => {
-        returnValue(Number(inputValue));
+        if(returnValue){
+            returnValue(Number(inputValue));
+        }
     },[inputValue])
     
     return(
