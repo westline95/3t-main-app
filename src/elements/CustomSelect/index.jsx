@@ -26,12 +26,35 @@ export const CustomSelect = (props) => {
 
     const measureElement = () => {
         if (refToThis.current) {
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const windowHeight = window.innerHeight;
             const rect = refToThis.current.getBoundingClientRect();
+            // const dropdownHeight = document.getElementById("portal").querySelector.offsetHeight;
+            const dropdownTop= rect.top;
+
+            // console.log(windowHeight - dropdownTop)
+            // console.log(selectItems?.current?.offsetHeight)
+            // console.log(dropdownHeight)
+
+            // if (windowHeight - dropdownTop < dropdownHeight) {
+            //     // dropdownList.style.bottom = '100%'
+            //     // dropdownList.style.top = 'auto'
+            //     console.log("harusnya di top kan")
+            // } else {
+            //     console.log("harusnya default")
+            //     // dropdownList.style.bottom = 'auto'
+            //     // dropdownList.style.top = '100%'
+            // }
+            // console.log(windowHeight)
+            // console.log(rect)
             setElPosition({
                 width: rect.width,
                 height: rect.height,
-                top: rect.top,
+                top: rect.top ,
+                bottom: rect.bottom + scrollTop ,
                 left: rect.left,
+                x: rect.x,
+                y: rect.y
             });
         }
     };
@@ -67,12 +90,8 @@ export const CustomSelect = (props) => {
     handleClickSelect(refToThis);
 
     const handleClickDropdown = (e) => {
-        setElPosition(e.currentTarget.getBoundingClientRect());
-        // const node = document.getElementById('portal');
-        // console.log(node.querySelectorAll('.select-items'))
-        // // if (node) {
-        // //     setPortalNode(node);
-        // // }
+        // setElPosition(e.currentTarget.getBoundingClientRect());
+        measureElement();
     }
     
     
@@ -165,7 +184,10 @@ const DropdownSelect = forwardRef((props,ref) => {
             <div ref={ref} className={`select-items ${open ? '' : 'select-hide'}`} 
                 style={{
                     width: elementPosition ? elementPosition.width  : '100%',
-                    top: elementPosition ? (elementPosition.top + elementPosition.height + 1.5) : 0,
+                    // top: elementPosition ? (elementPosition.top + elementPosition.height + 1.5) : 0,
+                    // bottom: elementPosition ? (elementPosition.bottom) : 0,
+                    top: elementPosition ? (elementPosition.bottom) : 0,
+                    // transform: elementPosition && `translateY(-${elementPosition.bottom+elementPosition.height}px)`,
                     left: elementPosition ? elementPosition.left : 0
                 }}
             >
