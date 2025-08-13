@@ -281,7 +281,7 @@ console.log(getValues('payment_method'))
 console.log(totalCart)
     return(
         <>
-        <Modal size='md' show={show} onHide={onHide} scrollable={false} centered={true}>
+        <Modal size='md' show={show} onHide={onHide} scrollable={true} centered={true}>
             <Modal.Header closeButton>
                 <Modal.Title>{source == 'order' ? 'create' : 'add'} payment</Modal.Title>
             </Modal.Header>
@@ -479,7 +479,7 @@ console.log(totalCart)
                                             name="paid_amount"
                                             rules={{validate:{
                                                 condition1: (value) => Number(value) != 0 || `Paid amount can't be 0`,
-                                                // condition2: (value, formValues) =>  formValues.amountOrigin >= totalCart || "Incorrect amount" 
+                                                condition2: (value, formValues) =>  formValues.amountOrigin >= totalCart || "Jumlah tidak cukup" 
                                             }, required: true}}
                                             render={({
                                                 field: {ref, name, onChange, value}, fieldState

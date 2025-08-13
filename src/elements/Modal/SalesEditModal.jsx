@@ -20,8 +20,12 @@ import DataStatic from '../../assets/js/dataStatic.js';
 import dataStatic from '../../assets/js/dataStatic.js';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { DataView } from 'primereact/dataview';
+import useMediaQuery from '../../hooks/useMediaQuery.js';
 
 export default function SalesEditModal({show, onHide, data}) {
+    const isMobile = useMediaQuery('(max-width: 767px)');
+    const isMediumScr = useMediaQuery('(min-width: 768px) and (max-width: 1024px)');
+
     const toast = useRef(null);
     const toastUpload = useRef(null);
     const orderCardLeft = useRef(null);
@@ -585,7 +589,7 @@ export default function SalesEditModal({show, onHide, data}) {
                         </div>
                     </SwiperSlide>
                     <SwiperSlide style={{width: '70px', height:'auto'}}>
-                        <div className='mobile-swiper-content danger' onClick={() => {delSalesItems(index)}}>
+                        <div className='mobile-swiper-content-right danger' onClick={() => {delSalesItems(index)}}>
                             <i className='bx bx-trash'></i>
                         </div>
                     </SwiperSlide>
@@ -759,7 +763,7 @@ export default function SalesEditModal({show, onHide, data}) {
 
     return(
         <>
-        <Modal size='xl' show={show} onHide={onHide} scrollable={true} centered={true}>
+        <Modal dialogClassName={isMobile || isMediumScr ? 'modal-fullscreen' : 'modal-xl'} show={show} onHide={onHide} scrollable={true} centered={true}>
             <Modal.Header closeButton>
                 <Modal.Title>sales edit {data !== "" ? `: ${data.id}` : ""}</Modal.Title>
                 <span style={{textTransform: 'capitalize'}} 

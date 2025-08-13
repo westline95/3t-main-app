@@ -443,6 +443,10 @@ table tr:last-of-type td .dropdown-menu {
   padding: 2rem;
 }
 
+.static-shadow {
+  border: 0 solid transparent;
+  box-shadow: 1px 1px 12px 7px rgba(174, 174, 232, 0.1);  
+}
 .section-title {
   font-weight: 600;
   text-transform: capitalize;

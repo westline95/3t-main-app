@@ -181,7 +181,7 @@ const DropdownSelect = forwardRef((props,ref) => {
     
     return(
         ReactDOM.createPortal(
-            <div ref={ref} className={`select-items ${open ? '' : 'select-hide'}`} 
+            <div ref={ref} className={`select-items ${open ? '' : 'select-hide'} static-shadow`} 
                 style={{
                     width: elementPosition ? elementPosition.width  : '100%',
                     // top: elementPosition ? (elementPosition.top + elementPosition.height + 1.5) : 0,

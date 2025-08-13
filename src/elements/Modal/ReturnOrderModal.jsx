@@ -890,96 +890,9 @@ export default function ReturnOrderModal({ show, onHide }){
             }
         }
         setSelectedProducts(_selected_products);
-        // return;
-        // let { rowData } = e;
-        // console.log(rowData)
-        // let _products = [...choosedRowItem];
-        // let _selected_products =  selectedProducts ? [...selectedProducts] : null;
-        
-        // // console.log(_products)
-        // // console.log(_products)
-        // // if(checked){
-        //     _products[index] = rowData;
-
-        //     // if(selectedProducts) {
-        //         // if(selectedProducts.length > 0){
-        //             // let findDupe = selectedProducts.find((selected) => selected.item_id == rowData.item_id);
-        //             // if(!findDupe){
-        //             //     let arr = [...selectedProducts];
-        //             //     arr.push(rowData);
-        //             //     setSelectedProducts(arr);
-        //             // }
-                    
-        //         // } else {
-        //         //     let arr = [];
-        //         //     arr.push(rowData);
-        //         //     setSelectedProducts(arr);
-        //         // }
-
-        //         if(_selected_products){
-        //             _products.map((product, i) => {
-        //                 _selected_products.map((selectProd, idx) => {
-        //                     if(product.item_id == selectProd.item_id){
-        //                         _selected_products[idx] = _products[i];
-        //                     }
-        //                 })
-        //             })
-        //             setSelectedProducts(_selected_products);
-        //         }
-        //     // } else {
-        //     //     let arr = [];
-        //     //     arr.push(rowData);
-        //     //     setSelectedProducts(arr);
-        //     // }
-        //     setChoosedRowItem(_products);
-             
-        //     // console.log(selectedProducts)
-        // // } else {
-        // //     if(selectedProducts) {
-        // //         if(selectedProducts.length > 0){
-        // //             let findDupe = selectedProducts.findIndex((row) => row.item_id == rowData.item_id);
-        // //             console.log(findDupe)
-        // //             if(findDupe >= 0){
-        // //                 let arr = [...selectedProducts];
-        // //                 arr.splice(findDupe, 1);
-        // //                 setSelectedProducts(arr);
-        // //             }
-        // //         } 
-        // //     } 
-        // //     else {
-        // //         console.log('err')
-        // //     }
-        // // }
     };
 
-    const handleCheckboxClick = (e) => {
-            // if(!reasonVal){
-            e.preventDefault();
-                console.log("hhh")
-                toast.current.show({
-                    severity: "error",
-                    summary: "Error",
-                    detail: "Alasan dan jumlah pengembalian tidak boleh kosong!",
-                    life: 3000,
-                });
-                // return null;
-            // }
-    }
-
-    // console.log(selectedProducts)
-
-    const orderTemplate = (rowData, index, editableData) => {
-        // let newData = [...editableData];
-        // newData.push(rowData);
-        // console.log(newData)
-        // if(!reasonVal){
-        //     // console.log(getValues('ro_item'))
-        //     if(getValues('ro_item') && getValues('ro_item')[0] == "on"){
-        //         setValue("ro_item", ["off"]);
-        //         handleChoosedRO(false);
-        //     }
-        // }
-
+    const orderTemplate = (rowData, index) => {
         return (
         <div className='card static-shadow' key={index} >
             <Swiper initialSlide={0} slidesPerView={'auto'} preventClicks={false} preventClicksPropagation={false} simulateTouch={false} style={{width:'100%', height:'auto'}}>
@@ -1094,11 +1007,11 @@ export default function ReturnOrderModal({ show, onHide }){
 
                     </div>
                 </SwiperSlide>
-                <SwiperSlide style={{width: '70px'}}>
+                {/* <SwiperSlide style={{width: '70px'}}>
                     <div className='mobile-swiper-content-right danger' onClick={() => {delSalesItems(index)}}>
                         <i className='bx bx-trash'></i>
                     </div>
-                </SwiperSlide>
+                </SwiperSlide> */}
             </Swiper>
             
         </div>
@@ -1118,111 +1031,9 @@ export default function ReturnOrderModal({ show, onHide }){
             
             <div className="order-list-mobile">
                 <p className="card-title mb-3">pilih Pengembalian Produk</p>
-                {/* <div className="w-full" 
-                    style={{
-                        // position:'relative', 
-                        backgroundColor:'#F8F9FD', 
-                        padding: '.9rem', 
-                        borderRadius:'7px',
-                        // marginTop: '2rem',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '.7rem',
-                        maxHeight: '418px',
-                        overflowY: 'scroll',
-                        overflowX: 'hidden'
-                    }}
-                >
-                </div> */}
                 <div className="flex flex-column gap-3">
                     {list}
-
                 </div>
-
-                {/* {salesEndNote ?
-                (
-                <div className='w-full order-cost-wrap'>
-                    <div class="order-cost-items">
-                        <p class="cost-text">{`items (${salesEndNote?.totalQty})`}</p>
-                        <p class="cost-price">
-                            <NumberFormat intlConfig={{
-                                value: salesEndNote?.subtotal, 
-                                locale: "id-ID",
-                                style: "currency", 
-                                currency: "IDR",
-                            }}
-                            />
-                        </p>
-                    </div>
-                    <div class="order-cost-addon">
-                        <p class="cost-addon-text">Diskon order</p>
-                        <span class="d-flex gap-2">
-                            {salesDisc && salesDisc.discType == "percent" ?
-                            (
-                                <>
-                                <NumberFormat intlConfig={{
-                                    value: salesDisc ? (salesDisc.value*Number(salesEndNote?.subtotal)/100) : "0", 
-                                    locale: "id-ID",
-                                    style: "currency", 
-                                    currency: "IDR",
-                                }}
-                                />
-                                <span>{`(${salesDisc?.value}%)`}</span>
-                                </>
-                            ) : salesDisc && salesDisc.discType != "percent" ?
-                            (
-                                <NumberFormat intlConfig={{
-                                    value: salesDisc?.value, 
-                                    locale: "id-ID",
-                                    style: "currency", 
-                                    currency: "IDR",
-                                }} 
-                                />
-                            ):'Rp 0'
-                            }
-                            <span class="order-sett" aria-label='addDiscount' onClick={(e) => handleModal(e)}>
-                                <i class="bx bx-cog"></i>
-                            </span>
-                        </span>
-                    </div>
-                    <div class="order-cost-total mt-2">
-                        <p class="order-cost-total-text">total</p>
-                        <p class="order-cost-total-price">
-                            <NumberFormat intlConfig={{
-                                value: salesEndNote.grandtotal, 
-                                locale: "id-ID",
-                                style: "currency", 
-                                currency: "IDR",
-                            }} 
-                            />
-                        </p>
-                    </div>
-                    <div class="order-cost-total">
-                        <p class="order-cost-total-text">Metode pembayaran</p>
-                        <div>
-                            <span style={{textTransform: 'capitalize', fontWeight: 500, marginRight: '.7rem', fontSize:14}}>{`${paidData ?  paidData.payment_type : ""}`}</span>
-                            <span className="edit-table-data" aria-label="createPayment" onClick={handleModal}>
-                                <i className='bx bx-plus'></i>
-                            </span>
-                        </div>
-                    </div>
-                        <div class="order-cost-total">
-                        <p class="order-cost-total-text">Total bayar</p>
-                        <p class="order-cost-total-text">
-                            <NumberFormat intlConfig={{
-                                value: paidData ? paidData.amountOrigin : 0, 
-                                locale: "id-ID",
-                                style: "currency", 
-                                currency: "IDR",
-                            }} 
-                        />     
-                        </p>
-                                            
-                    </div>
-                </div>
-
-                ):''
-                } */}
             </div>
             </>
         );
@@ -1256,7 +1067,7 @@ export default function ReturnOrderModal({ show, onHide }){
 
     return(
         <>
-        <Modal dialogClassName={isMobile ? 'modal-md' : 'modal-90w'} show={show} onHide={onHide} scrollable={true} centered={true} style={{overflowY:'unset'}}>
+        <Modal dialogClassName={isMobile || isMediumScr ? 'modal-xl' : 'modal-90w'} show={show} onHide={onHide} scrollable={true} centered={true} style={{overflowY:'unset'}}>
             <Modal.Header closeButton>
                 <Modal.Title>tambah pengembalian barang</Modal.Title>
             </Modal.Header>

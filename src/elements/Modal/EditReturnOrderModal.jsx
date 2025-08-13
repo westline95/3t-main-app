@@ -18,9 +18,14 @@ import EmptyState from "../../../public/vecteezy_box-empty-state-single-isolated
 import { ListBox } from 'primereact/listbox';
 import { Dropdown } from 'primereact/dropdown';
 import { Checkbox } from 'primereact/checkbox';
+import useMediaQuery from '../../hooks/useMediaQuery.js';
+import { DataView } from 'primereact/dataview';
+import { Swiper, SwiperSlide } from 'swiper/react';
 
 
 export default function EditReturnOrderModal({ show, onHide, data }){
+    const isMobile = useMediaQuery('(max-width: 768px)');
+    const isMediumScr = useMediaQuery('(min-width: 768px) and (max-width: 1024px)');
     const [ custData, setCustData ] = useState(null);
     const [ selectedOpt, setSelectedOpt ] = useState(null);
     const [ isLoading, setIsLoading ] = useState(true);
@@ -913,6 +918,209 @@ export default function EditReturnOrderModal({ show, onHide, data }){
         onEditing(false);
     };
 
+    const handleChoosedRO = (data) => {
+        const { originalEvent, checked, value } = data
+        let _selected_products = selectedProducts ? [...selectedProducts] : null;
+        let rowObj = value;
+        
+
+        if(!rowObj.reason || rowObj.returnValue === 0){
+            originalEvent.target.checked = false;
+            if(!rowObj.reason && rowObj.returnValue === 0){
+                toast.current.show({
+                    severity: "error",
+                    summary: "Error",
+                    detail: "Alasan dan jumlah pengembalian tidak boleh kosong!",
+                    life: 3000,
+                });
+
+            } else if(!rowObj.reason){
+                toast.current.show({
+                    severity: "error",
+                    summary: "Error",
+                    detail: "Alasan pengembalian tidak boleh kosong",
+                    life: 3000,
+                });
+            } else if(rowObj.returnValue == 0){
+                toast.current.show({
+                    severity: "error",
+                    summary: "Error",
+                    detail: "Jumlah pengembalian tidak boleh 0!",
+                    life: 3000,
+                });
+            } 
+            return null;
+        }
+
+        if(_selected_products){
+            if(checked){
+                _selected_products.map((selectProd, idx) => {
+                    if(rowObj.item_id == selectProd.item_id){
+                        _selected_products[idx] = rowObj;
+                    } else {
+                        _selected_products.push(rowObj); 
+                    }
+                })
+            } else {
+                let findIdx = _selected_products.findIndex(({item_id}) => rowObj.item_id == item_id);
+                if(findIdx >= 0) {
+                    _selected_products.splice(findIdx, 1);
+                } 
+            }
+        } else {
+            if(checked){
+                _selected_products = [rowObj]; 
+            }
+        }
+        setSelectedProducts(_selected_products);
+    };
+
+    const orderTemplate = (rowData, index) => {
+        return (
+        <div className='card static-shadow' key={index} >
+            <Swiper initialSlide={0} slidesPerView={'auto'} preventClicks={false} preventClicksPropagation={false} simulateTouch={false} style={{width:'100%', height:'auto'}}>
+                {/* <SwiperSlide style={{width: '70px'}}>
+                    <div className='mobile-swiper-content-left warning' onClick={() => {setEditableMobile((p) => !p)}}>
+                        <i className='bx bx-pencil'></i>
+                    </div>
+                </SwiperSlide> */}
+                <SwiperSlide style={{width: '100%'}}>
+                    <div className='flex flex-column xl:align-items-start gap-3'
+                        style={{
+                            backgroundColor: '#ffffff',
+                            padding: '1rem',
+                            boxShadow: '1px 1px 7px #9a9acc1a',
+                            borderRadius: '9px',
+                            position:'relative',
+                            width:'100%',
+                            minHeight:'125px'
+                        }}
+                    >
+                    
+                        <div className="flex align-items-center gap-3" 
+                            style={{
+                                textTransform: 'capitalize', 
+                            }}
+                        >
+                            {/* checkbox */}
+                            <InputWLabel 
+                                type="checkbox"
+                                name={`ro_item-${index}`}
+                                onChange={(e) => {handleChoosedRO({originalEvent: e, checked: e.target.checked, value: rowData})}} 
+                                register={register}
+                                require={false}
+                                checked={selectedProducts.find(({item_id}) => rowData.item_id == item_id ? true : false)}
+                            />
+                            <div className='flex flex-column' style={{width: '80%'}}>
+                                <div className='mb-1'>
+                                    <p style={{marginBottom: 0, fontSize: 14, fontWeight: 600, maxWidth: '100px'}}>{`${rowData.product.product_name}`}</p>
+                                    <p style={{marginBottom: 0, fontSize: 11, color: '#7d8086', maxWidth: '100px'}}>
+                                        {`Variant: ${rowData.product.variant}`}
+                                    </p>
+                                </div>
+                            </div>
+                                
+
+                        </div>
+                            <div className="return-reason" style={{width:'100%'}}>
+                            <InputWSelect
+                                // label={'alasan pengembalian'}
+                                name={`reason-${index}`}
+                                // position={choosedRowItem.length - 1 > 1 ? row.rowIndex == choosedRowItem.length - 1 ? "top" : "bottom" : "bottom"}
+                                selectLabel="Alasan pengembalian"
+                                options={dataStatic.returnReasonList}
+                                optionKeys={["id", "type"]}
+                                value={(selected) => {
+                                    setValue(`reason-${index}`, selected.value);
+                                    setValue(`reason_id-${index}`, selected.id);
+                                    // selected.value != "" ? clearErrors("reason") : null;
+                                    rowData.reason = selected.value;
+                                    rowData.reason_id = selected.id;
+                                    // console.log(editableData)
+                                    // selected.value != null ? setReasonVal(true):setReasonVal(false);
+                                }}
+                                defaultValue={rowData.reason_id}
+                                defaultValueKey={'id'}
+                                // disabled={editableMobile ? false : true}
+                                // onChange={(e) => editorCallback(e.value)}
+                                require={false}
+                                register={register}
+                                errors={errors}
+                            />
+                            {/* <Dropdown value={getValues('reason')} onChange={(e) => setValue('reason', e.value)} options={dataStatic.returnReasonList} optionLabel="type" placeholder="Select a reason" 
+                                    className="w-full" 
+                                /> */}
+                            
+                            {/* <InputWSelect
+                                // label={'alasan pengembalian'}
+                                name="reason"
+                                // position={choosedRowItem.length - 1 > 1 ? row.rowIndex == choosedRowItem.length - 1 ? "top" : "bottom" : "bottom"}
+                                selectLabel="Pilih alasan pengembalian"
+                                options={dataStatic.returnReasonList}
+                                optionKeys={["id", "type"]}
+                                value={(selected) => {
+                                    setValue('reason', selected.value);
+                                    setValue('reason_id', selected.id);
+                                    selected.value != "" ? clearErrors("reason") : null;
+                                    options.rowData.reason = selected.value;
+                                    options.rowData.reason_id = selected.id;
+                                }}
+                                onChange={(e) => options.editorCallback(e.value)}
+                                require={false}
+                                register={register}
+                                errors={errors}
+                            /> */}
+                        </div>
+                        <div className='mb-2' style={{position:'absolute',right:16, bottom: 60}}>
+                            <div className="order-qty-btn">
+                                <QtyButton 
+                                    min={0} 
+                                    max={Number(rowData.quantity)} 
+                                    name={`qty-product-${index}`} 
+                                    // id="qtyItem" 
+                                    value={rowData.returnValue && rowData.returnValue} 
+                                    returnValue={(e) => {rowData.returnValue = e}} 
+                                    size={100} 
+                                    // disabled={editableMobile ? false : true}
+                                />
+                            </div>
+                            {/* <button type="button" className="btn btn-warning btn-w-icon"><i className='bx bx-pencil'></i>Edit order</button> */}
+                        
+                        </div>
+
+                    </div>
+                </SwiperSlide>
+                {/* <SwiperSlide style={{width: '70px'}}>
+                    <div className='mobile-swiper-content-right danger' onClick={() => {delSalesItems(index)}}>
+                        <i className='bx bx-trash'></i>
+                    </div>
+                </SwiperSlide> */}
+            </Swiper>
+            
+        </div>
+        );
+    };
+
+    const orderListTemplate = (items) => {
+        if (!items || items.length === 0) return null;
+
+        let list = items.map((order, index) => {
+            return orderTemplate(order, index, items);
+        });
+
+        return (
+            <>
+            
+            <div className="order-list-mobile">
+                <p className="card-title mb-3">pilih Pengembalian Produk</p>
+                <div className="flex flex-column gap-3">
+                    {list}
+                </div>
+            </div>
+            </>
+        );
+    };
+
     useEffect(() => {
         if(chooseCust && chooseCust != ""){
             setChoosedOrder([]);
@@ -941,11 +1149,12 @@ export default function EditReturnOrderModal({ show, onHide, data }){
             return;
         }
     },[isLoading]);
-    console.log(data)
+    console.log(isMobile)
+    console.log(isMediumScr)
 
     return(
         <>
-        <Modal dialogClassName="modal-70w" show={show} onHide={onHide} scrollable={true} centered={true}>
+        <Modal dialogClassName={`${isMobile || isMediumScr ? 'modal-fullscreen' : 'modal-70w'}`} show={show} onHide={onHide} scrollable={true} centered={true}>
             <Modal.Header closeButton>
                 <Modal.Title>Ubah pengembalian barang</Modal.Title>
             </Modal.Header>
@@ -1118,105 +1327,69 @@ export default function EditReturnOrderModal({ show, onHide, data }){
                         </div>
                     </div>    
                     
+                    {!isMobile && !isMediumScr ? 
+                    (
                     <div className="card card-table static-shadow" style={{minHeight: 400}}>
                         <p className="card-title mb-3">pilih Pengembalian Produk</p>
-                        {/* <div className="mt-4 " style={{height:'100%'}}> */}
-                            <DataTable
-                                className="p-datatable freeze-overflow"
-                                value={choosedRowItem}
-                                size="normal"
-                                dataKey="item_id"
-                                tableStyle={{ minWidth: "50rem", fontSize: '14px', overflow: 'hidden', height:'100%'}}
-                                emptyMessage={emptyStateHandler}
-                                cellSelection
-                                selectionMode={'checkbox'} 
-                                selection={selectedProducts} 
-                                onSelectionChange={(e) => {
-                                    setSelectedProducts(e.value); 
-                                }} 
-                                isDataSelectable={isRowSelectable}
-                                scrollable={false}
-                                editMode="row"
-                                onRowEditInit={(e) => {onEditing(true)}}
-                                onRowEditCancel={(e) => {onEditing(false)}}
-                                onRowEditComplete={onRowEditComplete}
-                                rowEditValidator={rowEditValidator}
-                            >
-                                <Column 
-                                    columnKey='checkboxRow'
-                                    selectionMode="multiple" 
-                                    headerStyle={{ width: '3rem' }}
-                                ></Column>
-                                <Column
-                                    field="product.product_name"
-                                    header="Nama produk"
-                                    bodyStyle={{ textTransform: "capitalize" }}
-                                    style={{ textTransform: "uppercase" }}
-                                ></Column>
-                                <Column
-                                    field="product.variant"
-                                    header="varian"
-                                    bodyStyle={{ textTransform: "capitalize" }}
-                                    style={{ textTransform: "uppercase" }}
-                                ></Column>
-                                <Column
-                                    field=""
-                                    header="alasan pengembalian"
-                                    body={returnReasonEl}
-                                    editor={(options) => selectOptEditor(options)}
-                                    style={{ textTransform: "uppercase", width: 400 }}
-                                    bodyStyle={{ textTransform: "capitalize" }}
-                                ></Column>
-                                <Column
-                                    field="quantity"
-                                    header="kuantitas"
-                                    body={returnQty}
-                                    editor={(options) => qtyEditor(options)}
-                                    style={{ textTransform: "uppercase" }}
-                                ></Column>
-                                <Column rowEditor={true} headerStyle={{ width: '10%', minWidth: '8rem' }} bodyStyle={{ textAlign: 'center' }}></Column>
-                            </DataTable>
-                        {/* </div> */}
-                        {/* <div className='mt-3 mb-4'>
-                            <Row className='mb-4'>
-                                <Col lg={3} sm={12}>
-                                    <InputWSelect
-                                        label={'Pilih produk'}
-                                        name="order_item"
-                                        selectLabel="Pilih produk"
-                                        options={choosedRowProduct}
-                                        optionKeys={["product_id", "product_name"]}
-                                        value={(selected) => {
-                                            setValue('order_item', selected.value);
-                                            selected.value != "" ? clearErrors("order_item") : null;
-                                        }}
-                                        require={true}
-                                        register={register}
-                                        errors={errors}
-                                    />
-                                </Col>
-                                <Col lg={3} sm={12}>
-                                    <InputWSelect
-                                        label={'alasan pengembalian'}
-                                        name="reason"
-                                        selectLabel="Pilih alasan pengembalian"
-                                        options={dataStatic.returnReasonList}
-                                        optionKeys={["id", "type"]}
-                                        value={(selected) => {
-                                            setValue('reason', selected.value);
-                                            selected.value != "" ? clearErrors("reason") : null;
-                                        }}
-                                        require={true}
-                                        register={register}
-                                        errors={errors}
-                                    />
-                                </Col>
-                                    <Col lg={3} sm={12}>
-                                    <QtyButton min={0} max={999} name={`qty-product`} label={"qty"} id="qtyItem" width={"180px"} returnValue={(e) => setQtyVal(e)} value={qtyVal} />
-                                </Col>
-                            </Row>
-                        </div> */}
+                        <DataTable
+                            className="p-datatable freeze-overflow"
+                            value={choosedRowItem}
+                            size="normal"
+                            dataKey="item_id"
+                            tableStyle={{ minWidth: "50rem", fontSize: '14px', overflow: 'hidden', height:'100%'}}
+                            emptyMessage={emptyStateHandler}
+                            cellSelection
+                            selectionMode={'checkbox'} 
+                            selection={selectedProducts} 
+                            onSelectionChange={(e) => {
+                                setSelectedProducts(e.value); 
+                            }} 
+                            isDataSelectable={isRowSelectable}
+                            scrollable={false}
+                            editMode="row"
+                            onRowEditInit={(e) => {onEditing(true)}}
+                            onRowEditCancel={(e) => {onEditing(false)}}
+                            onRowEditComplete={onRowEditComplete}
+                            rowEditValidator={rowEditValidator}
+                        >
+                            <Column 
+                                columnKey='checkboxRow'
+                                selectionMode="multiple" 
+                                headerStyle={{ width: '3rem' }}
+                            ></Column>
+                            <Column
+                                field="product.product_name"
+                                header="Nama produk"
+                                bodyStyle={{ textTransform: "capitalize" }}
+                                style={{ textTransform: "uppercase" }}
+                            ></Column>
+                            <Column
+                                field="product.variant"
+                                header="varian"
+                                bodyStyle={{ textTransform: "capitalize" }}
+                                style={{ textTransform: "uppercase" }}
+                            ></Column>
+                            <Column
+                                field=""
+                                header="alasan pengembalian"
+                                body={returnReasonEl}
+                                editor={(options) => selectOptEditor(options)}
+                                style={{ textTransform: "uppercase", width: 400 }}
+                                bodyStyle={{ textTransform: "capitalize" }}
+                            ></Column>
+                            <Column
+                                field="quantity"
+                                header="kuantitas"
+                                body={returnQty}
+                                editor={(options) => qtyEditor(options)}
+                                style={{ textTransform: "uppercase" }}
+                            ></Column>
+                            <Column rowEditor={true} headerStyle={{ width: '10%', minWidth: '8rem' }} bodyStyle={{ textAlign: 'center' }}></Column>
+                        </DataTable>
                     </div>
+                    ):(
+                    <DataView value={choosedRowItem} listTemplate={orderListTemplate} emptyMessage=' '></DataView>
+                    )}
 
                 </div>
                  {/* ):''} */}

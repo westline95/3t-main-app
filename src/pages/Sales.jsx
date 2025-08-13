@@ -1985,8 +1985,8 @@ export default function Sales({handleSidebar, showSidebar}){
                     borderRadius: '9px',
                     position:'relative'
                 }}
-                aria-label="salesEditModal" 
-                onClick={(e) => handleModalWData(e, {endpoint: "sales", id: rowData.order_id, action: 'update', ...rowData})}
+                aria-label="roEditModal" 
+                onClick={(e) => handleModalWData(e, {id: rowData.return_order_id, ro: {...rowData}})}
             >
             
             <div className="flex align-items-center gap-3" 
@@ -2010,28 +2010,13 @@ export default function Sales({handleSidebar, showSidebar}){
                     <p style={{marginBottom: 0, fontSize: 13, color: '#7d8086'}}>{ConvertDate.LocaleStringDate(rowData.return_date)}</p>
                     <div className='flex flex-row gap-2' style={{fontSize: 13, marginTop: '.5rem'}}>
                         <span className={`badge badge-${
-                            rowData.order_type == "walk-in" ? 'primary'
-                            : rowData.order_type == "delivery" ? "warning" 
+                            rowData.status == "dikonfirmasi" ? 'success'
+                            : rowData.status == "tunda" ? "secondary" 
+                            // : rowData.status == "in-delivery" ? "warning" 
+                            : rowData.status == "batal" ? "danger" 
                             : ""} light`}
                         >
-                            {
-                                rowData.order_type
-                            }                                                                                
-                        </span>
-                        <span className={`badge badge-${
-                            rowData.order_status == "completed" ? 'success'
-                            : rowData.order_status == "pending" ? "secondary" 
-                            : rowData.order_status == "in-delivery" ? "warning" 
-                            : rowData.order_status == "canceled" ? "danger" 
-                            : ""} light`}
-                        >
-                            {
-                                rowData.order_status == "completed" ? 'completed'
-                                : rowData.order_status == "pending" ? 'pending'
-                                : rowData.order_status == "in-delivery" ? 'in-delivery'
-                                : rowData.order_status == "canceled" ? 'canceled'
-                                : ""
-                            }                                                                                
+                            {rowData.status}                                                                            
                         </span>
                         
                     </div>
@@ -2059,7 +2044,7 @@ export default function Sales({handleSidebar, showSidebar}){
                     </p>
                 </div>
                 <div className="flex flex-row justify-content-between">
-                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Metode pengembalian:</p>
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Metode:</p>
                     <p className="view-note" aria-label="viewReturnMethod" style={{marginBottom: 0, fontSize: 14, textAlign: 'right'}}> 
                         {/* <span className={`badge badge-${
                             rowData.payment_type == "unpaid" ? 'danger'
@@ -2073,29 +2058,44 @@ export default function Sales({handleSidebar, showSidebar}){
                 </div>
             </div>
             </div>
-            <Dropdown drop={index == custData.length - 1 ? "up" : "down"}  style={{position: 'absolute', top: 10, right: 9, padding: '1rem 1rem .5rem 1rem'}}>
+            <Dropdown drop={index == roData.length - 1 ? "up" : "down"}  style={{position: 'absolute', top: 10, right: 9, padding: '1rem 1rem .5rem 1rem'}}>
                 <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components" ></Dropdown.Toggle>
-                <Dropdown.Menu align={"end"}>
-                    <Dropdown.Item eventKey="1" as="button" 
-                        aria-label="salesEditModal" 
-                        onClick={(e) => handleModalWData(e, {endpoint: "sales", id: rowData.order_id, action: 'update', ...rowData})}
-                    >
-                        <i className='bx bxs-edit'></i> Ubah order
-                    </Dropdown.Item>
-                    <Dropdown.Item eventKey="1" as="button" 
-                        aria-label="cancelSalesModal" 
-                        onClick={(e) => handleModalWData(
+                <Dropdown.Menu align={"end"} className='static-shadow'>
+                    {rowData.status?.toLowerCase() !== "dikonfirmasi" ? 
+                        (
+                            <>
+                            <Dropdown.Item eventKey={index}  as="button" aria-label="roEditModal" 
+                                onClick={(e) => handleModalWData(e, {id: rowData.return_order_id, ro: {...rowData}})}
+                            >
+                                <i className='bx bxs-edit'></i> Edit pengembalian
+                            </Dropdown.Item>
+                            <Dropdown.Item eventKey={index} as="button" aria-label="roCancelModal" onClick={(e) => handleModalWData(
                             e, 
                             {
-                                endpoint: "sales", 
-                                id: rowData.order_id, 
-                                action: 'canceled',
+                                endpoint: "ro", 
+                                id: rowData.return_order_id, 
+                                action: 'delete',
                                 items: {...rowData}
-                            }
-                        )}
-                    >
-                        <i className='bx bx-trash'></i> Batalkan order
-                    </Dropdown.Item>
+                            })}>
+                            <i className='bx bx-trash'></i> Batalkan
+                            </Dropdown.Item>
+                            </>
+                        )
+                        : (
+                            <Dropdown.Item eventKey={index} as="button" aria-label="roCancelModal" onClick={(e) => 
+                                handleModalWData(e, 
+                                    {
+                                        endpoint: "ro", 
+                                        id: rowData.return_order_id, 
+                                        action: 'delete',
+                                        items: {...rowData}
+                                    }
+                                )}
+                            >
+                            <i className='bx bx-trash'></i> Batalkan
+                            </Dropdown.Item>
+                        )
+                    }
                 </Dropdown.Menu>
             </Dropdown>
         </div>
@@ -2220,7 +2220,7 @@ export default function Sales({handleSidebar, showSidebar}){
                     </div>
                 </SwiperSlide>
                 <SwiperSlide style={{width: '70px'}}>
-                    <div className='mobile-swiper-content danger' onClick={() => {delSalesItems(index)}}>
+                    <div className='mobile-swiper-content-right danger' onClick={() => {delSalesItems(index)}}>
                         <i className='bx bx-trash'></i>
                     </div>
                 </SwiperSlide>

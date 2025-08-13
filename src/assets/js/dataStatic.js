@@ -168,15 +168,18 @@ const invPayMethod = [
 const returnOrderStatus = [
     {
         id: 1, 
-        type: 'tunda'
+        type: 'tunda',
+        theme: 'secondary'
     }, 
     {
         id: 2, 
-        type: 'dikonfirmasi'
+        type: 'dikonfirmasi',
+        theme: 'success'
     },
     {
         id: 4, 
-        type: 'batal'
+        type: 'batal',
+        theme: 'danger'
     }
 ];
 
