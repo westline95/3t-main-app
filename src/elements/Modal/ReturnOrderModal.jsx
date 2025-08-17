@@ -257,11 +257,15 @@ export default function ReturnOrderModal({ show, onHide }){
                                     axiosPrivate.post("/order-credit", nextOrderBody)
                                     .then(resp4 => {
                                         if(resp4.data){
+                                            setTimeout(() => {
+                                                window.location.reload();
+                                            },1500);
+
                                             toast.current.show({
                                                 severity: "success",
                                                 summary: "Sukses",
                                                 detail: "order kredit ditambah!",
-                                                life: 3000,
+                                                life: 1500,
                                             });
                                         }
                                     })
@@ -427,28 +431,30 @@ export default function ReturnOrderModal({ show, onHide }){
             let nextOrderAddOn = {};
             await axiosPrivate.get(`/sales/next?id=${formData.customer_id}&order_date=${toDate}`)
             .then(resp1 => {
-                
+                nextOrderAddOn.customer_id = formData.customer_id;
                 if(resp1.data.length > 0){
                     let placedOrderToRO;
-                    
                     if(resp1.data.length > 1){
                         let findCurrent = resp1.data.findIndex(({order_id}) => returnOrderModel.order_id == order_id);
                         placedOrderToRO = resp1.data[findCurrent+1];
-                        nextOrderAddOn.customer_id = formData.customer_id;
-                        nextOrderAddOn.order_id = placedOrderToRO.order_id;
+                        nextOrderAddOn.order_id = placedOrderToRO ? placedOrderToRO.order_id : null;
                         
-                        fetchAddReturnOrder(returnOrderModel, roItemModel, nextOrderAddOn, order_discount_change);
                     } else {
-                        // placedOrderToRO = resp1.data[0];
-                        fetchAddReturnOrder(returnOrderModel, roItemModel, null, order_discount_change);
+                        nextOrderAddOn.order_id = null;
                     }
                 } else {
-                    nextOrderAddOn.customer_id = formData.customer_id;
-                    fetchAddReturnOrder(returnOrderModel, roItemModel, nextOrderAddOn, order_discount_change);
+                    nextOrderAddOn.order_id = null;
                 }
+                fetchAddReturnOrder(returnOrderModel, roItemModel, nextOrderAddOn, order_discount_change);
             })
             .catch(err1 => {
-                console.error(err1)
+                console.error(err1);
+                toast.current.show({
+                    severity: "error",
+                    summary: "Gagal",
+                    detail: "Gagal menambhakan pengembalian",
+                    life: 3000,
+                });
             })
         } else {
             fetchAddReturnOrder(returnOrderModel, roItemModel, null, order_discount_change);
@@ -1279,9 +1285,9 @@ export default function ReturnOrderModal({ show, onHide }){
                                             </td>
                                             <td>
                                                 <span className={`badge badge-${
-                                                    order.payment_type == "unpaid" ? 'danger'
-                                                    : order.payment_type == "paid"? "primary"
-                                                    : order.payment_type == "partial"? "warning"
+                                                    order.payment_type == "belum bayar" ? 'danger'
+                                                    : order.payment_type == "lunas"? "primary"
+                                                    : order.payment_type == "sebagian"? "warning"
                                                     : ""} light`}
                                                 >
                                                     {order.payment_type }                                                                                
@@ -1468,9 +1474,9 @@ export default function ReturnOrderModal({ show, onHide }){
                                             </td>
                                             <td>
                                                 <span className={`badge badge-${
-                                                    choosedRow?.payment_type == "unpaid" ? 'danger'
-                                                    : choosedRow?.payment_type == "paid"? "primary"
-                                                    : choosedRow?.payment_type == "partial"? "warning"
+                                                    choosedRow?.payment_type == "belum bayar" ? 'danger'
+                                                    : choosedRow?.payment_type == "lunas"? "primary"
+                                                    : choosedRow?.payment_type == "sebagian"? "warning"
                                                     : ""} light`}
                                                 >
                                                     {choosedRow?.payment_type }                                                                                

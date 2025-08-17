@@ -54,7 +54,7 @@ const InputGroup = forwardRef((props, ref) => {
                 break;
         }
     };
-
+    console.log(defaultValue)
     const onChangeInput = (e) => {
         let val = e.target.value;
 
@@ -85,6 +85,7 @@ const InputGroup = forwardRef((props, ref) => {
             } 
 
             returnValue && returnValue({origin: unformatted, formatted: newVal});
+            console.log({origin: unformatted, formatted: newVal})
             
         } else if(mask == "phone"){
              setVal(val.toString());

@@ -1682,6 +1682,7 @@ table td table {
 .select-items > * {
   padding: 0.425rem 0.75rem;
   cursor: pointer;
+  text-transform: capitalize;
 }
 
 .select-items>*:hover {
@@ -2704,7 +2705,7 @@ td .btn-group button i {
   padding: 1rem 0;
 }
 
-.invoice-detail .invoice-info-group>*:not(:first-of-type), 
+.invoice-detail .invoice-info-group:nth-of-type(0), 
 .invoice-content .invoice-info-group>*:not(:first-of-type) {
     margin-bottom: 1.7rem;
 }
@@ -2720,6 +2721,10 @@ td .btn-group button i {
 .invoice-amount,
 .cards-header {
   display: flex;
+}
+
+.invoice-header {
+  padding: 0 0 13px 0;
 }
 
 .invoice-header,
@@ -2752,11 +2757,9 @@ td .btn-group button i {
   margin-bottom: 0;
 }
 
-.invoice-detail .invoice-info-group,
-/* .cards-detail .cards-info-group, */
-.invoice-content .invoice-info-group {
+/* .invoice-content .invoice-info-group {
   margin-bottom: 1.2rem;
-}
+} */
 
 /* .invoice-content .invoice-info-group>*:first-of-type, */
 .card-amount .invoice-info-group>*:first-of-type,
@@ -2792,6 +2795,14 @@ td .btn-group button i {
   font-weight: 600;
   font-size: 16px;
   text-transform: capitalize;
+}
+
+.company-detail {
+  justify-items: flex-end;
+}
+
+.company-profile {
+   text-align: right;
 }
 
 .company-detail .company-img {
@@ -4387,6 +4398,16 @@ tr.hover-row:hover > * {
   height: inherit;
 }
 
+.inv-tools .inline-detail {
+  display: inline-flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.inv-tool-btns>:nth-child(2)>* {
+    width: 50%;
+  }
+
 /* media queries for responsiveness */
 /* for mobile */
 
@@ -4831,7 +4852,7 @@ tr.hover-row:hover > * {
   }
 
   .modal i {
-      font-size: 16px;
+      font-size: 18px;
   }
 
   .mobile-swiper-content-left i,
@@ -4839,12 +4860,12 @@ tr.hover-row:hover > * {
     font-size: 20px;
   }
 
-  .invoice-header,
-  .invoice-content,
-  .invoice-amount,
-  .inv-table-title {
+  /* .invoice-header, */
+  /* .invoice-content, */
+  /* .invoice-amount, */
+  /* .inv-table-title {
       padding: 0;
-  }
+  } */
 
   td .btn-group {
       height: 32px;
@@ -4879,6 +4900,11 @@ tr.hover-row:hover > * {
       font-size: 12px !important;
   }
 
+  .invoice-transaction,
+  .invoice-payment {
+    margin-bottom: 2rem;
+  }
+
   .modal .modal-btn-mobile .dropdown-menu .dropdown-item i {
       font-size: 16px;
       margin-right: .8rem;
@@ -4893,11 +4919,12 @@ tr.hover-row:hover > * {
   }
 
   #invoiceDetailModal .invoice-cust-info {
-      width: 50%;
+      /* width: 50%; */
+      margin-bottom: 1.2rem;
   }
 
   #invoiceDetailModal .invoice-amount {
-      width: 50%;
+      /* width: 50%; */
       flex-direction: column;
   }
 
@@ -5106,6 +5133,15 @@ tr.hover-row:hover > * {
 
   .order-list-mobile .card {
     padding: unset;
+  }
+
+  .inv-tools {
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .inv-tools .inline-detail {
+    justify-content: space-between;
   }
 
 }
@@ -5537,7 +5573,8 @@ tr.hover-row:hover > * {
   }
 
   .modal i {
-      font-size: 14px;
+      font-size: 20px;
+      vertical-align: text-top;
   }
 
   .qty-add-btn i {
@@ -5545,12 +5582,12 @@ tr.hover-row:hover > * {
     font-size: 20px !important;
   }
 
-  .invoice-header,
+  /* .invoice-header,
   .invoice-content,
   .invoice-amount,
   .inv-table-title {
       padding: 0;
-  }
+  } */
 
   td .btn-group {
       height: 32px;
@@ -5583,6 +5620,11 @@ tr.hover-row:hover > * {
   .invoice-transaction .table thead tr th,
   .invoice-payment .table thead tr th {
       font-size: 12px !important;
+  }
+
+  .invoice-transaction,
+  .invoice-payment {
+    margin-bottom: 2rem;
   }
 
   .modal .modal-btn-mobile .dropdown-menu .dropdown-item i {
@@ -5767,6 +5809,15 @@ tr.hover-row:hover > * {
 
   .order-list-mobile .card {
     padding: unset;
+  }
+
+  .inv-tools {
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .inv-tools .inline-detail {
+    justify-content: space-between;
   }
 
 }
@@ -6187,15 +6238,16 @@ tr.hover-row:hover > * {
   }
 
   .modal i {
-      font-size: 12px;
+      font-size: 20px;
+      vertical-align: text-top;
   }
 
-  .invoice-header,
+  /* .invoice-header,
   .invoice-content,
   .invoice-amount,
   .inv-table-title {
       padding: 0;
-  }
+  } */
 
   td .btn-group {
       height: 32px;
@@ -6229,6 +6281,12 @@ tr.hover-row:hover > * {
   .invoice-payment .table thead tr th {
       font-size: 12px !important;
   }
+
+  .invoice-transaction,
+  .invoice-payment {
+    margin-bottom: 2.5rem;
+  }
+
 
   .modal .modal-btn-mobile .dropdown-menu .dropdown-item i {
       font-size: 16px;
@@ -6348,6 +6406,35 @@ tr.hover-row:hover > * {
 
   .p-dataview {
     display: block;
+  }
+
+  .inv-tools {
+    flex-direction: row;
+    gap: 2rem;
+  }
+  .inv-tools>.card {
+     width: -webkit-fill-available;
+    /* For other browsers or future compatibility */
+    width: fill-available;
+    height: -webkit-fill-available;
+    height: fill-available;
+  }
+
+  .cust-card-inv {
+    justify-content: space-around;
+  }
+
+   .inv-tools .inline-detail {
+    display: block;
+  }
+
+  .inv-tool-btns>:nth-child(2){
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .inv-tool-btns>:nth-child(2)>* {
+    width: 100%;
   }
 }
 
@@ -6759,15 +6846,16 @@ tr.hover-row:hover > * {
   }
 
   .modal i {
-      font-size: 12px;
+      font-size: 20px;
+      vertical-align: text-top;
   }
 
-  .invoice-header,
+  /* .invoice-header,
   .invoice-content,
   .invoice-amount,
   .inv-table-title {
       padding: 0;
-  }
+  } */
 
   td .btn-group {
       height: 32px;

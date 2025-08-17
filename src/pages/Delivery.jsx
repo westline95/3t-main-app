@@ -367,7 +367,7 @@ export default function Delivery({handleSidebar, showSidebar}){
                                 });
                             }
                         } else {
-                            if(resp.data.payment_type == "partial"){
+                            if(resp.data.payment_type == "sebagian"){
                                 let paymentModel = {
                                     customer_id: resp.data.customer_id,
                                     invoice_id: resp.data.invoice_id,
@@ -505,16 +505,16 @@ export default function Delivery({handleSidebar, showSidebar}){
             remaining_payment: 0,
             payment_type: data.payment_type
         };
-        if(data.payment_type == "paid"){
+        if(data.payment_type == "lunas"){
             fetchInsertInv(modelInv);
-        } else if(data.payment_type == "partial"){
+        } else if(data.payment_type == "sebagian"){
             let newModelInv = {
                 ...modelInv,
                 is_paid: false,
                 remaining_payment: data.grandtotal - paidData.amountOrigin,
             }
             fetchInsertInv(newModelInv);
-        } else if(data.payment_type == "unpaid") {
+        } else if(data.payment_type == "belum bayar") {
             // if(!existInv){
                 // let newModelInv = {
                 //     ...modelInv,
@@ -796,11 +796,11 @@ export default function Delivery({handleSidebar, showSidebar}){
             setDiscVal(discount);
             setTotalDiscProd(allDiscProd);
 
-            if(paidData && paidData.payment_type == "paid"){
+            if(paidData && paidData.payment_type == "lunas"){
                 if(paidData.amountOrigin < (subtotal - discount)){
                     setPaidData(null);
                 }
-            } else if(paidData && paidData.payment_type == "partial"){
+            } else if(paidData && paidData.payment_type == "sebagian"){
                 if(paidData.amountOrigin >= (subtotal - discount)){
                     setPaidData(null);
                 }
@@ -814,9 +814,9 @@ export default function Delivery({handleSidebar, showSidebar}){
                 grandtotal: (subtotal - discount),
                 remaining_payment: 
                     paidData ? 
-                    paidData.payment_type == "paid" ? 0 
-                    : paidData.payment_type == "unpaid" ? (subtotal - discount)
-                    : paidData.payment_type == "partial" ? (subtotal - discount) - paidData.amountOrigin
+                    paidData.payment_type == "lunas" ? 0 
+                    : paidData.payment_type == "belum bayar" ? (subtotal - discount)
+                    : paidData.payment_type == "sebagian" ? (subtotal - discount) - paidData.amountOrigin
                     : (subtotal - discount) : (subtotal - discount)
             }
 
@@ -887,7 +887,7 @@ export default function Delivery({handleSidebar, showSidebar}){
                     forming.shipped_date = formData.order_date;
                 }
 
-                if(paidData.payment_type == "paid"){
+                if(paidData.payment_type == "lunas"){
                     let modified = {
                         ...forming,
                         order_status: "completed",
@@ -896,7 +896,7 @@ export default function Delivery({handleSidebar, showSidebar}){
                     }
                     fetchInsertSales(modified);
 
-                } else if(paidData.payment_type == "partial") {
+                } else if(paidData.payment_type == "sebagian") {
                     let modified = {
                         ...forming,
                         order_status: "pending",
@@ -905,7 +905,7 @@ export default function Delivery({handleSidebar, showSidebar}){
                     }
                     fetchInsertSales(modified);
                     // fetchInvStatusCust(false, e.customer_id, paidData.payment_type);
-                } else if(paidData.payment_type == "unpaid"){
+                } else if(paidData.payment_type == "belum bayar"){
                     if(Number(chooseCust.total_debt) > Number(chooseCust.debt_limit) && !confirmVal){
                         let send = {endpoint: "sales", action: 'warning', data:forming};
                         let formatNumber = new Intl.NumberFormat("id-ID", {
@@ -1189,9 +1189,9 @@ export default function Delivery({handleSidebar, showSidebar}){
     const paymentTypeCell = (rowData) => {
         return(
             <span className={`badge badge-${
-                rowData.payment_type == "unpaid" ? 'danger'
-                : rowData.payment_type == "paid"? "primary"
-                : rowData.payment_type == "partial"? "warning"
+                rowData.payment_type == "belum bayar" ? 'danger'
+                : rowData.payment_type == "lunas"? "primary"
+                : rowData.payment_type == "sebagian"? "warning"
                 : ""} light`}
             >
                 {rowData.payment_type }                                                                                

@@ -195,21 +195,46 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
         }
     };
 
-    const updateTotalSalesCust = async(currentOrderData) => {
+    const updateTotalSalesCust = async(currentOrderData, oldData) => {
         await axiosPrivate.get("/customers/member", {params: { id: currentOrderData.customer_id }})
         .then((resp1) => {
-            console.log(resp1.data)
             if(resp1.data){
-                const updatedTotalOrder = Number(resp1.data.total_sales)-Number(currentOrderData.grandtotal);
-                const updatedTotalDebt = Number(resp1.data.total_debt)-Number(currentOrderData.grandtotal);
+                let updatedTotalDebt,updatedTotalOrder;
+                if(data.action === "canceled"){
+                    currentOrderData.payment_type == "belum bayar" || currentOrderData.payment_type == "sebagian" && !currentOrderData.is_complete ? 
+                        updatedTotalDebt = Number(resp1.data.total_debt)-Number(currentOrderData.grandtotal) 
+                    : updatedTotalDebt=null;
+
+                    updatedTotalOrder = Number(resp1.data.total_sales)-Number(currentOrderData.grandtotal);
+                } else if(data.action === "update"){
+                    if(oldData){
+                        console.log(currentOrderData)
+                        if(oldData.payment_type == "belum bayar" || oldData.payment_type == "sebagian"){
+                            updatedTotalOrder = Number(resp1.data.total_sales)-Math.abs(Number(currentOrderData.grandtotal)-Number(oldData.grandtotal));
+                            if(oldData.invoice?.payments?.length > 0){
+                                const paymentTotal = oldData.invoice.payments.reduce((prev, curr) => prev + Number(curr.amount_paid), 0);
+                                updatedTotalDebt = ((Number(resp1.data.total_debt)-Number(oldData.grandtotal)) + Number(currentOrderData.grandtotal)) - paymentTotal <= 0 ? 0 :
+                                ((Number(resp1.data.total_debt)-Number(oldData.grandtotal)) + Number(currentOrderData.grandtotal)) - paymentTotal; 
+                                
+                            } else {
+                                updatedTotalDebt = Number(resp1.data.total_debt)-Number(currentOrderData.grandtotal);
+                            }
+                        } else {
+                            updatedTotalDebt = null;
+                        }
+                    }
+                }
+
                 axiosPrivate.patch(`/customer/sales/${resp1.data.customer_id}/${updatedTotalOrder}`)
                 .then(resp2 => {
-                    if(currentOrderData.payment_type == "unpaid"){
+                    console.log("jhh")
+                    if(updatedTotalDebt != null || updatedTotalDebt != undefined){
+                    // if(currentOrderData.payment_type == "unpaid"){
                         axiosPrivate.patch(`/customer/debt/${resp1.data.customer_id}/${updatedTotalDebt}`)
                         .then(resp3 => {
-                            setTimeout(() => {
-                                window.location.reload();
-                            },1200);
+                            // setTimeout(() => {
+                            //     window.location.reload();
+                            // },1200);
                             toast.current.show({
                                 severity: "success",
                                 summary: "Sukses",
@@ -220,10 +245,12 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
                         .catch(err3 => {
                             console.error("Failed to update total debt");
                         })
-                    }else {
-                        setTimeout(() => {
-                            window.location.reload();
-                        },1200);
+                    
+                    
+                    } else {
+                        // setTimeout(() => {
+                        //     window.location.reload();
+                        // },1200);
                         toast.current.show({
                             severity: "success",
                             summary: "Sukses",
@@ -250,349 +277,7 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
         })
     }
 
-    const cancelSales = async () => {
-        handleROAndOrderCredit();
-
-        if(!data.items.invoice_id){
-            // let handleROcredit = handleROAndOrderCredit();
-            if(continueCancel == true){
-                let body = JSON.stringify({order_status: 'canceled'});
-                await axiosPrivate.patch("/sales/update/status",body, {params: {id: data.id}})
-                .then(() => {
-                    toast.current.show({
-                        severity: "success",
-                        summary: "Sukses",
-                        detail: "Berhasil membatalkan order",
-                        life: 1500,
-                    });
-    
-                    if(data.items?.delivery){
-                        if(data.items.delivery.delivery_status !== "delivered"){
-                            let delivBody = JSON.stringify({delivery_status: 'canceled'});
-                            axiosPrivate.patch(`/delivery/status/${data.items.delivery.delivery_id}`, delivBody)
-                            .then(() => {
-                                toast.current.show({
-                                    severity: "success",
-                                    summary: "Sukses",
-                                    detail: "Berhasil membatalkan pengiriman",
-                                    life: 1500,
-                                });
-            
-                                // setTimeout(() => {
-                                //     window.location.reload();
-                                // },1500);
-                                updateTotalSalesCust(data.items);
-                            })
-                            .catch(error => {
-                                toast.current.show({
-                                    severity: "error",
-                                    summary: "Gagal",
-                                    detail: "Gagal membatalkan pengiriman!",
-                                    life: 3000,
-                                });
-                            })   
-                        } else {
-                            updateTotalSalesCust(data.items);
-                            // setTimeout(() => {
-                            //     window.location.reload();
-                            // },1500);
-                        }
-                    } else {
-                        updateTotalSalesCust(data.items);
-                        // setTimeout(() => {
-                        //     window.location.reload();
-                        // },1500);
-                    }
-                })
-                .catch(error => {
-                    toast.current.show({
-                        severity: "error",
-                        summary: "Gagal",
-                        detail: "Gagal mengupdate order!",
-                        life: 3000,
-                    });
-                })     
-
-            }
-        } else {
-            const parsedOrderIds = JSON.parse(data.items.invoice.order_id);
-            if(parsedOrderIds.length > 1){
-                // let handleROcredit = handleROAndOrderCredit();
-
-                if(continueCancel == true){
-                    let body = JSON.stringify({order_status: "canceled"});
-                    await axiosPrivate.patch(`/sales/update/status?id=${data.id}`, body)
-                    .then((resp1) => {
-                        if(resp1.data.length > 1 && resp1.data[0] > 0){
-                            toast.current.show({
-                                severity: "success",
-                                summary: "Sukses",
-                                detail: "Berhasil Mengupdate data order",
-                                life: 3000,
-                            });
-
-                            // check if order type is delivery
-                            if(data.items?.delivery){
-                                if(data.items.delivery.delivery_status !== "delivered"){
-                                    let delivBody = JSON.stringify({delivery_status: 'canceled'});
-                                    axiosPrivate.patch(`/delivery/status/${data.items.delivery.delivery_id}`, delivBody)
-                                    .then(() => {
-                                        toast.current.show({
-                                            severity: "success",
-                                            summary: "Sukses",
-                                            detail: "Berhasil membatalkan pengiriman",
-                                            life: 1500,
-                                        });
-                                    })
-                                    .catch(error => {
-                                        toast.current.show({
-                                            severity: "error",
-                                            summary: "Gagal",
-                                            detail: "Gagal membatalkan pengiriman!",
-                                            life: 3000,
-                                        });
-                                    })
-                                }   
-                                
-                            } 
-        
-                            let getIndex = parsedOrderIds.indexOf(data.id);
-                            if (getIndex !== -1) {
-                                parsedOrderIds.splice(getIndex, 1);
-                            }
-        
-                            // update invoice
-                            let oldInv = {
-                                ...data.items.invoice
-                            };
-                            delete oldInv.invoice_id;
-        
-                            let newInvModel = {
-                                // ...oldInv,
-                                order_id: JSON.stringify(parsedOrderIds),
-                                subtotal: data.items.invoice.subtotal - data.items.subtotal,
-                                amount_due: data.items.invoice.amount_due - data.items.grandtotal,
-                                remaining_payment: data.items.invoice.remaining_payment - data.items.grandtotal,
-                                total_discount: data.items.invoice.total_discount - data.items.order_discount,
-                            };
-
-                            newInvModel.is_paid = newInvModel.remaining_payment <= 0 ? true:false;
-
-                            let toStr = JSON.stringify(newInvModel);
-                            axiosPrivate.patch("/inv/payment", toStr, {params: {id: data.items.invoice.invoice_id}})
-                            .then(res2 => {
-                                toast.current.show({
-                                    severity: "success",
-                                    summary: "Sukses",
-                                    detail: "Berhasil Mengupdate invoice",
-                                    life: 1500,
-                                });
-
-                                updateTotalSalesCust(data.items);
-
-                                // setTimeout(() => {
-                                //     window.location.reload();
-                                // },1500);
-                                
-                            }) 
-                            .catch(error2 => {
-                                toast.current.show({
-                                    severity: "error",
-                                    summary: "Gagal",
-                                    detail: "Gagal mengupdate invoice!",
-                                    life: 3000,
-                                });
-                                // undo update order_status
-                                body = JSON.stringify({order_status: data.items.order_status});
-                                axiosPrivate.patch(`/sales/update/status?id=${data.id}`, body);
-                            })
-                        } else {
-                            console.error("no row affected");
-                        }
-                    })
-                    .catch(error1 => {
-                        console.log(error1)
-                        toast.current.show({
-                            severity: "error",
-                            summary: "Gagal",
-                            detail: "Gagal mengupdate order!",
-                            life: 3000,
-                        });
-                    })
-                }
-            }  
-            else {
-                if(data.items.invoice?.payments?.length > 0){
-                    console.error("minimal 1 order pada invoice dan terdapat pembayaran invoice")
-                    return returnValue(true);
-                    // coming soon => control return payment customer either by credit or cash
-                    
-                    // await axiosPrivate.patch(`/customer/${data.items.customer_id}/credit`, )
-                    // .then((resp1) => {
-                    //     if(resp1.data.length > 0 && resp1.data[0] > 0){
-                    //         // check if order type is delivery
-                    //         if(data.items?.delivery){
-                    //             if(data.items.delivery.delivery_status !== "delivered"){
-                    //                 let delivBody = JSON.stringify({delivery_status: 'canceled'});
-                    //                 axiosPrivate.patch(`/delivery/status/${data.items.delivery.delivery_id}`, delivBody)
-                    //                 .then(() => {
-                    //                     toast.current.show({
-                    //                         severity: "success",
-                    //                         summary: "Sukses",
-                    //                         detail: "Berhasil membatalkan pengiriman",
-                    //                         life: 1500,
-                    //                     });
-                    //                 })
-                    //                 .catch(error => {
-                    //                     toast.current.show({
-                    //                         severity: "error",
-                    //                         summary: "Gagal",
-                    //                         detail: "Gagal membatalkan pengiriman!",
-                    //                         life: 3000,
-                    //                     });
-                    //                 })
-                    //             }   
-                                
-                    //         } 
-
-                    //         axiosPrivate.patch("/inv/status",invBody, {params: {id: data.items.invoice.invoice_id}})
-                    //         .then((resp2) => {
-                    //             toast.current.show({
-                    //                 severity: "success",
-                    //                 summary: "Success",
-                    //                 detail: "Order updated",
-                    //                 life: 3000,
-                    //             });
-                                
-                    //             setTimeout(() => {
-                    //                 window.location.reload();
-                    //             },1200)
-                    //         })
-                    //         .catch(error2 => {
-                    //             toast.current.show({
-                    //                 severity: "error",
-                    //                 summary: "Failed",
-                    //                 detail: "Failure for update sales",
-                    //                 life: 3000,
-                    //             });
-    
-                    //             // undo update order_status bcs failed to update invoice
-                    //             axiosPrivate.patch("/sales/update/status", salesBodyUndo, {params: {id: data.id}})
-                    //             .then((resp1) => {
-                                    
-                    //             })
-                    //             .catch(error2 => {
-                    //                 toast.current.show({
-                    //                     severity: "error",
-                    //                     summary: "Failed",
-                    //                     detail: "Fatal error update order",
-                    //                     life: 3000,
-                    //                 });
-                    //             })
-                    //         })
-    
-                    //     }
-                    // })
-                    // .catch(error1 => {
-                    //     toast.current.show({
-                    //         severity: "error",
-                    //         summary: "Failed",
-                    //         detail: "Failed to update order",
-                    //         life: 3000,
-                    //     });
-                        
-                    // })
-                } else {
-                    // let handleROcredit = handleROAndOrderCredit();
-
-                    if(continueCancel == true){
-                        // canceled order and update invoice:status = canceled
-                        let salesBodyUpdate = JSON.stringify({order_status: "canceled"});
-                        let salesBodyUndo = JSON.stringify({order_status: data.items.order_status});
-                        let invBody = JSON.stringify({status: "canceled"});
-                        await axiosPrivate.patch(`/sales/update/status?id=${data.id}`, salesBodyUpdate)
-                        .then((resp1) => {
-                            if(resp1.data.length > 0 && resp1.data[0] > 0){
-                                // check if order type is delivery
-                                if(data.items?.delivery){
-                                    if(data.items.delivery.delivery_status !== "delivered"){
-                                        let delivBody = JSON.stringify({delivery_status: 'canceled'});
-                                        axiosPrivate.patch(`/delivery/status/${data.items.delivery.delivery_id}`, delivBody)
-                                        .then(() => {
-                                            toast.current.show({
-                                                severity: "success",
-                                                summary: "Sukses",
-                                                detail: "Berhasil membatalkan pengiriman",
-                                                life: 1500,
-                                            });
-                                        })
-                                        .catch(error => {
-                                            toast.current.show({
-                                                severity: "error",
-                                                summary: "Gagal",
-                                                detail: "Gagal membatalkan pengiriman!",
-                                                life: 3000,
-                                            });
-                                        })
-                                    }   
-                                    
-                                } 
-    
-                                axiosPrivate.patch("/inv/status",invBody, {params: {id: data.items.invoice.invoice_id}})
-                                .then((resp2) => {
-                                    toast.current.show({
-                                        severity: "success",
-                                        summary: "Success",
-                                        detail: "Order updated",
-                                        life: 3000,
-                                    });
-                                    
-                                     updateTotalSalesCust(data.items);
-                                    // setTimeout(() => {
-                                    //     window.location.reload();
-                                    // },1200)
-                                })
-                                .catch(error2 => {
-                                    toast.current.show({
-                                        severity: "error",
-                                        summary: "Failed",
-                                        detail: "Failure for update sales",
-                                        life: 3000,
-                                    });
-        
-                                    // undo update order_status bcs failed to update invoice
-                                    axiosPrivate.patch("/sales/update/status", salesBodyUndo, {params: {id: data.id}})
-                                    .then((resp1) => {
-                                        
-                                    })
-                                    .catch(error2 => {
-                                        toast.current.show({
-                                            severity: "error",
-                                            summary: "Failed",
-                                            detail: "Fatal error update order",
-                                            life: 3000,
-                                        });
-                                    })
-                                })
-        
-                            }
-                        })
-                        .catch(error1 => {
-                            toast.current.show({
-                                severity: "error",
-                                summary: "Failed",
-                                detail: "Failed to update order",
-                                life: 3000,
-                            });
-                            
-                        })
-
-                    }
-
-                }
-            }
-        }
-    }; 
+   
     
     const handleROAndOrderCredit = async () => {
         // checking order credit
@@ -724,54 +409,440 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
     };
     console.log(data)
 
+    const cancelSales = async () => {
+        handleROAndOrderCredit();
+    }; 
+
+    useEffect(() => {
+        if(continueCancel){
+            if(!data.items.invoice_id){
+                    // let handleROcredit = handleROAndOrderCredit();
+                // if(continueCancel == true){
+                    let body = JSON.stringify({order_status: 'canceled'});
+                    axiosPrivate.patch("/sales/update/status",body, {params: {id: data.id}})
+                    .then(() => {
+                        toast.current.show({
+                            severity: "success",
+                            summary: "Sukses",
+                            detail: "Berhasil membatalkan order",
+                            life: 1500,
+                        });
+    
+                        if(data.items?.delivery){
+                            if(data.items.delivery.delivery_status !== "delivered"){
+                                let delivBody = JSON.stringify({delivery_status: 'canceled'});
+                                axiosPrivate.patch(`/delivery/status/${data.items.delivery.delivery_id}`, delivBody)
+                                .then(() => {
+                                    toast.current.show({
+                                        severity: "success",
+                                        summary: "Sukses",
+                                        detail: "Berhasil membatalkan pengiriman",
+                                        life: 1500,
+                                    });
+                
+                                    // setTimeout(() => {
+                                    //     window.location.reload();
+                                    // },1500);
+                                    updateTotalSalesCust(data.items);
+                                })
+                                .catch(error => {
+                                    toast.current.show({
+                                        severity: "error",
+                                        summary: "Gagal",
+                                        detail: "Gagal membatalkan pengiriman!",
+                                        life: 3000,
+                                    });
+                                })   
+                            } else {
+                                updateTotalSalesCust(data.items);
+                                // setTimeout(() => {
+                                //     window.location.reload();
+                                // },1500);
+                            }
+                        } else {
+                            updateTotalSalesCust(data.items);
+                            // setTimeout(() => {
+                            //     window.location.reload();
+                            // },1500);
+                        }
+    
+                        // if(data.items.payment_type == "unpaid"  && !data.items.is_complete){
+                        //     const currTotalDebt = Number(data.items?.customer?.total_debt);
+                        //     const newTotalDebt = (currTotalDebt - Number(data.item.grandtotal)) <= 0 ? 0 : (currTotalDebt - Number(data.item.grandtotal));
+                        //     const updtTotalDebt = JSON.stringify({total_debt: newTotalDebt});
+    
+                        //     axiosPrivate.patch(`/customer/debt/${data.item.customer_id}/${Number(data.item.grandtotal)}`,updtTotalDebt)
+                        //     .catch(() => {
+                        //         console.error("error: update debt cust");
+                        //     })
+                        // } 
+                        // else if(data.items.payment_type == "partial"  && !data.items.is_complete) {
+    
+                        // }
+                    })
+                    .catch(error => {
+                        toast.current.show({
+                            severity: "error",
+                            summary: "Gagal",
+                            detail: "Gagal mengupdate order!",
+                            life: 3000,
+                        });
+                    })     
+    
+                // }
+            } else {
+                const parsedOrderIds = JSON.parse(data.items.invoice.order_id);
+                if(parsedOrderIds.length > 1){
+                    // let handleROcredit = handleROAndOrderCredit();
+    
+                    // if(continueCancel == true){
+                        let body = JSON.stringify({order_status: "canceled"});
+                        axiosPrivate.patch(`/sales/update/status?id=${data.id}`, body)
+                        .then((resp1) => {
+                            if(resp1.data.length > 1 && resp1.data[0] > 0){
+                                toast.current.show({
+                                    severity: "success",
+                                    summary: "Sukses",
+                                    detail: "Berhasil Mengupdate data order",
+                                    life: 3000,
+                                });
+    
+                                // check if order type is delivery
+                                if(data.items?.delivery){
+                                    if(data.items.delivery.delivery_status !== "delivered"){
+                                        let delivBody = JSON.stringify({delivery_status: 'canceled'});
+                                        axiosPrivate.patch(`/delivery/status/${data.items.delivery.delivery_id}`, delivBody)
+                                        .then(() => {
+                                            toast.current.show({
+                                                severity: "success",
+                                                summary: "Sukses",
+                                                detail: "Berhasil membatalkan pengiriman",
+                                                life: 1500,
+                                            });
+                                        })
+                                        .catch(error => {
+                                            toast.current.show({
+                                                severity: "error",
+                                                summary: "Gagal",
+                                                detail: "Gagal membatalkan pengiriman!",
+                                                life: 3000,
+                                            });
+                                        })
+                                    }   
+                                    
+                                } 
+            
+                                let getIndex = parsedOrderIds.indexOf(data.id);
+                                if (getIndex !== -1) {
+                                    parsedOrderIds.splice(getIndex, 1);
+                                }
+            
+                                // update invoice
+                                let oldInv = {
+                                    ...data.items.invoice
+                                };
+                                delete oldInv.invoice_id;
+            
+                                let newInvModel = {
+                                    // ...oldInv,
+                                    order_id: JSON.stringify(parsedOrderIds),
+                                    subtotal: data.items.invoice.subtotal - data.items.subtotal,
+                                    amount_due: data.items.invoice.amount_due - data.items.grandtotal,
+                                    remaining_payment: data.items.invoice.remaining_payment - data.items.grandtotal,
+                                    total_discount: data.items.invoice.total_discount - data.items.order_discount,
+                                };
+    
+                                newInvModel.is_paid = newInvModel.remaining_payment <= 0 ? true:false;
+    
+                                let toStr = JSON.stringify(newInvModel);
+                                axiosPrivate.patch("/inv/payment", toStr, {params: {id: data.items.invoice.invoice_id}})
+                                .then(res2 => {
+                                    toast.current.show({
+                                        severity: "success",
+                                        summary: "Sukses",
+                                        detail: "Berhasil Mengupdate invoice",
+                                        life: 1500,
+                                    });
+    
+                                    updateTotalSalesCust(data.items);
+    
+                                    // setTimeout(() => {
+                                    //     window.location.reload();
+                                    // },1500);
+                                    
+                                }) 
+                                .catch(error2 => {
+                                    toast.current.show({
+                                        severity: "error",
+                                        summary: "Gagal",
+                                        detail: "Gagal mengupdate invoice!",
+                                        life: 3000,
+                                    });
+                                    // undo update order_status
+                                    body = JSON.stringify({order_status: data.items.order_status});
+                                    axiosPrivate.patch(`/sales/update/status?id=${data.id}`, body);
+                                })
+                            } else {
+                                console.error("no row affected");
+                            }
+                        })
+                        .catch(error1 => {
+                            console.log(error1)
+                            toast.current.show({
+                                severity: "error",
+                                summary: "Gagal",
+                                detail: "Gagal mengupdate order!",
+                                life: 3000,
+                            });
+                        })
+                    // }
+                }  
+                else {
+                    if(data.items.invoice?.payments?.length > 0){
+                        console.error("minimal 1 order pada invoice dan terdapat pembayaran invoice")
+                        return returnValue(true);
+                        // coming soon => control return payment customer either by credit or cash
+                        
+                        // await axiosPrivate.patch(`/customer/${data.items.customer_id}/credit`, )
+                        // .then((resp1) => {
+                        //     if(resp1.data.length > 0 && resp1.data[0] > 0){
+                        //         // check if order type is delivery
+                        //         if(data.items?.delivery){
+                        //             if(data.items.delivery.delivery_status !== "delivered"){
+                        //                 let delivBody = JSON.stringify({delivery_status: 'canceled'});
+                        //                 axiosPrivate.patch(`/delivery/status/${data.items.delivery.delivery_id}`, delivBody)
+                        //                 .then(() => {
+                        //                     toast.current.show({
+                        //                         severity: "success",
+                        //                         summary: "Sukses",
+                        //                         detail: "Berhasil membatalkan pengiriman",
+                        //                         life: 1500,
+                        //                     });
+                        //                 })
+                        //                 .catch(error => {
+                        //                     toast.current.show({
+                        //                         severity: "error",
+                        //                         summary: "Gagal",
+                        //                         detail: "Gagal membatalkan pengiriman!",
+                        //                         life: 3000,
+                        //                     });
+                        //                 })
+                        //             }   
+                                    
+                        //         } 
+    
+                        //         axiosPrivate.patch("/inv/status",invBody, {params: {id: data.items.invoice.invoice_id}})
+                        //         .then((resp2) => {
+                        //             toast.current.show({
+                        //                 severity: "success",
+                        //                 summary: "Success",
+                        //                 detail: "Order updated",
+                        //                 life: 3000,
+                        //             });
+                                    
+                        //             setTimeout(() => {
+                        //                 window.location.reload();
+                        //             },1200)
+                        //         })
+                        //         .catch(error2 => {
+                        //             toast.current.show({
+                        //                 severity: "error",
+                        //                 summary: "Failed",
+                        //                 detail: "Failure for update sales",
+                        //                 life: 3000,
+                        //             });
+        
+                        //             // undo update order_status bcs failed to update invoice
+                        //             axiosPrivate.patch("/sales/update/status", salesBodyUndo, {params: {id: data.id}})
+                        //             .then((resp1) => {
+                                        
+                        //             })
+                        //             .catch(error2 => {
+                        //                 toast.current.show({
+                        //                     severity: "error",
+                        //                     summary: "Failed",
+                        //                     detail: "Fatal error update order",
+                        //                     life: 3000,
+                        //                 });
+                        //             })
+                        //         })
+        
+                        //     }
+                        // })
+                        // .catch(error1 => {
+                        //     toast.current.show({
+                        //         severity: "error",
+                        //         summary: "Failed",
+                        //         detail: "Failed to update order",
+                        //         life: 3000,
+                        //     });
+                            
+                        // })
+                    } else {
+                        // let handleROcredit = handleROAndOrderCredit();
+    
+                        // if(continueCancel == true){
+                            // canceled order and update invoice:status = canceled
+                            let salesBodyUpdate = JSON.stringify({order_status: "canceled"});
+                            let salesBodyUndo = JSON.stringify({order_status: data.items.order_status});
+                            let invBody = JSON.stringify({status: "canceled"});
+                            axiosPrivate.patch(`/sales/update/status?id=${data.id}`, salesBodyUpdate)
+                            .then((resp1) => {
+                                if(resp1.data.length > 0 && resp1.data[0] > 0){
+                                    // check if order type is delivery
+                                    if(data.items?.delivery){
+                                        if(data.items.delivery.delivery_status !== "delivered"){
+                                            let delivBody = JSON.stringify({delivery_status: 'canceled'});
+                                            axiosPrivate.patch(`/delivery/status/${data.items.delivery.delivery_id}`, delivBody)
+                                            .then(() => {
+                                                toast.current.show({
+                                                    severity: "success",
+                                                    summary: "Sukses",
+                                                    detail: "Berhasil membatalkan pengiriman",
+                                                    life: 1500,
+                                                });
+                                            })
+                                            .catch(error => {
+                                                toast.current.show({
+                                                    severity: "error",
+                                                    summary: "Gagal",
+                                                    detail: "Gagal membatalkan pengiriman!",
+                                                    life: 3000,
+                                                });
+                                            })
+                                        }   
+                                        
+                                    } 
+        
+                                    axiosPrivate.patch("/inv/status",invBody, {params: {id: data.items.invoice.invoice_id}})
+                                    .then((resp2) => {
+                                        toast.current.show({
+                                            severity: "success",
+                                            summary: "Success",
+                                            detail: "Order updated",
+                                            life: 3000,
+                                        });
+                                        
+                                            updateTotalSalesCust(data.items);
+                                        // setTimeout(() => {
+                                        //     window.location.reload();
+                                        // },1200)
+                                    })
+                                    .catch(error2 => {
+                                        toast.current.show({
+                                            severity: "error",
+                                            summary: "Failed",
+                                            detail: "Failure for update sales",
+                                            life: 3000,
+                                        });
+            
+                                        // undo update order_status bcs failed to update invoice
+                                        axiosPrivate.patch("/sales/update/status", salesBodyUndo, {params: {id: data.id}})
+                                        .then((resp1) => {
+                                            
+                                        })
+                                        .catch(error2 => {
+                                            toast.current.show({
+                                                severity: "error",
+                                                summary: "Failed",
+                                                detail: "Fatal error update order",
+                                                life: 3000,
+                                            });
+                                        })
+                                    })
+            
+                                }
+                            })
+                            .catch(error1 => {
+                                toast.current.show({
+                                    severity: "error",
+                                    summary: "Failed",
+                                    detail: "Failed to update order",
+                                    life: 3000,
+                                });
+                                
+                            })
+    
+                        // }
+    
+                    }
+                }
+            }
+        }
+    },[continueCancel])
+
     const fetchInsertMultipleOrderItem = async (body) => {
         let bodyData = JSON.stringify(body);
         await axiosPrivate.post("/order-item/writes", bodyData)
         .then(res => {
             if(res.data){
+                
                 if(data.data && data.data.order){
                     let body = JSON.stringify(data.data.order);
 
                     axiosPrivate.patch(`/sales/update-minor/${data.id}`, body )
                     .then(resp => {
                         if(resp.data){
+                            
                             if(data.old_data.invoice){
                                 const getTotalPayment = data.old_data.invoice?.payments ? data.old_data.invoice.payments.reduce((prevValue, currValue) => Number(prevValue) + Number(currValue.amount_paid),0) : 0;
                                 const totalDisc = Number(data.old_data.invoice.total_discount) == 0 ? (Number(data.old_data.invoice.total_discount) + Number(data.data.order.order_discount)) : ((Number(data.old_data.invoice.total_discount) - Number(data.old_data.order_discount)) + Number(data.data.order.order_discount));
                                 const subtotal = (Number(data.old_data.invoice.subtotal) - Number(data.old_data.subtotal) + Number(data.data.order.subtotal));
                                 const amount_due = ((Number(data.old_data.grandtotal) - Number(data.old_data.invoice.amount_due)) + (subtotal-totalDisc));
-                                console.log(data.old_data)
+
                                 let forInvoiceUpdate = {
                                     total_discount: totalDisc,
                                     subtotal: subtotal,
                                     amount_due: amount_due,
                                     remaining_payment: amount_due - getTotalPayment,
-                                    is_paid: (amount_due - getTotalPayment) == 0 ? true : false
+                                    is_paid: (amount_due - getTotalPayment) <= 0 ? true : false
                                 }
     
                                 const invBody = JSON.stringify(forInvoiceUpdate);
     
                                 axiosPrivate.patch(`/inv/payment?id=${data.old_data.invoice_id}`, invBody )
                                 .then(resp2 => {
-                                    setTimeout(() => {
-                                        window.location.reload();
-                                    },1200)
+                                    updateTotalSalesCust(data.data.order, data.old_data);
+
+                                    if(forInvoiceUpdate.is_paid){
+                                        const orderIDs = JSON.parse(data.old_data.invoice.order_id);
+                                        let updateOrderIDs;
+                                        if(orderIDs.length > 1){
+                                           updateOrderIDs = orderIDs.join("&id=");
+                                        } else {
+                                            updateOrderIDs = orderIDs[0];
+                                        }
+
+                                        let status = JSON.stringify({order_status: 'completed'});
+                                        axiosPrivate.patch(`/sales/update/status?id=${updateOrderIDs}`, status)
+                                        .then(() => {
+                                            toast.current.show({
+                                                severity: "success",
+                                                summary: "Sukses",
+                                                detail: "Berhasil memeperbarui data!",
+                                                life:1200,
+                                            });
+                                        })
+                                        .catch(() => {
+                                            console.error("failed to update sales => order_status")
+                                        })
+                                    } else {
+                                        toast.current.show({
+                                            severity: "success",
+                                            summary: "Sukses",
+                                            detail: "Berhasil memeperbarui data!",
+                                            life:1200,
+                                        });
+                                    }
                                     
-                                    toast.current.show({
-                                        severity: "success",
-                                        summary: "Sukses",
-                                        detail: "Berhasil memeperbarui data!",
-                                        life:1200,
-                                    });
+                                   
                                 })
                                 .catch(err2 => {
                                     console.error(err2)
                                 })
                                 
                             } else {
-                                setTimeout(() => {
-                                    window.location.reload();
-                                },1200)
+                                updateTotalSalesCust(data.data.order, data.old_data);
                                 
                                 toast.current.show({
                                     severity: "success",
@@ -803,19 +874,16 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
     };
 
     const fetchDelOrderItem = async () => {
-        console.log(data)
         if(data.id && data.id != "") {
             await axiosPrivate.delete("/order-item/order", { params: {id: data.id} })
             // FetchApi.fetchDelOrderItem(data.id)
                 .then(res => {
-                    console.log(res.data)
+                    // console.log(data)
                     if(res.data){
                         if(data.data && data.data.order_items){
                             fetchInsertMultipleOrderItem(data.data.order_items);
                         } else {
-                            setTimeout(() => {
-                                window.location.reload();
-                            },1200)
+                            updateTotalSalesCust(data.data.order, data.old_data);
                            
                             toast.current.show({
                                 severity: "success",
@@ -863,43 +931,81 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
             await axiosPrivate.patch(`/sales/update/ro/${data.items.order_id}`,orderBody)
             .then(res1 => {
                 if(res1.data){
-                    axiosPrivate.delete("/ro-item/ro", { params: {ro_id: data.id} })
+                    // => must change from delete to update status RO = canceled
+                    // then => remove order credit if exist
+                    const roStatus = JSON.stringify({status: 'batal'});
+                    // update status RO to canceled
+                    axiosPrivate.patch("/ro/half-update", {params: {id: data.id}}, roStatus)
                     .then(res2 => {
-                        // delete RO
                         if(res2.data){
-                            axiosPrivate.delete("/ro", { params: {id: data.id} })
+                            // delete order credit if exist
+                            axiosPrivate.delete("/order-credit/ro", {params: {ro_id: data.id}})
                             .then(res3 => {
-                                if(res3.data){
-                                    // update RoID in order
-                                    toast.current.show({
-                                        severity: "success",
-                                        summary: "Sukses",
-                                        detail: "Berhasil menghapus data",
-                                        life: 1500,
-                                    });
-                                    setTimeout(() => {
-                                        window.location.reload();
-                                    },1500)
-                                } 
+                                toast.current.show({
+                                    severity: "success",
+                                    summary: "Sukses",
+                                    detail: "Berhasil membatalkan pengembalian",
+                                    life: 1500,
+                                });
+                                setTimeout(() => {
+                                    window.location.reload();
+                                },1500)
                             })
-                            .catch(error3 => {
+                            .catch(err3 => {
                                 toast.current.show({
                                     severity: "error",
                                     summary: "Gagal",
-                                    detail: "Gagal menghapus data!",
+                                    detail: "Error saat membatalkan pengembalian",
                                     life: 3000,
                                 });
                             })
                         } 
                     })
-                    .catch(error2 => {
+                    .catch(err2 => {
                         toast.current.show({
                             severity: "error",
                             summary: "Gagal",
-                            detail: "Gagal menghapus item pengembalian",
+                            detail: "Gagal membatalkan pengembalian",
                             life: 3000,
                         });
                     })
+                    // axiosPrivate.delete("/ro-item/ro", { params: {ro_id: data.id} })
+                    // .then(res2 => {
+                    //     // delete RO
+                    //     if(res2.data){
+                    //         axiosPrivate.delete("/ro", { params: {id: data.id} })
+                    //         .then(res3 => {
+                    //             if(res3.data){
+                    //                 // update RoID in order
+                    //                 toast.current.show({
+                    //                     severity: "success",
+                    //                     summary: "Sukses",
+                    //                     detail: "Berhasil menghapus data",
+                    //                     life: 1500,
+                    //                 });
+                    //                 setTimeout(() => {
+                    //                     window.location.reload();
+                    //                 },1500)
+                    //             } 
+                    //         })
+                    //         .catch(error3 => {
+                    //             toast.current.show({
+                    //                 severity: "error",
+                    //                 summary: "Gagal",
+                    //                 detail: "Gagal menghapus data!",
+                    //                 life: 3000,
+                    //             });
+                    //         })
+                    //     } 
+                    // })
+                    // .catch(error2 => {
+                    //     toast.current.show({
+                    //         severity: "error",
+                    //         summary: "Gagal",
+                    //         detail: "Gagal menghapus item pengembalian",
+                    //         life: 3000,
+                    //     });
+                    // })
                 }
             })
             .catch(error1 => {
@@ -937,7 +1043,7 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
                 break;
                 case "sales":
                     if(data.action === "canceled"){
-                        console.log(data)
+                        // console.log(data)
                         // update order_status to canceled
                         cancelSales();
                         // fetchGetInv(data.data.invoice_id)
@@ -946,6 +1052,7 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
                     } else if(data.action === "update"){
                         // delete order item -> insert order item -> update order detail
                         fetchDelOrderItem();
+                        
                     } else if(data.action === "insert"){
                         // fetchInsertCustType();
                     }
@@ -1054,7 +1161,7 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
                             :""
                         }`} 
                         aria-label="confirm-btn" 
-                        onClick={() => {handleAction()}}
+                        onClick={handleAction}
                     >Ya</button>
                     </>
 

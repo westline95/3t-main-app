@@ -186,16 +186,20 @@ const returnOrderStatus = [
 const orderPayMethod = [
     {
         id: 1, 
-        type: "paid"
+        type: "lunas"
     },
     {
         id: 2, 
-        type: "unpaid"
+        type: "belum bayar"
     },
     {
         id: 3, 
-        type: "partial"
+        type: "sebagian"
     }
+];
+
+const invStatus = [
+    {id: 1, type: "paid"},{id: 2, type: "in-progress"},{id: 3, type: "due"}
 ];
 
 export default {
@@ -212,5 +216,6 @@ export default {
     returnMethodWPaidStatus,
     returnMethod,
     returnOrderStatus,
-    roStatus
+    roStatus,
+    invStatus
 };

@@ -223,7 +223,7 @@ InputWLabel.propTypes = {
     onKeyDown: propTypes.func,
     onFocus: propTypes.func,
     onBlur: propTypes.func,
-    value: propTypes.string,
+    value: propTypes.any,
     defaultValue:  propTypes.any,
     pattern: propTypes.oneOf(["currency", "number"]),
     validation: propTypes.bool,

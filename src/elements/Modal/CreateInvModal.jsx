@@ -9,8 +9,12 @@ import ConvertDate from '../../assets/js/ConvertDate.js';
 import NumberFormat from '../Masking/NumberFormat.jsx';
 import useAxiosPrivate from '../../hooks/useAxiosPrivate.js';
 import axios from '../../api/axios.js';
+import useMediaQuery from '../../hooks/useMediaQuery.js';
 
 export default function CreateInv({ show, onHide }){
+    const isMobile = useMediaQuery('(max-width: 767px)');
+    const isMediumScr = useMediaQuery('(min-width: 768px) and (max-width: 1024px)');
+
     const [ custData, setCustData ] = useState(null);
     const [ isLoading, setIsLoading ] = useState(true);
     const [ openPopup, setOpenPopup ] = useState(false);
@@ -226,7 +230,7 @@ export default function CreateInv({ show, onHide }){
     const fetchSalesbyOneCustUnpaid = async () => {
         await axiosPrivate.get("/sales/cust/paytype", { params: { 
             custid: chooseCust.customer_id, 
-            paytype:'unpaid'
+            paytype:'belum bayar'
         } })
         .then(resp => {
             setOrdersByCust(resp.data);
@@ -269,7 +273,7 @@ export default function CreateInv({ show, onHide }){
 
     const onSubmit = async (formData) => {
         if(choosedOrderId.length > 0 ){
-            let pay_type = 'unpaid';
+            let pay_type = 'belum bayar';
             let modelInv = {
                 customer_id: formData.customer_id,
                 order_id: JSON.stringify(choosedOrderId),
@@ -311,6 +315,7 @@ export default function CreateInv({ show, onHide }){
             modelInv.amount_due = getGrandtotalOrder - getTotalOrderDisc;
 
             modelInv.remaining_payment = (getGrandtotalOrder - getTotalOrderDisc);
+            console.log(modelInv)
 
             fetchInsertInv(modelInv, paymentIDs, totalPaymentInvNull);
             // fetchSumOrder(formData.customer_id, pay_type, modelInv);
@@ -491,13 +496,13 @@ export default function CreateInv({ show, onHide }){
 
     return(
         <>
-        <Modal dialogClassName="modal-90w" show={show} onHide={onHide} scrollable={true} centered={true}>
+        <Modal dialogClassName={isMobile || isMediumScr ? 'modal-xl' : 'modal-90w'} show={show} onHide={onHide} scrollable={true} centered={true}>
             <Modal.Header closeButton>
-                <Modal.Title>Create invoice</Modal.Title>
+                <Modal.Title>Buat invoice</Modal.Title>
             </Modal.Header>
             <Modal.Body style={{overflowY: 'unset', height: 'fit-content'}}>
-                <form className="row gy-3 mb-4">
-                    <div className="col-lg-4 col-sm-6 col-md-6 col-6">
+                <form className="row mb-4" style={{gap: isMobile || isMediumScr ? '0' : '1rem'}}>
+                    <div className="col-lg-4 col-sm-12 col-md-12 col-12">
                         <div style={{position:'relative'}}>
                             <InputWLabel 
                                 label="Customer Name" 
@@ -528,7 +533,7 @@ export default function CreateInv({ show, onHide }){
                             </div>   
                         </div>
                     </div>
-                    <div className="col-lg-4 col-sm-6 col-md-6 col-6">
+                    <div className="col-lg-4 col-sm-12 col-md-12 col-12">
                         <InputWLabel 
                             label={'invoice date'}
                             type={'date'}
@@ -540,7 +545,7 @@ export default function CreateInv({ show, onHide }){
                             defaultValue={getValues('invoice_date')}
                             />
                     </div>
-                    <div className="col-lg-4 col-sm-6 col-md-6 col-6">
+                    <div className="col-lg-4 col-sm-12 col-md-12 col-12">
                         <InputWLabel 
                             label={'invoice due'}
                             type={'date'}
@@ -674,9 +679,9 @@ export default function CreateInv({ show, onHide }){
                                             </td>
                                             <td>
                                                 <span className={`badge badge-${
-                                                    order.payment_type == "unpaid" ? 'danger'
-                                                    : order.payment_type == "paid"? "primary"
-                                                    : order.payment_type == "partial"? "warning"
+                                                    order.payment_type == "belum bayar" ? 'danger'
+                                                    : order.payment_type == "lunas"? "primary"
+                                                    : order.payment_type == "sebagian"? "warning"
                                                     : ""} light`}
                                                 >
                                                     {order.payment_type }                                                                                

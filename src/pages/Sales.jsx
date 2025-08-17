@@ -317,9 +317,11 @@ export default function Sales({handleSidebar, showSidebar}){
                     }
                     fetchInsertreceipt(receiptModel);
                 } else {
-                    setTimeout(() => {
-                        window.location.reload();
-                    },1700)
+                    // setTimeout(() => {
+                    //     window.location.reload();
+                    // },1700)
+                    console.log(currentOrder)
+                    console.log(body)
                 }
           })
           .catch(error => {
@@ -441,7 +443,7 @@ export default function Sales({handleSidebar, showSidebar}){
                             });
                         }
                     } else {
-                        if(resp.data.payment_type == "partial"){
+                        if(resp.data.payment_type == "sebagian"){
                             let paymentModel = {
                                 customer_id: resp.data.customer_id,
                                 invoice_id: resp.data.invoice_id,
@@ -600,7 +602,6 @@ export default function Sales({handleSidebar, showSidebar}){
             // check if customer has order credit with order id null
             axiosPrivate.get(`/orders-credit/available/${resp.data.customer_id}`)
             .then(resp1 => {
-                console.log(resp1)
                 if(resp1.data.length > 0){
                     // update order credits => order id to current order id
                     const order_credit_id = resp1.data[0].order_credit_id;
@@ -613,7 +614,7 @@ export default function Sales({handleSidebar, showSidebar}){
                             detail: "Successfully update order credit",
                             life: 3500,
                         });
-                        // setCurrOrderCredit(resp1.data[0].return_order.refund_total);
+                        setCurrOrderCredit(resp1.data[0].return_order.refund_total);
                     })
                     .catch(err2 => {
                         toast.current.show({
@@ -624,7 +625,6 @@ export default function Sales({handleSidebar, showSidebar}){
                         });
                     })
                 }
-
             })
             .catch(err1 => {
                 console.error('something error in order credit');
@@ -647,6 +647,7 @@ export default function Sales({handleSidebar, showSidebar}){
             } 
 
             setCurrentOrder(resp.data);
+            setDiscVal(Number(resp.data.order_discount));
             updateTotalSalesCust(resp.data);
             return fetchInsertMultipleOrderItem(resp.data.order_id, salesItems);            
         })
@@ -694,29 +695,40 @@ export default function Sales({handleSidebar, showSidebar}){
         .then((resp1) => {
             console.log(resp1.data)
             if(resp1.data){
-                const updatedTotalOrder = Number(resp1.data.total_sales)+Number(currentOrderData.grandtotal);
-                const updatedTotalDebt = Number(resp1.data.total_debt)+Number(currentOrderData.grandtotal);
-                axiosPrivate.patch(`/customer/sales/${resp1.data.customer_id}/${updatedTotalOrder}`)
-                .then(resp2 => {
-                    if(currentOrderData.payment_type == "unpaid"){
-                        axiosPrivate.patch(`/customer/debt/${resp1.data.customer_id}/${updatedTotalDebt}`)
-                        .then(resp3 => {
-                            toast.current.show({
-                                severity: "success",
-                                summary: "Sukses",
-                                detail: `Data pelanggan diperbarui!`,
-                                life: 1700,
-                            });
-                        })
-                        .catch(err3 => {
-                            console.error("Failed to update total debt");
-                        })
-                    }
+                let updatedTotalOrder,updatedTotalDebt;
+                if(currentOrderData.payment_type == "belum bayar"){
+                    updatedTotalOrder = Number(resp1.data.total_sales)+Number(currentOrderData.grandtotal);
+                    updatedTotalDebt = Number(resp1.data.total_debt)+Number(currentOrderData.grandtotal);
+                } else if(currentOrderData.payment_type == "sebagian"){
+                    updatedTotalOrder = Number(resp1.data.total_sales)+Number(currentOrderData.grandtotal);
+                    updatedTotalDebt = Number(resp1.data.total_debt)+(Number(currentOrderData.grandtotal)-Number(paidData.amountOrigin));
+                }
 
-                })
-                .catch(err2 => {
-                    console.error("Failed to update total sales");
-                })
+
+                if(updatedTotalOrder && updatedTotalDebt){
+                    axiosPrivate.patch(`/customer/sales/${resp1.data.customer_id}/${updatedTotalOrder}`)
+                    .then(resp2 => {
+                        // if(currentOrderData.payment_type == "unpaid"){
+                            axiosPrivate.patch(`/customer/debt/${resp1.data.customer_id}/${updatedTotalDebt}`)
+                            .then(resp3 => {
+                                toast.current.show({
+                                    severity: "success",
+                                    summary: "Sukses",
+                                    detail: `Data pelanggan diperbarui!`,
+                                    life: 1700,
+                                });
+                            })
+                            .catch(err3 => {
+                                console.error("Failed to update total debt");
+                            })
+                        // } 
+    
+                    })
+                    .catch(err2 => {
+                        console.error("Failed to update total sales");
+                    })
+
+                }
             }
         })
         .catch(err1 => {
@@ -747,18 +759,19 @@ export default function Sales({handleSidebar, showSidebar}){
             payment_type: data.payment_type,
             status: 'active'
         };
-        if(data.payment_type == "paid"){
+
+        if(data.payment_type == "lunas"){
             fetchInsertInv(modelInv);
-        } else if(data.payment_type == "partial"){
+        } else if(data.payment_type == "sebagian"){
             let newModelInv = {
                 ...modelInv,
                 is_paid: false,
                 remaining_payment: (data.grandtotal + Number(currOrderCredit)) - paidData.amountOrigin,
             }
             fetchInsertInv(newModelInv);
-        } else if(data.payment_type == "unpaid") {
+        } else if(data.payment_type == "belum bayar") {
             // check if there is an invoice with same customer ID and payment type and is_paid false
-            axiosPrivate.get("/inv/check", { params: { custid:  data.customer_id,  ispaid: false, type: "unpaid"} })
+            axiosPrivate.get("/inv/check", { params: { custid:  data.customer_id,  ispaid: false, type: "belum bayar"} })
             .then(resp => {
                 if(resp.data && resp.data.length > 0){
                     let orderId = JSON.parse(resp.data[0].order_id);
@@ -770,7 +783,8 @@ export default function Sales({handleSidebar, showSidebar}){
                         total_discount: Number(resp.data[0].total_discount) + Number(discVal),
                         remaining_payment: Number(resp.data[0].remaining_payment) + Number(data.grandtotal),
                     };
-                    // console.log(resp.data)
+                    console.log(currOrderCredit);
+                    console.log(modelInv);
                     setExistInv({invId: resp.data[0].invoice_id, invData: modelInv});
                     setSalesList({endpoint: 'inv', action: 'warning', items: {...resp.data[0]}});
                     setShowModal("existInvOrderModal");
@@ -1127,11 +1141,11 @@ export default function Sales({handleSidebar, showSidebar}){
             setDiscVal(discount);
             setTotalDiscProd(allDiscProd);
 
-            if(paidData && paidData.payment_type == "paid"){
+            if(paidData && paidData.payment_type == "lunas"){
                 if(paidData.amountOrigin < (subtotal - discount)){
                     setPaidData(null);
                 }
-            } else if(paidData && paidData.payment_type == "partial"){
+            } else if(paidData && paidData.payment_type == "sebagian"){
                 if(paidData.amountOrigin >= (subtotal - discount)){
                     setPaidData(null);
                 }
@@ -1145,9 +1159,9 @@ export default function Sales({handleSidebar, showSidebar}){
                 grandtotal: (subtotal - discount),
                 remaining_payment: 
                     paidData ? 
-                    paidData.payment_type == "paid" ? 0 
-                    : paidData.payment_type == "unpaid" ? (subtotal - discount)
-                    : paidData.payment_type == "partial" ? (subtotal - discount) - paidData.amountOrigin
+                    paidData.payment_type == "lunas" ? 0 
+                    : paidData.payment_type == "belum bayar" ? (subtotal - discount)
+                    : paidData.payment_type == "sebagian" ? (subtotal - discount) - paidData.amountOrigin
                     : (subtotal - discount) : (subtotal - discount)
             }
 
@@ -1223,7 +1237,7 @@ export default function Sales({handleSidebar, showSidebar}){
                     forming.shipped_date = formData.order_date;
                 }
 
-                if(paidData.payment_type == "paid"){
+                if(paidData.payment_type == "lunas"){
                     let modified = {
                         ...forming,
                         order_status: "completed",
@@ -1232,7 +1246,7 @@ export default function Sales({handleSidebar, showSidebar}){
                     }
                     fetchInsertSales(modified, deliveryModel);
 
-                } else if(paidData.payment_type == "partial") {
+                } else if(paidData.payment_type == "sebagian") {
                     let modified = {
                         ...forming,
                         order_status: "pending",
@@ -1241,7 +1255,7 @@ export default function Sales({handleSidebar, showSidebar}){
                     }
                     fetchInsertSales(modified, deliveryModel);
                     // fetchInvStatusCust(false, e.customer_id, paidData.payment_type);
-                } else if(paidData.payment_type == "unpaid"){
+                } else if(paidData.payment_type == "belum bayar"){
                     if(Number(chooseCust.total_debt) > Number(chooseCust.debt_limit) && !confirmVal){
                         let send = {endpoint: "sales", action: 'warning', data:forming};
                     
@@ -1709,7 +1723,7 @@ export default function Sales({handleSidebar, showSidebar}){
                                 action: 'delete',
                                 items: {...rowData}
                             })}>
-                            <i className='bx bx-trash'></i> Hapus
+                            <i className='bx bx-trash'></i> Batalkan
                             </Dropdown.Item>
                             </>
                         )
@@ -1724,7 +1738,7 @@ export default function Sales({handleSidebar, showSidebar}){
                                     }
                                 )}
                             >
-                            <i className='bx bx-trash'></i> Hapus
+                            <i className='bx bx-trash'></i> Batalkan
                             </Dropdown.Item>
                         )
                     }
@@ -1776,9 +1790,9 @@ export default function Sales({handleSidebar, showSidebar}){
     const paymentTypeCell = (rowData) => {
         return(
             <span className={`badge badge-${
-                rowData.payment_type == "unpaid" ? 'danger'
-                : rowData.payment_type == "paid"? "primary"
-                : rowData.payment_type == "partial"? "warning"
+                rowData.payment_type == "belum bayar" ? 'danger'
+                : rowData.payment_type == "lunas"? "primary"
+                : rowData.payment_type == "sebagian"? "warning"
                 : ""} light`}
             >
                 {rowData.payment_type }                                                                                
@@ -1933,9 +1947,9 @@ export default function Sales({handleSidebar, showSidebar}){
                     <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Tipe pembayaran:</p>
                     <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right'}}>
                         <span className={`badge badge-${
-                            rowData.payment_type == "unpaid" ? 'danger'
-                            : rowData.payment_type == "paid"? "primary"
-                            : rowData.payment_type == "partial"? "warning"
+                            rowData.payment_type == "belum bayar" ? 'danger'
+                            : rowData.payment_type == "lunas"? "primary"
+                            : rowData.payment_type == "sebagian"? "warning"
                             : ""} light`}
                         >
                             {rowData.payment_type }                                                                                

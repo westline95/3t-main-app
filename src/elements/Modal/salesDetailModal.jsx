@@ -78,8 +78,8 @@ export default function SalesDetailModal({show, onHide, data}) {
                     : ""} light mx-2`}
                 >
                     {
-                        !dataPoint.is_complete ? 'unpaid'
-                        : 'paid'
+                        !dataPoint.is_complete ? 'belum bayar'
+                        : 'lunas'
                     }                                                                                
                 </span>
             </Modal.Header>

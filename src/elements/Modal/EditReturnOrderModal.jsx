@@ -342,40 +342,47 @@ export default function EditReturnOrderModal({ show, onHide, data }){
     
     const fetchInsertOrderCredit = async() => {
         let toDate = data.ro.order.order_date;
+        let nextOrderAddOn = {};
 
         await axiosPrivate.get(`/sales/next?id=${data.ro.customer_id}&order_date=${toDate}`)
         .then(resp1 => {
-            console.log(resp1.data)
+            nextOrderAddOn.customer_id = data.ro.customer_id;
+            nextOrderAddOn.return_order_id = data.ro.return_order_id;
             if(resp1.data.length > 0){
-                let nextOrderAddOn = {
-                    customer_id: data.ro.customer_id,
-                    order_id: resp1.data[0].order_id,
-                    return_order_id: data.ro.return_order_id
-                };
+                let placedOrderToRO;
 
-                axiosPrivate.post("/order-credit", JSON.stringify(nextOrderAddOn))
-                .then(resp2 => {
-                    if(resp2.data){
-                        console.log(resp2.data);
-                        toast.current.show({
-                            severity: "success",
-                            summary: "Sukses",
-                            detail: "Berhasil menambahkan order kredit!",
-                            life: 3000,
-                        });
-                    }
-                })
-                .catch(err2 => {
+                if(resp1.data.length > 1){
+                    let findCurrent = resp1.data.findIndex(({order_id}) => data.ro.order_id == order_id);
+                    placedOrderToRO = resp1.data[findCurrent+1];
+                    nextOrderAddOn.order_id = placedOrderToRO ? placedOrderToRO.order_id : null;
+                    
+                } else {
+                    nextOrderAddOn.order_id = null;
+                }
+            } else {
+                nextOrderAddOn.order_id = null;
+            }
+
+            axiosPrivate.post("/order-credit", JSON.stringify(nextOrderAddOn))
+            .then(resp2 => {
+                if(resp2.data){
+                    console.log(resp2.data);
                     toast.current.show({
-                        severity: "error",
-                        summary: "Gagal",
-                        detail: "Gagal menambahkan order kredit!",
+                        severity: "success",
+                        summary: "Sukses",
+                        detail: "Berhasil menambahkan order kredit!",
                         life: 3000,
                     });
-                })
-            } else {
-
-            }
+                }
+            })
+            .catch(err2 => {
+                toast.current.show({
+                    severity: "error",
+                    summary: "Gagal",
+                    detail: "Gagal menambahkan order kredit!",
+                    life: 3000,
+                });
+            })
         })
         .catch(err1 => {
             toast.current.show({
@@ -407,37 +414,44 @@ export default function EditReturnOrderModal({ show, onHide, data }){
                         }})
                         .then(resp3 => {
                             if(resp3.data){
+                                console.log(data.ro.order.invoice)
                                 if(data.ro.order.invoice){
-                                    let invUpdate={};
-                                    if(resp3.data[1][0].return_method_id == 2 || resp3.data[1][0].return_method_id == 1){
-                                        invUpdate = {
-                                            subtotal: (Number(data.ro.order.invoice.subtotal) - Number(ROModel.refund_total)),
-                                            amount_due: (Number(data.ro.order.invoice.amount_due) - Number(ROModel.refund_total)),
-                                            remaining_payment: (Number(data.ro.order.invoice.remaining_payment) - Number(ROModel.refund_total)) <= 0 ? 
-                                            0 : (Number(data.ro.order.invoice.remaining_payment) - Number(ROModel.refund_total)),
-                                            is_paid: (Number(data.ro.order.invoice.remaining_payment) - Number(ROModel.refund_total)) <= 0 ? true : false,
-                                            
-                                        }
-                                    } else if(resp3.data[1][0].return_method_id == 3){
-                                        invUpdate = {
-                                            subtotal: (Number(data.ro.order.invoice.subtotal) + Number(ROModel.refund_total)),
-                                            amount_due: (Number(data.ro.order.invoice.amount_due) + Number(ROModel.refund_total)),
-                                            remaining_payment: (Number(data.ro.order.invoice.remaining_payment) + Number(ROModel.refund_total)) <= 0 ? 
-                                            0 : (Number(data.ro.order.invoice.remaining_payment) + Number(ROModel.refund_total)),
-                                            is_paid: (Number(data.ro.order.invoice.remaining_payment) + Number(ROModel.refund_total)) <= 0 ? true : false,
-                                        }
-
+                                    const payments = data.ro.order.invoice?.payments?.length > 0 ? data.ro.order.invoice?.payments.reduce((prev, curr) => prev + Number(curr.amount_paid),0) : 0;
+                                    let invUpdate = {};
+                                    // if(resp3.data[1][0].return_method_id == 2 || resp3.data[1][0].return_method_id == 1){
+                                    //     console.log("sini")
+                                    //     invUpdate = {
+                                    //         subtotal: (Number(data.ro.order.invoice.subtotal) -  Number(ROModel.refund_total)),
+                                    //         amount_due: (Number(data.ro.order.invoice.amount_due) - Number(ROModel.refund_total)),
+                                    //         remaining_payment: (Number(data.ro.order.invoice.remaining_payment) - Number(ROModel.refund_total)) <= 0 ? 
+                                    //         0 : (Number(data.ro.order.invoice.remaining_payment) - Number(ROModel.refund_total)),
+                                    //         is_paid: (Number(data.ro.order.invoice.remaining_payment) - Number(ROModel.refund_total)) <= 0 ? true : false,
+                                    //     }
+                                    // } else if(resp3.data[1][0].return_method_id == 3){
+                                    const grandTotal = (Number(data.ro.order.invoice.amount_due) + Number(data.ro.refund_total)) - Number(ROModel.refund_total);
+                                    invUpdate = {
+                                        subtotal: (Number(data.ro.order.invoice.subtotal) + Number(data.ro.refund_total)) - Number(ROModel.refund_total),
+                                        amount_due: grandTotal,
+                                        remaining_payment: (grandTotal - payments) <= 0 ? 
+                                        0 : (grandTotal - payments),
+                                        is_paid: (grandTotal - payments) <= 0 ? true : false,
                                     }
+                                        
+                                    // }
+                                    // console.log(data)
+                                    // console.log(ROModel)
+                                    // console.log(payments)
+                                    // console.log(invUpdate)
                                     
                                     if(Object.keys(invUpdate).length > 0){
                                         fetchUpdateInv(data.ro.order.invoice.invoice_id, invUpdate);
                                     } else {
-                                        throw new Error("Empty invoice, no invoice update!")
+                                        console.error("Empty invoice, no invoice update!")
                                     }
                                 } else {
-                                    setTimeout(() => {
-                                        window.location.reload();
-                                    },1500);
+                                    // setTimeout(() => {
+                                    //     window.location.reload();
+                                    // },1500);
 
                                     toast.current.show({
                                         severity: "success",
@@ -483,22 +497,22 @@ export default function EditReturnOrderModal({ show, onHide, data }){
         await axiosPrivate.put("/inv", invUpdateBody, {params: {id: invID}})
         .then(resp => {
             // console.log(resp.data);
-            // toast.current.show({
-            //     severity: "success",
-            //     summary: "Sukses",
-            //     detail: "Berhasil memperbarui invoice",
-            //     life: 3000,
-            // });
-            setTimeout(() => {
-                window.location.reload();
-            },1500);
-
             toast.current.show({
                 severity: "success",
                 summary: "Sukses",
-                detail: "Update pengembalian barang berhasil",
-                life: 1700,
+                detail: "Berhasil memperbarui invoice",
+                life: 3000,
             });
+            // setTimeout(() => {
+            //     window.location.reload();
+            // },1500);
+
+            // toast.current.show({
+            //     severity: "success",
+            //     summary: "Sukses",
+            //     detail: "Update pengembalian barang berhasil",
+            //     life: 1700,
+            // });
         })
         .catch(err => {
             toast.current.show({
@@ -1313,9 +1327,9 @@ export default function EditReturnOrderModal({ show, onHide, data }){
                                         </td>
                                         <td>
                                             <span className={`badge badge-${
-                                                data.ro.order?.payment_type == "unpaid" ? 'danger'
-                                                : data.ro.order?.payment_type == "paid"? "primary"
-                                                : data.ro.order?.payment_type == "partial"? "warning"
+                                                data.ro.order?.payment_type == "belum bayar" ? 'danger'
+                                                : data.ro.order?.payment_type == "lunas"? "primary"
+                                                : data.ro.order?.payment_type == "sebagian"? "warning"
                                                 : ""} light`}
                                             >
                                                 {data.ro.order?.payment_type }                                                                                

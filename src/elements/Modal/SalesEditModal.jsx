@@ -16,7 +16,6 @@ import CreatePayment from './CreatePaymentModal';
 import FetchApi from '../../assets/js/fetchApi.js';
 import { useForm } from 'react-hook-form';
 import ConvertDate from '../../assets/js/ConvertDate.js';
-import DataStatic from '../../assets/js/dataStatic.js';
 import dataStatic from '../../assets/js/dataStatic.js';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { DataView } from 'primereact/dataview';
@@ -768,9 +767,9 @@ export default function SalesEditModal({show, onHide, data}) {
                 <Modal.Title>sales edit {data !== "" ? `: ${data.id}` : ""}</Modal.Title>
                 <span style={{textTransform: 'capitalize'}} 
                   className={`badge badge-${
-                    data.payment_type == "unpaid" ? 'danger'
-                    : data.payment_type == "paid"? "primary"
-                    : data.payment_type == "partial"? "warning"
+                    data.payment_type == "belum bayar" ? 'danger'
+                    : data.payment_type == "lunas"? "primary"
+                    : data.payment_type == "sebagian"? "warning"
                     :""
                 } light mx-2`}
                 >

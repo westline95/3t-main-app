@@ -184,7 +184,7 @@ export default function InvoicePayment({ show, onHide }){
     const fetchSalesbyOneCustUnpaid = async () => {
         await axiosPrivate.get("/sales/cust/paytype", { params: { 
             custid: chooseCust.customer_id, 
-            paytype:'unpaid'
+            paytype:'belum bayar'
         } })
         .then(resp => {
             setOrdersByCust(resp.data);
@@ -202,7 +202,7 @@ export default function InvoicePayment({ show, onHide }){
 
     const onSubmit = (formData) => {
         if(formData.customer_id && choosedOrder.length > 0 && formData.invoice_date && formData.invoice_due){
-            let pay_type = 'unpaid';
+            let pay_type = 'belum bayar';
             let modelInv = {
                 customer_id: formData.customer_id,
                 order_id: JSON.stringify(choosedOrder),
@@ -508,12 +508,12 @@ export default function InvoicePayment({ show, onHide }){
                                                     <span className={`badge badge-${
                                                         !inv.is_paid ? 'danger' :  "primary"} light`}
                                                     >
-                                                        {inv.is_paid ? 'paid' : 'unpaid'}                                                                                
+                                                        {inv.is_paid ? 'lunas' : 'belum bayar'}                                                                                
                                                     </span>
                                                     <span className={`badge badge-${
-                                                        inv.payment_type == "unpaid" ? 'danger'
-                                                        : inv.payment_type == "paid"? "primary"
-                                                        : inv.payment_type == "partial"? "warning"
+                                                        inv.payment_type == "belum bayar" ? 'danger'
+                                                        : inv.payment_type == "lunas"? "primary"
+                                                        : inv.payment_type == "sebagian"? "warning"
                                                         : ""} light`}
                                                     >
                                                         {inv.payment_type }                                                                                

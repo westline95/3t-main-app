@@ -24,8 +24,16 @@ import EmptyState from "../../public/vecteezy_box-empty-state-single-isolated-ic
 import useAxiosPrivate from '../hooks/useAxiosPrivate.js';
 import { FilterMatchMode, FilterOperator } from 'primereact/api';
 import EditInv from '../elements/Modal/EditInvModal.jsx';
+import useMediaQuery from '../hooks/useMediaQuery.js';
+import { DataView } from 'primereact/dataview';
+import dataStatic from '../assets/js/dataStatic.js';
 
 export default function Invoice({handleSidebar, showSidebar}){
+    const isMobile = useMediaQuery('(max-width: 767px)');
+    const isMediumScr = useMediaQuery('(min-width: 768px) and (max-width: 1024px)');
+
+    const mobileSearchInput = useRef(null);
+
     const [ isClose, setClose ] = useState(false);
     const [ deleteInv, setDeleteInv ] = useState(false);
     const [ invData, setInvData ] = useState(null);
@@ -42,6 +50,8 @@ export default function Invoice({handleSidebar, showSidebar}){
     const [ globalFilterValue, setGlobalFilterValue ] = useState("");
     const [ globalFilterValueReceipt, setGlobalFilterValueReceipt ] = useState("");
     const [ selectedInvoice, setSelectedInv ] = useState(null);
+    const [ mobileSearchMode, setMobileSearchMode ] = useState(false);
+    const [ mobileFilterValue, setMobileFilterValue ] = useState("");
 
     const axiosPrivate = useAxiosPrivate();
     const toast = useRef(null);
@@ -69,11 +79,11 @@ export default function Invoice({handleSidebar, showSidebar}){
                 setShowModal("createInvModal");
                 break;
             case "viewInvModal":
+                // e.stopPropagation();
                 data = {
                     id: invData.id, 
                     items: invData.items
                 }
-                console.log(data)
                 setInvList(invData);
                 setShowModal("viewInvModal");
                 break;
@@ -451,7 +461,7 @@ export default function Invoice({handleSidebar, showSidebar}){
                     <InputWSelect
                         name="inv_status"
                         selectLabel="Select invoice status"
-                        options={[{id: 1, type: "paid"},{id: 2, type: "in-progress"},{id: 3, type: "due"}]}
+                        options={dataStatic.invStatus}
                         optionKeys={["id", "type"]}
                         value={(selected) => setStatusFilter(selected.value)}
                         width={"220px"}
@@ -512,7 +522,7 @@ export default function Invoice({handleSidebar, showSidebar}){
                         }
                     >
                         <i className="bx bx-plus" style={{ marginTop: -3 }}></i>
-                        Create invoice
+                        Buat invoice
                     </button>
                 </div>
             </div>
@@ -649,9 +659,9 @@ export default function Invoice({handleSidebar, showSidebar}){
     const paymentTypeCell = (rowData) => {
         return(
             <span className={`badge badge-${
-                rowData.payment_type == "unpaid" ? 'danger'
-                : rowData.payment_type == "paid"? "primary"
-                : rowData.payment_type == "partial"? "warning"
+                rowData.payment_type == "belum bayar" ? 'danger'
+                : rowData.payment_type == "lunas"? "primary"
+                : rowData.payment_type == "sebagian"? "warning"
                 : ""} light`}
             >
                 {rowData.payment_type }                                                                                
@@ -663,7 +673,7 @@ export default function Invoice({handleSidebar, showSidebar}){
         return(
             <span className={`badge badge-${
                 rowData.is_paid ? "primary" : "danger"} light`}
-            >{rowData.is_paid ? "paid" : "unpaid"}</span>
+            >{rowData.is_paid ? "lunas" : "belum lunas"}</span>
         )
     };
 
@@ -859,6 +869,185 @@ export default function Invoice({handleSidebar, showSidebar}){
         );
     };
 
+    // list setting
+    const mobileFilterFunc = (e) => {
+        setMobileFilterValue(e.target.value);
+        e.target.value == "" ? setMobileSearchMode(false):setMobileSearchMode(true)
+    }
+
+    const itemTemplate = (rowData, index) => {
+        return (
+        <div className="col-12" key={rowData.invoice_id} style={{position:'relative'}} aria-label="viewInvModal" onClick={(e) => handleModal(e, {id: rowData.invoice_id, items: rowData})}>
+            <div className='flex flex-column xl:align-items-start gap-2'
+                style={{
+                    backgroundColor: '#F8F9FD',
+                    padding: '1rem',
+                    boxShadow: '1px 1px 7px #9a9acc1a',
+                    borderRadius: '9px',
+                    position:'relative'
+                }}
+                aria-label="salesEditModal" 
+                // onClick={(e) => handleModalWData(e, {endpoint: "sales", id: rowData.order_id, action: 'update', ...rowData})}
+            >
+            
+            <div className="flex align-items-center gap-3" 
+                style={{
+                    textTransform: 'capitalize', 
+                    paddingBottom: '.75rem',
+                    borderBottom: '1px solid rgba(146, 146, 146, .2509803922)'
+                }}
+            >
+                <span className="user-img" style={{marginRight: 0}}>
+                <img
+                    src={
+                    rowData.customer.img ? rowData.customer.img
+                        : `https://res.cloudinary.com/du3qbxrmb/image/upload/v1751378806/no-img_u5jpuh.jpg`
+                    }
+                    alt=""
+                />
+                </span>
+                <div style={{width: '80%'}}>
+                    <p style={{marginBottom: 0, fontSize: 15, fontWeight: 600, textTransform: 'uppercase'}}>{rowData.invoice_number}</p>
+                    <p style={{marginBottom: 0, fontSize: 13, color: '#7d8086'}}>{ConvertDate.LocaleStringDate(rowData.invoice_date)}</p>
+                    <div className='flex flex-row gap-2' style={{fontSize: 13, marginTop: '.5rem'}}>
+                        <span className={`badge badge-${
+                            rowData.payment_type == "belum bayar" ? 'danger'
+                            : rowData.payment_type == "lunas"? "primary"
+                            : rowData.payment_type == "sebagian"? "warning"
+                            : ""} light`}
+                        >
+                            {rowData.payment_type }                                                                                
+                        </span>
+                        <span className={`badge badge-${rowData.is_paid ? "primary" : "danger"} light`}>
+                            {rowData.is_paid ? "lunas" : "belum lunas"}
+                        </span>
+                        <span className={`badge badge-${rowData.is_paid ? "success"  : new Date() > new Date(rowData.invoice_due) ?  "danger" : 'warning'} light`}>
+                            {rowData.is_paid ? "completed" : new Date() > new Date(rowData.invoice_due) ? "due" : 'in-progress'}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div className="flex flex-column gap-1" 
+                style={{
+                    textTransform: 'capitalize', 
+                }}
+            >
+                {/* <div className="flex flex-row justify-content-between">
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Pelanggan:</p>
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>{rowData.customer_id ? `${rowData.customer?.name} (${rowData.customer_id})` : `guest.name (non-member)`}</p>
+                </div> */}
+                <div className="flex flex-row justify-content-between">
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Pelanggan:</p>
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right'}}>{rowData.customer.name}</p>
+                </div>
+                <div className="flex flex-row justify-content-between">
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Total:</p>
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right'}}>
+                        <NumberFormat intlConfig={{
+                            value: rowData.amount_due, 
+                            locale: "id-ID",
+                            style: "currency", 
+                            currency: "IDR",
+                        }} 
+                        />
+                    </p>
+                </div>
+                <div className="flex flex-row justify-content-between">
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Sisa:</p>
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right'}}>
+                        <NumberFormat intlConfig={{
+                            value: rowData.remaining_payment, 
+                            locale: "id-ID",
+                            style: "currency", 
+                            currency: "IDR",
+                        }} 
+                        />
+                    </p>
+                </div>
+                {/* <div className="flex flex-row justify-content-between">
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Sisa:</p>
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right'}}>
+                       
+                    </p>
+                </div> */}
+            </div>
+            </div>
+            {/* <Dropdown drop={index == invData.length - 1 ? "up" : "down"} style={{position: 'absolute', top: 10, right: 9, padding: '1rem 1rem .5rem 1rem'}}> */}
+            <Dropdown drop={"down"} style={{position: 'absolute', top: 10, right: 9, padding: '1rem 1rem .5rem 1rem'}}>
+                <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components" ></Dropdown.Toggle>
+                <Dropdown.Menu align={"end"} className='static-shadow'>
+                    <Dropdown.Item eventKey="1" as="button" aria-label="viewInvModal" onClick={(e) => {handleModal(e, {id: rowData.invoice_id, items: rowData})}}>
+                        <i className='bx bx-show'></i> Preview invoice
+                    </Dropdown.Item> 
+                    {
+                        !rowData.is_paid ?
+                        (
+                            <>
+                            <Dropdown.Item eventKey="1" as="button" aria-label="addPaymentModal" onClick={(e) => handleModal(e, {id: rowData.invoice_id, items:{...rowData}})}>
+                                <i className='bx bx-money'></i> Add payment
+                            </Dropdown.Item>
+                            <Dropdown.Item eventKey="1" as="button" aria-label="editInvModal" onClick={(e) => handleModal(e, {id: rowData.invoice_id, items: rowData})}>
+                                <i className='bx bxs-edit'></i> Edit invoice
+                            </Dropdown.Item>
+                            
+                            </>
+                        ):""
+                    }
+                    <Dropdown.Item eventKey="1" as="button" aria-label="deleteInvModal" onClick={(e) => handleModal(e, {endpoint: "inv", action: 'delete' , id: rowData.invoice_id, items: rowData})}>
+                        <i className='bx bx-trash'></i> Delete invoice
+                    </Dropdown.Item>
+                </Dropdown.Menu>
+            </Dropdown>
+        </div>
+        );
+    };
+
+    const listTemplate = (items) => {
+        if (!items || items.length === 0) return null;
+
+        let list = items.map((inv, index) => {
+            return itemTemplate(inv, index);
+        });
+
+        return (
+        <>
+        <div className="flex flex-column gap-2" style={{ width: "100%" }}>
+            <div className="flex gap-3 align-items-center mb-4" style={{ width: "100%" }}>
+                <div className="input-group-right" style={{ width: "100%" }}>
+                    {mobileSearchMode ?
+                    (
+                    <span className="input-group-icon input-icon-right" 
+                        onClick={() => {
+                            setMobileFilterValue('');
+                            setMobileSearchMode(false);
+                            mobileSearchInput.current.focus();
+                        }}
+                    >
+                        <i class='bx bx-x'></i>
+                    </span>
+                    ):(
+                    <span className="input-group-icon input-icon-right">
+                        <i className="zwicon-search"></i>
+                    </span>
+                    )
+                    }
+                    <input
+                        ref={mobileSearchInput}
+                        type="text"
+                        className="form-control input-w-icon-right"
+                        value={mobileFilterValue}
+                        onChange={mobileFilterFunc}
+                        placeholder="Keyword Search"
+                        // onKeyDown={() => setMobileSearchMode(true)}
+                    />
+                </div>
+            </div>
+        </div>
+        <div className="grid gap-1">{list}</div>
+        </>
+        );
+    };
+
     useEffect(() => {
         fetchAllInv();
         fetchAllReceipt();
@@ -983,7 +1172,8 @@ export default function Invoice({handleSidebar, showSidebar}){
                                                 selectedOption={returnSelectVal} 
                                             /> 
                                         </div> */}
-
+                                        {!isMobile && !isMediumScr ? 
+                                        (
                                         <div className="mt-4">
                                             <DataTable
                                                 className="p-datatable"
@@ -1114,6 +1304,62 @@ export default function Invoice({handleSidebar, showSidebar}){
                                             ></Column>
                                             </DataTable>
                                         </div>
+                                        ):(
+                                        <>
+                                            <div
+                                                className="wrapping-table-btn flex gap-3 justify-content-end"
+                                                style={{ width: "100%", height: "inherit" }}
+                                            >
+                                                <Dropdown drop={"down"}>
+                                                    <Dropdown.Toggle variant="primary" style={{ height: "100%" }}>
+                                                        <i className="bx bx-download"></i> export
+                                                    </Dropdown.Toggle>
+                                                    <Dropdown.Menu align={"end"}>
+                                                    <Dropdown.Item
+                                                        eventKey="1"
+                                                        as="button"
+                                                        aria-label="viewInvModal"
+                                                        onClick={(e) =>
+                                                            handleModal(e, { id: inv.invoice_id, items: { ...inv } })
+                                                        }
+                                                    >
+                                                        <i className="bx bx-show"></i> PDF (.pdf)
+                                                    </Dropdown.Item>
+                                                    <Dropdown.Item
+                                                        eventKey="1"
+                                                        as="button"
+                                                        aria-label="editInvModal"
+                                                        onClick={(e) => handleModal(e, inv.invoice_id)}
+                                                    >
+                                                        <i className="bx bxs-edit"></i> Microsoft Excel (.xlsx)
+                                                    </Dropdown.Item>
+                                                    </Dropdown.Menu>
+                                                </Dropdown>
+                                                <button
+                                                    type="button"
+                                                    className=" btn btn-primary btn-w-icon"
+                                                    style={{ height: "100%" }}
+                                                >
+                                                    <i className="bx bxs-file-plus"></i> import
+                                                </button>
+                                                <button type="button" className="add-btn btn btn-primary btn-w-icon" 
+                                                    aria-label="createInvModal"
+                                                    onClick={(e) =>
+                                                        handleModal(e, {
+                                                            endpoint: "custType",
+                                                            action: "insert",
+                                                        })
+                                                    }
+                                                >
+                                                    <i className="bx bx-plus"></i>
+                                                    Buat invoice
+                                                </button>
+                                            </div>
+                                            <DataView value={invData} listTemplate={listTemplate} style={{marginTop: '.5rem'}} emptyMessage='No data' />       
+                                        </>
+                                        )
+                                        }
+
                                         {/* <div className="table-responsive mt-4">
                                             <table className="table" id="advancedTablesWFixedHeader" data-table-search="true"
                                                 data-table-sort="true" data-table-checkbox="true">

@@ -15,9 +15,13 @@ import capitalizeEveryWord from '../../assets/js/CapitalizeEveryWord.js';
 import CreatePayment from './CreatePaymentModal.jsx';
 import dataStatic from '../../assets/js/dataStatic.js';
 import InputWSelect from '../Input/InputWSelect.jsx';
+import useMediaQuery from '../../hooks/useMediaQuery.js';
 
 
 export default function InvoiceModal({show, onHide, data}) {
+    const isMobile = useMediaQuery('(max-width: 767px)');
+    const isMediumScr = useMediaQuery('(min-width: 768px) and (max-width: 1024px)');
+
     const [ countItem, setCountItem ] = useState(0);
     const [ dataPoint, setDataPoint ] = useState(null);
     const [ showToast, setShowToast ] = useState(false);
@@ -452,11 +456,11 @@ export default function InvoiceModal({show, onHide, data}) {
                 </div>
             </div>
         </div> */}
-        <Modal dialogClassName="modal-75w" show={show} onHide={onHide} scrollable={true} centered={true}  id="invoiceDetailModal" >
+        <Modal dialogClassName={isMobile || isMediumScr ? 'modal-fullscreen' : 'modal-75w'} show={show} onHide={onHide} scrollable={true} centered={true}  id="invoiceDetailModal" >
             <Modal.Header closeButton>
                 <Modal.Title style={{marginRight: '1rem'}}>invoice detail: #INV-{invDupe !== "" ? `${invDupe.id}` : ""}</Modal.Title>
                 <span>
-                    <InputWSelect
+                    {/* <InputWSelect
                                 // label={'status'}
                                 // name="status"
                                 // selectLabel="Select order type"
@@ -474,7 +478,7 @@ export default function InvoiceModal({show, onHide, data}) {
                                 // require={true}
                                 // register={register}
                                 // errors={errors}
-                            />
+                            /> */}
                 </span>
                 {/* <div className="modal-btn-wrap">
                     <Dropdown>
@@ -532,8 +536,8 @@ export default function InvoiceModal({show, onHide, data}) {
                 </div>
             </Modal.Header>
             <Modal.Body ref={componentRef}>
-                <div className='prev-inv-container' style={{display: 'flex', flexDirection: 'row', width: '100%', gap:'3rem'}}>
-                    <div className='card static-shadow prev-inv-content' style={{width: '75%'}}>
+                <div className='prev-inv-container' style={{display: 'flex', flexDirection: isMobile || isMediumScr ? 'column' : 'row', width: '100%', gap:'3rem'}}>
+                    <div className='card static-shadow prev-inv-content' style={{width: isMobile || isMediumScr ? '100%' : '75%'}}>
                         <div className="invoice-header">
                             <div className="invoice-detail">
                                 <h3 className="invoice-title">invoice</h3>
@@ -563,7 +567,7 @@ export default function InvoiceModal({show, onHide, data}) {
                                 </div>
                             </div>
                         </div>
-                        <div className="invoice-content">
+                        <div className="invoice-content" style={{ overflowX: 'auto'}}>
                             <div className="invoice-cust-info">
                                 <div className="invoice-info-group">
                                     <p className="label-text">nama pelanggan</p>
@@ -625,9 +629,9 @@ export default function InvoiceModal({show, onHide, data}) {
                                 </div> */}
                             </div>
                         </div>
-                        <div className="invoice-transaction">
+                        <div className="invoice-transaction mt-4">
                             <p className="inv-table-title">detail transaksi</p>
-                            <div style={{width: '100%'}}>
+                            <div className='table-responsive'>
                                 {/* <table className="table"> */}
                                 {/* <InvoiceDoc data={{invoice: data.items, order: salesList, payment: paymentData}} /> */}
                                 {salesList ? (salesList.map((sales, idx) => {
@@ -993,7 +997,7 @@ export default function InvoiceModal({show, onHide, data}) {
                             <p className="invoice-footer-text">Thank you for your business!</p>
                         </div>
                     </div>
-                    <div className='inv-tools' style={{width: '25%'}}>
+                    <div className='inv-tools' style={{width: isMobile || isMediumScr ? '100%' : '25%'}}>
                         {/* send invoice card */}
                         <div className='card static-shadow cust-card-inv' style={{minHeight: '200px', padding: '1.5rem 1.7rem'}}>
                             <div className="card-header">
@@ -1003,11 +1007,11 @@ export default function InvoiceModal({show, onHide, data}) {
                                 <span className='card-title'>{invDupe.items.customer.name}</span>
                             </div>
                             <div className="card-sub-header mb-3">
-                                <div style={{display: 'inline-flex', gap: '1rem'}}>
+                                <div className='inline-detail'>
                                     <p className='sub-header'>Email:</p>
                                     <p className='sub-header'>{invDupe.items.customer.email ? invDupe.items.customer.email : "-"}</p>
                                 </div>
-                                <div style={{display: 'inline-flex', gap: '1rem'}}>
+                                <div className='inline-detail'>
                                     <p className='sub-header'>Phonenumber:</p>
                                     <p className='sub-header'>{invDupe.items.customer.phonenumber}</p>
                                 </div>
@@ -1084,10 +1088,10 @@ export default function InvoiceModal({show, onHide, data}) {
                                 ):''
                             }
                             <div style={{display: 'inline-flex', gap: '.7rem'}}>
-                                <button type="button" className={`btn btn-danger light btn-w-icon`} style={{width: '50%'}} onClick={handlePage}>
+                                <button type="button" className={`btn btn-danger light btn-w-icon`} onClick={handlePage}>
                                     <i className='bx bxs-printer'></i>Print
                                 </button>
-                                <button type="button" className={`btn btn-success light btn-w-icon`} style={{width: '50%'}} onClick={handlePage}>
+                                <button type="button" className={`btn btn-success light btn-w-icon`} onClick={handlePage}>
                                     <i className='bx bxs-printer'></i>excel
                                 </button>
                             </div>

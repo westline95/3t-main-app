@@ -966,9 +966,9 @@ export default function Products({handleSidebar, showSidebar}){
     const paymentTypeCell = (rowData) => {
         return(
             <span className={`badge badge-${
-                rowData.payment_type == "unpaid" ? 'danger'
-                : rowData.payment_type == "paid"? "primary"
-                : rowData.payment_type == "partial"? "warning"
+                rowData.payment_type == "belum bayar" ? 'danger'
+                : rowData.payment_type == "lunas"? "primary"
+                : rowData.payment_type == "sebagian"? "warning"
                 : ""} light`}
             >
                 {rowData.payment_type }                                                                                
