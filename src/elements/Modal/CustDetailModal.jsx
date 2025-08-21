@@ -26,8 +26,8 @@ export default function CustDetailModal({show, onHide, data}) {
                                     <p className="cards-text">{data.customer_id}</p>
                                 </div>
                             </div>
-                            <div className="company-detail">
-                                <div className="company-img">
+                            <div className="profile-detail">
+                                <div className="profile-img">
                                     <img src={data.img} alt="" />
                                 </div>
                             </div>

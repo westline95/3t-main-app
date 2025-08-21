@@ -2745,6 +2745,7 @@ td .btn-group button i {
 
 
 .invoice-amount {
+  width: 100%;
   gap: 10px;
 }
 
@@ -2798,18 +2799,57 @@ td .btn-group button i {
 }
 
 .company-detail {
+  /* justify-items: flex-end; */
+    display: flex;
+    position: absolute;
+    gap: 15px;
+    background-color: #42c0fb;
+    height: 130px;
+    right: 0;
+    top: 2.7rem;
+    padding: 1rem 2rem;
+    border-top-left-radius: 17px;
+    border-bottom-left-radius: 17px;
+    align-self: center;
+}
+
+.profile-detail {
   justify-items: flex-end;
 }
 
-.company-profile {
-   text-align: right;
-}
-
-.company-detail .company-img {
+.profile-detail .profile-img {
   width: 110px;
   height: 110px;
   margin-top: -.8rem;
   margin-bottom: .5rem;
+}
+
+.profile-img img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.company-profile {
+   /* text-align: right; */
+   text-align: left;
+   align-self: center;
+}
+
+.company-profile .label-text{
+  color: #fff !important;
+  font-size: 14px !important;
+}
+
+.company-profile>.label-text:first-of-type {
+  font-weight: 800;
+}
+
+.company-detail .company-img {
+  width: 97px;
+  height: 97px;
+  /* margin-top: -.8rem; */
+  /* margin-bottom: .5rem; */
 }
 
 .company-img img {
@@ -2828,6 +2868,7 @@ td .btn-group button i {
 .invoice-amount .card-amount,
 .cards-amount .card-amount {
   min-width: 220px;
+  width: 33.3%;
   height: 120px;
   background-color: #F5F6F9;
   text-align: center;
@@ -4404,9 +4445,10 @@ tr.hover-row:hover > * {
   flex-wrap: wrap;
 }
 
-.inv-tool-btns>:nth-child(2)>* {
+.inline-group-btn>* {
     width: 50%;
-  }
+}
+
 
 /* media queries for responsiveness */
 /* for mobile */
@@ -4521,6 +4563,10 @@ tr.hover-row:hover > * {
 
   .notification-area .dropdown-menu {
       width: 247px;
+  }
+
+  .dropdown-item {
+    padding: .5rem 1rem;
   }
 
   .notification-area .dropdown-menu .dropdown-item .icon-wrapper {
@@ -5144,6 +5190,10 @@ tr.hover-row:hover > * {
     justify-content: space-between;
   }
 
+  .inline-group-btn>* {
+    width: 50%;
+  }
+
 }
 
 @media (min-width: 481px) and (max-width: 767px) {
@@ -5250,6 +5300,11 @@ tr.hover-row:hover > * {
   .notification-area .dropdown-menu {
       width: 247px;
   }
+
+  .dropdown-item {
+    padding: .5rem 1rem;
+  }
+
 
   .notification-area .dropdown-menu .dropdown-item .icon-wrapper {
       width: 32px;
@@ -6985,6 +7040,8 @@ tr.hover-row:hover > * {
   .p-calendar {
     height: 36px;
   }
+
+
 }
 
 

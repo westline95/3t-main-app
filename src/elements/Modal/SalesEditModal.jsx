@@ -80,7 +80,7 @@ export default function SalesEditModal({show, onHide, data}) {
         defaultValues: {
             customer_id: data?.customer?.customer_id,
             name: data.customer.name,
-            order_date: new Date().toString(),
+            order_date: data.order_date ? new Date(data.order_date) : null,
             order_type: data.order_type
         }
     });
@@ -767,7 +767,7 @@ export default function SalesEditModal({show, onHide, data}) {
                 <Modal.Title>sales edit {data !== "" ? `: ${data.id}` : ""}</Modal.Title>
                 <span style={{textTransform: 'capitalize'}} 
                   className={`badge badge-${
-                    data.payment_type == "belum bayar" ? 'danger'
+                    data.payment_type == "bayar nanti" ? 'danger'
                     : data.payment_type == "lunas"? "primary"
                     : data.payment_type == "sebagian"? "warning"
                     :""

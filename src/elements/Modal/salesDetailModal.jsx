@@ -78,7 +78,7 @@ export default function SalesDetailModal({show, onHide, data}) {
                     : ""} light mx-2`}
                 >
                     {
-                        !dataPoint.is_complete ? 'belum bayar'
+                        !dataPoint.is_complete ? 'bayar nanti'
                         : 'lunas'
                     }                                                                                
                 </span>
@@ -111,7 +111,7 @@ export default function SalesDetailModal({show, onHide, data}) {
                                 type="text"
                                 name="salesStatus" 
                                 disabled={true}
-                                value={dataPoint.ordeR_status}
+                                value={dataPoint.order_status}
                                 textStyle={"capitalize"}
                             />
                         </div>

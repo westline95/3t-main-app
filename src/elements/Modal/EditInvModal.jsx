@@ -59,7 +59,8 @@ export default function EditInv({ show, onHide, data }){
     const fetchUpdateSalesInv = async (reqLink, reqUnlink) => {
         if(reqLink){
             let invoiceID = JSON.stringify({invoice_id: data?.id});
-
+            console.log(reqLink)
+            console.log(reqUnlink)
             await axiosPrivate.patch(`/sales/invs?id=${reqLink}`, invoiceID)
             .then(resp => {
                 if(reqUnlink){
@@ -74,9 +75,9 @@ export default function EditInv({ show, onHide, data }){
                             life: 3000,
                         });
 
-                        setTimeout(() => {
-                            window.location.reload();
-                        },1200)
+                        // setTimeout(() => {
+                        //     window.location.reload();
+                        // },1200)
                     })
                     .catch(err2 => {
                         toast.current.show({
@@ -94,10 +95,12 @@ export default function EditInv({ show, onHide, data }){
                         life: 3000,
                     });
 
-                    setTimeout(() => {
-                        window.location.reload();
-                    },1200)
+                    // setTimeout(() => {
+                    //     window.location.reload();
+                    // },1200)
                 }
+
+                
             })
             .catch(error => {
                 toast.current.show({
@@ -392,20 +395,22 @@ export default function EditInv({ show, onHide, data }){
     }
 
     const onSubmit = (formData) => {
-        // console.log(totalPayment)
+        console.log(formData)
         if(choosedOrderId.length > 0){
-            let pay_type = 'belum bayar';
             let modelInv = {
                 customer_id: formData.customer_id,
                 order_id: JSON.stringify(choosedOrderId),
                 invoice_date: formData.invoice_date,
                 invoice_due: formData.invoice_due,
-                payment_type: pay_type
+                payment_type: data.items.payment_type
             };
-            // console.log(formData)
+            // console.log(data)
+            // console.log(modelInv)
             fetchGetPayment(modelInv);
             // fetchSumOrder(formData.customer_id, pay_type, modelInv);
         } else {
+            // console.log(data)
+            // console.log(formData)
             fetchUnlinkInv();
         }
     };
@@ -588,7 +593,7 @@ export default function EditInv({ show, onHide, data }){
                     <div className="col-lg-4 col-sm-12 col-md-12 col-12">
                         <div style={{position:'relative'}}>
                             <InputWLabel 
-                                label="Customer Name" 
+                                label="Nama pelanggan" 
                                 type="text"
                                 name="name" 
                                 placeholder="Search customer name..." 
@@ -619,7 +624,7 @@ export default function EditInv({ show, onHide, data }){
                     </div>
                     <div className="col-lg-4 col-sm-12 col-md-12 col-12">
                         <InputWLabel 
-                            label={'invoice date'}
+                            label={'Tanggal terbit'}
                             type={'date'}
                             name={'invoice_date'}
                             onChange={(e) => {add7days(e.value)}}
@@ -631,7 +636,7 @@ export default function EditInv({ show, onHide, data }){
                     </div>
                     <div className="col-lg-4 col-sm-12 col-md-12 col-12">
                         <InputWLabel 
-                            label={'invoice due'}
+                            label={'Jatuh tempo'}
                             type={'date'}
                             name={'invoice_due'}
                             require={true}
@@ -675,23 +680,23 @@ export default function EditInv({ show, onHide, data }){
                                             <span className="sort-icon"></span>
                                         </th>
                                         <th scope="col" className="head-w-icon sorting" aria-label="order-date">
-                                            order date
+                                            tanggal order
                                             <span className="sort-icon"></span>
                                         </th>
                                         <th scope="col" className="head-w-icon sorting" aria-label="cust-name">
-                                            customer name
+                                            nama pelanggan
                                             <span className="sort-icon"></span>
                                         </th>
                                         <th scope="col" className="head-w-icon sorting" aria-label="cust-id">
-                                            customer ID
+                                            ID pelanggan
                                             <span className="sort-icon"></span>
                                         </th>
-                                        <th scope="col" className="head-w-icon sorting" aria-label="cust-type">
+                                        {/* <th scope="col" className="head-w-icon sorting" aria-label="cust-type">
                                             customer type
                                             <span className="sort-icon"></span>
-                                        </th>
+                                        </th> */}
                                         <th scope="col" className="head-w-icon sorting" aria-label="order-type">
-                                            order type
+                                            tipe order
                                             <span className="sort-icon"></span>
                                         </th>
                                         <th scope="col" className="head-w-icon sorting" aria-label="total">
@@ -703,7 +708,7 @@ export default function EditInv({ show, onHide, data }){
                                             <span className="sort-icon"></span>
                                         </th>
                                         <th scope="col" className="head-w-icon sorting" aria-label="payment-type">
-                                            type
+                                            Tipe Pembayaran
                                             <span className="sort-icon"></span>
                                         </th>
                                         {/* <th scope="col" aria-label="action">
@@ -731,9 +736,9 @@ export default function EditInv({ show, onHide, data }){
                                                 {ordersByCust.name}
                                             </td>
                                             <td>{ordersByCust.customer_id}</td>
-                                            <td>
+                                            {/* <td>
                                                 {ordersByCust.cust_type}
-                                            </td>
+                                            </td> */}
                                             <td>{order.order_type}</td>
                                             <td>
                                                 {
@@ -765,7 +770,7 @@ export default function EditInv({ show, onHide, data }){
                                             </td>
                                             <td>
                                                 <span className={`badge badge-${
-                                                    order.payment_type == "belum bayar" ? 'danger'
+                                                    order.payment_type == "bayar nanti" ? 'danger'
                                                     : order.payment_type == "lunas"? "primary"
                                                     : order.payment_type == "sebagian"? "warning"
                                                     : ""} light`}
@@ -791,8 +796,16 @@ export default function EditInv({ show, onHide, data }){
                  </form>
             </Modal.Body>
             <Modal.Footer>
-                <button type="button" className="btn btn-secondary light" onClick={onHide}>Cancel</button>
-                <button type="button" className="btn btn-primary" onClick={handleSubmit(onSubmit,onError)}>Create</button>
+                <button type="button" className="btn btn-secondary light" onClick={onHide}>Batal</button>
+                <button type="button" className="btn btn-primary" onClick={() => {
+                    choosedOrderId.length > 0 ? handleSubmit(onSubmit,onError)()
+                    : toast.current.show({
+                        severity: "warn",
+                        summary: "Peringatan",
+                        detail: "Pilih minimal 1 order",
+                        life: 3000,
+                    });
+                }}>Buat invoice</button>
             </Modal.Footer>
         </Modal>
         

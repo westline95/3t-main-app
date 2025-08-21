@@ -381,7 +381,7 @@ export default function CreatePayment({show, onHide, totalCart, multiple, stack,
                         (
                             <>
                             
-                            <Collapse in={getValues('payment_type') && getValues('payment_type') !== "belum bayar"}>
+                            <Collapse in={getValues('payment_type') && getValues('payment_type') !== "bayar nanti"}>
                                 <div>
                                     <InputWSelect
                                         label={'payment method'}
@@ -396,7 +396,7 @@ export default function CreatePayment({show, onHide, totalCart, multiple, stack,
                                             selected.value == 'transfer' ? setValue('paid_amount', totalCart) : '0';
                                             selected.value != "" ? clearErrors("payment_method"):null;
                                         }}
-                                        require={getValues('payment_type') !== "belum bayar" ? true : false}
+                                        require={getValues('payment_type') !== "bayar nanti" ? true : false}
                                         register={register}
                                         errors={errors}
                                         // watch={watch('payTypeId')}
@@ -417,7 +417,7 @@ export default function CreatePayment({show, onHide, totalCart, multiple, stack,
                                 </div>
                             </Collapse>
                             {
-                                paymentType && paymentType.value !== "belum bayar" ?
+                                paymentType && paymentType.value !== "bayar nanti" ?
                                     paymentType.value == "sebagian" && getValues('payment_method') ?
                                     (
                                         <Controller
@@ -543,7 +543,7 @@ export default function CreatePayment({show, onHide, totalCart, multiple, stack,
                                 name="pay_amount"
                                 rules={{validate:{
                                     condition1: (value) => Number(value) != 0 || `Paid amount can't be 0`,
-                                    condition2: (value, formValues) =>  formValues.amountOrigin >= totalCart || "Jumlah tidak cukup" 
+                                    // condition2: (value, formValues) =>  formValues.amountOrigin >= totalCart || "Jumlah tidak cukup" 
                                 }, required: true}}
                                 render={({
                                     field: {ref, name, onChange, value}, fieldState

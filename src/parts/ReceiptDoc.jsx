@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'; 
-import ConvertDate from '../assets/js/convertFullDate.js';
-
+import ConvertDate from '../assets/js/ConvertDate.js';
 import Logo from "../assets/images/Logo_WA-removebg-preview.png";
 import NumberFormat from '../elements/Masking/NumberFormat.jsx';
 

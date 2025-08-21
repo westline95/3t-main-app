@@ -514,7 +514,7 @@ export default function Delivery({handleSidebar, showSidebar}){
                 remaining_payment: data.grandtotal - paidData.amountOrigin,
             }
             fetchInsertInv(newModelInv);
-        } else if(data.payment_type == "belum bayar") {
+        } else if(data.payment_type == "bayar nanti") {
             // if(!existInv){
                 // let newModelInv = {
                 //     ...modelInv,
@@ -815,7 +815,7 @@ export default function Delivery({handleSidebar, showSidebar}){
                 remaining_payment: 
                     paidData ? 
                     paidData.payment_type == "lunas" ? 0 
-                    : paidData.payment_type == "belum bayar" ? (subtotal - discount)
+                    : paidData.payment_type == "bayar nanti" ? (subtotal - discount)
                     : paidData.payment_type == "sebagian" ? (subtotal - discount) - paidData.amountOrigin
                     : (subtotal - discount) : (subtotal - discount)
             }
@@ -905,7 +905,7 @@ export default function Delivery({handleSidebar, showSidebar}){
                     }
                     fetchInsertSales(modified);
                     // fetchInvStatusCust(false, e.customer_id, paidData.payment_type);
-                } else if(paidData.payment_type == "belum bayar"){
+                } else if(paidData.payment_type == "bayar nanti"){
                     if(Number(chooseCust.total_debt) > Number(chooseCust.debt_limit) && !confirmVal){
                         let send = {endpoint: "sales", action: 'warning', data:forming};
                         let formatNumber = new Intl.NumberFormat("id-ID", {
@@ -1189,7 +1189,7 @@ export default function Delivery({handleSidebar, showSidebar}){
     const paymentTypeCell = (rowData) => {
         return(
             <span className={`badge badge-${
-                rowData.payment_type == "belum bayar" ? 'danger'
+                rowData.payment_type == "bayar nanti" ? 'danger'
                 : rowData.payment_type == "lunas"? "primary"
                 : rowData.payment_type == "sebagian"? "warning"
                 : ""} light`}

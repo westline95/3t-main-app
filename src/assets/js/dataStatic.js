@@ -190,7 +190,7 @@ const orderPayMethod = [
     },
     {
         id: 2, 
-        type: "belum bayar"
+        type: "bayar nanti"
     },
     {
         id: 3, 

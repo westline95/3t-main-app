@@ -190,7 +190,7 @@ export default function Invoice({handleSidebar, showSidebar}){
     };
 
     const fetchUpdateOrderStatus =  async(reqURL) => {
-        let orderStatus = JSON.stringify({ order_status: "completed" });
+        let orderStatus = JSON.stringify({ order_status: "completed", is_complete: true });
         // check order type first
         await axiosPrivate.get(`/sales/by?id=${reqURL}`)
         .then(resp => {
@@ -217,6 +217,79 @@ export default function Invoice({handleSidebar, showSidebar}){
             throw new Error("There will be an error for updating order_status");
         })
         
+    };
+
+    const updateTotalDebtCust = async(paymentModel) => {
+        let oldTotalDebt = Number(invListObj.items.customer?.total_debt);
+        let updateTotalDebt = (oldTotalDebt - paymentModel.amount_paid) <= 0 ? 0 : (oldTotalDebt - paymentModel.amount_paid);
+
+        await axiosPrivate.patch(`/customer/debt/${paymentModel.customer_id}/${updateTotalDebt}`)
+        .then((resp) => {
+            if(resp.data){
+                toast.current.show({
+                    severity: "success",
+                    summary: "Sukses",
+                    detail: "Data pelanggan diperbarui",
+                    life: 1700,
+                });
+            }
+        })
+        .catch((err) => {
+            toast.current.show({
+                severity: "error",
+                summary: "Gagal",
+                detail: "Data pelanggan gagal diperbarui",
+                life: 3000,
+            });
+        })
+    }
+
+    
+    const fetchDetailedCust = async(custID) => {
+        await axiosPrivate.get(`/customer/detail?custid=${custID}`)
+        .then(resp => {
+            const sales = resp.data.sales ? resp.data.sales[0] : null;
+            const debt = resp.data.debt ? resp.data.debt[0] : null;
+
+            const updt_total_sales = (sales && sales.total_sales_grandtotal ? Number(sales.total_sales_grandtotal) : 0) 
+            - (sales && sales.return_refund ? Number(sales.return_refund) : 0)
+            + (sales && sales.orders_credit_uncanceled ? Number(sales.orders_credit_uncanceled.total) : 0);
+            
+            const orderBBNotInv = debt && debt.total_debt_grandtotal ? Number(debt.total_debt_grandtotal) : 0;
+            const orderPartialRemain = debt && debt.partial_sisa ? Number(debt.partial_sisa.sisa) : 0;
+            const orderInvRemain = debt && debt.hutang_invoice ? Number(debt.hutang_invoice.sisa_hutang) : 0;
+            const orderCreditUncomplete = debt && debt.orders_credit_uncomplete ? Number(debt.orders_credit_uncomplete.total) : 0;
+
+            const updt_total_debt = orderBBNotInv+orderPartialRemain+orderInvRemain+orderCreditUncomplete;
+        
+            axiosPrivate.patch(`/customer/sales-debt/${custID}/${updt_total_debt}/${updt_total_sales}`)
+            .then(resp2 =>{
+                toast.current.show({
+                    severity: "success",
+                    summary: "Sukses",
+                    detail: "Berhasil memperbarui data pelanggan!",
+                    life:1200,
+                });
+            })
+            .catch(err2 => {
+                console.error(err2);
+                toast.current.show({
+                    severity: "error",
+                    summary: "Fatal Error",
+                    detail: "Error saat memperbarui data pelanggan!",
+                    life:1200,
+                });
+            })
+        })
+        .catch(err => {
+            console.error(err);
+            toast.current.show({
+                severity: "error",
+                summary: "Gagal",
+                detail: "Gagal memperbarui data pelanggan!",
+                life:1200,
+            });
+        })
     };
 
     const fetchInsertPayment = async () => {
@@ -246,6 +319,12 @@ export default function Invoice({handleSidebar, showSidebar}){
 
         await axiosPrivate.post("/payment/write", JSON.stringify(paymentModel))
         .then(resp => {
+            
+            // if(invListObj.items.payment_type != "lunas"){
+            //     updateTotalDebtCust(paymentModel);
+            // }
+            fetchDetailedCust(paymentModel.customer_id);
+
             axiosPrivate.patch("/inv/payment", JSON.stringify(invModel), { params: { id: invListObj.items.invoice_id } })
             .then(resp2 => {
                 
@@ -297,14 +376,15 @@ export default function Invoice({handleSidebar, showSidebar}){
             let invoiceID = JSON.stringify({invoice_id: null});
             let invoiceIDrelink = JSON.stringify({invoice_id: invListObj.id});
             
-            if(!invListObj.items.payments && !invListObj.items.is_paid){
+            if(invListObj.items.payments.length == 0 && !invListObj.items.is_paid){
                 
                 // update order:invoice_id to null (unlink)
                 await axiosPrivate.patch(`/sales/invs?id=${orderIds}`, invoiceID)
                 .then(resp => {
-    
                     // delete inv
-                    axiosPrivate.delete(`/inv`, {params: { id: invListObj.id}})
+                    // axiosPrivate.delete(`/inv`, {params: { id: invListObj.id}})
+                    const invStatus = JSON.stringify({status: 0});
+                    axiosPrivate.patch(`/inv/status`, invStatus, {params: { id: invListObj.id}})
                     .then(resp2 => {
                         setShowModal("");
                         setTimeout(() => {
@@ -314,7 +394,7 @@ export default function Invoice({handleSidebar, showSidebar}){
                         toast.current.show({
                             severity: "success",
                             summary: "Success",
-                            detail: "Successfully delete invoice",
+                            detail: "Successfully remove invoice",
                             life: 1300,
                         });
         
@@ -331,7 +411,7 @@ export default function Invoice({handleSidebar, showSidebar}){
                             });
                         })
                         .catch(err3 => {
-                            throw new Error('error: ' + err3)
+                            console.error('error: ' + err3)
                         })
                         toast.current.show({
                             severity: "error",
@@ -353,10 +433,12 @@ export default function Invoice({handleSidebar, showSidebar}){
 
             } else {
                 // unlink first
-                await axiosPrivate.patch(`/sales/invs?id=${orderIds}`, invoiceID)
-                .then(resp => {
-                    // delete inv
-                    axiosPrivate.delete(`/inv`, {params: { id: invListObj.id}})
+                // await axiosPrivate.patch(`/sales/invs?id=${orderIds}`, invoiceID)
+                // .then(resp => {
+                    // just delete inv => not delete but update status invoice to 0
+                    // axiosPrivate.delete(`/inv`, {params: { id: invListObj.id}})
+                    const invStatus = JSON.stringify({status: 0});
+                    await axiosPrivate.patch(`/inv/status`, invStatus, {params: { id: invListObj.id}})
                     .then(resp2 => {
                         setShowModal("");
                         setTimeout(() => {
@@ -366,7 +448,7 @@ export default function Invoice({handleSidebar, showSidebar}){
                         toast.current.show({
                             severity: "success",
                             summary: "Success",
-                            detail: "Successfully delete invoice",
+                            detail: "Successfully remove invoice",
                             life: 1300,
                         });
         
@@ -382,7 +464,7 @@ export default function Invoice({handleSidebar, showSidebar}){
                             });
                         })
                         .catch(err3 => {
-                            throw new Error('error: ' + err3)
+                            console.error('error: ' + err3)
                         })
                         toast.current.show({
                             severity: "error",
@@ -391,15 +473,15 @@ export default function Invoice({handleSidebar, showSidebar}){
                             life: 3000,
                         });
                     })
-                })
-                .catch(error => {
-                    toast.current.show({
-                        severity: "error",
-                        summary: "Failed",
-                        detail: "Failed to delete invoice",
-                        life: 3000,
-                    });
-                })
+                // })
+                // .catch(error => {
+                //     toast.current.show({
+                //         severity: "error",
+                //         summary: "Failed",
+                //         detail: "Failed to delete invoice",
+                //         life: 3000,
+                //     });
+                // })
             }
 
         }
@@ -659,7 +741,7 @@ export default function Invoice({handleSidebar, showSidebar}){
     const paymentTypeCell = (rowData) => {
         return(
             <span className={`badge badge-${
-                rowData.payment_type == "belum bayar" ? 'danger'
+                rowData.payment_type == "bayar nanti" ? 'danger'
                 : rowData.payment_type == "lunas"? "primary"
                 : rowData.payment_type == "sebagian"? "warning"
                 : ""} light`}
@@ -680,8 +762,9 @@ export default function Invoice({handleSidebar, showSidebar}){
     const invStatus = (rowData) => {
         return(
             <span className={`badge badge-${
+                rowData.status == 0 ? "danger" :
                 rowData.is_paid ? "success"  : new Date() > new Date(rowData.invoice_due) ?  "danger" : 'warning'} light`}
-            >{rowData.is_paid ? "completed" : new Date() > new Date(rowData.invoice_due) ? "due" : 'in-progress'}</span>
+            >{ rowData.status == 0 ? "canceled" : rowData.is_paid ? "completed" : new Date() > new Date(rowData.invoice_due) ? "due" : 'in-progress'}</span>
 
         )
     };
@@ -825,25 +908,40 @@ export default function Invoice({handleSidebar, showSidebar}){
             <Dropdown drop={rowIndex == invData.length - 1 ? "up" : "down"}>
                 <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components" ></Dropdown.Toggle>
                 <Dropdown.Menu align={"end"}>
-                    <Dropdown.Item eventKey="1" as="button" aria-label="viewInvModal" onClick={(e) => handleModal(e, {id: rowData.invoice_id, items: rowData})}>
-                        <i className='bx bx-show'></i> Preview invoice
+                    <Dropdown.Item eventKey="1" as="button" aria-label="viewInvModal" onClick={(e) => {e.stopPropagation();handleModal(e, {id: rowData.invoice_id, items: rowData})}}>
+                        <i className='bx bx-show'></i> Lihat invoice
                     </Dropdown.Item> 
                     {
                         !rowData.is_paid ?
                         (
                             <>
-                            <Dropdown.Item eventKey="1" as="button" aria-label="addPaymentModal" onClick={(e) => handleModal(e, {id: rowData.invoice_id, items:{...rowData}})}>
-                                <i className='bx bx-money'></i> Add payment
+                            <Dropdown.Item eventKey="1" as="button" aria-label="addPaymentModal" onClick={(e) => {e.stopPropagation();handleModal(e, {id: rowData.invoice_id, items:{...rowData}})}}>
+                                <i className='bx bx-money'></i> Tambah pembayaran
                             </Dropdown.Item>
-                            <Dropdown.Item eventKey="1" as="button" aria-label="editInvModal" onClick={(e) => handleModal(e, {id: rowData.invoice_id, items: rowData})}>
-                                <i className='bx bxs-edit'></i> Edit invoice
-                            </Dropdown.Item>
-                            
+                            {rowData.payment_type == "bayar nanti" ?
+                                (
+                                <Dropdown.Item eventKey="1" as="button" aria-label="editInvModal" onClick={(e) => {e.stopPropagation();handleModal(e, {id: rowData.invoice_id, items: rowData})}}>
+                                    <i className='bx bxs-edit'></i> Edit invoice
+                                </Dropdown.Item>
+                                ):''
+                            }
                             </>
                         ):""
                     }
-                    <Dropdown.Item eventKey="1" as="button" aria-label="deleteInvModal" onClick={(e) => handleModal(e, {endpoint: "inv", action: 'delete' , id: rowData.invoice_id, items: rowData})}>
-                        <i className='bx bx-trash'></i> Delete invoice
+                    <Dropdown.Item eventKey="1" as="button" aria-label="deleteInvModal" onClick={(e) => {
+                        e.stopPropagation();
+                        // rowData.payments?.length > 0 ?
+                        //     toast.current.show({
+                        //         severity: "error",
+                        //         summary: "Restricted",
+                        //         detail: "Terdapat pembayaran yang sedang berlangsung",
+                        //         life: 3000,
+                        //     })
+                        // : 
+                        handleModal(e, {endpoint: "inv", action: 'delete' , id: rowData.invoice_id, items: rowData});
+                    }}
+                    >
+                        <i className='bx bx-trash'></i> Hapus invoice
                     </Dropdown.Item>
                 </Dropdown.Menu>
             </Dropdown>
@@ -911,7 +1009,7 @@ export default function Invoice({handleSidebar, showSidebar}){
                     <p style={{marginBottom: 0, fontSize: 13, color: '#7d8086'}}>{ConvertDate.LocaleStringDate(rowData.invoice_date)}</p>
                     <div className='flex flex-row gap-2' style={{fontSize: 13, marginTop: '.5rem'}}>
                         <span className={`badge badge-${
-                            rowData.payment_type == "belum bayar" ? 'danger'
+                            rowData.payment_type == "bayar nanti" ? 'danger'
                             : rowData.payment_type == "lunas"? "primary"
                             : rowData.payment_type == "sebagian"? "warning"
                             : ""} light`}
@@ -976,25 +1074,46 @@ export default function Invoice({handleSidebar, showSidebar}){
             <Dropdown drop={"down"} style={{position: 'absolute', top: 10, right: 9, padding: '1rem 1rem .5rem 1rem'}}>
                 <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components" ></Dropdown.Toggle>
                 <Dropdown.Menu align={"end"} className='static-shadow'>
-                    <Dropdown.Item eventKey="1" as="button" aria-label="viewInvModal" onClick={(e) => {handleModal(e, {id: rowData.invoice_id, items: rowData})}}>
-                        <i className='bx bx-show'></i> Preview invoice
+                    <Dropdown.Item eventKey="1" as="button" aria-label="viewInvModal" onClick={(e) => {e.stopPropagation();handleModal(e, {id: rowData.invoice_id, items: rowData})}}>
+                        <i className='bx bx-show'></i> Lihat invoice
                     </Dropdown.Item> 
                     {
                         !rowData.is_paid ?
                         (
                             <>
-                            <Dropdown.Item eventKey="1" as="button" aria-label="addPaymentModal" onClick={(e) => handleModal(e, {id: rowData.invoice_id, items:{...rowData}})}>
-                                <i className='bx bx-money'></i> Add payment
+                            <Dropdown.Item eventKey="1" as="button" aria-label="addPaymentModal" onClick={(e) => {e.stopPropagation();handleModal(e, {id: rowData.invoice_id, items:{...rowData}})}}>
+                                <i className='bx bx-money'></i> Tambah pembayaran
                             </Dropdown.Item>
-                            <Dropdown.Item eventKey="1" as="button" aria-label="editInvModal" onClick={(e) => handleModal(e, {id: rowData.invoice_id, items: rowData})}>
-                                <i className='bx bxs-edit'></i> Edit invoice
-                            </Dropdown.Item>
+                            {
+                                rowData.payment_type == "bayar nanti" ? 
+                                (
+                                    <Dropdown.Item eventKey="1" as="button" aria-label="editInvModal" onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleModal(e, {id: rowData.invoice_id, items: rowData})
+                                    }}>
+                                        <i className='bx bxs-edit'></i> Edit invoice
+                                    </Dropdown.Item>
+
+                                ):''
+                            }
                             
                             </>
                         ):""
                     }
-                    <Dropdown.Item eventKey="1" as="button" aria-label="deleteInvModal" onClick={(e) => handleModal(e, {endpoint: "inv", action: 'delete' , id: rowData.invoice_id, items: rowData})}>
-                        <i className='bx bx-trash'></i> Delete invoice
+                    <Dropdown.Item eventKey="1" as="button" aria-label="deleteInvModal" onClick={(e) => {
+                        e.stopPropagation();
+                        // rowData.payments?.length > 0 ?
+                        //     toast.current.show({
+                        //         severity: "error",
+                        //         summary: "Restricted",
+                        //         detail: "Terdapat pembayaran yang sedang berlangsung",
+                        //         life: 3000,
+                        //     })
+                        // : 
+                        handleModal(e, {endpoint: "inv", action: 'delete' , id: rowData.invoice_id, items: rowData});
+                    }}
+                    >
+                        <i className='bx bx-trash'></i> Hapus invoice
                     </Dropdown.Item>
                 </Dropdown.Menu>
             </Dropdown>
@@ -1084,7 +1203,7 @@ export default function Invoice({handleSidebar, showSidebar}){
                 // delete invoice
                 deleteSelectedInv();
             } else if(invListObj.items.payments.length == 0 && !invListObj.items.is_paid){
-                console.log("aaha")
+                // console.log("aaha")
                 // delete invoice
                 deleteSelectedInv();
             }
@@ -1981,7 +2100,7 @@ export default function Invoice({handleSidebar, showSidebar}){
                             msg={
                                 <p style={{marginBottom: 0}}>
                                     Tidak dapat menghapus invoice ini karena terdapat pembayaran yang belum penuh.<br />
-                                    Coba hapus pembayaran yang terkait terlebih dahulu lalu coba hapus ulang invoice ini
+                                    Coba hapus pembayaran yang terkait terlebih dahulu lalu coba lagi.
                                 </p>
                             }
                             returnValue={(confirmVal) => setDeleteInv(confirmVal)}

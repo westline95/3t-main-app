@@ -736,10 +736,10 @@ export default function Customers({handleSidebar, showSidebar}) {
               </p>
             </div>
             <div className="flex flex-row justify-content-between">
-              <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Total hutang:</p>
+              <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Total order:</p>
               <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>
                 <NumberFormat intlConfig={{
-                    value: rowData.total_debt, 
+                    value: rowData.total_sales, 
                     locale: "id-ID",
                     style: "currency", 
                     currency: "IDR",
@@ -748,10 +748,10 @@ export default function Customers({handleSidebar, showSidebar}) {
               </p>
             </div>
             <div className="flex flex-row justify-content-between">
-              <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Total order:</p>
+              <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Total hutang:</p>
               <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>
                 <NumberFormat intlConfig={{
-                    value: rowData.total_sales, 
+                    value: rowData.total_debt, 
                     locale: "id-ID",
                     style: "currency", 
                     currency: "IDR",

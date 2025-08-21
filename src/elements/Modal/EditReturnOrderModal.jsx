@@ -393,7 +393,56 @@ export default function EditReturnOrderModal({ show, onHide, data }){
             });
         })
     }
-    console.log(data)
+
+    const fetchDetailedCust = async(custID) => {
+        await axiosPrivate.get(`/customer/detail?custid=${custID}`)
+        .then(resp => {
+            const sales = resp.data.sales ? resp.data.sales[0] : null;
+            const debt = resp.data.debt ? resp.data.debt[0] : null;
+
+            const updt_total_sales = (sales && sales.total_sales_grandtotal ? Number(sales.total_sales_grandtotal) : 0) 
+            - (sales && sales.return_refund ? Number(sales.return_refund) : 0)
+            + (sales && sales.orders_credit_uncanceled ? Number(sales.orders_credit_uncanceled.total) : 0);
+            
+            const orderBBNotInv = debt && debt.total_debt_grandtotal ? Number(debt.total_debt_grandtotal) : 0;
+            const orderPartialRemain = debt && debt.partial_sisa ? Number(debt.partial_sisa.sisa) : 0;
+            const orderInvRemain = debt && debt.hutang_invoice ? Number(debt.hutang_invoice.sisa_hutang) : 0;
+            const orderCreditUncomplete = debt && debt.orders_credit_uncomplete ? Number(debt.orders_credit_uncomplete.total) : 0;
+            const refundTotal = debt && debt.total_refund ? Number(debt.total_refund) : 0;
+
+            const updt_total_debt = (orderBBNotInv+orderPartialRemain+orderInvRemain+orderCreditUncomplete) - refundTotal;
+        
+            axiosPrivate.patch(`/customer/sales-debt/${custID}/${updt_total_debt}/${updt_total_sales}`)
+            .then(resp2 =>{
+                toast.current.show({
+                    severity: "success",
+                    summary: "Sukses",
+                    detail: "Berhasil memperbarui data pelanggan!",
+                    life:1200,
+                });
+            })
+            .catch(err2 => {
+                console.error(err2);
+                toast.current.show({
+                    severity: "error",
+                    summary: "Fatal Error",
+                    detail: "Error saat memperbarui data pelanggan!",
+                    life:1200,
+                });
+            })
+        })
+        .catch(err => {
+            console.error(err);
+            toast.current.show({
+                severity: "error",
+                summary: "Gagal",
+                detail: "Gagal memperbarui data pelanggan!",
+                life:1200,
+            });
+        })
+    };
+    
+    // console.log(data)
     const fetchUpdateRO = async(ROModel, ROIModel) => {
        
         // delete all ro item
@@ -418,16 +467,6 @@ export default function EditReturnOrderModal({ show, onHide, data }){
                                 if(data.ro.order.invoice){
                                     const payments = data.ro.order.invoice?.payments?.length > 0 ? data.ro.order.invoice?.payments.reduce((prev, curr) => prev + Number(curr.amount_paid),0) : 0;
                                     let invUpdate = {};
-                                    // if(resp3.data[1][0].return_method_id == 2 || resp3.data[1][0].return_method_id == 1){
-                                    //     console.log("sini")
-                                    //     invUpdate = {
-                                    //         subtotal: (Number(data.ro.order.invoice.subtotal) -  Number(ROModel.refund_total)),
-                                    //         amount_due: (Number(data.ro.order.invoice.amount_due) - Number(ROModel.refund_total)),
-                                    //         remaining_payment: (Number(data.ro.order.invoice.remaining_payment) - Number(ROModel.refund_total)) <= 0 ? 
-                                    //         0 : (Number(data.ro.order.invoice.remaining_payment) - Number(ROModel.refund_total)),
-                                    //         is_paid: (Number(data.ro.order.invoice.remaining_payment) - Number(ROModel.refund_total)) <= 0 ? true : false,
-                                    //     }
-                                    // } else if(resp3.data[1][0].return_method_id == 3){
                                     const grandTotal = (Number(data.ro.order.invoice.amount_due) + Number(data.ro.refund_total)) - Number(ROModel.refund_total);
                                     invUpdate = {
                                         subtotal: (Number(data.ro.order.invoice.subtotal) + Number(data.ro.refund_total)) - Number(ROModel.refund_total),
@@ -436,12 +475,6 @@ export default function EditReturnOrderModal({ show, onHide, data }){
                                         0 : (grandTotal - payments),
                                         is_paid: (grandTotal - payments) <= 0 ? true : false,
                                     }
-                                        
-                                    // }
-                                    // console.log(data)
-                                    // console.log(ROModel)
-                                    // console.log(payments)
-                                    // console.log(invUpdate)
                                     
                                     if(Object.keys(invUpdate).length > 0){
                                         fetchUpdateInv(data.ro.order.invoice.invoice_id, invUpdate);
@@ -452,6 +485,7 @@ export default function EditReturnOrderModal({ show, onHide, data }){
                                     // setTimeout(() => {
                                     //     window.location.reload();
                                     // },1500);
+                                    fetchDetailedCust(data.items.customer_id);
 
                                     toast.current.show({
                                         severity: "success",
@@ -494,7 +528,10 @@ export default function EditReturnOrderModal({ show, onHide, data }){
 
     const fetchUpdateInv = async(invID, invUpdate) => {
         let invUpdateBody = JSON.stringify(invUpdate);
-        await axiosPrivate.put("/inv", invUpdateBody, {params: {id: invID}})
+        console.log(data)
+        console.log(invID)
+        // await axiosPrivate.put("/inv", invUpdateBody, {params: {id: invID}})
+        await axiosPrivate.patch("/inv/payment", invUpdateBody, {params: {id: invID}})
         .then(resp => {
             // console.log(resp.data);
             toast.current.show({
@@ -503,6 +540,7 @@ export default function EditReturnOrderModal({ show, onHide, data }){
                 detail: "Berhasil memperbarui invoice",
                 life: 3000,
             });
+            fetchDetailedCust(data.ro.customer_id);
             // setTimeout(() => {
             //     window.location.reload();
             // },1500);
@@ -548,7 +586,7 @@ export default function EditReturnOrderModal({ show, onHide, data }){
             setChoosedOrder(filteringOrder);
         }
     };
-
+    console.log(data)
     const onSubmit = async (formData) => {
         let roItemModel = [];
         let returnOrderModel = {
@@ -587,7 +625,7 @@ export default function EditReturnOrderModal({ show, onHide, data }){
             }
         })
         .catch(err => {
-            throw new Error("checking order credit before update RO error")
+            console.error("checking order credit before update RO error")
         })
 
         fetchUpdateRO(returnOrderModel, roItemModel);
@@ -1327,7 +1365,7 @@ export default function EditReturnOrderModal({ show, onHide, data }){
                                         </td>
                                         <td>
                                             <span className={`badge badge-${
-                                                data.ro.order?.payment_type == "belum bayar" ? 'danger'
+                                                data.ro.order?.payment_type == "bayar nanti" ? 'danger'
                                                 : data.ro.order?.payment_type == "lunas"? "primary"
                                                 : data.ro.order?.payment_type == "sebagian"? "warning"
                                                 : ""} light`}

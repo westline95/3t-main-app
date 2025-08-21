@@ -50,19 +50,32 @@ const invoiceStyle = StyleSheet.create({
         fontWeight: 600,
         fontSize: '40px',
         textTransform: 'capitalize',
-        marginBottom: '56px'
+        marginBottom: '47px'
     },
     headerCompany: {
         display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'flex-end',
+        flexDirection: 'row',
+        alignContent: 'center',
+        alignSelf: 'center',
+        position: 'absolute',
+        gap: 12,
+        marginTop:-32,
+        right:-32,
+        backgroundColor: '#42c0fb',
+        width:'890px',
+        height: '350px',
+        paddingVertical: 16,
+        paddingHorizontal: 16,
+        // borderRadius: 12
+        borderBottomLeftRadius:12,
+        borderTopLeftRadius:12,
     },
     companyImg: {
         width: '230px',
         height: '230px',
-        marginTop: -10,
-        marginBottom: '20px',
-        alignSelf: 'flex-start',
+        // marginTop: -10,
+        // marginBottom: '20px',
+        alignSelf: 'center',
         marginLeft: '12px',
     },
     logoImg: {
@@ -72,10 +85,18 @@ const invoiceStyle = StyleSheet.create({
     },
     companyProfile:{
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        alignSelf: 'center',
+        marginRight:32
     },
-    profileText: {
-        color: '#929292',
+    profileText1: {
+        color: '#ffffff',
+        fontWeight: 800,
+        fontSize: '40px',
+        textTransform: 'capitalize',
+    },
+    profileText2: {
+        color: '#ffffff',
         fontWeight: 500,
         fontSize: '40px',
         textTransform: 'capitalize',
@@ -84,17 +105,20 @@ const invoiceStyle = StyleSheet.create({
         display: 'flex',
         flexDirection: 'row',
         justifyContent:'space-between',
-        paddingVertical: '98px',
+        paddingVertical: '70px',
         alignItems: 'center',
-        marginBottom: '24px'
     },
     InvAmount: {
         display: 'flex',
         flexDirection: 'row',
-        gap: '20px'
+        justifyContent:'space-between',
+        gap: '27px',
+        width:'100%',
+        marginBottom: 24
     },
     cardAmount :{
-        minWidth: '490px',
+        // minWidth: '490px',
+        width:'32%',
         height: '300px',
         backgroundColor: '#F5F6F9',
         textAlign: 'center',
@@ -102,7 +126,7 @@ const invoiceStyle = StyleSheet.create({
         paddingHorizontal: '62px',
     },
     cardAmountHighlight: {
-        minWidth: '490px',
+        width: '33%',
         height: '300px',
         backgroundColor: '#42C0FB',
         textAlign: 'center',
@@ -121,25 +145,25 @@ const invoiceStyle = StyleSheet.create({
         fontWeight: 700,
         fontSize: '40px',
         alignSelf:'center',
-        marginBottom: '15px',
+        marginBottom: '37px',
     },
     cardInfoHighlightLabel: {
         color: '#ffffff',
         fontWeight: 700,
         fontSize: '40px',
         alignSelf:'center',
-        marginBottom: '16px',
+        marginBottom: '37px',
     },
     cardInfoHighlightText: {
         color: '#ffffff',
         fontWeight: 700,
-        fontSize: '40px',
+        fontSize: '50px',
         alignSelf:'center',
     },
     cardInfoText: {
         color: '#344050',
         fontWeight: 700,
-        fontSize: '40px',
+        fontSize: '50px',
         alignSelf:'center'
     },
     badgeSuccess: {
@@ -194,6 +218,18 @@ const invoiceStyle = StyleSheet.create({
         paddingHorizontal: '65px',
         
         // height: '100px',
+    },
+    orderNumberTab:{
+        backgroundColor: '#42C0FB',
+        borderTopLeftRadius: 12,
+        borderTopRightRadius: 12,
+        width: '38%',
+        paddingVertical: '45px',
+        paddingHorizontal: '65px',
+    },
+    orderNumberTabText: {
+        color: '#ffffff',
+        fontWeight: 600,
     },
     rowHead:{
         width:'100%',
@@ -314,6 +350,9 @@ const invoiceStyle = StyleSheet.create({
         bottom: 22,
         left: 32,
         right: 32,
+    },
+    tableDesc: {
+        fontStyle: 'italic'
     }
 
     
@@ -321,6 +360,7 @@ const invoiceStyle = StyleSheet.create({
 export default function InvoiceDoc({data, ref}) {
     const [ orderData, setOrderData ] = useState(data ? data.order : []);
     const [ paymentData, setPaymentData ] = useState(data ? data.payment : []);
+    // const [ paymentData, setPaymentData ] = useState(data ? data.payment : []);
     const [ totalPaid, setTotalPaid] = useState(0);
     const imageUrl = "https://res.cloudinary.com/du3qbxrmb/image/upload/v1748248130/Logo_WA-removebg-preview_qnf7tu.png";
      const formatedNumber = new Intl.NumberFormat("id-ID", {
@@ -368,9 +408,9 @@ export default function InvoiceDoc({data, ref}) {
                             <Image source={imageUrl} style={invoiceStyle.logoImg} />
                         </View>
                         <View style={invoiceStyle.companyProfile}>
-                            <Text style={invoiceStyle.profileText}>tahu tempe tauge</Text>
-                            <Text style={invoiceStyle.profileText}>+628123456789</Text>
-                            <Text style={invoiceStyle.profileText}>pangururan, samosir</Text>
+                            <Text style={invoiceStyle.profileText1}>tahu tempe tauge</Text>
+                            <Text style={invoiceStyle.profileText2}>+628123456789</Text>
+                            <Text style={invoiceStyle.profileText2}>pangururan, samosir</Text>
                         </View>
                     </View>
                 </View>
@@ -398,10 +438,19 @@ export default function InvoiceDoc({data, ref}) {
                             {/* <View className={`badge badge-${data.invoice.is_paid ? 'success' : 'danger'} light`}>{data.invoice.is_paid ? 'lunas' : 'belum lunas'}</View> */}
                         </View>
                     </View>
-                    <View style={invoiceStyle.InvAmount}>
+                    <View style={{alignSelf:'flex-start'}}>
+                        <View>
+                            <Text style={{...invoiceStyle.infoLabel, marginBottom: '20px'}}>Informasi Pembayaran</Text>
+                            <Text style={{...invoiceStyle.infoLabel}}>Bank Transfer: <Text style={{...invoiceStyle.infoText}}>BRI</Text></Text>
+                            <Text style={{...invoiceStyle.infoLabel}}>A/N: <Text style={{...invoiceStyle.infoText}}>Anton Ruchiat</Text></Text>
+                            <Text style={{...invoiceStyle.infoLabel, marginBottom:0}}>Nomor rekening: <Text style={{...invoiceStyle.infoText}}>01234567890123</Text></Text>
+                        </View>
+                    </View>
+                </View>
+                <View style={invoiceStyle.InvAmount}>
                         <View style={invoiceStyle.cardAmount}>
                             <View style={invoiceStyle.infoGroup}>
-                                <Text style={invoiceStyle.cardInfoLabel}>Total transaksi</Text>
+                                <Text style={invoiceStyle.cardInfoLabel}>Total seluruh transaksi</Text>
                                 <Text style={invoiceStyle.cardInfoText}>{formatedNumber.format(data.invoice.amount_due)}</Text>
                             </View>
                         </View>
@@ -422,13 +471,15 @@ export default function InvoiceDoc({data, ref}) {
                             </View>
                         </View>
                     </View>
-                </View>
                 <View style={invoiceStyle.invTransaction}>
                     <View style={{ marginBottom: '132px',}}>
                        <Text style={invoiceStyle.invTableTitle}>detail transaksi</Text>
                         {data.order ? (data.order.map((sales, idx) => {
                             return(
                             <View style={invoiceStyle.table} key={`transaction-table-${idx}`}>
+                                <View style={invoiceStyle.orderNumberTab}>
+                                    <View style={{...invoiceStyle.orderNumberTabText}}><Text>order ID: {sales.order_id}</Text></View>
+                                </View>
                                 <View style={invoiceStyle.thead}>
                                     <View style={invoiceStyle.rowHead}>
                                         <View style={{...invoiceStyle.th, width: '13.4%'}}><Text>tanggal</Text></View>
@@ -485,18 +536,22 @@ export default function InvoiceDoc({data, ref}) {
                                         })}
                                         </View>
                                     </View>
+                                    {Number(sales.order_discount) !== 0 ? 
+                                    (
                                     <View style={{...invoiceStyle.tableEndNote1}}>
                                         <View style={{textAlign: 'right', minWidth: '17.9%'}}><Text>diskon order</Text></View>
                                         <View style={{width: '18%'}}><Text>{formatedNumber.format(sales.order_discount)}</Text></View>
                                     </View>
-                                        <View style={{...invoiceStyle.tableEndNote1}}>
-                                        <View style={{textAlign: 'right', minWidth: '17.9%', fontWeight: 600}}><Text>total order</Text></View>
+
+                                    ):''}
+                                    <View style={{...invoiceStyle.tableEndNote1}}>
+                                        <View style={{textAlign: 'right', marginRight:32, fontWeight: 600}}><Text>total order</Text></View>
                                         <View style={{width: '18%', fontWeight: 600}}><Text>{formatedNumber.format(sales.grandtotal)}</Text></View>
                                     </View>
                                     {idx == data.order.length-1 ? 
                                         (
                                         <View style={{...invoiceStyle.tableEndNote2}}>
-                                            <View style={{textAlign: 'right', minWidth: '17.9%', fontWeight: 600}}><Text>total transaksi</Text></View>
+                                            <View style={{textAlign: 'right', fontWeight: 600, marginRight:32}}><Text>total seluruh transaksi</Text></View>
                                             <View style={{width: '18%', fontWeight: 600}}><Text>{formatedNumber.format(data.invoice.amount_due)}</Text></View>
                                         </View>
                                         )
@@ -507,9 +562,9 @@ export default function InvoiceDoc({data, ref}) {
                             )
                         })):""}
                     </View>
-                    {data.payment.length > 0 ? 
+                    {data.payment?.length > 0 ? 
                         (
-                        <View style={{ marginBottom: '50px',}}>
+                        <View style={{ marginBottom: '132px',}}>
                             <Text style={invoiceStyle.invTableTitle}>detail pembayaran</Text>
                             {data.payment ? (data.payment.map((pay, idx) => {
                                 return(
@@ -561,6 +616,109 @@ export default function InvoiceDoc({data, ref}) {
                         :''
                     }
                 </View>
+                {data.ro && data.ro.length > 0 ? 
+                    (
+                    <View style={invoiceStyle.invTransaction} break={true}>
+                        <Text style={invoiceStyle.invTableTitle}>detail pengembalian</Text>
+                        <Text style={{...invoiceStyle.tableDesc, ...invoiceStyle.infoText, fontWeight:500, textTransform:'none'}}>Detail pengembalian ini hanya untuk transparansi data. Seluruh data transaksi sudah mencakup data pengembalian yang ada.</Text>
+                        {/* <div style={{width: '100%'}}> */}
+                            {data.ro.map((ro, idx) => {
+                                return(
+                                    <>
+                                    <View>
+                                        {/* <View className='table-desc-wrap-inline'>
+                                            <View className='table-desc-inline'>
+                                                <Text className='table-desc-title'>tanggal order:</Text>
+                                                <Text className='table-desc-value'>{ConvertDate.convertToFullDate(ro.order.order_date,"/")}</Text>
+                                            </View>    
+                                            <View className='table-desc-inline'>
+                                                <Text className='table-desc-title'>tanggal pengembalian:</Text>
+                                                <Text className='table-desc-value'>{ConvertDate.convertToFullDate(ro.return_date,"/")}</Text>
+                                            </View>
+                                        </View>
+                                        <View className='table-desc-inline'>
+                                            <Text className='table-desc-title'>Metode pengembalian:</Text>
+                                            <Text className='table-desc-value'>{ro.return_method}</Text>
+                                        </View> */}
+                                    </View>
+                                    <View style={invoiceStyle.table} key={`transaction-table-${idx}`}>
+                                        <View style={invoiceStyle.thead}>
+                                            <View style={invoiceStyle.rowHead}>
+                                                <View style={{...invoiceStyle.th, width: '5%'}}><Text>#</Text></View>
+                                                <View style={{...invoiceStyle.th, width: '23%' }}><Text>item</Text></View>
+                                                <View style={{...invoiceStyle.th, width: '10%'}}><Text>order qty</Text></View>
+                                                <View style={{...invoiceStyle.th, width: '5%'}}><Text></Text></View>
+                                                <View style={{...invoiceStyle.th, width: '17%'}}><Text>pengembalian</Text></View>
+                                                <View style={{...invoiceStyle.th, width: '25%'}}><Text>Alasan pengembalian</Text></View>
+                                                <View style={{...invoiceStyle.th, width: '15%'}}><Text>jumlah</Text></View>
+                                            </View>
+                                        </View>
+                                        <View style={{...invoiceStyle.tbody}}>
+                                            {ro.return_order_items?.map((roItem, index) => {
+                                                return (
+                                                    // <View style={{...invoiceStyle.rowBody, width: '100%', }}>
+                                                    <>
+                                                    <View style={{...invoiceStyle.td, paddingHorizontal:'75px', 
+                                                        borderBottom: '2.25px', 
+                                                        borderStyle: 'solid' ,  
+                                                        borderColor: '#EBF1F6'}}
+                                                    >
+                                                        <View style={{...invoiceStyle.tr,  width: '5%'}}>
+                                                            <Text>{index+1}</Text>
+                                                        </View>
+                                                        <View style={{...invoiceStyle.tr, width: '23%'}}>
+                                                            <Text>{`${roItem.order_item.product.product_name}  ${roItem.order_item.product.variant}`}</Text>
+                                                        </View>
+                                                        <View style={{...invoiceStyle.tr, width: '10%'}}>
+                                                            <Text>{ Number(roItem.order_item.quantity)}</Text>
+                                                        </View>
+                                                        <View style={{...invoiceStyle.tr, width: '5%', textAlign:'center'}}>
+                                                            <Text>{'>'}</Text>
+                                                        </View>
+                                                        <View style={{...invoiceStyle.tr, width: '17%'}}>
+                                                            <Text>{Number(roItem.quantity)}</Text>
+                                                        </View>
+                                                        <View style={{...invoiceStyle.tr, width: '25%',}}>
+                                                            <Text>{roItem.reason}</Text>
+                                                        </View>
+                                                        <View style={{...invoiceStyle.tr, width: '15%',}}>
+                                                            <Text>{formatedNumber.format(roItem.return_value)}</Text>
+                                                        </View>
+                                                    </View>
+                                                    
+                                                    {index == ro.return_order_items.length-1 ?
+                                                        (
+                                                        <View style={{...invoiceStyle.tableEndNote1}}>
+                                                            <View style={{textAlign: 'right',marginRight:32, fontWeight: 600,}}><Text>total</Text></View>
+                                                            <View style={{width: '18%', fontWeight: 600}}><Text>{formatedNumber.format(ro.refund_total)}</Text></View>
+                                                        </View>
+                                                        ):''
+                                                    }
+                                                    </>
+                                                )
+                                            })}
+                                            {idx == data.ro.length-1 ? 
+                                                (
+                                                <View style={{...invoiceStyle.tableEndNote2}}>
+                                                    <View style={{textAlign: 'right', fontWeight: 600, marginRight:32}}><Text>total pengembalian</Text></View>
+                                                    <View style={{width: '18%', fontWeight: 600}}><Text>{formatedNumber.format(ro.refund_total)}</Text></View>
+                                                </View>
+                                                )
+                                            :""}
+                                            {/* </View> */}
+                                        </View>
+                                        
+                                    </View>
+                                </>
+                                )
+                            })}
+                        {/* </div> */}
+                    </View>
+                    )
+                    :''
+                }
+
+                
 
 
                 {/* FOOTER */}

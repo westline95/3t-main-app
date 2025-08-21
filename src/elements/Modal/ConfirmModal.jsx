@@ -201,7 +201,7 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
             if(resp1.data){
                 let updatedTotalDebt,updatedTotalOrder;
                 if(data.action === "canceled"){
-                    currentOrderData.payment_type == "belum bayar" || currentOrderData.payment_type == "sebagian" && !currentOrderData.is_complete ? 
+                    currentOrderData.payment_type == "bayar nanti" || currentOrderData.payment_type == "sebagian" && !currentOrderData.is_complete ? 
                         updatedTotalDebt = Number(resp1.data.total_debt)-Number(currentOrderData.grandtotal) 
                     : updatedTotalDebt=null;
 
@@ -209,7 +209,7 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
                 } else if(data.action === "update"){
                     if(oldData){
                         console.log(currentOrderData)
-                        if(oldData.payment_type == "belum bayar" || oldData.payment_type == "sebagian"){
+                        if(oldData.payment_type == "bayar nanti" || oldData.payment_type == "sebagian"){
                             updatedTotalOrder = Number(resp1.data.total_sales)-Math.abs(Number(currentOrderData.grandtotal)-Number(oldData.grandtotal));
                             if(oldData.invoice?.payments?.length > 0){
                                 const paymentTotal = oldData.invoice.payments.reduce((prev, curr) => prev + Number(curr.amount_paid), 0);
@@ -277,6 +277,52 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
         })
     }
 
+    const fetchDetailedCust = async(custID) => {
+        await axiosPrivate.get(`/customer/detail?custid=${custID}`)
+        .then(resp => {
+            const sales = resp.data.sales ? resp.data.sales[0] : null;
+            const debt = resp.data.debt ? resp.data.debt[0] : null;
+
+            const updt_total_sales = (sales && sales.total_sales_grandtotal ? Number(sales.total_sales_grandtotal) : 0) 
+            - (sales && sales.return_refund ? Number(sales.return_refund) : 0)
+            + (sales && sales.orders_credit_uncanceled ? Number(sales.orders_credit_uncanceled.total) : 0);
+            
+            const orderBBNotInv = debt && debt.total_debt_grandtotal ? Number(debt.total_debt_grandtotal) : 0;
+            const orderPartialRemain = debt && debt.partial_sisa ? Number(debt.partial_sisa.sisa) : 0;
+            const orderInvRemain = debt && debt.hutang_invoice ? Number(debt.hutang_invoice.sisa_hutang) : 0;
+            const orderCreditUncomplete = debt && debt.orders_credit_uncomplete ? Number(debt.orders_credit_uncomplete.total) : 0;
+
+            const updt_total_debt = orderBBNotInv+orderPartialRemain+orderInvRemain+orderCreditUncomplete;
+        
+            axiosPrivate.patch(`/customer/sales-debt/${custID}/${updt_total_debt}/${updt_total_sales}`)
+            .then(resp2 =>{
+                toast.current.show({
+                    severity: "success",
+                    summary: "Sukses",
+                    detail: "Berhasil memperbarui data pelanggan!",
+                    life:1200,
+                });
+            })
+            .catch(err2 => {
+                console.error(err2);
+                toast.current.show({
+                    severity: "error",
+                    summary: "Fatal Error",
+                    detail: "Error saat memperbarui data pelanggan!",
+                    life:1200,
+                });
+            })
+        })
+        .catch(err => {
+            console.error(err);
+            toast.current.show({
+                severity: "error",
+                summary: "Gagal",
+                detail: "Gagal memperbarui data pelanggan!",
+                life:1200,
+            });
+        })
+    };
    
     
     const handleROAndOrderCredit = async () => {
@@ -415,10 +461,14 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
 
     useEffect(() => {
         if(continueCancel){
+            console.log(data)
+            // let tes = JSON.parse("[\"1099428398817902593\",\"1099431095945560065\",\"1099432000028672001\"]");
+            // tes.splice(tes.indexOf(data.id), 1);
+            // console.log(tes)
             if(!data.items.invoice_id){
                     // let handleROcredit = handleROAndOrderCredit();
                 // if(continueCancel == true){
-                    let body = JSON.stringify({order_status: 'canceled'});
+                    let body = JSON.stringify({order_status: 'canceled', is_complete: false});
                     axiosPrivate.patch("/sales/update/status",body, {params: {id: data.id}})
                     .then(() => {
                         toast.current.show({
@@ -443,7 +493,8 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
                                     // setTimeout(() => {
                                     //     window.location.reload();
                                     // },1500);
-                                    updateTotalSalesCust(data.items);
+                                    // updateTotalSalesCust(data.items);
+                                    fetchDetailedCust(data.items.customer_id);
                                 })
                                 .catch(error => {
                                     toast.current.show({
@@ -454,13 +505,15 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
                                     });
                                 })   
                             } else {
-                                updateTotalSalesCust(data.items);
+                                // updateTotalSalesCust(data.items);
+                                fetchDetailedCust(data.items.customer_id);
                                 // setTimeout(() => {
                                 //     window.location.reload();
                                 // },1500);
                             }
                         } else {
-                            updateTotalSalesCust(data.items);
+                            // updateTotalSalesCust(data.items);
+                            fetchDetailedCust(data.items.customer_id);
                             // setTimeout(() => {
                             //     window.location.reload();
                             // },1500);
@@ -491,12 +544,12 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
     
                 // }
             } else {
-                const parsedOrderIds = JSON.parse(data.items.invoice.order_id);
+                const parsedOrderIds = JSON.parse(data.items.invoice?.order_id);
                 if(parsedOrderIds.length > 1){
                     // let handleROcredit = handleROAndOrderCredit();
     
                     // if(continueCancel == true){
-                        let body = JSON.stringify({order_status: "canceled"});
+                        let body = JSON.stringify({order_status: "canceled", is_complete: false});
                         axiosPrivate.patch(`/sales/update/status?id=${data.id}`, body)
                         .then((resp1) => {
                             if(resp1.data.length > 1 && resp1.data[0] > 0){
@@ -511,6 +564,7 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
                                 if(data.items?.delivery){
                                     if(data.items.delivery.delivery_status !== "delivered"){
                                         let delivBody = JSON.stringify({delivery_status: 'canceled'});
+
                                         axiosPrivate.patch(`/delivery/status/${data.items.delivery.delivery_id}`, delivBody)
                                         .then(() => {
                                             toast.current.show({
@@ -533,7 +587,7 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
                                 } 
             
                                 let getIndex = parsedOrderIds.indexOf(data.id);
-                                if (getIndex !== -1) {
+                                if (getIndex >= 0) {
                                     parsedOrderIds.splice(getIndex, 1);
                                 }
             
@@ -551,9 +605,9 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
                                     remaining_payment: data.items.invoice.remaining_payment - data.items.grandtotal,
                                     total_discount: data.items.invoice.total_discount - data.items.order_discount,
                                 };
-    
+                                
                                 newInvModel.is_paid = newInvModel.remaining_payment <= 0 ? true:false;
-    
+                                console.log(newInvModel)
                                 let toStr = JSON.stringify(newInvModel);
                                 axiosPrivate.patch("/inv/payment", toStr, {params: {id: data.items.invoice.invoice_id}})
                                 .then(res2 => {
@@ -564,7 +618,8 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
                                         life: 1500,
                                     });
     
-                                    updateTotalSalesCust(data.items);
+                                    fetchDetailedCust(data.items.customer_id);
+                                    // updateTotalSalesCust(data.items);
     
                                     // setTimeout(() => {
                                     //     window.location.reload();
@@ -579,7 +634,10 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
                                         life: 3000,
                                     });
                                     // undo update order_status
-                                    body = JSON.stringify({order_status: data.items.order_status});
+                                    body = JSON.stringify({
+                                        order_status: data.items.order_status, 
+                                        is_complete: data.items.order_status != "completed" ? false : true
+                                    });
                                     axiosPrivate.patch(`/sales/update/status?id=${data.id}`, body);
                                 })
                             } else {
@@ -683,8 +741,11 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
     
                         // if(continueCancel == true){
                             // canceled order and update invoice:status = canceled
-                            let salesBodyUpdate = JSON.stringify({order_status: "canceled"});
-                            let salesBodyUndo = JSON.stringify({order_status: data.items.order_status});
+                            let salesBodyUpdate = JSON.stringify({order_status: "canceled", is_complete: false});
+                            let salesBodyUndo = JSON.stringify({
+                                order_status: data.items.order_status,
+                                is_complete: data.items.order_status != "completed" ? false : true
+                            });
                             let invBody = JSON.stringify({status: "canceled"});
                             axiosPrivate.patch(`/sales/update/status?id=${data.id}`, salesBodyUpdate)
                             .then((resp1) => {
@@ -723,7 +784,8 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
                                             life: 3000,
                                         });
                                         
-                                            updateTotalSalesCust(data.items);
+                                            // updateTotalSalesCust(data.items);
+                                            fetchDetailedCust(data.items.customer_id);
                                         // setTimeout(() => {
                                         //     window.location.reload();
                                         // },1200)
@@ -784,6 +846,8 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
                     .then(resp => {
                         if(resp.data){
                             
+                            
+
                             if(data.old_data.invoice){
                                 const getTotalPayment = data.old_data.invoice?.payments ? data.old_data.invoice.payments.reduce((prevValue, currValue) => Number(prevValue) + Number(currValue.amount_paid),0) : 0;
                                 const totalDisc = Number(data.old_data.invoice.total_discount) == 0 ? (Number(data.old_data.invoice.total_discount) + Number(data.data.order.order_discount)) : ((Number(data.old_data.invoice.total_discount) - Number(data.old_data.order_discount)) + Number(data.data.order.order_discount));
@@ -802,7 +866,7 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
     
                                 axiosPrivate.patch(`/inv/payment?id=${data.old_data.invoice_id}`, invBody )
                                 .then(resp2 => {
-                                    updateTotalSalesCust(data.data.order, data.old_data);
+                                    // updateTotalSalesCust(data.data.order, data.old_data);
 
                                     if(forInvoiceUpdate.is_paid){
                                         const orderIDs = JSON.parse(data.old_data.invoice.order_id);
@@ -813,7 +877,7 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
                                             updateOrderIDs = orderIDs[0];
                                         }
 
-                                        let status = JSON.stringify({order_status: 'completed'});
+                                        let status = JSON.stringify({order_status: 'completed', is_complete: true});
                                         axiosPrivate.patch(`/sales/update/status?id=${updateOrderIDs}`, status)
                                         .then(() => {
                                             toast.current.show({
@@ -842,15 +906,18 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
                                 })
                                 
                             } else {
-                                updateTotalSalesCust(data.data.order, data.old_data);
+                                // updateTotalSalesCust(data.data.order, data.old_data);
                                 
                                 toast.current.show({
                                     severity: "success",
                                     summary: "Sukses",
-                                    detail: "Berhasil memeperbarui data!",
+                                    detail: "Berhasil memperbarui data!",
                                     life:1200,
                                 });
                             }
+
+                            // console.log("sinsnisn")
+                            fetchDetailedCust(data.old_data.customer_id);
 
                         }
                     })
@@ -874,6 +941,7 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
     };
 
     const fetchDelOrderItem = async () => {
+        // console.log(data)
         if(data.id && data.id != "") {
             await axiosPrivate.delete("/order-item/order", { params: {id: data.id} })
             // FetchApi.fetchDelOrderItem(data.id)
@@ -881,9 +949,14 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
                     // console.log(data)
                     if(res.data){
                         if(data.data && data.data.order_items){
+                            // console.log("1")
+                            // console.log("1sdiasdawsd")
                             fetchInsertMultipleOrderItem(data.data.order_items);
                         } else {
-                            updateTotalSalesCust(data.data.order, data.old_data);
+                            // console.log("2sdiasdawsd")
+
+                            // updateTotalSalesCust(data.data.order, data.old_data);
+                            fetchDetailedCust(data.old_data.customer_id);
                            
                             toast.current.show({
                                 severity: "success",

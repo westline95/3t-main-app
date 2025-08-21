@@ -184,7 +184,7 @@ export default function InvoicePayment({ show, onHide }){
     const fetchSalesbyOneCustUnpaid = async () => {
         await axiosPrivate.get("/sales/cust/paytype", { params: { 
             custid: chooseCust.customer_id, 
-            paytype:'belum bayar'
+            paytype:'bayar nanti'
         } })
         .then(resp => {
             setOrdersByCust(resp.data);
@@ -202,7 +202,7 @@ export default function InvoicePayment({ show, onHide }){
 
     const onSubmit = (formData) => {
         if(formData.customer_id && choosedOrder.length > 0 && formData.invoice_date && formData.invoice_due){
-            let pay_type = 'belum bayar';
+            let pay_type = 'bayar nanti';
             let modelInv = {
                 customer_id: formData.customer_id,
                 order_id: JSON.stringify(choosedOrder),
@@ -508,10 +508,10 @@ export default function InvoicePayment({ show, onHide }){
                                                     <span className={`badge badge-${
                                                         !inv.is_paid ? 'danger' :  "primary"} light`}
                                                     >
-                                                        {inv.is_paid ? 'lunas' : 'belum bayar'}                                                                                
+                                                        {inv.is_paid ? 'lunas' : 'bayar nanti'}                                                                                
                                                     </span>
                                                     <span className={`badge badge-${
-                                                        inv.payment_type == "belum bayar" ? 'danger'
+                                                        inv.payment_type == "bayar nanti" ? 'danger'
                                                         : inv.payment_type == "lunas"? "primary"
                                                         : inv.payment_type == "sebagian"? "warning"
                                                         : ""} light`}

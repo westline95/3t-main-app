@@ -4,7 +4,7 @@ import { Toast } from 'primereact/toast';
 import NumberFormat from '../Masking/NumberFormat';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import { useReactToPrint } from 'react-to-print';
-import FetchApi from '../../assets/js/fetchApi';
+import FetchApi from '../../assets/js/fetchApi.js';
 import InvoiceDoc from '../../parts/InvoiceDoc.jsx';
 import ConvertDate from '../../assets/js/ConvertDate.js';
 import InputWLabel from '../Input/InputWLabel';
@@ -16,6 +16,7 @@ import CreatePayment from './CreatePaymentModal.jsx';
 import dataStatic from '../../assets/js/dataStatic.js';
 import InputWSelect from '../Input/InputWSelect.jsx';
 import useMediaQuery from '../../hooks/useMediaQuery.js';
+import ReceiptDoc from '../../parts/ReceiptDoc.jsx';
 
 
 export default function InvoiceModal({show, onHide, data}) {
@@ -458,7 +459,7 @@ export default function InvoiceModal({show, onHide, data}) {
         </div> */}
         <Modal dialogClassName={isMobile || isMediumScr ? 'modal-fullscreen' : 'modal-75w'} show={show} onHide={onHide} scrollable={true} centered={true}  id="invoiceDetailModal" >
             <Modal.Header closeButton>
-                <Modal.Title style={{marginRight: '1rem'}}>invoice detail: #INV-{invDupe !== "" ? `${invDupe.id}` : ""}</Modal.Title>
+                <Modal.Title style={{marginRight: '1rem'}}>invoice ID: {invDupe !== "" ? `${invDupe.id}` : ""}</Modal.Title>
                 <span>
                     {/* <InputWSelect
                                 // label={'status'}
@@ -519,7 +520,7 @@ export default function InvoiceModal({show, onHide, data}) {
                         <i className='bx bxs-printer'></i>Print
                     </button>
                 </div> */}
-                <div className="modal-btn-mobile dropdown">
+                {/* <div className="modal-btn-mobile dropdown">
                     <button type="button" className="modal-btn" data-bs-toggle="dropdown" aria-expanded="false">
                         <i className='bx bx-dots-vertical-rounded'></i>
                     </button>
@@ -533,7 +534,7 @@ export default function InvoiceModal({show, onHide, data}) {
                             <a href="" className="dropdown-item"><i className='bx bx-printer'></i>Print</a>
                         </li>
                     </ul>
-                </div>
+                </div> */}
             </Modal.Header>
             <Modal.Body ref={componentRef}>
                 <div className='prev-inv-container' style={{display: 'flex', flexDirection: isMobile || isMediumScr ? 'column' : 'row', width: '100%', gap:'3rem'}}>
@@ -571,63 +572,71 @@ export default function InvoiceModal({show, onHide, data}) {
                             <div className="invoice-cust-info">
                                 <div className="invoice-info-group">
                                     <p className="label-text">nama pelanggan</p>
-                                    <p className="invoice-text">{invDupe.items.customer.name}</p>
+                                    <p className="invoice-text" style={{marginBottom:17}}>{invDupe.items.customer.name}</p>
                                 </div>
                                 <div className="invoice-info-group">
                                     <p className="label-text">status</p>
                                     <span className={`badge badge-${invDupe.items.is_paid ? 'success' : 'danger'} light`}>{invDupe.items.is_paid ? 'lunas' : 'belum lunas'}</span>
                                 </div>
                             </div>
-                            <div className="invoice-amount">
-                                <div className="card-amount">
-                                    <div className="invoice-info-group">
-                                        <p className="label-text">Total Transaksi</p>
-                                        <p className="invoice-text">
-                                            <NumberFormat intlConfig={{
-                                                value: invDupe.items.amount_due, 
-                                                locale: "id-ID",
-                                                style: "currency", 
-                                                currency: "IDR",
-                                                }} 
-                                            />
-                                        </p>
-                                    </div>
+                            <div className='inv-bank-info'>
+                                <div class="invoice-info-group">
+                                    <p class="label-text" style={{marginBottom:3}}>Informasi Pembayaran</p>
+                                    <p class="invoice-text" style={{marginBottom:3}}>Bank Transfer: BRI</p>
+                                    <p class="invoice-text" style={{marginBottom:3}}>A/n: Anton Ruchiat</p>
+                                    <p class="invoice-text" style={{marginBottom:0}}>Nomor rekening: 01234567890123</p>
                                 </div>
-                                <div className="card-amount">
-                                    <div className="invoice-info-group">
-                                        <p className="label-text">Total Bayar</p>
-                                        <p className="invoice-text">
-                                            <NumberFormat intlConfig={{
-                                                value: totalPaid, 
-                                                locale: "id-ID",
-                                                style: "currency", 
-                                                currency: "IDR",
-                                                }} 
-                                            />
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="card-amount">
-                                    <div className="invoice-info-group">
-                                        <p className="label-text">jumlah yang harus dibayar</p>
-                                        <p className="invoice-text">
-                                            <NumberFormat intlConfig={{
-                                                value: totalPaid == 0 ? invDupe.items.amount_due : ((totalPaid - invDupe.items.amount_due) > 0 ? 0 :(invDupe.items.amount_due - totalPaid)), 
-                                                locale: "id-ID",
-                                                style: "currency", 
-                                                currency: "IDR",
-                                                }} 
-                                            />
-                                        </p>
-                                    </div>
-                                </div>
-                                {/* <div className="card-amount">
-                                    <div className="invoice-info-group">
-                                        <p className="label-text">sisa bon</p>
-                                        <p className="invoice-text"><span className="currency">Rp</span> 0</p>
-                                    </div>
-                                </div> */}
                             </div>
+                        </div>
+                        <div className="invoice-amount">
+                            <div className="card-amount">
+                                <div className="invoice-info-group">
+                                    <p className="label-text">Total Transaksi</p>
+                                    <p className="invoice-text">
+                                        <NumberFormat intlConfig={{
+                                            value: invDupe.items.amount_due, 
+                                            locale: "id-ID",
+                                            style: "currency", 
+                                            currency: "IDR",
+                                            }} 
+                                        />
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="card-amount">
+                                <div className="invoice-info-group">
+                                    <p className="label-text">Total Bayar</p>
+                                    <p className="invoice-text">
+                                        <NumberFormat intlConfig={{
+                                            value: totalPaid, 
+                                            locale: "id-ID",
+                                            style: "currency", 
+                                            currency: "IDR",
+                                            }} 
+                                        />
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="card-amount">
+                                <div className="invoice-info-group">
+                                    <p className="label-text">jumlah yang harus dibayar</p>
+                                    <p className="invoice-text">
+                                        <NumberFormat intlConfig={{
+                                            value: totalPaid == 0 ? invDupe.items.amount_due : ((totalPaid - invDupe.items.amount_due) > 0 ? 0 :(invDupe.items.amount_due - totalPaid)), 
+                                            locale: "id-ID",
+                                            style: "currency", 
+                                            currency: "IDR",
+                                            }} 
+                                        />
+                                    </p>
+                                </div>
+                            </div>
+                            {/* <div className="card-amount">
+                                <div className="invoice-info-group">
+                                    <p className="label-text">sisa bon</p>
+                                    <p className="invoice-text"><span className="currency">Rp</span> 0</p>
+                                </div>
+                            </div> */}
                         </div>
                         <div className="invoice-transaction mt-4">
                             <p className="inv-table-title">detail transaksi</p>
@@ -889,6 +898,10 @@ export default function InvoiceModal({show, onHide, data}) {
                                             <div className='table-top-desc-wrap'>
                                                 <div className='table-desc-wrap-inline'>
                                                     <div className='table-desc-inline'>
+                                                        <p className='table-desc-title'>order ID:</p>
+                                                        <p className='table-desc-value'>{ro.order.order_id}</p>
+                                                    </div>   
+                                                    <div className='table-desc-inline'>
                                                         <p className='table-desc-title'>tanggal order:</p>
                                                         <p className='table-desc-value'>{ConvertDate.convertToFullDate(ro.order.order_date,"/")}</p>
                                                     </div>    
@@ -963,7 +976,11 @@ export default function InvoiceModal({show, onHide, data}) {
                                                             </tr>
                                                             ):''
                                                         }
-                                                        {idx == roList.length-1 ? 
+                                                        
+                                                        </>
+                                                    )
+                                                })}
+                                                {idx == roList.length-1 ? 
                                                             (
                                                             <tr className="grand-total">
                                                                 <td colSpan="5"></td>
@@ -980,9 +997,6 @@ export default function InvoiceModal({show, onHide, data}) {
                                                             </tr>
                                                             )
                                                         :""}
-                                                        </>
-                                                    )
-                                                })}
                                                 </tbody>
                                             </table>
                                         </>
@@ -1069,7 +1083,7 @@ export default function InvoiceModal({show, onHide, data}) {
                             <button type="button" className={`btn btn-dark btn-w-icon`}>
                                 <i className='bx bxs-file-pdf'></i>
                                 <PDFDownloadLink style={{textDecoration: 'none', color: '#ffffff'}} 
-                                    document={<InvoiceDoc data={{invoice: invDupe.items, order: salesList, payment: paymentData}} />} 
+                                    document={<InvoiceDoc data={{invoice: invDupe.items, order: salesList, payment: paymentData, ro: roList}} />} 
                                     fileName={`${(invDupe.items.invoice_number).toUpperCase()} - ${capitalizeEveryWord(invDupe.items.customer?.name)}.pdf`}>
                                     {({ loading }) => (loading ? 'Loading...' : 'Download PDF')}
                                 </PDFDownloadLink>
@@ -1080,14 +1094,14 @@ export default function InvoiceModal({show, onHide, data}) {
                                     <button type="button" className={`btn btn-light light btn-w-icon`}>
                                         <i className='bx bxs-receipt'></i>
                                         <PDFDownloadLink style={{textDecoration: 'none', color: '#262626'}} 
-                                            document={<InvoiceDoc data={{invoice: invDupe.items, order: salesList, payment: paymentData}} />} 
+                                            document={<ReceiptDoc data={{invoice: invDupe.items, order: salesList, payment: paymentData}} />} 
                                             fileName={`${(invDupe.items.invoice_number).toUpperCase()} - ${capitalizeEveryWord(invDupe.items.customer?.name)}.pdf`}>
                                             {({ loading }) => (loading ? 'Loading...' : 'Download Receipt')}
                                         </PDFDownloadLink>
                                     </button>
                                 ):''
                             }
-                            <div style={{display: 'inline-flex', gap: '.7rem'}}>
+                            <div className='inline-group-btn' style={{display: 'inline-flex', gap: '.7rem'}}>
                                 <button type="button" className={`btn btn-danger light btn-w-icon`} onClick={handlePage}>
                                     <i className='bx bxs-printer'></i>Print
                                 </button>

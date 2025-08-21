@@ -944,7 +944,7 @@ export default function Categories({handleSidebar, showSidebar}){
     const paymentTypeCell = (rowData) => {
         return(
             <span className={`badge badge-${
-                rowData.payment_type == "belum bayar" ? 'danger'
+                rowData.payment_type == "bayar nanti" ? 'danger'
                 : rowData.payment_type == "lunas"? "primary"
                 : rowData.payment_type == "sebagian"? "warning"
                 : ""} light`}

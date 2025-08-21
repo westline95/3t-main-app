@@ -10,7 +10,7 @@ import SalesEditModal from '../elements/Modal/SalesEditModal';
 import ConfirmModal from '../elements/Modal/ConfirmModal';
 import InputWLabel from '../elements/Input/InputWLabel';
 import InputWSelect from '../elements/Input/InputWSelect';
-import FetchApi from '../assets/js/fetchApi';
+import FetchApi from '../assets/js/fetchApi.js';
 import { Accordion, Col, Collapse, Dropdown, Form, Row, 
     // Toast, ToastContainer 
 } from 'react-bootstrap';
@@ -23,6 +23,7 @@ import { Calendar } from 'primereact/calendar';
 import { FilterMatchMode, FilterOperator } from 'primereact/api';
 import dataStatic from '../assets/js/dataStatic.js';
 import useAxiosPrivate from '../hooks/useAxiosPrivate.js';
+// import FetchAPI from '../assets/js/FetchAPI.js';
 
 import AutoComplete from '../elements/AutoComplete';
 import QtyButton from '../elements/QtyButton';
@@ -272,19 +273,41 @@ export default function Sales({handleSidebar, showSidebar}){
           })
     }
 
-    const fetchInsertreceipt = async (body) => {
-        let bodyData = JSON.stringify(body);
-        await axiosPrivate.post("/receipt/write", bodyData)
-          .then(resp => {
+    const fetchUpdateSalesReceipt = async(receiptID) => {
+        if(currentOrder.order_id){
+            await axiosPrivate.patch(`/sales/receipt?id=${currentOrder.order_id}`, receiptID)
+            .then(resp => {
                 toast.current.show({
                     severity: "success",
                     summary: "Success",
                     detail: "New receipt is created",
                     life: 3500,
                 });
-                setTimeout(() => {
-                    window.location.reload();
-                },1700)
+
+            })
+            .catch(err => {
+                toast.current.show({
+                    severity: "error",
+                    summary: "Failed",
+                    detail: "Failed to create new receipt",
+                    life: 3500,
+                });
+            })
+        }
+    }
+
+    const fetchInsertreceipt = async (body) => {
+        let bodyData = JSON.stringify(body);
+        await axiosPrivate.post("/receipt/write", bodyData)
+          .then(resp => {
+                if(resp.data){
+                    const receiptID = JSON.stringify({receipt_id: resp.data.receipt_id})
+                    // update order->receipt_id
+                    fetchUpdateSalesReceipt(receiptID)
+                }
+                // setTimeout(() => {
+                //     window.location.reload();
+                // },1700)
           })
           .catch(error => {
                 toast.current.show({
@@ -585,7 +608,52 @@ export default function Sales({handleSidebar, showSidebar}){
         })
     }
 
-    
+    const fetchDetailedCust = async(custID) => {
+        await axiosPrivate.get(`/customer/detail?custid=${custID}`)
+        .then(resp => {
+            const sales = resp.data.sales ? resp.data.sales[0] : null;
+            const debt = resp.data.debt ? resp.data.debt[0] : null;
+
+            const updt_total_sales = (sales && sales.total_sales_grandtotal ? Number(sales.total_sales_grandtotal) : 0) 
+            - (sales && sales.return_refund ? Number(sales.return_refund) : 0)
+            + (sales && sales.orders_credit_uncanceled ? Number(sales.orders_credit_uncanceled.total) : 0);
+            
+            const orderBBNotInv = debt && debt.total_debt_grandtotal ? Number(debt.total_debt_grandtotal) : 0;
+            const orderPartialRemain = debt && debt.partial_sisa ? Number(debt.partial_sisa.sisa) : 0;
+            const orderInvRemain = debt && debt.hutang_invoice ? Number(debt.hutang_invoice.sisa_hutang) : 0;
+            const orderCreditUncomplete = debt && debt.orders_credit_uncomplete ? Number(debt.orders_credit_uncomplete.total) : 0;
+
+            const updt_total_debt = orderBBNotInv+orderPartialRemain+orderInvRemain+orderCreditUncomplete;
+        
+            axiosPrivate.patch(`/customer/sales-debt/${custID}/${updt_total_debt}/${updt_total_sales}`)
+            .then(resp2 =>{
+                toast.current.show({
+                    severity: "success",
+                    summary: "Sukses",
+                    detail: "Berhasil memperbarui data pelanggan!",
+                    life:1200,
+                });
+            })
+            .catch(err2 => {
+                console.error(err2);
+                toast.current.show({
+                    severity: "error",
+                    summary: "Fatal Error",
+                    detail: "Error saat memperbarui data pelanggan!",
+                    life:1200,
+                });
+            })
+        })
+        .catch(err => {
+            console.error(err);
+            toast.current.show({
+                severity: "error",
+                summary: "Gagal",
+                detail: "Gagal memperbarui data pelanggan!",
+                life:1200,
+            });
+        })
+    };
 
     const fetchInsertSales = async (body, deliveryModel) => {
         let bodyData = JSON.stringify(body);
@@ -648,7 +716,8 @@ export default function Sales({handleSidebar, showSidebar}){
 
             setCurrentOrder(resp.data);
             setDiscVal(Number(resp.data.order_discount));
-            updateTotalSalesCust(resp.data);
+            // updateTotalSalesCust(resp.data);
+            fetchDetailedCust(resp.data.customer_id);
             return fetchInsertMultipleOrderItem(resp.data.order_id, salesItems);            
         })
         .then(orderItemResp => {
@@ -696,7 +765,7 @@ export default function Sales({handleSidebar, showSidebar}){
             console.log(resp1.data)
             if(resp1.data){
                 let updatedTotalOrder,updatedTotalDebt;
-                if(currentOrderData.payment_type == "belum bayar"){
+                if(currentOrderData.payment_type == "bayar nanti"){
                     updatedTotalOrder = Number(resp1.data.total_sales)+Number(currentOrderData.grandtotal);
                     updatedTotalDebt = Number(resp1.data.total_debt)+Number(currentOrderData.grandtotal);
                 } else if(currentOrderData.payment_type == "sebagian"){
@@ -757,7 +826,7 @@ export default function Sales({handleSidebar, showSidebar}){
             is_paid: true,
             remaining_payment: 0,
             payment_type: data.payment_type,
-            status: 'active'
+            status: 1
         };
 
         if(data.payment_type == "lunas"){
@@ -769,9 +838,9 @@ export default function Sales({handleSidebar, showSidebar}){
                 remaining_payment: (data.grandtotal + Number(currOrderCredit)) - paidData.amountOrigin,
             }
             fetchInsertInv(newModelInv);
-        } else if(data.payment_type == "belum bayar") {
+        } else if(data.payment_type == "bayar nanti") {
             // check if there is an invoice with same customer ID and payment type and is_paid false
-            axiosPrivate.get("/inv/check", { params: { custid:  data.customer_id,  ispaid: false, type: "belum bayar"} })
+            axiosPrivate.get("/inv/check", { params: { custid:  data.customer_id,  ispaid: false, type: "bayar nanti"} })
             .then(resp => {
                 if(resp.data && resp.data.length > 0){
                     let orderId = JSON.parse(resp.data[0].order_id);
@@ -1160,7 +1229,7 @@ export default function Sales({handleSidebar, showSidebar}){
                 remaining_payment: 
                     paidData ? 
                     paidData.payment_type == "lunas" ? 0 
-                    : paidData.payment_type == "belum bayar" ? (subtotal - discount)
+                    : paidData.payment_type == "bayar nanti" ? (subtotal - discount)
                     : paidData.payment_type == "sebagian" ? (subtotal - discount) - paidData.amountOrigin
                     : (subtotal - discount) : (subtotal - discount)
             }
@@ -1255,7 +1324,7 @@ export default function Sales({handleSidebar, showSidebar}){
                     }
                     fetchInsertSales(modified, deliveryModel);
                     // fetchInvStatusCust(false, e.customer_id, paidData.payment_type);
-                } else if(paidData.payment_type == "belum bayar"){
+                } else if(paidData.payment_type == "bayar nanti"){
                     if(Number(chooseCust.total_debt) > Number(chooseCust.debt_limit) && !confirmVal){
                         let send = {endpoint: "sales", action: 'warning', data:forming};
                     
@@ -1790,7 +1859,7 @@ export default function Sales({handleSidebar, showSidebar}){
     const paymentTypeCell = (rowData) => {
         return(
             <span className={`badge badge-${
-                rowData.payment_type == "belum bayar" ? 'danger'
+                rowData.payment_type == "bayar nanti" ? 'danger'
                 : rowData.payment_type == "lunas"? "primary"
                 : rowData.payment_type == "sebagian"? "warning"
                 : ""} light`}
@@ -1947,7 +2016,7 @@ export default function Sales({handleSidebar, showSidebar}){
                     <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Tipe pembayaran:</p>
                     <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right'}}>
                         <span className={`badge badge-${
-                            rowData.payment_type == "belum bayar" ? 'danger'
+                            rowData.payment_type == "bayar nanti" ? 'danger'
                             : rowData.payment_type == "lunas"? "primary"
                             : rowData.payment_type == "sebagian"? "warning"
                             : ""} light`}
@@ -4278,8 +4347,8 @@ export default function Sales({handleSidebar, showSidebar}){
                         data={showModal === "warningCancelModal" ? salesListObj : ""} 
                         msg={
                             <p style={{marginBottom: 0}}>
-                                Tidak dapat membatalkan order ini karena hanya satu-satunya order di invoice dan terdapat pembayaran yang belum penuh.<br />
-                                Coba hapus pembayaran yang terkait terlebih dahulu lalu coba hapus ulang order ini
+                                Tidak dapat membatalkan order ini, karena hanya satu-satunya order di invoice dan terdapat pembayaran yang belum penuh.<br />
+                                Coba hapus pembayaran yang terkait terlebih dahulu lalu coba lagi.
                             </p>
                         }
                         returnValue={(value) => {setCantCanceled(value)}}

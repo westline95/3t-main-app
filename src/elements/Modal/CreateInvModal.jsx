@@ -96,6 +96,7 @@ export default function CreateInv({ show, onHide }){
                                 setTimeout(() => {
                                     window.location.reload();
                                 },1700);
+                                
 
                                 toast.current.show({
                                     severity: "success",
@@ -230,7 +231,7 @@ export default function CreateInv({ show, onHide }){
     const fetchSalesbyOneCustUnpaid = async () => {
         await axiosPrivate.get("/sales/cust/paytype", { params: { 
             custid: chooseCust.customer_id, 
-            paytype:'belum bayar'
+            paytype:'bayar nanti'
         } })
         .then(resp => {
             setOrdersByCust(resp.data);
@@ -273,7 +274,7 @@ export default function CreateInv({ show, onHide }){
 
     const onSubmit = async (formData) => {
         if(choosedOrderId.length > 0 ){
-            let pay_type = 'belum bayar';
+            let pay_type = 'bayar nanti';
             let modelInv = {
                 customer_id: formData.customer_id,
                 order_id: JSON.stringify(choosedOrderId),
@@ -281,7 +282,7 @@ export default function CreateInv({ show, onHide }){
                 invoice_due: formData.invoice_due,
                 is_paid: false,
                 payment_type: pay_type,
-                status: 'active'
+                status: 1
             };
 
             let totalPaymentInvNull = 0;
@@ -501,7 +502,7 @@ export default function CreateInv({ show, onHide }){
                 <Modal.Title>Buat invoice</Modal.Title>
             </Modal.Header>
             <Modal.Body style={{overflowY: 'unset', height: 'fit-content'}}>
-                <form className="row mb-4" style={{gap: isMobile || isMediumScr ? '0' : '1rem'}}>
+                <form className="row mb-4" style={{gap: isMobile || isMediumScr ? '0.25rem' : '0'}}>
                     <div className="col-lg-4 col-sm-12 col-md-12 col-12">
                         <div style={{position:'relative'}}>
                             <InputWLabel 
@@ -679,7 +680,7 @@ export default function CreateInv({ show, onHide }){
                                             </td>
                                             <td>
                                                 <span className={`badge badge-${
-                                                    order.payment_type == "belum bayar" ? 'danger'
+                                                    order.payment_type == "bayar nanti" ? 'danger'
                                                     : order.payment_type == "lunas"? "primary"
                                                     : order.payment_type == "sebagian"? "warning"
                                                     : ""} light`}

@@ -4,7 +4,7 @@ import { Toast } from 'primereact/toast';
 import InputWLabel from '../Input/InputWLabel';
 import InputWSelect from '../Input/InputWSelect';
 import { useForm } from 'react-hook-form';
-import FetchApi from '../../assets/js/fetchApi.js';
+// import FetchApi from '../../assets/js/fetchApi.js';
 import ConvertDate from "../../assets/js/ConvertDate.js";
 import NumberFormat from '../Masking/NumberFormat.jsx';
 import useAxiosPrivate from '../../hooks/useAxiosPrivate.js';
@@ -181,24 +181,25 @@ export default function ReturnOrderModal({ show, onHide }){
     };
     
     const fetchSalesbyCust = async () => {
-        await axiosPrivate.get("/sales/cust/available", { params: { 
-            id: chooseCust.customer_id, 
-        } })
+        // await axiosPrivate.get("/sales/cust/available", { params: { 
+        //     id: chooseCust.customer_id, 
+        // } })
+        await axiosPrivate.get(`/sales/ro/filtered?id=${chooseCust.customer_id}`)
         .then(resp => {
             if(resp.data){
                 if(resp.data.length > 0){
-                    let filteringOrder = resp.data.filter(({return_order_id}) => return_order_id == null);
-                    if(filteringOrder.length == 0){
-                        setOrdersByCust(null);
-                        toast.current.show({
-                            severity: "error",
-                            summary: "Gagal",
-                            detail: "Tidak ada data order yang valid",
-                            life: 3000,
-                        });
-                    } else {
-                        setOrdersByCust(filteringOrder);
-                    }
+                    // let filteringOrder = resp.data.filter(({return_order_id}) => return_order_id == null);
+                    // if(filteringOrder.length == 0){
+                    //     setOrdersByCust(null);
+                    //     toast.current.show({
+                    //         severity: "error",
+                    //         summary: "Gagal",
+                    //         detail: "Tidak ada data order yang valid",
+                    //         life: 3000,
+                    //     });
+                    // } else {
+                        setOrdersByCust(resp.data);
+                    // }
                 } else {
                     setOrdersByCust(null);
                     toast.current.show({
@@ -222,7 +223,54 @@ export default function ReturnOrderModal({ show, onHide }){
         })
     };
 
-    const fetchAddReturnOrder = async(ROModel, ROIModel, nextOrderAddOn) => {
+    const fetchDetailedCust = async(custID) => {
+        await axiosPrivate.get(`/customer/detail?custid=${custID}`)
+        .then(resp => {
+            const sales = resp.data.sales ? resp.data.sales[0] : null;
+            const debt = resp.data.debt ? resp.data.debt[0] : null;
+
+            const updt_total_sales = (sales && sales.total_sales_grandtotal ? Number(sales.total_sales_grandtotal) : 0) 
+            - (sales && sales.return_refund ? Number(sales.return_refund) : 0)
+            + (sales && sales.orders_credit_uncanceled ? Number(sales.orders_credit_uncanceled.total) : 0);
+            
+            const orderBBNotInv = debt && debt.total_debt_grandtotal ? Number(debt.total_debt_grandtotal) : 0;
+            const orderPartialRemain = debt && debt.partial_sisa ? Number(debt.partial_sisa.sisa) : 0;
+            const orderInvRemain = debt && debt.hutang_invoice ? Number(debt.hutang_invoice.sisa_hutang) : 0;
+            const orderCreditUncomplete = debt && debt.orders_credit_uncomplete ? Number(debt.orders_credit_uncomplete.total) : 0;
+
+            const updt_total_debt = orderBBNotInv+orderPartialRemain+orderInvRemain+orderCreditUncomplete;
+        
+            axiosPrivate.patch(`/customer/sales-debt/${custID}/${updt_total_debt}/${updt_total_sales}`)
+            .then(resp2 =>{
+                toast.current.show({
+                    severity: "success",
+                    summary: "Sukses",
+                    detail: "Berhasil memperbarui data pelanggan!",
+                    life:1200,
+                });
+            })
+            .catch(err2 => {
+                console.error(err2);
+                toast.current.show({
+                    severity: "error",
+                    summary: "Fatal Error",
+                    detail: "Error saat memperbarui data pelanggan!",
+                    life:1200,
+                });
+            })
+        })
+        .catch(err => {
+            console.error(err);
+            toast.current.show({
+                severity: "error",
+                summary: "Gagal",
+                detail: "Gagal memperbarui data pelanggan!",
+                life:1200,
+            });
+        })
+    };
+
+    const fetchAddReturnOrder = async(ROModel, ROIModel, nextOrderAddOn, custID) => {
         let ROBody = JSON.stringify(ROModel);
         await axiosPrivate.post("/ro", ROBody)
         .then(resp1 => {
@@ -257,9 +305,10 @@ export default function ReturnOrderModal({ show, onHide }){
                                     axiosPrivate.post("/order-credit", nextOrderBody)
                                     .then(resp4 => {
                                         if(resp4.data){
-                                            setTimeout(() => {
-                                                window.location.reload();
-                                            },1500);
+                                            // setTimeout(() => {
+                                            //     window.location.reload();
+                                            // },1500);
+                                            fetchDetailedCust(custID)
 
                                             toast.current.show({
                                                 severity: "success",
@@ -278,9 +327,10 @@ export default function ReturnOrderModal({ show, onHide }){
                                         });
                                     })
                                 } else {
-                                    setTimeout(() => {
-                                        window.location.reload();
-                                    },1500);
+                                    // setTimeout(() => {
+                                    //     window.location.reload();
+                                    // },1500);
+                                    fetchDetailedCust(custID);
                                 }
                                 
                             } else {
@@ -445,19 +495,21 @@ export default function ReturnOrderModal({ show, onHide }){
                 } else {
                     nextOrderAddOn.order_id = null;
                 }
-                fetchAddReturnOrder(returnOrderModel, roItemModel, nextOrderAddOn, order_discount_change);
+                // fetchAddReturnOrder(returnOrderModel, roItemModel, nextOrderAddOn, order_discount_change, formData.customer_id);
+                fetchAddReturnOrder(returnOrderModel, roItemModel, nextOrderAddOn, formData.customer_id);
             })
             .catch(err1 => {
                 console.error(err1);
                 toast.current.show({
                     severity: "error",
                     summary: "Gagal",
-                    detail: "Gagal menambhakan pengembalian",
+                    detail: "Gagal menambahkan pengembalian",
                     life: 3000,
                 });
             })
         } else {
-            fetchAddReturnOrder(returnOrderModel, roItemModel, null, order_discount_change);
+            // fetchAddReturnOrder(returnOrderModel, roItemModel, null, order_discount_change, formData.customer_id);
+            fetchAddReturnOrder(returnOrderModel, roItemModel, null, formData.customer_id);
         }
         
 
@@ -1230,13 +1282,23 @@ export default function ReturnOrderModal({ show, onHide }){
                                 {ordersByCust?.map((order, idx) => {
                                     return(
                                         <tr className='hover-row' key={`order-${idx}`} style={{textTransform: 'capitalize', cursor:'pointer'}} 
-                                            onClick={() => {order.invoice ? toast.current.show({
-                                                                                severity: "error",
-                                                                                summary: "Error",
-                                                                                detail: "Tidak dapat mengajukan pengembalian karena invoice telah terbit!",
-                                                                                life: 3000,
-                                                                            }) 
-                                                            : handleClickRow(order)}} >
+                                            onClick={() => {
+                                                if(order.invoice){
+                                                    if(!order.invoice?.is_paid){
+                                                        handleClickRow(order);        
+                                                    } else {
+                                                        toast.current.show({
+                                                            severity: "error",
+                                                            summary: "Error",
+                                                            detail: "Tidak dapat mengajukan pengembalian karena invoice telah lunas!",
+                                                            life: 3000,
+                                                        }) 
+                                                    }
+                                                } else {
+                                                    handleClickRow(order);        
+                                                }
+                                            }} 
+                                        >
                                             {/* <th scope="row">
                                                 <input className="form-check-input checkbox-primary checkbox-single"
                                                     type="checkbox" value={order.order_id} ref={addCheckboxRef} 
@@ -1285,7 +1347,7 @@ export default function ReturnOrderModal({ show, onHide }){
                                             </td>
                                             <td>
                                                 <span className={`badge badge-${
-                                                    order.payment_type == "belum bayar" ? 'danger'
+                                                    order.payment_type == "bayar nanti" ? 'danger'
                                                     : order.payment_type == "lunas"? "primary"
                                                     : order.payment_type == "sebagian"? "warning"
                                                     : ""} light`}
@@ -1474,7 +1536,7 @@ export default function ReturnOrderModal({ show, onHide }){
                                             </td>
                                             <td>
                                                 <span className={`badge badge-${
-                                                    choosedRow?.payment_type == "belum bayar" ? 'danger'
+                                                    choosedRow?.payment_type == "bayar nanti" ? 'danger'
                                                     : choosedRow?.payment_type == "lunas"? "primary"
                                                     : choosedRow?.payment_type == "sebagian"? "warning"
                                                     : ""} light`}
