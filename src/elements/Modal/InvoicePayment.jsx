@@ -422,7 +422,6 @@ export default function InvoicePayment({ show, onHide }){
             return;
         }
     },[isLoading]);
-    getValues('invoice_due')
 
     return(
         <>
@@ -463,7 +462,7 @@ export default function InvoicePayment({ show, onHide }){
                         <div className="col-lg-12 col-sm-12 col-md-12 col-12">
                             <div style={{position:'relative'}}>
                                 <InputWLabel 
-                                    label="Customer Name" 
+                                    label="Nama pelanggan" 
                                     type="text"
                                     name="name" 
                                     placeholder="Search customer name..." 
@@ -477,15 +476,20 @@ export default function InvoicePayment({ show, onHide }){
                                     autoComplete={"off"}
                                 />
                                 <div className="popup-element" aria-expanded={openPopup} ref={refToThis}>
-                                    {filterCust && filterCust.length > 0 ? 
-                                        filterCust.map((e,idx) => {
-                                            return (
-                                                <div key={`cust-${idx}`} className="res-item" onClick={() => 
-                                                    handleChooseCust({ 
-                                                        ...e
-                                                })}>{e.name}</div>
-                                            )
-                                        }) : ""
+                                    {filterCust ?
+                                        filterCust.length > 0 ? 
+                                            filterCust.map((e,idx) => {
+                                                return (
+                                                    <div key={`cust-${idx}`} className="res-item" onClick={() => 
+                                                        handleChooseCust({ 
+                                                            ...e
+                                                    })}>{e.name}</div>
+                                                )
+                                            }) 
+                                        : (
+                                            <div className="res-item">Data tidak ada</div>
+                                        )
+                                    :null
                                     }
                                 </div>   
                             </div>
@@ -496,45 +500,50 @@ export default function InvoicePayment({ show, onHide }){
                             <div className="table-responsive" style={{height: '350px'}}>
                                 <div className='mini-card-container'>
                                     {
-                                    custData && invsByCust.map((inv, idx) => {
-                                        return(
-                                            <div className='mini-card' key={idx} aria-label="viewInvModal" onClick={(e) => handleModal(e, {id: inv.invoice_id, items: inv})}>
-                                                <div className={`header-highlight ${new Date() > new Date(inv.invoice_due) ? 'bg-danger': 'bg-warning'}`}>
-                                                    {new Date() > new Date(inv.invoice_due) ?  'due' : 'in-progress'}
-                                                </div>
-                                                {/* <p className='mini-card-caption mt-4'>{'Felicia'}</p> */}
-                                                <p className='mini-card-title' style={{marginTop: '2rem'}}>{inv.invoice_number}</p>
-                                                <div style={{display: 'inline-flex', gap: '.2rem', textTransform: 'capitalize', marginBottom: '1rem', fontSize: '12.5px'}}>
-                                                    <span className={`badge badge-${
-                                                        !inv.is_paid ? 'danger' :  "primary"} light`}
-                                                    >
-                                                        {inv.is_paid ? 'lunas' : 'bayar nanti'}                                                                                
-                                                    </span>
-                                                    <span className={`badge badge-${
-                                                        inv.payment_type == "bayar nanti" ? 'danger'
-                                                        : inv.payment_type == "lunas"? "primary"
-                                                        : inv.payment_type == "sebagian"? "warning"
-                                                        : ""} light`}
-                                                    >
-                                                        {inv.payment_type }                                                                                
-                                                    </span>
-                                                </div>
+                                    custData && invsByCust ?
+                                        invsByCust.length > 0 ?
+                                            invsByCust.map((inv, idx) => {
+                                                return(
+                                                    <div className='mini-card' key={idx} aria-label="viewInvModal" onClick={(e) => handleModal(e, {id: inv.invoice_id, items: inv})}>
+                                                        <div className={`header-highlight ${new Date() > new Date(inv.invoice_due) ? 'bg-danger': 'bg-warning'}`}>
+                                                            {new Date() > new Date(inv.invoice_due) ?  'due' : 'in-progress'}
+                                                        </div>
+                                                        {/* <p className='mini-card-caption mt-4'>{'Felicia'}</p> */}
+                                                        <p className='mini-card-title' style={{marginTop: '2rem'}}>{inv.invoice_number}</p>
+                                                        <div style={{display: 'inline-flex', gap: '.2rem', textTransform: 'capitalize', marginBottom: '1rem', fontSize: '12.5px'}}>
+                                                            <span className={`badge badge-${
+                                                                !inv.is_paid ? 'danger' :  "primary"} light`}
+                                                            >
+                                                                {inv.is_paid ? 'lunas' : 'bayar nanti'}                                                                                
+                                                            </span>
+                                                            <span className={`badge badge-${
+                                                                inv.payment_type == "bayar nanti" ? 'danger'
+                                                                : inv.payment_type == "lunas"? "primary"
+                                                                : inv.payment_type == "sebagian"? "warning"
+                                                                : ""} light`}
+                                                            >
+                                                                {inv.payment_type }                                                                                
+                                                            </span>
+                                                        </div>
+                                                    
+                                                        <div>
+                                                            <p className='mini-card-subtitle'>{'sisa'}</p>
+                                                            <p className='mini-card-text'>
+                                                                <NumberFormat intlConfig={{
+                                                                    value: inv.remaining_payment, 
+                                                                    locale: "id-ID",
+                                                                    style: "currency", 
+                                                                    currency: "IDR",
+                                                                    }} 
+                                                                />
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )
                                             
-                                                <div>
-                                                    <p className='mini-card-subtitle'>{'sisa'}</p>
-                                                    <p className='mini-card-text'>
-                                                        <NumberFormat intlConfig={{
-                                                            value: inv.remaining_payment, 
-                                                            locale: "id-ID",
-                                                            style: "currency", 
-                                                            currency: "IDR",
-                                                            }} 
-                                                        />
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        )
-                                    })
+                                            }) 
+                                        : null
+                                    :null
                                     }
                                 </div>
                             </div>

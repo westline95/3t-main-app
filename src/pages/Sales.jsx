@@ -17,6 +17,7 @@ import { Accordion, Col, Collapse, Dropdown, Form, Row,
 import { Toast } from 'primereact/toast';
 import { ProgressBar } from 'primereact/progressbar';
 import { DataTable } from 'primereact/datatable';
+import { primeTableBodyStyle, primeTableHeaderStyle } from '../assets/js/primeStyling.js';
 import { Column } from 'primereact/column';
 import { Dropdown as PrimeDropdown } from 'primereact/dropdown';
 import { Calendar } from 'primereact/calendar';
@@ -132,12 +133,11 @@ export default function Sales({handleSidebar, showSidebar}){
     } = useForm({
         defaultValues:{
             customer_id: '',
-            order_date: new Date().toString(),
-            ship_date: new Date().toString(),
+            order_date: new Date(),
+            ship_date: new Date(),
             order_type: ''
         }
     });
-    
 
     const fetchAllSales = async () => {
         await axiosPrivate.get("/sales")
@@ -148,9 +148,9 @@ export default function Sales({handleSidebar, showSidebar}){
 
             // filtering
             let tmp = [...response.data];
-            const mainFilter = ["pending", "confirmed", "in-delivery", "delivered"];
+            const mainFilter = dataStatic.orderStatus;
             let getMain = tmp.filter(e => mainFilter.includes(e.order_status));
-            let getComplete = tmp.filter(e => e.order_status === "completed");
+            // let getComplete = tmp.filter(e => e.order_status === "completed");
             let getCanceled = tmp.filter(e => e.order_status === "canceled");
 
             // sorting maindata to descending by createdAt
@@ -169,7 +169,7 @@ export default function Sales({handleSidebar, showSidebar}){
             }
 
             setSalesMain(getMainSorted);
-            setSalesComplete(getComplete);
+            // setSalesComplete(getComplete);
             setSalesCanceled(getCanceled);
         })
         .catch(error => {
@@ -1393,11 +1393,7 @@ export default function Sales({handleSidebar, showSidebar}){
         fetchAllRO();
     },[])
 
-    useEffect(() => {
-        if(salesData && allProdData && custData && courierList && roData){
-            setLoading(false);
-        } 
-    },[salesData, allProdData, custData, courierList, roData]);
+    
 
     const tableHeader = (e) => {
         return (
@@ -1424,14 +1420,14 @@ export default function Sales({handleSidebar, showSidebar}){
                     <i className="bx bx-filter-alt" style={{ fontSize: "24px" }}></i>
                     Clear filter
                 </button>
-                <InputWSelect
+                {/* <InputWSelect
                     name="custTypeFilter"
                     selectLabel="Select order status"
                     options={[{id: 1, type: "pending"},{id: 2, type: "confirmed"},{id: 3, type: "in-delivery"},{id: 4, type: "delivered"}]}
                     optionKeys={["id", "type"]}
                     value={(selected) => setCustTypeFilter(selected.value)}
                     width={"220px"}
-                />
+                /> */}
             </div>
     
             <div
@@ -1750,7 +1746,16 @@ export default function Sales({handleSidebar, showSidebar}){
 
                 <Dropdown.Menu align={"end"}>
                     <Dropdown.Item eventKey="handleBg"  as="button" aria-label="salesEditModal" 
-                        onClick={(e) => handleModalWData(e, {endpoint: "sales", id: rowData.order_id, action: 'update', ...rowData})}
+                        onClick={(e) => {
+                            rowData.invoice ? 
+                                toast.current.show({
+                                    severity: "error",
+                                    summary: "Error",
+                                    detail: "Tidak dapat mengubah order jika sudah masuk invoice",
+                                    life: 3000,
+                                })      
+                            : handleModalWData(e, {endpoint: "sales", id: rowData.order_id, action: 'update', ...rowData})}
+                        }
                     >
                         <i className='bx bxs-edit'></i> Ubah order
                     </Dropdown.Item>
@@ -1825,18 +1830,36 @@ export default function Sales({handleSidebar, showSidebar}){
                 : rowData.order_status == "pending" ? "secondary" 
                 : rowData.order_status == "in-delivery" ? "warning" 
                 : rowData.order_status == "canceled" ? "danger" 
+                : rowData.order_status == "confirmed" ? "primary" 
                 : ""} light`}
             >
                 {
-                    rowData.order_status == "completed" ? 'completed'
+                    rowData.order_status == "completed" ? 'selesai'
                     : rowData.order_status == "pending" ? 'pending'
                     : rowData.order_status == "in-delivery" ? 'in-delivery'
-                    : rowData.order_status == "canceled" ? 'canceled'
+                    : rowData.order_status == "canceled" ? 'batal'
+                    : rowData.order_status == "confirmed" ? 'dikonfirmasi'
                     : ""
                 }                                                                                
             </span>
         )
     };
+
+    const invoiced = (rowData) => {
+        
+        return(
+            rowData.invoice ?
+            (
+                <span className="verified-inv">
+                    <i class='bx bx-check-shield' ></i>
+                </span>
+            ):(
+                <span className="unverified-inv">
+                    <i class='bx bx-shield-x'></i>
+                </span>
+            )
+        )
+    }
     
     const returnStatusCell = (rowData) => {
         return(
@@ -1920,8 +1943,8 @@ export default function Sales({handleSidebar, showSidebar}){
 
     const emptyStateHandler = () =>{
         return (
-        <div style={{width: '100%', textAlign: 'center'}}>
-            <img src={EmptyState} style={{width: '165px', height: '170px'}}  />
+        <div style={{width: '100%', textAlign: 'center', padding: '1rem 0'}}>
+            <img src={EmptyState} style={{width: '145px', height: '150px'}}  />
             <p style={{marginBottom: ".3rem"}}>No result found</p>
         </div>
         )
@@ -1977,16 +2000,29 @@ export default function Sales({handleSidebar, showSidebar}){
                             : rowData.order_status == "pending" ? "secondary" 
                             : rowData.order_status == "in-delivery" ? "warning" 
                             : rowData.order_status == "canceled" ? "danger" 
+                            : rowData.order_status == "confirmed" ? "primary" 
                             : ""} light`}
                         >
                             {
-                                rowData.order_status == "completed" ? 'completed'
+                                rowData.order_status == "completed" ? 'selesai'
                                 : rowData.order_status == "pending" ? 'pending'
                                 : rowData.order_status == "in-delivery" ? 'in-delivery'
-                                : rowData.order_status == "canceled" ? 'canceled'
+                                : rowData.order_status == "canceled" ? 'batal'
+                                : rowData.order_status == "confirmed" ? 'dikonfirmasi'
                                 : ""
                             }                                                                                
                         </span>
+                        {rowData.invoice ?
+                            (
+                            <span className="verified-inv">
+                                <i class='bx bx-check-shield'></i>
+                            </span>
+                            ):(
+                            <span className="unverified-inv">
+                                <i class='bx bx-shield-x'></i>
+                            </span>
+                            )
+                        }
                         
                     </div>
                 </div>
@@ -1996,10 +2032,10 @@ export default function Sales({handleSidebar, showSidebar}){
                     textTransform: 'capitalize', 
                 }}
             >
-                {/* <div className="flex flex-row justify-content-between">
+                <div className="flex flex-row justify-content-between">
                     <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Pelanggan:</p>
-                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>{rowData.customer_id ? `${rowData.customer?.name} (${rowData.customer_id})` : `guest.name (non-member)`}</p>
-                </div> */}
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>{rowData.customer_id ? `${rowData.customer?.name}` : `guest.name (non-member)`}</p>
+                </div>
                 <div className="flex flex-row justify-content-between">
                     <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Total order:</p>
                     <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right'}}>
@@ -2564,7 +2600,7 @@ export default function Sales({handleSidebar, showSidebar}){
         initFilters();
       }, []);
 
-      useEffect(() => {
+    useEffect(() => {
         if(cantCanceled){
             let data = {
                 id: salesListObj.id, 
@@ -2578,7 +2614,13 @@ export default function Sales({handleSidebar, showSidebar}){
         } else {
             fetchAllSales();
         }
-      },[cantCanceled])
+    },[cantCanceled])
+
+    useEffect(() => {
+        if(salesData && allProdData && custData && courierList && roData){
+            setLoading(false);
+        } 
+    },[salesData, allProdData, custData, courierList, roData]);
 
     if(isLoading){
         return;
@@ -2606,11 +2648,11 @@ export default function Sales({handleSidebar, showSidebar}){
                                     >
                                         <span className="tab-title">Tambah data </span>
                                     </div>
-                                    <div className={`tab-indicator ${openTab === "completeTab" ? "active" : ""}`} 
+                                    {/* <div className={`tab-indicator ${openTab === "completeTab" ? "active" : ""}`} 
                                         id='completeTab' 
                                         onClick={(e) => handleClick(e)}>
                                         <span className="tab-title">selesai</span>
-                                    </div>
+                                    </div> */}
                                     <div className={`tab-indicator ${openTab === "returnTab" ? "active" : ""}`} 
                                         id='returnTab' 
                                         onClick={(e) => handleClick(e)}>
@@ -2684,7 +2726,7 @@ export default function Sales({handleSidebar, showSidebar}){
                                                 // }}
                                                 dataKey="order_id"
                                                 style={{marginTop: '1.5rem' }}
-                                                tableStyle={{ minWidth: "50rem", fontSize: '14px' }}
+                                                tableStyle={{ minWidth: "50rem"}}
                                                 filters={salesFilters}
                                                 filterDisplay='menu'
                                                 globalFilterFields={[
@@ -2704,86 +2746,107 @@ export default function Sales({handleSidebar, showSidebar}){
                                                 paginator
                                                 totalRecords={totalRecords}
                                                 rows={50}
+                                                stripedRows
                                             >
-                                                {/* <Column
+                                                <Column
                                                     selectionMode="multiple"
                                                     headerStyle={{ width: "3.5rem" }}
-                                                ></Column> */}
+                                                ></Column>
                                                 <Column
                                                     field="order_id"
                                                     header="Order ID"
                                                     sortable
-                                                    bodyStyle={{ textTransform: "capitalize" }}
-                                                    style={{ textTransform: "uppercase" }}
+                                                    severity
+                                                    headerStyle={primeTableHeaderStyle}
+                                                    bodyStyle={primeTableBodyStyle}
+                                                    style={{ textTransform: "capitalize" }}
                                                 ></Column>
                                                 <Column
                                                     field="order_date"
-                                                    header="order date"
+                                                    header="tanggal"
                                                     body={formatedOrderDate}
                                                     dataType='date'
                                                     filter 
+                                                    headerStyle={primeTableHeaderStyle}
+                                                    bodyStyle={{ fontSize:14 }}
                                                     filterPlaceholder="Type a date"
-                                                    style={{ textTransform: "uppercase" }}
+                                                    style={{ textTransform: "capitalize" }}
                                                 ></Column>
                                                 <Column
                                                     field="customer.name"
-                                                    header="customer"
+                                                    header="pelanggan"
                                                     filter 
+                                                    headerStyle={primeTableHeaderStyle}
                                                     filterPlaceholder="Search by customer name"
-                                                    style={{ textTransform: "uppercase" }}
-                                                    bodyStyle={{ textTransform: "capitalize" }}
+                                                    style={{ textTransform: "capitalize" }}
+                                                    bodyStyle={{ textTransform: "capitalize", fontSize:14 }}
                                                 ></Column>
                                                 <Column
                                                     field="order_type"
-                                                    header="Order type"
+                                                    header="jenis order"
                                                     filter 
+                                                    headerStyle={primeTableHeaderStyle}
                                                     showFilterMenu={false}
                                                     filterMenuStyle={{ width: '100%' }}
                                                     filterPlaceholder={"order type"}
-                                                    bodyStyle={{ textTransform: 'capitalize' }}
-                                                    style={{ textTransform: 'uppercase' }}
+                                                    bodyStyle={primeTableBodyStyle}
+                                                    style={{ textTransform: 'capitalize' }}
                                                 ></Column>
                                                 <Column
                                                     field="grandtotal"
                                                     header="Total"
                                                     body={formatedGrandtotal}
-                                                    bodyStyle={{textTransform: 'capitalize'}}
+                                                    bodyStyle={primeTableBodyStyle}
                                                     sortable 
-                                                    style={{ textTransform: "uppercase" }}
+                                                    headerStyle={primeTableHeaderStyle}
+                                                    style={{ textTransform: "capitalize" }}
                                                 ></Column>
                                                 <Column
                                                     field="source"
-                                                    header="source"
-                                                    bodyStyle={{textTransform: 'capitalize'}}
+                                                    header="sumber"
+                                                    bodyStyle={primeTableBodyStyle}
                                                     filter
+                                                    headerStyle={primeTableHeaderStyle}
                                                     showFilterMenu={false}
                                                     filterMenuStyle={{ width: 'inherit' }}
-                                                    style={{ textTransform: "uppercase" }}
+                                                    style={{ textTransform: "capitalize" }}
                                                 ></Column>
                                                 <Column
                                                     field="payment_type"
-                                                    header="type"
+                                                    header="pembayaran"
                                                     body={paymentTypeCell}
-                                                    bodyStyle={{textTransform: 'capitalize'}}
+                                                    bodyStyle={primeTableBodyStyle}
                                                     filter
-                                                    style={{ textTransform: "uppercase" }}
+                                                    headerStyle={primeTableHeaderStyle}
+                                                    style={{ textTransform: "capitalize" }}
                                                 ></Column>
                                                 <Column
                                                     field="order_status"
                                                     header="status"
                                                     body={statusCell}
-                                                    bodyStyle={{textTransform: 'capitalize'}}
+                                                    bodyStyle={primeTableBodyStyle}
                                                     filter
+                                                    headerStyle={primeTableHeaderStyle}
                                                     showFilterMenu={false} 
                                                     filterMenuStyle={{ width: '100%' }}
                                                     filterElement={statusRowFilter}
-                                                    style={{ textTransform: "uppercase" }}
+                                                    style={{ textTransform: "capitalize" }}
                                                 ></Column>
+                                                <Column 
+                                                    field=''
+                                                    header="Invoice"
+                                                    filter
+                                                    body={invoiced}
+                                                    headerStyle={{justifyItems:'center'}}
+                                                    style={{ textAlign: 'center' }}
+                                                >
+                                                </Column>
                                                 <Column
                                                     field=""
-                                                    header="Action"
+                                                    header="aksi"
+                                                    headerStyle={primeTableHeaderStyle}
                                                     body={(rowData, rowIndex) => actionCell(rowData, rowIndex)}
-                                                    style={{ textTransform: "uppercase" }}
+                                                    style={{ textTransform: "capitalize" }}
                                                 ></Column>
                                             </DataTable>
                                             ): 
@@ -3068,16 +3131,16 @@ export default function Sales({handleSidebar, showSidebar}){
                                 </div>
                                 <div className="tabs-content" style={openTab === "addSalesTab" ? {display: "block"} : {display: "none"}}>
                                     <div className="card card-table add-on-shadow">
-                                        <p className="card-title mb-3">Add sales data</p>
+                                        <p className="card-title mb-3">tambah order</p>
                                         <Accordion defaultActiveKey={['0', '1']} alwaysOpen className="accordion accordion-w-icon">
                                             <form autoComplete='off'>
                                                 <Accordion.Item eventKey="0">
                                                     <Accordion.Header>
-                                                        <i className='bx bx-info-circle'></i>Customer information
+                                                        <i className='bx bx-info-circle'></i>Informasi pelanggan
                                                     </Accordion.Header>
                                                     <Accordion.Body className='mt-1'>
                                                         <div className='mt-3 mb-4'>
-                                                            <Row className='mb-4' style={{gap: '1.5rem'}}>
+                                                            <Row className='mb-4' style={{rowGap: '1.5rem'}}>
                                                                 <Col lg={3} sm={12}>
                                                                     {/* start: this is helper */}
                                                                     <InputWLabel 
@@ -3092,7 +3155,7 @@ export default function Sales({handleSidebar, showSidebar}){
 
                                                                     <div style={{position:'relative'}}>
                                                                         <InputWLabel 
-                                                                            label="Customer Name" 
+                                                                            label="nama pelanggan" 
                                                                             type="text"
                                                                             name="name"
                                                                             placeholder="Search customer name..." 
@@ -3120,9 +3183,9 @@ export default function Sales({handleSidebar, showSidebar}){
                                                                         </div>   
                                                                     </div>
                                                                 </Col>
-                                                                <Col lg={2} sm={12}>
+                                                                <Col lg={3} md={6} sm={12}>
                                                                     <InputWLabel 
-                                                                        label="sales date" 
+                                                                        label="tanggal order" 
                                                                         type="date"
                                                                         name="order_date" 
                                                                         defaultValue={getValues('order_date')}
@@ -3131,11 +3194,11 @@ export default function Sales({handleSidebar, showSidebar}){
                                                                         errors={errors}
                                                                     />                                                            
                                                                 </Col>
-                                                                <Col lg={2} sm={12}>
+                                                                <Col lg={3} md={6} sm={12}>
                                                                     <InputWSelect
                                                                         label={'Order type'}
                                                                         name="order_type"
-                                                                        selectLabel="Select order type"
+                                                                        selectLabel="Pilih jenis order"
                                                                         options={dataStatic.orderTypeList}
                                                                         optionKeys={["id", "type"]}
                                                                         value={(selected) => {
@@ -3203,7 +3266,7 @@ export default function Sales({handleSidebar, showSidebar}){
                                                                     </Col>
                                                                     <Col lg={2} sm={12}>
                                                                         <InputWLabel 
-                                                                            label="ship date" 
+                                                                            label="tanggal pengiriman" 
                                                                             type="date"
                                                                             name="ship_date" 
                                                                             defaultValue={getValues('ship_date')}
@@ -3214,7 +3277,7 @@ export default function Sales({handleSidebar, showSidebar}){
                                                                     </Col>
                                                                     <Col lg={3} sm={12}>
                                                                         <InputWLabel 
-                                                                            label="delivery address" 
+                                                                            label="alamat pengiriman" 
                                                                             as="textarea"
                                                                             name="delivery_address" 
                                                                             register={register}
@@ -3227,7 +3290,7 @@ export default function Sales({handleSidebar, showSidebar}){
                                                             <Row className='mt-4'>
                                                                  <Col lg={3} sm={12}>
                                                                     <InputWLabel 
-                                                                        label="note" 
+                                                                        label="catatan" 
                                                                         as="textarea"
                                                                         name="note" 
                                                                         register={register}
@@ -3357,13 +3420,13 @@ export default function Sales({handleSidebar, showSidebar}){
                                                                 </div>
                                                             </div>
                                                         </div> */}
-                                                        <div className="flex sm:flex-column md:flex-column lg:flex-row xl:flex-row xl:gap-3 lg:gap-0 md:gap-3 sm:flex-wrap add-product-control mt-3 mb-4" >
-                                                            <div className='sm:w-12 lg:w-5'>
+                                                        <div className="add-product-control mt-3 mb-4" >
+                                                            <div className='col-lg-4 col-md-6 col-sm-12'>
                                                                 <InputWLabel 
-                                                                    label="add product"
+                                                                    label="tambah produk"
                                                                     type="text"
                                                                     name="salesProduct" 
-                                                                    placeholder="Search product name..." 
+                                                                    placeholder="cari nama produk..." 
                                                                     onChange={handleSearchProd}
                                                                     onFocus={handleSearchProd}
                                                                     onKeyDown={keyDownSearchProd}
@@ -3397,7 +3460,7 @@ export default function Sales({handleSidebar, showSidebar}){
                                                                 </div>  
                                                             </div>
                                     
-                                                            <div className='flex sm:flex-row lg:flex-row gap-3'>
+                                                            <div className='qty-add-btn-group'>
                                                                 {/* <div> */}
                                                                     {/* <Form.Label className="mb-1">qty</Form.Label> */}
                                                                     <QtyButton 
@@ -3412,7 +3475,7 @@ export default function Sales({handleSidebar, showSidebar}){
                                                                     />
                                                                 {/* </div> */}
                                                                 {/* <div className='align-self-end'> */}
-                                                                    <div className={`btn btn-primary qty-add-btn align-self-end`} onClick={addToSalesData}><i className="bx bx-plus"></i></div>
+                                                                    <button className={`btn btn-primary qty-add-btn`} onClick={(e) => {e.preventDefault();addToSalesData()}}><i className="bx bx-plus"></i></button>
                                                                 {/* </div> */}
                                                             </div>
                                                         </div>
@@ -3425,25 +3488,25 @@ export default function Sales({handleSidebar, showSidebar}){
                                                                     <thead>
                                                                         <tr>
                                                                             <th scope="col" aria-label="product desc">
-                                                                                product
+                                                                                produk
                                                                             </th> 
                                                                             <th scope="col" aria-label="product variant">
-                                                                                variant
+                                                                                varian
                                                                             </th>
                                                                             <th scope="col" aria-label="qty">
                                                                                 qty
                                                                             </th>
                                                                             <th scope="col" aria-label="product price">
-                                                                                price
+                                                                                harga
                                                                             </th>
                                                                             <th scope="col" aria-label="product price">
-                                                                                discount
+                                                                                diskon
                                                                             </th>
                                                                             <th scope="col" aria-label="total">
                                                                                 total
                                                                             </th>
                                                                             <th scope="col" aria-label="action">
-                                                                                action
+                                                                                aksi
                                                                             </th>
                                                                         </tr>
                                                                     </thead>
@@ -3629,7 +3692,7 @@ export default function Sales({handleSidebar, showSidebar}){
                                         </Accordion>
                                     </div>
                                 </div>
-                                <div className="tabs-content" style={openTab === "completeTab" ? {display: "block"} : {display: "none"}}>
+                                {/* <div className="tabs-content" style={openTab === "completeTab" ? {display: "block"} : {display: "none"}}>
                                     <div className="card card-table add-on-shadow">
                                         {!isMobile && !isMediumScr ? (
                                         <div className="mt-4">
@@ -3638,7 +3701,7 @@ export default function Sales({handleSidebar, showSidebar}){
                                                 value={salesComplete}
                                                 size="normal"
                                                 removableSort
-                                                // stripedRows
+                                                stripedRows
                                                 // selectionMode={"checkbox"}
                                                 // selection={selectedSales}
                                                 // onSelectionChange={(e) => {
@@ -3665,84 +3728,96 @@ export default function Sales({handleSidebar, showSidebar}){
                                                 totalRecords={totalRecords}
                                                 rows={50}
                                             >
-                                            {/* <Column
+                                            <Column
                                                 selectionMode="multiple"
                                                 headerStyle={{ width: "3.5rem" }}
-                                            ></Column> */}
+                                            ></Column>
                                             <Column
                                                 field="order_id"
                                                 header="Order ID"
                                                 sortable
-                                                bodyStyle={{ textTransform: "capitalize" }}
-                                                style={{ textTransform: "uppercase" }}
+                                                headerStyle={{fontSize:13.5}}
+                                                bodyStyle={{ textTransform: "capitalize",fontSize:14 }}
+                                                style={{ textTransform: "capitalize" }}
                                             ></Column>
                                             <Column
                                                 field="order_date"
-                                                header="order date"
+                                                header="tanggal"
                                                 body={formatedOrderDate}
                                                 dataType='date'
                                                 filter 
+                                                headerStyle={{fontSize:13.5}}
+                                                bodyStyle={{ textTransform: "capitalize",fontSize:14 }}
                                                 filterPlaceholder="Type a date"
-                                                style={{ textTransform: "uppercase" }}
+                                                style={{ textTransform: "capitalize" }}
                                             ></Column>
                                             <Column
                                                 field="customer.name"
-                                                header="customer"
+                                                header="pelanggan"
                                                 filter 
+                                                headerStyle={{fontSize:13.5}}
+                                                bodyStyle={{ textTransform: "capitalize",fontSize:14 }}
                                                 filterPlaceholder="Search by customer name"
                                                 style={{ textTransform: "capitalize" }}
                                             ></Column>
                                             <Column
                                                 field="order_type"
-                                                header="Order type"
+                                                header="jenis order"
                                                 filter 
                                                 showFilterMenu={false}
                                                 filterMenuStyle={{ width: '100%' }}
                                                 filterPlaceholder={"order type"}
-                                                bodyStyle={{ textTransform: 'capitalize' }}
-                                                style={{ textTransform: 'uppercase' }}
+                                                headerStyle={{fontSize:13.5}}
+                                                bodyStyle={primeTableBodyStyle}
+                                                style={{ textTransform: 'capitalize' }}
                                             ></Column>
                                             <Column
                                                 field="grandtotal"
                                                 header="Total"
                                                 body={formatedGrandtotal}
-                                                bodyStyle={{textTransform: 'capitalize'}}
+                                                headerStyle={{fontSize:13.5}}
+                                                bodyStyle={primeTableBodyStyle}
                                                 sortable 
-                                                style={{ textTransform: "uppercase" }}
+                                                style={{ textTransform: "capitalize" }}
                                             ></Column>
                                             <Column
                                                 field="source"
-                                                header="source"
-                                                bodyStyle={{textTransform: 'capitalize'}}
+                                                header="sumber"
+                                                headerStyle={{fontSize:13.5}}
+                                                bodyStyle={primeTableBodyStyle}
                                                 filter
                                                 showFilterMenu={false}
                                                 filterMenuStyle={{ width: 'inherit' }}
-                                                style={{ textTransform: "uppercase" }}
+                                                style={{ textTransform: "capitalize" }}
                                             ></Column>
                                             <Column
                                                 field="payment_type"
-                                                header="type"
+                                                header="pembayaran"
                                                 body={paymentTypeCell}
-                                                bodyStyle={{textTransform: 'capitalize'}}
+                                                headerStyle={{fontSize:13.5}}
+                                                bodyStyle={primeTableBodyStyle}
                                                 filter
-                                                style={{ textTransform: "uppercase" }}
+                                                style={{ textTransform: "capitalize" }}
                                             ></Column>
                                             <Column
                                                 field="order_status"
                                                 header="status"
                                                 body={statusCell}
-                                                bodyStyle={{textTransform: 'capitalize'}}
+                                                headerStyle={{fontSize:13.5}}
+                                                bodyStyle={primeTableBodyStyle}
                                                 filter
                                                 showFilterMenu={false} 
                                                 filterMenuStyle={{ width: '100%' }}
                                                 filterElement={statusRowFilter}
-                                                style={{ textTransform: "uppercase" }}
+                                                style={{ textTransform: "capitalize" }}
                                             ></Column>
                                             <Column
                                                 field=""
-                                                header="Action"
+                                                header="aksi"
+                                                headerStyle={{fontSize:13.5}}
+                                                bodyStyle={{fontSize:14}}
                                                 body={(rowData, rowIndex) => actionCell(rowData, rowIndex)}
-                                                style={{ textTransform: "uppercase" }}
+                                                style={{ textTransform: "capitalize" }}
                                             ></Column>
                                             </DataTable>
                                         </div>
@@ -3885,8 +3960,8 @@ export default function Sales({handleSidebar, showSidebar}){
                                                 <ul className="basic-pagination" id="paginationBtnRender"></ul>
                                             </div>
                                         </div> */}
-                                    </div>
-                                </div>
+                                    {/* </div>
+                                </div>  */}
                                 <div className="tabs-content" style={openTab === "returnTab" ? {display: "block"} : {display: "none"}}>
                                     <div className="card card-table add-on-shadow">
                                         {!isMobile && !isMediumScr ? 
@@ -3898,7 +3973,7 @@ export default function Sales({handleSidebar, showSidebar}){
                                                 size="normal"
                                                 removableSort
                                                 dataKey="order_id"
-                                                tableStyle={{ minWidth: "50rem", fontSize: '14px' }}
+                                                tableStyle={{ minWidth: "50rem"}}
                                                 // filters={salesFilters}
                                                 filterDisplay='menu'
                                                 globalFilterFields={[
@@ -3916,60 +3991,68 @@ export default function Sales({handleSidebar, showSidebar}){
                                                 totalRecords={totalRecords}
                                                 rows={50}
                                             >
-                                            {/* <Column
+                                            <Column
                                                 selectionMode="multiple"
                                                 headerStyle={{ width: "3.5rem" }}
-                                            ></Column> */}
+                                            ></Column>
                                             <Column
                                                 field="return_order_id"
                                                 header="RO ID"
                                                 sortable
-                                                bodyStyle={{ textTransform: "capitalize" }}
-                                                style={{ textTransform: "uppercase" }}
+                                                headerStyle={primeTableHeaderStyle}
+                                                bodyStyle={primeTableBodyStyle}
+                                                style={{ textTransform: "capitalize" }}
                                             ></Column>
                                             <Column
                                                 field="order_id"
                                                 header="Order ID"
                                                 sortable
-                                                bodyStyle={{ textTransform: "capitalize" }}
-                                                style={{ textTransform: "uppercase" }}
+                                                headerStyle={primeTableHeaderStyle}
+                                                bodyStyle={primeTableBodyStyle}
+                                                style={{ textTransform: "capitalize" }}
                                             ></Column>
                                             <Column
                                                 field="return_date"
-                                                header="return date"
+                                                header="tanggal pengembalian"
                                                 body={formatedReturnDate}
                                                 dataType='date'
                                                 sortable
-                                                style={{ textTransform: "uppercase" }}
+                                                headerStyle={primeTableHeaderStyle}
+                                                bodyStyle={primeTableBodyStyle}
+                                                style={{ textTransform: "capitalize" }}
                                             ></Column>
                                             <Column
                                                 field="customer.customer_id"
-                                                header="customer ID"
+                                                header="ID Pelanggan"
                                                 sortable
-                                                style={{ textTransform: "uppercase" }}
-                                                bodyStyle={{ textTransform: "capitalize" }}
+                                                headerStyle={primeTableHeaderStyle}
+                                                bodyStyle={primeTableBodyStyle}
+                                                style={{ textTransform: "capitalize" }}
                                             ></Column>
                                             <Column
                                                 field="customer.name"
-                                                header="customer"
+                                                header="pelanggan"
                                                 sortable
-                                                style={{ textTransform: "uppercase" }}
-                                                bodyStyle={{ textTransform: "capitalize" }}
+                                                sheaderStyle={primeTableHeaderStyle}
+                                                bodyStyle={primeTableBodyStyle}
+                                                style={{ textTransform: "capitalize" }}
                                             ></Column>
                                             <Column
                                                 field="refund_total"
-                                                header="total refund"
+                                                header="total pengembalian"
                                                 body={formatedRefundtotal}
-                                                bodyStyle={{textTransform: 'capitalize'}}
                                                 sortable 
-                                                style={{ textTransform: "uppercase" }}
+                                                headerStyle={primeTableHeaderStyle}
+                                                bodyStyle={primeTableBodyStyle}
+                                                style={{ textTransform: "capitalize" }}
                                             ></Column>
                                             <Column
                                                 field="return_method"
                                                 header="Metode pengembalian"
                                                 body={viewReturnMethod}
-                                                bodyStyle={{textTransform: 'capitalize'}}
-                                                style={{ textTransform: "uppercase" }}
+                                                headerStyle={primeTableHeaderStyle}
+                                                bodyStyle={primeTableBodyStyle}
+                                                style={{ textTransform: "capitalize" }}
                                             ></Column>
                                             <Column
                                                 field="status"
@@ -3978,15 +4061,18 @@ export default function Sales({handleSidebar, showSidebar}){
                                                 showFilterMenu={false}
                                                 filterMenuStyle={{ width: '100%' }}
                                                 filterPlaceholder={"order type"}
-                                                bodyStyle={{ textTransform: 'capitalize' }}
-                                                style={{ textTransform: 'uppercase' }}
                                                 body={returnStatusCell}
+                                                headerStyle={primeTableHeaderStyle}
+                                                bodyStyle={primeTableBodyStyle}
+                                                style={{ textTransform: "capitalize" }}
                                             ></Column>
                                             <Column
                                                 field=""
-                                                header="Action"
+                                                header="aksi"
                                                 body={(rowData, rowIndex) => returnOrderActionCell(rowData, rowIndex)}
-                                                style={{ textTransform: "uppercase" }}
+                                                headerStyle={primeTableHeaderStyle}
+                                                bodyStyle={primeTableBodyStyle}
+                                                style={{ textTransform: "capitalize" }}
                                             ></Column>
                                             </DataTable>
                                         </div>
@@ -4058,7 +4144,7 @@ export default function Sales({handleSidebar, showSidebar}){
                                                 value={salesCanceled}
                                                 size="normal"
                                                 removableSort
-                                                // stripedRows
+                                                stripedRows
                                                 // selectionMode={"checkbox"}
                                                 // selection={selectedSales}
                                                 // onSelectionChange={(e) => {
@@ -4085,84 +4171,96 @@ export default function Sales({handleSidebar, showSidebar}){
                                                 totalRecords={totalRecords}
                                                 rows={50}
                                             >
-                                            {/* <Column
+                                            <Column
                                                 selectionMode="multiple"
                                                 headerStyle={{ width: "3.5rem" }}
-                                            ></Column> */}
+                                            ></Column>
                                             <Column
                                                 field="order_id"
                                                 header="Order ID"
                                                 sortable
-                                                bodyStyle={{ textTransform: "capitalize" }}
-                                                style={{ textTransform: "uppercase" }}
+                                                headerStyle={primeTableHeaderStyle}
+                                                bodyStyle={primeTableBodyStyle}
+                                                style={{ textTransform: "capitalize" }}
                                             ></Column>
                                             <Column
                                                 field="order_date"
-                                                header="order date"
+                                                header="tanggal"
                                                 body={formatedOrderDate}
                                                 dataType='date'
                                                 filter 
                                                 filterPlaceholder="Type a date"
-                                                style={{ textTransform: "uppercase" }}
+                                                headerStyle={primeTableHeaderStyle}
+                                                bodyStyle={primeTableBodyStyle}
+                                                style={{ textTransform: "capitalize" }}
                                             ></Column>
                                             <Column
                                                 field="customer.name"
-                                                header="customer"
+                                                header="pelanggan"
                                                 filter 
                                                 filterPlaceholder="Search by customer name"
+                                                headerStyle={primeTableHeaderStyle}
+                                                bodyStyle={primeTableBodyStyle}
                                                 style={{ textTransform: "capitalize" }}
                                             ></Column>
                                             <Column
                                                 field="order_type"
-                                                header="Order type"
+                                                header="jenis order"
                                                 filter 
                                                 showFilterMenu={false}
                                                 filterMenuStyle={{ width: '100%' }}
                                                 filterPlaceholder={"order type"}
-                                                bodyStyle={{ textTransform: 'capitalize' }}
-                                                style={{ textTransform: 'uppercase' }}
+                                                headerStyle={primeTableHeaderStyle}
+                                                bodyStyle={primeTableBodyStyle}
+                                                style={{ textTransform: "capitalize" }}
                                             ></Column>
                                             <Column
                                                 field="grandtotal"
                                                 header="Total"
                                                 body={formatedGrandtotal}
-                                                bodyStyle={{textTransform: 'capitalize'}}
                                                 sortable 
-                                                style={{ textTransform: "uppercase" }}
+                                                headerStyle={primeTableHeaderStyle}
+                                                bodyStyle={primeTableBodyStyle}
+                                                style={{ textTransform: "capitalize" }}
                                             ></Column>
                                             <Column
                                                 field="source"
-                                                header="source"
-                                                bodyStyle={{textTransform: 'capitalize'}}
+                                                header="sumber"
                                                 filter
                                                 showFilterMenu={false}
                                                 filterMenuStyle={{ width: 'inherit' }}
-                                                style={{ textTransform: "uppercase" }}
+                                                headerStyle={primeTableHeaderStyle}
+                                                bodyStyle={primeTableBodyStyle}
+                                                style={{ textTransform: "capitalize" }}
                                             ></Column>
                                             <Column
                                                 field="payment_type"
-                                                header="type"
+                                                header="pembayaran"
                                                 body={paymentTypeCell}
-                                                bodyStyle={{textTransform: 'capitalize'}}
                                                 filter
-                                                style={{ textTransform: "uppercase" }}
+                                                headerStyle={primeTableHeaderStyle}
+                                                bodyStyle={primeTableBodyStyle}
+                                                style={{ textTransform: "capitalize" }}
                                             ></Column>
                                             <Column
                                                 field="order_status"
                                                 header="status"
                                                 body={statusCell}
-                                                bodyStyle={{textTransform: 'capitalize'}}
                                                 filter
                                                 showFilterMenu={false} 
                                                 filterMenuStyle={{ width: '100%' }}
                                                 filterElement={statusRowFilter}
-                                                style={{ textTransform: "uppercase" }}
+                                                headerStyle={primeTableHeaderStyle}
+                                                bodyStyle={primeTableBodyStyle}
+                                                style={{ textTransform: "capitalize" }}
                                             ></Column>
                                             <Column
                                                 field=""
-                                                header="Action"
+                                                header="aksi"
                                                 body={(rowData, rowIndex) => actionCell(rowData, rowIndex)}
-                                                style={{ textTransform: "uppercase" }}
+                                                headerStyle={primeTableHeaderStyle}
+                                                bodyStyle={primeTableBodyStyle}
+                                                style={{ textTransform: "capitalize" }}
                                             ></Column>
                                             </DataTable>
                                         </div>

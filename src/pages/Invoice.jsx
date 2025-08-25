@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Sidebar from '../parts/Sidebar';
 import Header from '../parts/Header';
 import { DataTable } from 'primereact/datatable';
+import { primeTableBodyStyle, primeTableHeaderStyle } from '../assets/js/primeStyling.js';
 import { Column } from 'primereact/column';
 import { Toast } from 'primereact/toast';
 import { CustomSelect } from '../elements/CustomSelect';
@@ -33,7 +34,7 @@ export default function Invoice({handleSidebar, showSidebar}){
     const isMediumScr = useMediaQuery('(min-width: 768px) and (max-width: 1024px)');
 
     const mobileSearchInput = useRef(null);
-
+    const [ isLoading, setLoading ] = useState(true);
     const [ isClose, setClose ] = useState(false);
     const [ deleteInv, setDeleteInv ] = useState(false);
     const [ invData, setInvData ] = useState(null);
@@ -712,7 +713,7 @@ export default function Invoice({handleSidebar, showSidebar}){
                     }
                 >
                     <i className="bx bx-plus" style={{ marginTop: -3 }}></i>
-                    Create Receipt manually
+                    Buat receipt
                 </button>
             </div>
         </div>
@@ -1210,6 +1211,16 @@ export default function Invoice({handleSidebar, showSidebar}){
         }
     },[deleteInv])
 
+    useEffect(() => {
+        if(invData){
+            setLoading(false);
+        } 
+    },[invData]);
+
+    if(isLoading){
+        return;
+    }
+
     return(
         <>
         {/* <Sidebar show={isClose} /> */}
@@ -1328,88 +1339,98 @@ export default function Invoice({handleSidebar, showSidebar}){
                                                 totalRecords={totalRecords}
                                                 rows={50}
                                             >
-                                            <Column
+                                            {/* <Column
                                                 selectionMode="multiple"
                                                 headerStyle={{ width: "3.5rem" }}
-                                            ></Column>
+                                            ></Column> */}
                                             <Column
                                                 field="invoice_number"
-                                                header="invoice number"
+                                                header="nomor invoice"
                                                 sortable
-                                                bodyStyle={{ textTransform: "uppercase" }}
+                                                bodyStyle={{...primeTableBodyStyle, textTransform:'uppercase'}}
+                                                headerStyle={primeTableHeaderStyle}
                                                 style={{ textTransform: "uppercase" }}
                                             ></Column>
                                             <Column
                                                 field="invoice_date"
-                                                header="date"
+                                                header="tanggal"
                                                 body={formatedInvDate}
                                                 dataType='date'
                                                 filter 
                                                 filterPlaceholder="Type a date"
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                                 style={{ textTransform: "uppercase" }}
                                             ></Column>
                                             <Column
                                                 field="customer.name"
-                                                header="customer"
+                                                header="pelanggan"
                                                 filter 
                                                 filterPlaceholder="Search by customer name"
                                                 style={{ textTransform: "uppercase" }}
-                                                bodyStyle={{ textTransform: "capitalize" }}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                             ></Column>
                                              <Column
                                                 field="customer_id"
-                                                header="customer id"
+                                                header="ID pelanggan"
                                                 sortable
-                                                bodyStyle={{ textTransform: "capitalize" }}
                                                 style={{ textTransform: "uppercase" }}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                             ></Column>
                                             <Column
                                                 field="amount_due"
-                                                header="amount due"
+                                                header="tagihan"
                                                 filter 
                                                 // showFilterMenu={false}
                                                 // filterMenuStyle={{ width: '100%' }}
                                                 body={formatedAmountDue}
                                                 filterPlaceholder={"order type"}
-                                                bodyStyle={{ textTransform: 'capitalize' }}
                                                 style={{ textTransform: 'uppercase' }}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                             ></Column>
                                             <Column
                                                 field="remaining_payment"
-                                                header="remaining"
+                                                header="sisa"
                                                 filter 
                                                 // showFilterMenu={false}
                                                 // filterMenuStyle={{ width: '100%' }}
                                                 body={formatedRemaining}
                                                 filterPlaceholder={"order type"}
-                                                bodyStyle={{ textTransform: 'capitalize' }}
                                                 style={{ textTransform: 'uppercase' }}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                             ></Column>
                                             <Column
                                                 field="payment_type"
-                                                header="type"
+                                                header="pembayaran"
                                                 body={paymentTypeCell}
-                                                bodyStyle={{textTransform: 'capitalize'}}
-                                                filter
                                                 style={{ textTransform: "uppercase" }}
+                                                filter
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                             ></Column>
                                             <Column
                                                 field="is_paid"
-                                                header="paid"
+                                                header="bayar"
                                                 body={isPaidCell}
-                                                bodyStyle={{textTransform: 'capitalize'}}
                                                 filter
+                                                style={{ textTransform: "uppercase" }}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                                 // showFilterMenu={false} 
                                                 // filterMenuStyle={{ width: '100%' }}
                                                 // filterElement={statusRowFilter}
-                                                style={{ textTransform: "uppercase" }}
                                             ></Column>
                                             <Column
                                                 field="invoice_due"
                                                 header="status"
                                                 body={invStatus}
-                                                bodyStyle={{textTransform: 'capitalize'}}
                                                 filter
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                                 // showFilterMenu={false} 
                                                 // filterMenuStyle={{ width: '100%' }}
                                                 // filterElement={statusRowFilter}
@@ -1417,9 +1438,11 @@ export default function Invoice({handleSidebar, showSidebar}){
                                             ></Column>
                                             <Column
                                                 field=""
-                                                header="Action"
+                                                header="aksi"
                                                 body={(rowData, rowIndex) => invActionCell(rowData, rowIndex)}
                                                 style={{ textTransform: "uppercase" }}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                             ></Column>
                                             </DataTable>
                                         </div>
@@ -1785,59 +1808,68 @@ export default function Invoice({handleSidebar, showSidebar}){
                                             ></Column>
                                             <Column
                                                 field="receipt_id"
-                                                header="Receipt Number"
+                                                header="nomor Receipt"
                                                 sortable
-                                                bodyStyle={{ textTransform: "capitalize" }}
                                                 style={{ textTransform: "uppercase" }}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                             ></Column>
                                              <Column
                                                 field="invoice_id"
-                                                header="invoice Number"
+                                                header="nomor invoice"
                                                 sortable
-                                                bodyStyle={{ textTransform: "capitalize" }}
                                                 style={{ textTransform: "uppercase" }}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                             ></Column>
                                             <Column
                                                 field="receipt_date"
-                                                header="date"
+                                                header="tanggal"
                                                 body={formatedReceiptDate}
                                                 dataType='date'
                                                 filter 
                                                 filterPlaceholder="Type a date"
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                                 style={{ textTransform: "uppercase" }}
                                             ></Column>
                                             <Column
                                                 field="customer_id"
-                                                header="customer id"
+                                                header="ID pelanggan"
                                                 sortable
-                                                bodyStyle={{ textTransform: "capitalize" }}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                                 style={{ textTransform: "uppercase" }}
                                             ></Column>
                                             <Column
                                                 field="customer.name"
-                                                header="customer"
+                                                header="pelanggan"
                                                 filter 
                                                 filterPlaceholder="Search by customer name"
                                                 style={{ textTransform: "uppercase" }}
-                                                bodyStyle={{ textTransform: "capitalize" }}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                             ></Column>
                                             <Column
                                                 field="total_payment"
-                                                header="total"
+                                                header="total pembayaran"
                                                 // filter 
                                                 // showFilterMenu={false}
                                                 // filterMenuStyle={{ width: '100%' }}
                                                 body={formatedTotal}
                                                 sortable
                                                 // filterPlaceholder={"order type"}
-                                                bodyStyle={{ textTransform: 'capitalize' }}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                                 style={{ textTransform: 'uppercase' }}
                                             ></Column>
                                             <Column
                                                 field=""
-                                                header="Action"
+                                                header="aksi"
                                                 body={(rowData, rowIndex) => receiptActionCell(rowData, rowIndex)}
                                                 style={{ textTransform: "uppercase" }}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                             ></Column>
                                             </DataTable>
                                         </div>

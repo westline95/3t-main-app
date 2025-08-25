@@ -17,6 +17,7 @@ import { Accordion, Col, Dropdown, Form, Row,
 import { Toast } from 'primereact/toast';
 import { ProgressBar } from 'primereact/progressbar';
 import { DataTable } from 'primereact/datatable';
+import { primeTableBodyStyle, primeTableHeaderStyle } from '../assets/js/primeStyling.js';
 import { Column } from 'primereact/column';
 import { Dropdown as PrimeDropdown } from 'primereact/dropdown';
 import { Calendar } from 'primereact/calendar';
@@ -1070,7 +1071,7 @@ export default function Delivery({handleSidebar, showSidebar}){
                     }
                 >
                     <i className="bx bx-plus" style={{ marginTop: -3 }}></i>
-                    Add delivery manually
+                    Pengiriman manual
                 </button>
             </div>
           </div>
@@ -1405,21 +1406,24 @@ export default function Delivery({handleSidebar, showSidebar}){
                                                 field="delivery_id"
                                                 header="ID Pengiriman"
                                                 sortable
-                                                bodyStyle={{ textTransform: "capitalize" }}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                                 style={{ textTransform: "uppercase" }}
                                             ></Column>
                                             <Column
                                                 field="order_id"
                                                 header="ID Order"
                                                 sortable
-                                                bodyStyle={{ textTransform: "capitalize" }}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                                 style={{ textTransform: "uppercase" }}
                                             ></Column>
                                             <Column
                                                 field="tracking_number"
-                                                header="tracking number"
+                                                header="Nomor Resi"
                                                 sortable
-                                                bodyStyle={{ textTransform: "uppercase" }}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                                 style={{ textTransform: "uppercase" }}
                                             ></Column>
                                             <Column
@@ -1430,12 +1434,15 @@ export default function Delivery({handleSidebar, showSidebar}){
                                                 filter 
                                                 filterPlaceholder="Type a date"
                                                 style={{ textTransform: "uppercase" }}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                             ></Column>
                                             <Column
                                                 field="courier_id"
                                                 header="ID Kurir"
                                                 sortable
-                                                bodyStyle={{ textTransform: "capitalize" }}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                                 style={{ textTransform: "uppercase" }}
                                             ></Column>
                                             <Column
@@ -1444,14 +1451,16 @@ export default function Delivery({handleSidebar, showSidebar}){
                                                 filter 
                                                 filterPlaceholder="Search by courier name"
                                                 style={{ textTransform: "uppercase" }}
-                                                bodyStyle={{ textTransform: "capitalize" }}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                             ></Column>
                                              <Column
                                                 field="order.customer.name"
                                                 header="Pelanggan"
                                                 filter 
                                                 style={{ textTransform: "uppercase" }}
-                                                bodyStyle={{ textTransform: "capitalize" }}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                             ></Column>
                                             <Column
                                                 field="delivery_address"
@@ -1461,14 +1470,16 @@ export default function Delivery({handleSidebar, showSidebar}){
                                                 filterMenuStyle={{ width: '100%' }}
                                                 filterPlaceholder={"order type"}
                                                 body={deliveryAddress}
-                                                bodyStyle={{ textTransform: 'capitalize' }}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                                 style={{ textTransform: 'uppercase' }}
                                             ></Column>
                                             <Column
                                                 field="delivery_status"
                                                 header="status"
                                                 body={statusCell}
-                                                bodyStyle={{textTransform: 'capitalize'}}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                                 filter
                                                 showFilterMenu={false} 
                                                 filterMenuStyle={{ width: '100%' }}
@@ -1477,9 +1488,11 @@ export default function Delivery({handleSidebar, showSidebar}){
                                             ></Column>
                                             <Column
                                                 field=""
-                                                header="Action"
+                                                header="aksi"
                                                 body={(rowData, rowIndex) => actionCell(rowData, rowIndex)}
                                                 style={{ textTransform: "uppercase" }}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                             ></Column>
                                             </DataTable>
                                         </div>

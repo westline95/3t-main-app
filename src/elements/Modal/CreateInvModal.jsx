@@ -484,7 +484,7 @@ export default function CreateInv({ show, onHide }){
     },[]);
 
     useEffect(() => {
-        if(ordersByCust){
+        if(ordersByCust && custData){
             setIsLoading(false);
         }
     },[ordersByCust])
@@ -506,7 +506,7 @@ export default function CreateInv({ show, onHide }){
                     <div className="col-lg-4 col-sm-12 col-md-12 col-12">
                         <div style={{position:'relative'}}>
                             <InputWLabel 
-                                label="Customer Name" 
+                                label="nama pelanggan" 
                                 type="text"
                                 name="name" 
                                 placeholder="Search customer name..." 
@@ -536,7 +536,7 @@ export default function CreateInv({ show, onHide }){
                     </div>
                     <div className="col-lg-4 col-sm-12 col-md-12 col-12">
                         <InputWLabel 
-                            label={'invoice date'}
+                            label={'tanggal'}
                             type={'date'}
                             name={'invoice_date'}
                             onChange={(e) => add7days(e.value)}
@@ -548,7 +548,7 @@ export default function CreateInv({ show, onHide }){
                     </div>
                     <div className="col-lg-4 col-sm-12 col-md-12 col-12">
                         <InputWLabel 
-                            label={'invoice due'}
+                            label={'jatuh tempo'}
                             type={'date'}
                             name={'invoice_due'}
                             require={true}
@@ -573,7 +573,7 @@ export default function CreateInv({ show, onHide }){
 
                 <Collapse in={ordersByCust != null}>
                     <div className="modal-table-wrap mt-2">
-                        <div className="table-responsive" style={{height: '350px'}}>
+                        <div className="table-responsive" style={{height: '320px'}}>
                             <table className="table" id="salesList" data-table-search="true" data-table-sort="true"
                                 data-table-checkbox="true">
                                 <thead>
@@ -588,27 +588,27 @@ export default function CreateInv({ show, onHide }){
                                             />
                                         </th>
                                         <th scope="col" className="head-w-icon sorting" aria-label="order-id">
-                                            order id
+                                            ID order
                                             <span className="sort-icon"></span>
                                         </th>
                                         <th scope="col" className="head-w-icon sorting" aria-label="order-date">
-                                            order date
-                                            <span className="sort-icon"></span>
-                                        </th>
-                                        <th scope="col" className="head-w-icon sorting" aria-label="cust-name">
-                                            customer name
+                                            tanggal order
                                             <span className="sort-icon"></span>
                                         </th>
                                         <th scope="col" className="head-w-icon sorting" aria-label="cust-id">
                                             customer ID
                                             <span className="sort-icon"></span>
                                         </th>
-                                        <th scope="col" className="head-w-icon sorting" aria-label="cust-type">
-                                            customer type
+                                        <th scope="col" className="head-w-icon sorting" aria-label="cust-name">
+                                            nama pelanggan
                                             <span className="sort-icon"></span>
                                         </th>
+                                        {/* <th scope="col" className="head-w-icon sorting" aria-label="cust-type">
+                                            customer type
+                                            <span className="sort-icon"></span>
+                                        </th> */}
                                         <th scope="col" className="head-w-icon sorting" aria-label="order-type">
-                                            order type
+                                            jenis order
                                             <span className="sort-icon"></span>
                                         </th>
                                         <th scope="col" className="head-w-icon sorting" aria-label="total">
@@ -620,7 +620,7 @@ export default function CreateInv({ show, onHide }){
                                             <span className="sort-icon"></span>
                                         </th>
                                         <th scope="col" className="head-w-icon sorting" aria-label="payment-type">
-                                            type
+                                            pembayaran
                                             <span className="sort-icon"></span>
                                         </th>
                                         {/* <th scope="col" aria-label="action">
@@ -642,13 +642,13 @@ export default function CreateInv({ show, onHide }){
                                                 {order.order_id}
                                             </td>
                                             <td className="">{ConvertDate.convertToFullDate(order.order_date, "/")}</td>
+                                            <td>{ordersByCust.customer_id}</td>
                                             <td className="data-img">
                                                 {ordersByCust.name}
                                             </td>
-                                            <td>{ordersByCust.customer_id}</td>
-                                            <td>
+                                            {/* <td>
                                                 {ordersByCust.cust_type}
-                                            </td>
+                                            </td> */}
                                             <td>{order.order_type}</td>
                                             <td>
                                                 {
@@ -667,13 +667,15 @@ export default function CreateInv({ show, onHide }){
                                                     : order.order_status == "pending" ? "secondary" 
                                                     : order.order_status == "in-delivery" ? "warning" 
                                                     : order.order_status == "canceled" ? "danger" 
+                                                    : order.order_status == "confirmed" ? "primary" 
                                                     : ""} light`}
                                                 >
                                                     {
-                                                        order.order_status == "completed" ? 'completed'
+                                                        order.order_status == "completed" ? 'selesai'
                                                         : order.order_status == "pending" ? 'pending'
                                                         : order.order_status == "in-delivery" ? 'in-delivery'
-                                                        : order.order_status == "canceled" ? 'canceled'
+                                                        : order.order_status == "canceled" ? 'batal'
+                                                        : order.order_status == "confirmed" ? 'dikonfirmasi'
                                                         : ""
                                                     }                                                                                
                                                 </span>
@@ -706,8 +708,8 @@ export default function CreateInv({ show, onHide }){
                  </form>
             </Modal.Body>
             <Modal.Footer>
-                <button type="button" className="btn btn-secondary light" onClick={onHide}>Cancel</button>
-                <button type="button" className="btn btn-primary" onClick={handleSubmit(onSubmit,onError)}>Create</button>
+                <button type="button" className="btn btn-secondary light" onClick={onHide}>batal</button>
+                <button type="button" className="btn btn-primary" onClick={handleSubmit(onSubmit,onError)}>buat invoice</button>
             </Modal.Footer>
         </Modal>
         

@@ -39,6 +39,7 @@ const statusInvList = [
     //     type:"canceled"
     // },
 ];
+const orderStatus = ['pending', 'confirmed', 'completed', 'canceled'];
 
 const orderStatusList = [
     {
@@ -47,7 +48,7 @@ const orderStatusList = [
     }, 
     {
         id: 2, 
-        type:"in-delivery"
+        type: "confirmed"
     }, 
     {
         id: 3, 
@@ -81,6 +82,8 @@ const delivStatusList = [
         type:"canceled"
     },
 ];
+
+const roStatus = ['pending', 'pengecekan', 'dikonirmasi', 'ditolak'];
 
 
 const returnReasonList = [
@@ -150,9 +153,6 @@ const unitOfProduct = [
     {id: 3, type: "kg"},
     {id: 4, type: "gr"},
 ];
-
-const orderStatus = ['pending', 'completed', 'in-delivery' , 'canceled'];
-const roStatus = ['pengecekan', 'disetujui', 'ditolak'];
 
 const invPayMethod = [
     {

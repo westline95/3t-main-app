@@ -36,7 +36,7 @@ export default function BaseLayout({children}){
         <div className="wrapper" style={{overflowY:'unset'}}>
             <div className="d-flex position-relative" style={{overflowY:'unset'}}>
                 <Sidebar ref={sidebarEl} show={isOpen} clickedMenu={(value) => handleClickedSidebar(value)} />
-                <main ref={mainOverlayResp} className={`main-content ${isOpen ? "active" : ""}`} style={{overflowY:'unset'}}>
+                <main ref={mainOverlayResp} className={`main-content ${isOpen ? "active" : ""}`}>
                     <Header onClick={() => setOpen((p) => !p)} />
                     {/* //components from all routes */}
                     {children} 

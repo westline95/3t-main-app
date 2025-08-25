@@ -1352,13 +1352,15 @@ export default function EditReturnOrderModal({ show, onHide, data }){
                                                 : data.ro.order?.order_status == "pending" ? "secondary" 
                                                 : data.ro.order?.order_status == "in-delivery" ? "warning" 
                                                 : data.ro.order?.order_status == "canceled" ? "danger" 
+                                                : data.ro.order?.order_status == "confirmed" ? "primary" 
                                                 : ""} light`}
                                             >
                                                 {
-                                                    data.ro.orderRow?.order_status == "completed" ? 'completed'
+                                                    data.ro.orderRow?.order_status == "completed" ? 'selesai'
                                                     : data.ro.order?.order_status == "pending" ? 'pending'
                                                     : data.ro.order?.order_status == "in-delivery" ? 'in-delivery'
-                                                    : data.ro.order?.order_status == "canceled" ? 'canceled'
+                                                    : data.ro.order?.order_status == "canceled" ? 'batal'
+                                                    : data.ro.order?.order_status == "confirmed" ? 'dikonfirmasi'
                                                     : ""
                                                 }                                                                                
                                             </span>

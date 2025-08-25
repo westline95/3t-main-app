@@ -17,6 +17,8 @@ import { Accordion, Col, Collapse, Dropdown, Form, Row,
 import { Toast } from 'primereact/toast';
 import { ProgressBar } from 'primereact/progressbar';
 import { DataTable } from 'primereact/datatable';
+import { primeTableBodyStyle, primeTableHeaderStyle } from '../assets/js/primeStyling.js';
+
 import { Column } from 'primereact/column';
 import { Dropdown as PrimeDropdown } from 'primereact/dropdown';
 import { Calendar } from 'primereact/calendar';
@@ -1174,14 +1176,16 @@ export default function Products({handleSidebar, showSidebar}){
                                                 field="product_name"
                                                 header="nama produk"
                                                 // sortable
-                                                bodyStyle={{ textTransform: "capitalize" }}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                                 body={cellWithImg}
                                                 style={{ textTransform: "uppercase" }}
                                             ></Column>
                                             <Column
                                                 field="variant"
                                                 header="varian"
-                                                bodyStyle={{ textTransform: "capitalize" }}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                                 // body={formatedOrderDate}
                                                 // dataType='date'
                                                 // filter 
@@ -1191,7 +1195,8 @@ export default function Products({handleSidebar, showSidebar}){
                                             <Column
                                                 field="sku"
                                                 header="sku"
-                                                bodyStyle={{ textTransform: "capitalize" }}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                                 // body={formatedOrderDate}
                                                 // dataType='date'
                                                 // filter 
@@ -1201,7 +1206,8 @@ export default function Products({handleSidebar, showSidebar}){
                                             <Column
                                                 field="unit"
                                                 header="unit"
-                                                bodyStyle={{ textTransform: "capitalize" }}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                                 // body={formatedOrderDate}
                                                 // dataType='date'
                                                 // filter 
@@ -1212,7 +1218,8 @@ export default function Products({handleSidebar, showSidebar}){
                                                 field="product_cost"
                                                 header="biaya produksi"
                                                 body={formatedProductCost}
-                                                bodyStyle={{textTransform: 'capitalize'}}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                                 // sortable 
                                                 style={{ textTransform: "uppercase" }}
                                             ></Column>
@@ -1220,14 +1227,16 @@ export default function Products({handleSidebar, showSidebar}){
                                                 field="sell_price"
                                                 header="Harga jual"
                                                 body={formatedSellPrice}
-                                                bodyStyle={{textTransform: 'capitalize'}}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                                 // sortable 
                                                 style={{ textTransform: "uppercase" }}
                                             ></Column>
                                             <Column
                                                 field="discount"
                                                 header="diskon aktif"
-                                                bodyStyle={{ textTransform: "capitalize" }}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                                 body={formatedDisc}
                                                 // dataType='date'
                                                 // sortable
@@ -1246,9 +1255,11 @@ export default function Products({handleSidebar, showSidebar}){
                                             ></Column> */}
                                             <Column
                                                 field=""
-                                                header="Action"
+                                                header="aksi"
                                                 body={(rowData, rowIndex) => actionCell(rowData, rowIndex)}
                                                 style={{ textTransform: "uppercase" }}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                             ></Column>
                                             </DataTable>
                                         </div>

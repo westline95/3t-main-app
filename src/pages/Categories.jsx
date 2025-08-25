@@ -17,6 +17,8 @@ import { Accordion, Col, Collapse, Dropdown, Form, Row,
 import { Toast } from 'primereact/toast';
 import { ProgressBar } from 'primereact/progressbar';
 import { DataTable } from 'primereact/datatable';
+import { primeTableBodyStyle, primeTableHeaderStyle } from '../assets/js/primeStyling.js';
+
 import { Column } from 'primereact/column';
 import { Dropdown as PrimeDropdown } from 'primereact/dropdown';
 import { Calendar } from 'primereact/calendar';
@@ -1132,15 +1134,18 @@ export default function Categories({handleSidebar, showSidebar}){
                                                 field="category_name"
                                                 header="nama kategori"
                                                 // sortable
-                                                bodyStyle={{ textTransform: "capitalize" }}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                                 body={cellWithImg}
                                                 style={{ textTransform: "uppercase" }}
                                             ></Column>
                                             <Column
                                                 field=""
-                                                header="Action"
+                                                header="aksi"
                                                 body={(rowData, rowIndex) => actionCell(rowData, rowIndex)}
                                                 style={{ textTransform: "uppercase" }}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
                                             ></Column>
                                             </DataTable>
                                         </div>

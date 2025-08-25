@@ -838,8 +838,8 @@ export default function ReturnOrderModal({ show, onHide }){
 
     const qtyEditor = (options) => {
         return(
-            <QtyButton min={0} max={options.rowData.quantity} name={`qty-product`} width={"180px"} returnValue={(e) => {setQtyVal(e);options.rowData.returnValue = e}} 
-            value={options.rowData.returnValue ? options.rowData.returnValue : qtyVal} onChange={(e) => {options.editorCallback(e.value)}} />
+            <QtyButton min={0} max={options.rowData.quantity} name={`qty-product`} width={"180px"} returnValue={(e) => {options.rowData.returnValue = e}} 
+            value={options.rowData.returnValue ? options.rowData.returnValue : 0} onChange={(e) => {options.editorCallback(e.value)}} />
         )
     };
 
@@ -870,10 +870,12 @@ export default function ReturnOrderModal({ show, onHide }){
             });
             return false;
         } else {
+            // setSelectedProducts(data);
             return true;
         }
     }
 
+    
     const onRowEditComplete = (e) => {
         let { newData, index } = e;
         let _products = [...choosedRowItem];
@@ -885,10 +887,16 @@ export default function ReturnOrderModal({ show, onHide }){
                 _selected_products.map((selectProd, idx) => {
                     if(product.item_id == selectProd.item_id){
                         _selected_products[idx] = _products[i];
+                    } else {
+                        _selected_products[index] = newData;
                     }
                 })
             })
             setSelectedProducts(_selected_products);
+        } else {
+            let arr = new Array();
+            arr[index] = newData;
+            setSelectedProducts(arr);
         }
         setChoosedRowItem(_products);
     };
@@ -1112,7 +1120,7 @@ export default function ReturnOrderModal({ show, onHide }){
     },[]);
 
     useEffect(() => {
-        if(ordersByCust){
+        if(ordersByCust && custData){
             setIsLoading(false);
         }
     },[ordersByCust])
@@ -1273,6 +1281,9 @@ export default function ReturnOrderModal({ show, onHide }){
                                             type
                                             <span className="sort-icon"></span>
                                         </th>
+                                        <th scope="col">
+                                            invoice
+                                        </th>
                                         {/* <th scope="col" aria-label="action">
                                             action
                                         </th> */}
@@ -1285,7 +1296,12 @@ export default function ReturnOrderModal({ show, onHide }){
                                             onClick={() => {
                                                 if(order.invoice){
                                                     if(!order.invoice?.is_paid){
-                                                        handleClickRow(order);        
+                                                        toast.current.show({
+                                                            severity: "error",
+                                                            summary: "Error",
+                                                            detail: "Tidak dapat mengajukan pengembalian karena invoice telah dibuat!",
+                                                            life: 3000,
+                                                        })         
                                                     } else {
                                                         toast.current.show({
                                                             severity: "error",
@@ -1330,18 +1346,15 @@ export default function ReturnOrderModal({ show, onHide }){
                                             </td>
                                             <td>
                                                 <span className={`badge badge-${
-                                                    order.order_status == "completed" ? 'success'
+                                                    order.order_status == "selesai" ? 'success'
                                                     : order.order_status == "pending" ? "secondary" 
                                                     : order.order_status == "in-delivery" ? "warning" 
-                                                    : order.order_status == "canceled" ? "danger" 
+                                                    : order.order_status == "batal" ? "danger" 
+                                                    : order.order_status == "dikonfirmasi" ? "primary" 
                                                     : ""} light`}
                                                 >
                                                     {
-                                                        order.order_status == "completed" ? 'completed'
-                                                        : order.order_status == "pending" ? 'pending'
-                                                        : order.order_status == "in-delivery" ? 'in-delivery'
-                                                        : order.order_status == "canceled" ? 'canceled'
-                                                        : ""
+                                                        order.order_status
                                                     }                                                                                
                                                 </span>
                                             </td>
@@ -1354,6 +1367,19 @@ export default function ReturnOrderModal({ show, onHide }){
                                                 >
                                                     {order.payment_type }                                                                                
                                                 </span>
+                                            </td>
+                                            <td>
+                                                {order.invoice ?
+                                                (
+                                                    <span className="verified-inv" style={{fontSize: 20}}>
+                                                        <i class='bx bx-check-shield' ></i>
+                                                    </span>
+                                                ):(
+                                                    <span className="unverified-inv" style={{fontSize: 20}}>
+                                                        <i class='bx bx-shield-x'></i>
+                                                    </span>
+                                                )
+                                                }
                                             </td>
                                             {/* <td>
                                                 <span className="table-btn detail-table-data" data-bs-toggle="modal"
@@ -1493,6 +1519,7 @@ export default function ReturnOrderModal({ show, onHide }){
                                             <th scope="col">
                                                 type
                                             </th>
+                                           
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1519,18 +1546,15 @@ export default function ReturnOrderModal({ show, onHide }){
                                             </td>
                                             <td>
                                                 <span className={`badge badge-${
-                                                    choosedRow?.order_status == "completed" ? 'success'
+                                                     choosedRow?.order_status == "selesai" ? 'success'
                                                     : choosedRow?.order_status == "pending" ? "secondary" 
                                                     : choosedRow?.order_status == "in-delivery" ? "warning" 
-                                                    : choosedRow?.order_status == "canceled" ? "danger" 
+                                                    : choosedRow?.order_status == "batal" ? "danger" 
+                                                    : choosedRow?.order_status == "dikonfirmasi" ? "primary" 
                                                     : ""} light`}
                                                 >
                                                     {
-                                                        choosedRow?.order_status == "completed" ? 'completed'
-                                                        : choosedRow?.order_status == "pending" ? 'pending'
-                                                        : choosedRow?.order_status == "in-delivery" ? 'in-delivery'
-                                                        : choosedRow?.order_status == "canceled" ? 'canceled'
-                                                        : ""
+                                                        choosedRow?.order_status
                                                     }                                                                                
                                                 </span>
                                             </td>
@@ -1544,6 +1568,7 @@ export default function ReturnOrderModal({ show, onHide }){
                                                     {choosedRow?.payment_type }                                                                                
                                                 </span>
                                             </td>
+                                           
                                         </tr>
                                     </tbody>
                                 </table>
@@ -1588,20 +1613,20 @@ export default function ReturnOrderModal({ show, onHide }){
                                         field="product.product_name"
                                         header="Nama produk"
                                         bodyStyle={{ textTransform: "capitalize" }}
-                                        style={{ textTransform: "uppercase" }}
+                                        style={{ textTransform: "capitalize" }}
                                     ></Column>
                                     <Column
                                         field="product.variant"
                                         header="varian"
                                         bodyStyle={{ textTransform: "capitalize" }}
-                                        style={{ textTransform: "uppercase" }}
+                                        style={{ textTransform: "capitalize" }}
                                     ></Column>
                                     <Column
                                         field=""
                                         header="alasan pengembalian"
                                         body={returnReasonEl}
                                         editor={(options) => selectOptEditor(options)}
-                                        style={{ textTransform: "uppercase", width: 400 }}
+                                        style={{ textTransform: "capitalize", width: 400 }}
                                         bodyStyle={{ textTransform: "capitalize", width: 400 }}
                                     ></Column>
                                     <Column
@@ -1609,7 +1634,7 @@ export default function ReturnOrderModal({ show, onHide }){
                                         header="kuantitas"
                                         body={returnQty}
                                         editor={(options) => qtyEditor(options)}
-                                        style={{ textTransform: "uppercase" }}
+                                        style={{ textTransform: "capitalize" }}
                                         bodyStyle={{ textTransform: "capitalize" }}
                                     ></Column>
                                     <Column rowEditor={true} headerStyle={{ width: '10%', minWidth: '8rem' }} bodyStyle={{ textAlign: 'center' }}></Column>

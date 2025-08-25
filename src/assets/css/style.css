@@ -1201,7 +1201,7 @@ label {
 }
 
 .btn-group button {
-  height: 39px !important;
+  height: 38px !important;
 }
 
 .product-qty-wrap .btn-group button {
@@ -1750,27 +1750,41 @@ tr {
   border-color: #EBF1F6 !important;
 }
 
-th {
-  opacity: .75;
+thead tr th {
+  color: var(--sa-black-blue) !important;
+  background-color: #EBEEF1 !important;
+  opacity: .9;
+  /* color: #69717D; */
 }
 
 
 .table>thead {
-  position: sticky;
+  position: sticky;    
   top: 0;
   text-transform: capitalize;
   color: var(--sa-black-blue);
+  background-color: #EBEEF1 !important;
   height: 3.7rem;
   z-index: 9;
 }
 
 
-.table thead tr th {
-  color: #626262 !important;
-  opacity: 1;
-  text-transform: uppercase;
+.table thead tr th
+.p-datatable .p-datatable-thead > tr > th {
+  color: var(--sa-black-blue)!important;
+  opacity: .9;
+  text-transform: capitalize;
   font-weight: 600;
-  background: #F5F6F9 !important;
+  background: #e6eaed !important;
+  font-size: 14px;
+}
+
+.p-datatable .p-datatable-thead > tr > th {
+  color: var(--sa-black-blue)!important;
+  opacity: .8;
+  text-transform: capitalize;
+  font-weight: 600;
+  background: #e6eaed !important;
   font-size: 14px;
 }
 
@@ -4316,7 +4330,8 @@ tr.hover-row:hover > * {
 }
 
 .qty-add-btn {
-  height: 39px;
+  height: 38px;
+  margin-top: 26px;
 }
 
 .modal-btn-wrap-mobile {
@@ -4449,6 +4464,37 @@ tr.hover-row:hover > * {
     width: 50%;
 }
 
+.p-datatable.p-datatable-striped .p-datatable-tbody > tr.p-row-odd {
+  background: #FBFBFC;
+}
+
+.p-datatable .p-datatable-tbody > tr > td { 
+  border: none !important;
+  border-width: 0 !important;
+}
+
+.unverified-inv {
+  color: var(--sa-color-danger);
+}
+
+.verified-inv {
+  color: var(--sa-color-success);
+}
+
+.qty-add-btn-group {
+  display: flex;
+  flex-direction: row;
+  gap: 1.25rem;
+}
+
+.add-product-control {
+  display: flex;
+  flex-direction: row;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  align-items: start;
+}
+
 
 /* media queries for responsiveness */
 /* for mobile */
@@ -4479,9 +4525,9 @@ tr.hover-row:hover > * {
     animation: .15s forwards ease-out slideRight;
   }
 
-  body.freeze {
+  .main-content.active {
     height: 100vh;
-    overflow: unset;
+    overflow-y: hidden;
   }
 
   .vertical-background.active {
@@ -5106,11 +5152,16 @@ tr.hover-row:hover > * {
   .add-product-control {
     flex-direction: column !important;
     gap: 1.5rem;
+    align-items: flex-start;
+  }
+
+  .add-product-control>* {
+    width: 100%;
   }
 
   .qty-add-btn {
-    position: relative;
-    bottom: -2px;
+    /* position: relative; */
+    /* bottom: -2px; */
   }
 
   .order-qty-btn .btn-group input {
@@ -5194,6 +5245,10 @@ tr.hover-row:hover > * {
     width: 50%;
   }
 
+  .invoice-wrapper {
+    zoom: .5;
+  }
+
 }
 
 @media (min-width: 481px) and (max-width: 767px) {
@@ -5215,9 +5270,9 @@ tr.hover-row:hover > * {
       margin-left: 0;
   }
 
-   body.freeze {
-    height: 100%;
-    overflow: hidden;
+  .main-content.active {
+    height: 100vh;
+    overflow-y: hidden;
   }
 
   .vertical-background.active {
@@ -5624,13 +5679,22 @@ tr.hover-row:hover > * {
   }
 
   .btn-group button {
-      padding: 9px 12px;
+      padding: 6px 12px;
   }
 
   .modal i {
       font-size: 20px;
       vertical-align: text-top;
   }
+
+  .qty-add-btn-group {
+    gap: 1rem;
+  }
+
+.add-product-control {
+  gap: 0;
+  justify-content: space-between;
+}
 
   .qty-add-btn i {
     padding: 3px 2px;
@@ -5897,9 +5961,9 @@ tr.hover-row:hover > * {
       margin-left: 0;
   }
 
-   body.freeze {
-    height: 100%;
-    overflow: hidden;
+  .main-content.active {
+    height: 100vh;
+    overflow-y: hidden;
   }
 
    .vertical-background.active {
@@ -6211,6 +6275,22 @@ tr.hover-row:hover > * {
       font-size: 14px;
   }
 
+  .modal-btn-wrap-mobile {
+      display: inline-flex !important ;
+      width: 100%;
+      gap: .5rem;
+    }
+    
+  .modal-btn-wrap-mobile>button {
+    width: 50%;
+    padding: 7px 13px;
+    font-size: 14px !important;
+  }
+  
+  .modal-btn-wrap-mobile>i {
+    font-size: 16px !important;
+  }
+
   .modal-btn-wrap {
       display: none !important;
   }
@@ -6289,7 +6369,7 @@ tr.hover-row:hover > * {
   }
 
   .btn-group button {
-      padding: 3px 6px;
+      padding: 3px 12px;
   }
 
   .modal i {
@@ -6780,7 +6860,7 @@ tr.hover-row:hover > * {
   }
 
   .main-content i {
-      font-size: 18px;
+      font-size: 22px;
   }
 
   .card .card-title,
@@ -6897,7 +6977,7 @@ tr.hover-row:hover > * {
   }
 
   .btn-group button {
-      padding: 3px 6px;
+      padding: 3px 12px;
   }
 
   .modal i {

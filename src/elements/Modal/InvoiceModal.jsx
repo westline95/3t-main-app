@@ -74,6 +74,7 @@ export default function InvoiceModal({show, onHide, data}) {
         await axiosPrivate.get(`/ro/by?id=${request}`)
         .then(resp => {
             if(resp.data){
+                console.log(request)
                 setROList(resp.data);
             }
         })
@@ -539,418 +540,213 @@ export default function InvoiceModal({show, onHide, data}) {
             <Modal.Body ref={componentRef}>
                 <div className='prev-inv-container' style={{display: 'flex', flexDirection: isMobile || isMediumScr ? 'column' : 'row', width: '100%', gap:'3rem'}}>
                     <div className='card static-shadow prev-inv-content' style={{width: isMobile || isMediumScr ? '100%' : '75%'}}>
-                        <div className="invoice-header">
-                            <div className="invoice-detail">
-                                <h3 className="invoice-title">invoice</h3>
-                                <div className="invoice-info-group">
-                                    <p className="label-text">nomor invoice</p>
-                                    <p className="invoice-text" style={{textTransform: 'uppercase'}}>#{invDupe !== "" ? `${invDupe.items?.invoice_number}` : ""}</p>
-                                </div>
-                                <div style={{display: 'flex', flexDirection: 'row', gap: '2rem'}}>
+                        <div className='invoice-wrapper'>
+                            <div className="invoice-header">
+                                <div className="invoice-detail">
+                                    <h3 className="invoice-title">invoice</h3>
                                     <div className="invoice-info-group">
-                                        <p className="label-text">tanggal</p>
-                                        <p className="invoice-text">{ConvertDate.convertToBeautyDate(invDupe.items.invoice_date)}</p>
+                                        <p className="label-text">nomor invoice</p>
+                                        <p className="invoice-text" style={{textTransform: 'uppercase'}}>#{invDupe !== "" ? `${invDupe.items?.invoice_number}` : ""}</p>
+                                    </div>
+                                    <div style={{display: 'flex', flexDirection: 'row', gap: '2rem'}}>
+                                        <div className="invoice-info-group">
+                                            <p className="label-text">tanggal</p>
+                                            <p className="invoice-text">{ConvertDate.convertToBeautyDate(invDupe.items.invoice_date)}</p>
+                                        </div>
+                                        <div className="invoice-info-group">
+                                            <p className="label-text">jatuh tempo</p>
+                                            <p className="invoice-text">{ConvertDate.convertToBeautyDate(invDupe.items.invoice_due)}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="company-detail" style={{}}>
+                                    <div className="company-img">
+                                        <img src={'https://res.cloudinary.com/du3qbxrmb/image/upload/v1748248130/Logo_WA-removebg-preview_qnf7tu.png'} alt="logo" />
+                                    </div>
+                                    <div className="company-profile">
+                                        <p className="label-text">tahu tempe tauge</p>
+                                        <p className="label-text">+628123456789</p>
+                                        <p className="label-text">pangururan, samosir</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="invoice-content" style={{ overflowX: 'auto'}}>
+                                <div className="invoice-cust-info">
+                                    <div className="invoice-info-group">
+                                        <p className="label-text">nama pelanggan</p>
+                                        <p className="invoice-text" style={{marginBottom:17}}>{invDupe.items.customer.name}</p>
                                     </div>
                                     <div className="invoice-info-group">
-                                        <p className="label-text">jatuh tempo</p>
-                                        <p className="invoice-text">{ConvertDate.convertToBeautyDate(invDupe.items.invoice_due)}</p>
+                                        <p className="label-text">status</p>
+                                        <span className={`badge badge-${invDupe.items.is_paid ? 'success' : 'danger'} light`}>{invDupe.items.is_paid ? 'lunas' : 'belum lunas'}</span>
+                                    </div>
+                                </div>
+                                <div className='inv-bank-info'>
+                                    <div class="invoice-info-group">
+                                        <p class="label-text" style={{marginBottom:3}}>Informasi Pembayaran</p>
+                                        <p class="invoice-text" style={{marginBottom:3}}>Bank Transfer: BRI</p>
+                                        <p class="invoice-text" style={{marginBottom:3}}>A/n: Anton Ruchiat</p>
+                                        <p class="invoice-text" style={{marginBottom:0}}>Nomor rekening: 01234567890123</p>
                                     </div>
                                 </div>
                             </div>
-                            <div className="company-detail" style={{}}>
-                                <div className="company-img">
-                                    <img src={'https://res.cloudinary.com/du3qbxrmb/image/upload/v1748248130/Logo_WA-removebg-preview_qnf7tu.png'} alt="logo" />
+                            <div className="invoice-amount">
+                                <div className="card-amount">
+                                    <div className="invoice-info-group">
+                                        <p className="label-text">Total Transaksi</p>
+                                        <p className="invoice-text">
+                                            <NumberFormat intlConfig={{
+                                                value: invDupe.items.amount_due, 
+                                                locale: "id-ID",
+                                                style: "currency", 
+                                                currency: "IDR",
+                                                }} 
+                                            />
+                                        </p>
+                                    </div>
                                 </div>
-                                <div className="company-profile">
-                                    <p className="label-text">tahu tempe tauge</p>
-                                    <p className="label-text">+628123456789</p>
-                                    <p className="label-text">pangururan, samosir</p>
+                                <div className="card-amount">
+                                    <div className="invoice-info-group">
+                                        <p className="label-text">Total Bayar</p>
+                                        <p className="invoice-text">
+                                            <NumberFormat intlConfig={{
+                                                value: totalPaid, 
+                                                locale: "id-ID",
+                                                style: "currency", 
+                                                currency: "IDR",
+                                                }} 
+                                            />
+                                        </p>
+                                    </div>
                                 </div>
+                                <div className="card-amount">
+                                    <div className="invoice-info-group">
+                                        <p className="label-text">jumlah yang harus dibayar</p>
+                                        <p className="invoice-text">
+                                            <NumberFormat intlConfig={{
+                                                value: totalPaid == 0 ? invDupe.items.amount_due : ((totalPaid - invDupe.items.amount_due) > 0 ? 0 :(invDupe.items.amount_due - totalPaid)), 
+                                                locale: "id-ID",
+                                                style: "currency", 
+                                                currency: "IDR",
+                                                }} 
+                                            />
+                                        </p>
+                                    </div>
+                                </div>
+                                {/* <div className="card-amount">
+                                    <div className="invoice-info-group">
+                                        <p className="label-text">sisa bon</p>
+                                        <p className="invoice-text"><span className="currency">Rp</span> 0</p>
+                                    </div>
+                                </div> */}
                             </div>
-                        </div>
-                        <div className="invoice-content" style={{ overflowX: 'auto'}}>
-                            <div className="invoice-cust-info">
-                                <div className="invoice-info-group">
-                                    <p className="label-text">nama pelanggan</p>
-                                    <p className="invoice-text" style={{marginBottom:17}}>{invDupe.items.customer.name}</p>
-                                </div>
-                                <div className="invoice-info-group">
-                                    <p className="label-text">status</p>
-                                    <span className={`badge badge-${invDupe.items.is_paid ? 'success' : 'danger'} light`}>{invDupe.items.is_paid ? 'lunas' : 'belum lunas'}</span>
-                                </div>
-                            </div>
-                            <div className='inv-bank-info'>
-                                <div class="invoice-info-group">
-                                    <p class="label-text" style={{marginBottom:3}}>Informasi Pembayaran</p>
-                                    <p class="invoice-text" style={{marginBottom:3}}>Bank Transfer: BRI</p>
-                                    <p class="invoice-text" style={{marginBottom:3}}>A/n: Anton Ruchiat</p>
-                                    <p class="invoice-text" style={{marginBottom:0}}>Nomor rekening: 01234567890123</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="invoice-amount">
-                            <div className="card-amount">
-                                <div className="invoice-info-group">
-                                    <p className="label-text">Total Transaksi</p>
-                                    <p className="invoice-text">
-                                        <NumberFormat intlConfig={{
-                                            value: invDupe.items.amount_due, 
-                                            locale: "id-ID",
-                                            style: "currency", 
-                                            currency: "IDR",
-                                            }} 
-                                        />
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="card-amount">
-                                <div className="invoice-info-group">
-                                    <p className="label-text">Total Bayar</p>
-                                    <p className="invoice-text">
-                                        <NumberFormat intlConfig={{
-                                            value: totalPaid, 
-                                            locale: "id-ID",
-                                            style: "currency", 
-                                            currency: "IDR",
-                                            }} 
-                                        />
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="card-amount">
-                                <div className="invoice-info-group">
-                                    <p className="label-text">jumlah yang harus dibayar</p>
-                                    <p className="invoice-text">
-                                        <NumberFormat intlConfig={{
-                                            value: totalPaid == 0 ? invDupe.items.amount_due : ((totalPaid - invDupe.items.amount_due) > 0 ? 0 :(invDupe.items.amount_due - totalPaid)), 
-                                            locale: "id-ID",
-                                            style: "currency", 
-                                            currency: "IDR",
-                                            }} 
-                                        />
-                                    </p>
-                                </div>
-                            </div>
-                            {/* <div className="card-amount">
-                                <div className="invoice-info-group">
-                                    <p className="label-text">sisa bon</p>
-                                    <p className="invoice-text"><span className="currency">Rp</span> 0</p>
-                                </div>
-                            </div> */}
-                        </div>
-                        <div className="invoice-transaction mt-4">
-                            <p className="inv-table-title">detail transaksi</p>
-                            <div className='table-responsive'>
-                                {/* <table className="table"> */}
-                                {/* <InvoiceDoc data={{invoice: data.items, order: salesList, payment: paymentData}} /> */}
-                                {salesList ? (salesList.map((sales, idx) => {
-                                    return(
-                                    <>
-                                    <table className="table" key={`transaction-table-${idx}`} id='tes'>
-                                        <thead>
-                                            <tr className='order-number-tab'>
-                                                <th className='inv-tab-primary'>Order ID:</th>
-                                                <th className='inv-tab-primary'>{sales.order_id}</th>
-                                            </tr>
-                                            <tr>
-                                                <th>tanggal</th>
-                                                <th>item</th>
-                                                <th>qty</th>
-                                                <th>satuan</th>
-                                                <th>diskon/item</th>
-                                                <th>jumlah</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {sales.order_items.length > 0 && sales.order_items.map((orderItem, index) => {
-                                                return( 
-                                                    <tr style={{textTransform:'capitalize'}}>
-                                                        {index == 0 ? 
-                                                            (
-                                                                <td rowSpan={`${sales.order_items.length}`}>{ConvertDate.convertToFullDate(sales.order_date,"/")}</td>
-                                                            ):''
-                                                        }
-                                                        <td>{`${orderItem.product.product_name}  ${orderItem.product.variant}`}</td>
-                                                        <td>{orderItem.return_order_item ? 
-                                                            `${Number(orderItem.quantity)} (-${Number(orderItem.return_order_item.quantity)})`
-                                                            : `${Number(orderItem.quantity)}`
-                                                        }
-                                                        </td>
-                                                        <td>
-                                                            <NumberFormat intlConfig={{
-                                                                    value: orderItem.sell_price, 
-                                                                    locale: "id-ID",
-                                                                    style: "currency", 
-                                                                    currency: "IDR",
-                                                                }} 
-                                                            />
-                                                        </td>
-                                                        <td>
-                                                            <NumberFormat intlConfig={{
-                                                                value: orderItem.discount_prod_rec, 
-                                                                locale: "id-ID",
-                                                                style: "currency", 
-                                                                currency: "IDR",
-                                                                }} 
-                                                            />
-                                                            {/* <span style={{textTransform: 'lowercase'}}>{`(x${Number(orderItem.quantity)})`}</span> */}
-                                                        </td>
-                                                        <td>
-                                                            <NumberFormat intlConfig={{
-                                                                value: orderItem.return_order_item ? 
-                                                                (((Number(orderItem.quantity) - Number(orderItem.return_order_item.quantity)) * Number(orderItem.sell_price)) - ((Number(orderItem.quantity) - Number(orderItem.return_order_item.quantity))*orderItem.discount_prod_rec)) 
-                                                                : ((Number(orderItem.quantity) * Number(orderItem.sell_price)) - (Number(orderItem.quantity)*orderItem.discount_prod_rec)), 
-                                                                locale: "id-ID",
-                                                                style: "currency", 
-                                                                currency: "IDR",
-                                                                }} 
-                                                            />
-                                                        </td>
-                                                    </tr>
-                                                )
-                                            })}
-                                            {sales.orders_credit ?
-                                            (
-                                                <>
-                                                {sales.orders_credit.return_order.return_order_items.map((roItem, roItemIdx) => {
-                                                    return (
-                                                    <tr style={{textTransform:'capitalize'}}>
-                                                        <td></td>
-                                                        {/* {roItemIdx == 0 ? 
-                                                            // (
-                                                            //     // <td rowSpan={`${sales.orders_credit.return_order.return_order_items.length}`}>{ConvertDate.convertToFullDate(sales.order_date,"/")}</td>
-                                                            // ):''
-                                                        } */}
-                                                        <td>{`+${roItem.order_item.product.product_name}  ${roItem.order_item.product.variant}`}</td>
-                                                        <td>{Number(roItem.quantity)}</td>
-                                                        <td>
-                                                            <NumberFormat intlConfig={{
-                                                                    value: roItem.order_item.sell_price, 
-                                                                    locale: "id-ID",
-                                                                    style: "currency", 
-                                                                    currency: "IDR",
-                                                                }} 
-                                                            />
-                                                        </td>
-                                                        <td>
-                                                            <NumberFormat intlConfig={{
-                                                                value: roItem.order_item.discount_prod_rec, 
-                                                                locale: "id-ID",
-                                                                style: "currency", 
-                                                                currency: "IDR",
-                                                                }} 
-                                                            />
-                                                            {/* <span style={{textTransform: 'lowercase'}}>{`(x${Number(orderItem.quantity)})`}</span> */}
-                                                        </td>
-                                                        <td>
-                                                            <NumberFormat intlConfig={{
-                                                                value: roItem.return_value,
-                                                                locale: "id-ID",
-                                                                style: "currency", 
-                                                                currency: "IDR",
-                                                                }} 
-                                                            />
-                                                        </td>
-                                                    </tr>
-                                                    )
-                                                })}
-                                                
-                                                </>
-                                            )
-                                            :''}
-                                            {sales.order_discount && Number(sales.order_discount) !== 0 ?
-                                                (
-                                                <tr>
-                                                    <td colSpan="4"></td>
-                                                    <td className="each-total-title"  style={{fontWeight: 500}}>diskon order</td>
-                                                    <td className="each-total-text"  style={{fontWeight: 500}}>
-                                                        <NumberFormat intlConfig={{
-                                                            value: sales.order_discount, 
-                                                            locale: "id-ID",
-                                                            style: "currency", 
-                                                            currency: "IDR",
-                                                            }} 
-                                                        />
-                                                    </td>
-                                                </tr>
-                                                ): null
-                                            }
-                                            <tr>
-                                                <td colSpan="4"></td>
-                                                <td className="each-total-title">total</td>
-                                                <td className="each-total-text">
-                                                    <NumberFormat intlConfig={{
-                                                        value: Number(sales.grandtotal) + (sales.orders_credit ? (Number(sales.orders_credit.return_order.refund_total)):0) - (sales.return_order ? (Number(sales.return_order.refund_total)):0),
-                                                        locale: "id-ID",
-                                                        style: "currency", 
-                                                        currency: "IDR",
-                                                        }} 
-                                                    />
-                                                </td>
-                                            </tr>
-                                            {idx == salesList.length-1 ? 
-                                                (
-                                                <tr className="grand-total">
-                                                    <td colSpan="4"></td>
-                                                    <td className="each-total-title">Total seluruh transaksi</td>
-                                                    <td className="each-total-text">
-                                                        <NumberFormat intlConfig={{
-                                                            value: data.items.amount_due, 
-                                                            locale: "id-ID",
-                                                            style: "currency", 
-                                                            currency: "IDR",
-                                                            }} 
-                                                        />
-                                                    </td>
-                                                </tr>
-                                                )
-                                            :""}
-                                        </tbody>
-                                    </table>
-
-                                  
-                                    
-                                    </>
-                                    )
-                                })):""}
-                            </div>
-                        </div>
-                        
-                        <div className="invoice-payment">
-                            {
-                                paymentData.length > 0 ? 
-                                (
-                                    <>
-                                    <p className="inv-table-title">detail pembayaran</p>
-                                    <div className="table-responsive">
-                                        <table className="table">
+                            <div className="invoice-transaction mt-4">
+                                <p className="inv-table-title">detail transaksi</p>
+                                <div className='table-responsive'>
+                                    {/* <table className="table"> */}
+                                    {/* <InvoiceDoc data={{invoice: data.items, order: salesList, payment: paymentData}} /> */}
+                                    {salesList ? (salesList.map((sales, idx) => {
+                                        console.log(sales)
+                                        return(
+                                        <>
+                                        <table className="table" key={`transaction-table-${idx}`} id='tes'>
                                             <thead>
+                                                <tr className='order-number-tab'>
+                                                    <th className='inv-tab-primary'>Order ID:</th>
+                                                    <th className='inv-tab-primary'>{sales.order_id}</th>
+                                                </tr>
                                                 <tr>
                                                     <th>tanggal</th>
-                                                    <th>catatan</th>
-                                                    <th></th>
-                                                    <th>metode</th>
+                                                    <th>item</th>
+                                                    <th>qty</th>
+                                                    <th>satuan</th>
+                                                    <th>diskon/item</th>
                                                     <th>jumlah</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {paymentData ?
-                                                    paymentData.map((payment,idx) => {
-                                                        return(
-                                                            <>
-                                                                <tr key={`payment-${idx}`}>
-                                                                    <td>{ConvertDate.convertToFullDate(payment.payment_date,"/")}</td>
-                                                                    <td>{payment.note == '' || payment.note == null ? '-' : payment.note}</td>
-                                                                    <td></td>
-                                                                    <td style={{textTransform: 'capitalize'}}>{payment.payment_method}</td>
-                                                                    <td>
-                                                                        <NumberFormat intlConfig={{
-                                                                            value: payment.amount_paid, 
-                                                                            locale: "id-ID",
-                                                                            style: "currency", 
-                                                                            currency: "IDR",
-                                                                        }}/>
-                                                                    </td>
-                                                                </tr>
-                                                                {idx == paymentData.length-1 ? 
-                                                                (
-                                                                    <>
-                                                                    
-                                                                    <tr className="grand-total">
-                                                                        <td colSpan="3"></td>
-                                                                        <td className="each-total-title">Total bayar</td>
-                                                                        <td className="each-total-text">
-                                                                            <NumberFormat intlConfig={{
-                                                                                value: totalPaid, 
-                                                                                locale: "id-ID",
-                                                                                style: "currency", 
-                                                                                currency: "IDR",
-                                                                            }}/>
-                                                                        </td>
-                                                                    </tr>
-                                                                    </>
-                                                                ):''}
-                                                            
-                                                            </>
-                                                            
-                                                        )
-                                                    })
-                                                :''}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    </>
-                                ): ''
-                            }
-                        </div>
-
-                        {/* return order detail if return method id is 2 or potong tagihan  */}
-                        
-                        {roList && roList.length >0 ? 
-                            (
-                            <div className="invoice-transaction">
-                                <p className="inv-table-title">detail pengembalian</p>
-                                <p className="inv-table-desc">Detail pengembalian ini hanya untuk transparansi data. Seluruh data transaksi sudah mencakup data pengembalian yang ada.</p>
-                                {/* <div style={{width: '100%'}}> */}
-                                    {roList.map((ro, idx) => {
-                                        return(
-                                            <>
-                                            <div className='table-top-desc-wrap'>
-                                                <div className='table-desc-wrap-inline'>
-                                                    <div className='table-desc-inline'>
-                                                        <p className='table-desc-title'>order ID:</p>
-                                                        <p className='table-desc-value'>{ro.order.order_id}</p>
-                                                    </div>   
-                                                    <div className='table-desc-inline'>
-                                                        <p className='table-desc-title'>tanggal order:</p>
-                                                        <p className='table-desc-value'>{ConvertDate.convertToFullDate(ro.order.order_date,"/")}</p>
-                                                    </div>    
-                                                    <div className='table-desc-inline'>
-                                                        <p className='table-desc-title'>tanggal pengembalian:</p>
-                                                        <p className='table-desc-value'>{ConvertDate.convertToFullDate(ro.return_date,"/")}</p>
-                                                    </div>
-                                                </div>
-                                                <div className='table-desc-inline'>
-                                                    <p className='table-desc-title'>Metode pengembalian:</p>
-                                                    <p className='table-desc-value'>{ro.return_method}</p>
-                                                </div>
-                                            </div>
-                                            <table className="table" key={`transaction-table-${idx}`}>
-                                                <thead>
-                                                    <tr>
-                                                        <th>#</th>
-                                                        <th>item</th>
-                                                        <th>order qty</th>
-                                                        <th></th>
-                                                        <th>pengembalian</th>
-                                                        <th>Alasan pengembalian</th>
-                                                        <th>jumlah</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                {ro.return_order_items?.map((roItem, index) => {
-                                                    console.log(roItem)
-                                                    return (
-                                                        <>
+                                                {sales.order_items.length > 0 && sales.order_items.map((orderItem, index) => {
+                                                    return( 
                                                         <tr style={{textTransform:'capitalize'}}>
-                                                            <td style={{fontWeight: 500, paddingLeft: '2rem'}}>{index+1}</td>
-                                                            <td>{`${roItem.order_item.product.product_name}  ${roItem.order_item.product.variant}`}</td>
-                                                            <td>
-                                                                {
-                                                                    Number(roItem.order_item.quantity)
-                                                                }
-                                                            </td>
-                                                            <td><i class='bx bxs-chevrons-right'></i></td>
-                                                            <td>
-                                                                {/* {Number(roItem.quantity) - Number(orderItem.return_order_item.quantity)} */}
-                                                                {Number(roItem.quantity)}
-                                                            </td>
-                                                            <td>
-                                                                {roItem.reason}
+                                                            {index == 0 ? 
+                                                                (
+                                                                    <td rowSpan={`${sales.order_items.length}`}>{ConvertDate.convertToFullDate(sales.order_date,"/")}</td>
+                                                                ):''
+                                                            }
+                                                            <td>{`${orderItem.product.product_name}  ${orderItem.product.variant}`}</td>
+                                                            <td>{orderItem.return_order_item ? 
+                                                                `${Number(orderItem.quantity)} (-${Number(orderItem.return_order_item.quantity)})`
+                                                                : `${Number(orderItem.quantity)}`
+                                                            }
                                                             </td>
                                                             <td>
                                                                 <NumberFormat intlConfig={{
-                                                                    // value: (((Number(roItem.order_item.quantity) - Number(roItem.quantity)) * Number(roItem.order_item.sell_price)) - ((Number(roItem.order_item.quantity) - Number(roItem.quantity))*roItem.order_item.discount_prod_rec)),
+                                                                        value: orderItem.sell_price, 
+                                                                        locale: "id-ID",
+                                                                        style: "currency", 
+                                                                        currency: "IDR",
+                                                                    }} 
+                                                                />
+                                                            </td>
+                                                            <td>
+                                                                <NumberFormat intlConfig={{
+                                                                    value: orderItem.discount_prod_rec, 
+                                                                    locale: "id-ID",
+                                                                    style: "currency", 
+                                                                    currency: "IDR",
+                                                                    }} 
+                                                                />
+                                                                {/* <span style={{textTransform: 'lowercase'}}>{`(x${Number(orderItem.quantity)})`}</span> */}
+                                                            </td>
+                                                            <td>
+                                                                <NumberFormat intlConfig={{
+                                                                    value: orderItem.return_order_item ? 
+                                                                    (((Number(orderItem.quantity) - Number(orderItem.return_order_item.quantity)) * Number(orderItem.sell_price)) - ((Number(orderItem.quantity) - Number(orderItem.return_order_item.quantity))*orderItem.discount_prod_rec)) 
+                                                                    : ((Number(orderItem.quantity) * Number(orderItem.sell_price)) - (Number(orderItem.quantity)*orderItem.discount_prod_rec)), 
+                                                                    locale: "id-ID",
+                                                                    style: "currency", 
+                                                                    currency: "IDR",
+                                                                    }} 
+                                                                />
+                                                            </td>
+                                                        </tr>
+                                                    )
+                                                })}
+                                                {sales.orders_credit ?
+                                                (
+                                                    <>
+                                                    {sales.orders_credit.return_order.return_order_items.map((roItem, roItemIdx) => {
+                                                        return (
+                                                        <tr style={{textTransform:'capitalize'}}>
+                                                            <td></td>
+                                                            {/* {roItemIdx == 0 ? 
+                                                                // (
+                                                                //     // <td rowSpan={`${sales.orders_credit.return_order.return_order_items.length}`}>{ConvertDate.convertToFullDate(sales.order_date,"/")}</td>
+                                                                // ):''
+                                                            } */}
+                                                            <td>{`+${roItem.order_item.product.product_name}  ${roItem.order_item.product.variant}`}</td>
+                                                            <td>{Number(roItem.quantity)}</td>
+                                                            <td>
+                                                                <NumberFormat intlConfig={{
+                                                                        value: roItem.order_item.sell_price, 
+                                                                        locale: "id-ID",
+                                                                        style: "currency", 
+                                                                        currency: "IDR",
+                                                                    }} 
+                                                                />
+                                                            </td>
+                                                            <td>
+                                                                <NumberFormat intlConfig={{
+                                                                    value: roItem.order_item.discount_prod_rec, 
+                                                                    locale: "id-ID",
+                                                                    style: "currency", 
+                                                                    currency: "IDR",
+                                                                    }} 
+                                                                />
+                                                                {/* <span style={{textTransform: 'lowercase'}}>{`(x${Number(orderItem.quantity)})`}</span> */}
+                                                            </td>
+                                                            <td>
+                                                                <NumberFormat intlConfig={{
                                                                     value: roItem.return_value,
                                                                     locale: "id-ID",
                                                                     style: "currency", 
@@ -959,56 +755,265 @@ export default function InvoiceModal({show, onHide, data}) {
                                                                 />
                                                             </td>
                                                         </tr>
-                                                        {index == ro.return_order_items.length-1 ?
-                                                            (
-                                                            <tr>
-                                                                <td colSpan="5"></td>
-                                                                <td className="each-total-title">total</td>
-                                                                <td className="each-total-text">
-                                                                    <NumberFormat intlConfig={{
-                                                                        value: ro.refund_total, 
-                                                                        locale: "id-ID",
-                                                                        style: "currency", 
-                                                                        currency: "IDR",
-                                                                        }} 
-                                                                    />
-                                                                </td>
-                                                            </tr>
-                                                            ):''
-                                                        }
-                                                        
-                                                        </>
+                                                        )
+                                                    })}
+                                                    
+                                                    </>
+                                                )
+                                                :''}
+                                                {sales.order_discount && Number(sales.order_discount) !== 0 ?
+                                                    (
+                                                    <tr>
+                                                        <td colSpan="4"></td>
+                                                        <td className="each-total-title"  style={{fontWeight: 500}}>diskon order</td>
+                                                        <td className="each-total-text"  style={{fontWeight: 500}}>
+                                                            <NumberFormat intlConfig={{
+                                                                value: sales.order_discount, 
+                                                                locale: "id-ID",
+                                                                style: "currency", 
+                                                                currency: "IDR",
+                                                                }} 
+                                                            />
+                                                        </td>
+                                                    </tr>
+                                                    ): null
+                                                }
+                                                <tr>
+                                                    <td colSpan="4"></td>
+                                                    <td className="each-total-title" style={{textAlign:'right'}}>total</td>
+                                                    <td className="each-total-text">
+                                                        <NumberFormat intlConfig={{
+                                                            value: Number(sales.grandtotal) + (sales.orders_credit ? (Number(sales.orders_credit.return_order.refund_total)):0) - (sales.return_order ? (Number(sales.return_order.refund_total)):0),
+                                                            locale: "id-ID",
+                                                            style: "currency", 
+                                                            currency: "IDR",
+                                                            }} 
+                                                        />
+                                                    </td>
+                                                </tr>
+                                                {idx == salesList.length-1 ? 
+                                                    (
+                                                    <tr className="grand-total">
+                                                        <td colSpan="4"></td>
+                                                        <td className="each-total-title" style={{textAlign:'right'}}>Total seluruh transaksi</td>
+                                                        <td className="each-total-text">
+                                                            <NumberFormat intlConfig={{
+                                                                value: data.items.amount_due, 
+                                                                locale: "id-ID",
+                                                                style: "currency", 
+                                                                currency: "IDR",
+                                                                }} 
+                                                            />
+                                                        </td>
+                                                    </tr>
                                                     )
-                                                })}
-                                                {idx == roList.length-1 ? 
-                                                            (
-                                                            <tr className="grand-total">
-                                                                <td colSpan="5"></td>
-                                                                <td className="each-total-title">Total pengembalian</td>
-                                                                <td className="each-total-text">
-                                                                    <NumberFormat intlConfig={{
-                                                                        value: ro.refund_total, 
-                                                                        locale: "id-ID",
-                                                                        style: "currency", 
-                                                                        currency: "IDR",
-                                                                        }} 
-                                                                    />
-                                                                </td>
-                                                            </tr>
-                                                            )
-                                                        :""}
-                                                </tbody>
-                                            </table>
+                                                :""}
+                                            </tbody>
+                                        </table>
+
+                                    
+                                        
                                         </>
                                         )
-                                    })}
-                                {/* </div> */}
+                                    })):""}
+                                </div>
                             </div>
-                            )
-                            :''
-                        }
-                        <div className="invoice-footer">
-                            <p className="invoice-footer-text">Thank you for your business!</p>
+                            
+                            <div className="invoice-payment">
+                                {
+                                    paymentData.length > 0 ? 
+                                    (
+                                        <>
+                                        <p className="inv-table-title">detail pembayaran</p>
+                                        <div className="table-responsive">
+                                            <table className="table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>tanggal</th>
+                                                        <th>catatan</th>
+                                                        <th></th>
+                                                        <th>metode</th>
+                                                        <th>jumlah</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {paymentData ?
+                                                        paymentData.map((payment,idx) => {
+                                                            return(
+                                                                <>
+                                                                    <tr key={`payment-${idx}`}>
+                                                                        <td>{ConvertDate.convertToFullDate(payment.payment_date,"/")}</td>
+                                                                        <td>{payment.note == '' || payment.note == null ? '-' : payment.note}</td>
+                                                                        <td></td>
+                                                                        <td style={{textTransform: 'capitalize'}}>{payment.payment_method}</td>
+                                                                        <td>
+                                                                            <NumberFormat intlConfig={{
+                                                                                value: payment.amount_paid, 
+                                                                                locale: "id-ID",
+                                                                                style: "currency", 
+                                                                                currency: "IDR",
+                                                                            }}/>
+                                                                        </td>
+                                                                    </tr>
+                                                                    {idx == paymentData.length-1 ? 
+                                                                    (
+                                                                        <>
+                                                                        
+                                                                        <tr className="grand-total">
+                                                                            <td colSpan="3"></td>
+                                                                            <td className="each-total-title" style={{textAlign:'right'}}>Total bayar</td>
+                                                                            <td className="each-total-text">
+                                                                                <NumberFormat intlConfig={{
+                                                                                    value: totalPaid, 
+                                                                                    locale: "id-ID",
+                                                                                    style: "currency", 
+                                                                                    currency: "IDR",
+                                                                                }}/>
+                                                                            </td>
+                                                                        </tr>
+                                                                        </>
+                                                                    ):''}
+                                                                
+                                                                </>
+                                                                
+                                                            )
+                                                        })
+                                                    :''}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        </>
+                                    ): ''
+                                }
+                            </div>
+
+                            {/* return order detail if return method id is 2 or potong tagihan  */}
+                            
+                            {roList && roList.length >0 ? 
+                                (
+                                <div className="invoice-transaction">
+                                    <p className="inv-table-title">detail pengembalian</p>
+                                    <p className="inv-table-desc">Detail pengembalian ini hanya untuk transparansi data. Seluruh data transaksi sudah mencakup data pengembalian yang ada.</p>
+                                    {/* <div style={{width: '100%'}}> */}
+                                        {roList.map((ro, idx) => {
+                                            return(
+                                                <>
+                                                <div className='table-top-desc-wrap'>
+                                                    <div className='table-desc-wrap-inline'>
+                                                        <div className='table-desc-inline'>
+                                                            <p className='table-desc-title'>order ID:</p>
+                                                            <p className='table-desc-value'>{ro.order.order_id}</p>
+                                                        </div>   
+                                                        <div className='table-desc-inline'>
+                                                            <p className='table-desc-title'>tanggal order:</p>
+                                                            <p className='table-desc-value'>{ConvertDate.convertToFullDate(ro.order.order_date,"/")}</p>
+                                                        </div>    
+                                                        <div className='table-desc-inline'>
+                                                            <p className='table-desc-title'>tanggal pengembalian:</p>
+                                                            <p className='table-desc-value'>{ConvertDate.convertToFullDate(ro.return_date,"/")}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className='table-desc-inline'>
+                                                        <p className='table-desc-title'>Metode pengembalian:</p>
+                                                        <p className='table-desc-value'>{ro.return_method}</p>
+                                                    </div>
+                                                </div>
+                                                <table className="table" key={`transaction-table-${idx}`}>
+                                                    <thead>
+                                                        <tr>
+                                                            <th>#</th>
+                                                            <th>item</th>
+                                                            <th>qty</th>
+                                                            <th></th>
+                                                            <th>pengembalian</th>
+                                                            <th>Alasan pengembalian</th>
+                                                            <th>jumlah</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                    {ro.return_order_items?.map((roItem, index) => {
+                                                        console.log(roItem)
+                                                        return (
+                                                            <>
+                                                            <tr style={{textTransform:'capitalize'}}>
+                                                                <td style={{fontWeight: 500, paddingLeft: '2rem'}}>{index+1}</td>
+                                                                <td>{`${roItem.order_item.product.product_name}  ${roItem.order_item.product.variant}`}</td>
+                                                                <td>
+                                                                    {
+                                                                        Number(roItem.order_item.quantity)
+                                                                    }
+                                                                </td>
+                                                                <td><i class='bx bxs-chevrons-right'></i></td>
+                                                                <td>
+                                                                    {/* {Number(roItem.quantity) - Number(orderItem.return_order_item.quantity)} */}
+                                                                    {Number(roItem.quantity)}
+                                                                </td>
+                                                                <td>
+                                                                    {roItem.reason}
+                                                                </td>
+                                                                <td>
+                                                                    <NumberFormat intlConfig={{
+                                                                        // value: (((Number(roItem.order_item.quantity) - Number(roItem.quantity)) * Number(roItem.order_item.sell_price)) - ((Number(roItem.order_item.quantity) - Number(roItem.quantity))*roItem.order_item.discount_prod_rec)),
+                                                                        value: roItem.return_value,
+                                                                        locale: "id-ID",
+                                                                        style: "currency", 
+                                                                        currency: "IDR",
+                                                                        }} 
+                                                                    />
+                                                                </td>
+                                                            </tr>
+                                                            {index == ro.return_order_items.length-1 ?
+                                                                (
+                                                                <tr>
+                                                                    <td colSpan="5"></td>
+                                                                    <td className="each-total-title" style={{textAlign:'right'}}>total</td>
+                                                                    <td className="each-total-text">
+                                                                        <NumberFormat intlConfig={{
+                                                                            value: ro.refund_total, 
+                                                                            locale: "id-ID",
+                                                                            style: "currency", 
+                                                                            currency: "IDR",
+                                                                            }} 
+                                                                        />
+                                                                    </td>
+                                                                </tr>
+                                                                ):''
+                                                            }
+                                                            
+                                                            </>
+                                                        )
+                                                    })}
+                                                    {idx == roList.length-1 ? 
+                                                                (
+                                                                <tr className="grand-total">
+                                                                    <td colSpan="5"></td>
+                                                                    <td className="each-total-title" style={{textAlign:'right'}}>Total pengembalian</td>
+                                                                    <td className="each-total-text">
+                                                                        <NumberFormat intlConfig={{
+                                                                            value: ro.refund_total, 
+                                                                            locale: "id-ID",
+                                                                            style: "currency", 
+                                                                            currency: "IDR",
+                                                                            }} 
+                                                                        />
+                                                                    </td>
+                                                                </tr>
+                                                                )
+                                                            :""}
+                                                    </tbody>
+                                                </table>
+                                            </>
+                                            )
+                                        })}
+                                    {/* </div> */}
+                                </div>
+                                )
+                                :''
+                            }
+                            <div className="invoice-footer">
+                                <p className="invoice-footer-text">Thank you for your business!</p>
+                            </div>
+
                         </div>
                     </div>
                     <div className='inv-tools' style={{width: isMobile || isMediumScr ? '100%' : '25%'}}>

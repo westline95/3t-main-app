@@ -318,6 +318,26 @@ const invoiceStyle = StyleSheet.create({
         paddingHorizontal: '90px',
         backgroundColor: '#F5F6F9'
     },
+    returnHeader: {
+        backgroundColor: '#F5F6F9',
+        width: '100%',
+        color: '#344050',
+        fontWeight: 500,
+        textTransform:'capitalize'
+    },
+    returnHeaderInline: {
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent:'space-between',
+    },
+    returnHeaderText:{
+        display: 'flex',
+        flexDirection: 'row',
+        gap: 4,
+        fontSize: '40px',
+        paddingVertical: '36px',
+        paddingHorizontal: '40px',
+    },
     tableEndNote1: {
         display: 'flex', 
         flexDirection: 'row', 
@@ -470,7 +490,7 @@ export default function InvoiceDoc({data, ref}) {
                                 }</Text>
                             </View>
                         </View>
-                    </View>
+                </View>
                 <View style={invoiceStyle.invTransaction}>
                     <View style={{ marginBottom: '132px',}}>
                        <Text style={invoiceStyle.invTableTitle}>detail transaksi</Text>
@@ -482,38 +502,42 @@ export default function InvoiceDoc({data, ref}) {
                                 </View>
                                 <View style={invoiceStyle.thead}>
                                     <View style={invoiceStyle.rowHead}>
-                                        <View style={{...invoiceStyle.th, width: '13.4%'}}><Text>tanggal</Text></View>
-                                        <View style={{...invoiceStyle.th, width: '27.7%' }}><Text>item</Text></View>
-                                        <View style={{...invoiceStyle.th, width: '9.3%'}}><Text>qty</Text></View>
-                                        <View style={{...invoiceStyle.th, width: '14.8%'}}><Text>satuan</Text></View>
-                                        <View style={{...invoiceStyle.th, width: '19.1%'}}><Text>diskon/item</Text></View>
+                                        <View style={{...invoiceStyle.th, width: '13.2%'}}><Text>tanggal</Text></View>
+                                        <View style={{...invoiceStyle.th, width: '30%' }}><Text>item</Text></View>
+                                        <View style={{...invoiceStyle.th, width: '9.5%'}}><Text>qty</Text></View>
+                                        <View style={{...invoiceStyle.th, width: '15%'}}><Text>satuan</Text></View>
+                                        <View style={{...invoiceStyle.th, width: '17%'}}><Text>diskon/item</Text></View>
                                         <View style={{...invoiceStyle.th, width: '15.3%'}}><Text>jumlah</Text></View>
                                     </View>
                                 </View>
                                 <View style={{...invoiceStyle.tbody}}>
                                     <View style={{...invoiceStyle.rowBody, width: '100%', }}>
-                                        <View style={{height: '100%', paddingLeft:'75px', width: '12.6%', ...invoiceStyle.trBorder, justifyContent: 'center'}}>
+                                        <View style={{height: '100%', paddingLeft:'75px', width: '12%', ...invoiceStyle.trBorder, justifyContent: 'center'}}>
                                             <Text style={{ color: '#344050',fontWeight: 600}}>{ConvertDate.convertToFullDate(sales.order_date,"/")}</Text>
                                         </View>
-                                        <View style={{width: '87.4%',...invoiceStyle.trBorder, paddingLeft:'75px'}}>
+                                        <View style={{width: '88%',...invoiceStyle.trBorder, paddingLeft:'75px'}}>
                                         {sales.order_items.length > 0 && sales.order_items.map((orderItem, index) => {
                                             return( 
                                                 <>
-                                                <View style={{...invoiceStyle.td, paddingRight:'75px', 
+                                                <View style={{...invoiceStyle.td, paddingRight:'67px', 
                                                     borderBottom: index == sales.order_items.length - 1 ?  0 : '2.25px', 
                                                     borderStyle: index == sales.order_items.length - 1 ? 'none': 'solid' ,  
                                                     borderColor: index == sales.order_items.length - 1 ? 'none' : '#EBF1F6'}}
                                                 >
-                                                    <View style={{...invoiceStyle.tr,  width: '33%'}}>
+                                                    <View style={{...invoiceStyle.tr,  width: '34.8%'}}>
                                                         <Text>{`${orderItem.product.product_name} ${orderItem.product.variant}`}</Text>
                                                     </View>
-                                                    <View style={{...invoiceStyle.tr, width: '9.8%'}}>
-                                                        <Text>{Number(orderItem.quantity)}</Text>
+                                                    <View style={{...invoiceStyle.tr, width: '11%'}}>
+                                                        <Text>{orderItem.return_order_item ? 
+                                                            `${Number(orderItem.quantity)} (-${Number(orderItem.return_order_item.quantity)})`
+                                                            : `${Number(orderItem.quantity)}`
+                                                            }
+                                                        </Text>
                                                     </View>
-                                                    <View style={{...invoiceStyle.tr, width: '17.1%'}}>
+                                                    <View style={{...invoiceStyle.tr, width: '17.5%'}}>
                                                         <Text>{formatedNumber.format(orderItem.sell_price)}</Text>
                                                     </View>
-                                                    <View style={{...invoiceStyle.tr, width: '22%'}}>
+                                                    <View style={{...invoiceStyle.tr, width: '19%'}}>
                                                         <View style={{display: 'flex', flexDirection: 'row', gap: '12px'}}>
                                                             {orderItem.discount_prod_rec == 0 ? 
                                                             (
@@ -528,7 +552,40 @@ export default function InvoiceDoc({data, ref}) {
                                                         </View>
                                                     </View>
                                                     <View style={{...invoiceStyle.tr, width: '14.9%',}}>
-                                                        <Text>{formatedNumber.format((Number(orderItem.quantity) * Number(orderItem.sell_price) - (Number(orderItem.quantity)*orderItem.discount_prod_rec)))}</Text>
+                                                        <Text>{orderItem.return_order_item ? 
+                                                                (((Number(orderItem.quantity) - Number(orderItem.return_order_item.quantity)) * Number(orderItem.sell_price)) - ((Number(orderItem.quantity) - Number(orderItem.return_order_item.quantity))*orderItem.discount_prod_rec)) 
+                                                                : ((Number(orderItem.quantity) * Number(orderItem.sell_price)) - (Number(orderItem.quantity)*orderItem.discount_prod_rec))}
+                                                        </Text>
+                                                    </View>
+                                                </View>
+                                                </>
+                                            )
+                                        })}
+                                        {sales.orders_credit && sales.orders_credit.return_order.return_order_items.map((roItem, roItemIdx) => { 
+                                            return( 
+                                                <>
+                                                <View style={{...invoiceStyle.td, paddingRight:'67px', 
+                                                    borderBottom: roItemIdx == sales.order_items.length - 1 ?  0 : '2.25px', 
+                                                    borderStyle: roItemIdx == sales.order_items.length - 1 ? 'none': 'solid' ,  
+                                                    borderColor: roItemIdx == sales.order_items.length - 1 ? 'none' : '#EBF1F6'}}
+                                                >
+                                                    <View style={{...invoiceStyle.tr,  width: '34.8%'}}>
+                                                        <Text>{`+${roItem.order_item.product.product_name}  ${roItem.order_item.product.variant}`}</Text>
+                                                    </View>
+                                                    <View style={{...invoiceStyle.tr, width: '11%'}}>
+                                                        <Text>{Number(roItem.quantity)}</Text>
+                                                    </View>
+                                                    <View style={{...invoiceStyle.tr, width: '17.5%'}}>
+                                                        <Text>{formatedNumber.format(roItem.order_item.sell_price)}</Text>
+                                                    </View>
+                                                    <View style={{...invoiceStyle.tr, width: '19%'}}>
+                                                        <View style={{display: 'flex', flexDirection: 'row', gap: '12px'}}>
+                                                            <Text>{formatedNumber.format(roItem.order_item.discount_prod_rec)}</Text>
+                                                            {/* <Text style={{textTransform: 'lowercase'}}>{`(x${Number(orderItem.quantity)})`}</Text> */}
+                                                        </View>
+                                                    </View>
+                                                    <View style={{...invoiceStyle.tr, width: '14.9%',}}>
+                                                        <Text>{roItem.return_value}</Text>
                                                     </View>
                                                 </View>
                                                 </>
@@ -545,14 +602,17 @@ export default function InvoiceDoc({data, ref}) {
 
                                     ):''}
                                     <View style={{...invoiceStyle.tableEndNote1}}>
-                                        <View style={{textAlign: 'right', marginRight:32, fontWeight: 600}}><Text>total order</Text></View>
-                                        <View style={{width: '18%', fontWeight: 600}}><Text>{formatedNumber.format(sales.grandtotal)}</Text></View>
+                                        <View style={{textAlign: 'right', marginRight:24, fontWeight: 600}}><Text>total order</Text></View>
+                                        <View style={{width: '17.8%', fontWeight: 600}}>
+                                            <Text>{formatedNumber.format(Number(sales.grandtotal) + (sales.orders_credit ? (Number(sales.orders_credit.return_order.refund_total)):0) - (sales.return_order ? (Number(sales.return_order.refund_total)):0))}
+                                            </Text>
+                                        </View>
                                     </View>
                                     {idx == data.order.length-1 ? 
                                         (
                                         <View style={{...invoiceStyle.tableEndNote2}}>
-                                            <View style={{textAlign: 'right', fontWeight: 600, marginRight:32}}><Text>total seluruh transaksi</Text></View>
-                                            <View style={{width: '18%', fontWeight: 600}}><Text>{formatedNumber.format(data.invoice.amount_due)}</Text></View>
+                                            <View style={{textAlign: 'right', fontWeight: 600, marginRight:24}}><Text>total seluruh transaksi</Text></View>
+                                            <View style={{width: '17.8%', fontWeight: 600}}><Text>{formatedNumber.format(data.invoice.amount_due)}</Text></View>
                                         </View>
                                         )
                                     :""} 
@@ -625,89 +685,95 @@ export default function InvoiceDoc({data, ref}) {
                             {data.ro.map((ro, idx) => {
                                 return(
                                     <>
-                                    <View>
-                                        {/* <View className='table-desc-wrap-inline'>
-                                            <View className='table-desc-inline'>
-                                                <Text className='table-desc-title'>tanggal order:</Text>
-                                                <Text className='table-desc-value'>{ConvertDate.convertToFullDate(ro.order.order_date,"/")}</Text>
-                                            </View>    
-                                            <View className='table-desc-inline'>
-                                                <Text className='table-desc-title'>tanggal pengembalian:</Text>
-                                                <Text className='table-desc-value'>{ConvertDate.convertToFullDate(ro.return_date,"/")}</Text>
-                                            </View>
-                                        </View>
-                                        <View className='table-desc-inline'>
-                                            <Text className='table-desc-title'>Metode pengembalian:</Text>
-                                            <Text className='table-desc-value'>{ro.return_method}</Text>
-                                        </View> */}
-                                    </View>
-                                    <View style={invoiceStyle.table} key={`transaction-table-${idx}`}>
-                                        <View style={invoiceStyle.thead}>
-                                            <View style={invoiceStyle.rowHead}>
-                                                <View style={{...invoiceStyle.th, width: '5%'}}><Text>#</Text></View>
-                                                <View style={{...invoiceStyle.th, width: '23%' }}><Text>item</Text></View>
-                                                <View style={{...invoiceStyle.th, width: '10%'}}><Text>order qty</Text></View>
-                                                <View style={{...invoiceStyle.th, width: '5%'}}><Text></Text></View>
-                                                <View style={{...invoiceStyle.th, width: '17%'}}><Text>pengembalian</Text></View>
-                                                <View style={{...invoiceStyle.th, width: '25%'}}><Text>Alasan pengembalian</Text></View>
-                                                <View style={{...invoiceStyle.th, width: '15%'}}><Text>jumlah</Text></View>
-                                            </View>
-                                        </View>
-                                        <View style={{...invoiceStyle.tbody}}>
-                                            {ro.return_order_items?.map((roItem, index) => {
-                                                return (
-                                                    // <View style={{...invoiceStyle.rowBody, width: '100%', }}>
-                                                    <>
-                                                    <View style={{...invoiceStyle.td, paddingHorizontal:'75px', 
-                                                        borderBottom: '2.25px', 
-                                                        borderStyle: 'solid' ,  
-                                                        borderColor: '#EBF1F6'}}
-                                                    >
-                                                        <View style={{...invoiceStyle.tr,  width: '5%'}}>
-                                                            <Text>{index+1}</Text>
-                                                        </View>
-                                                        <View style={{...invoiceStyle.tr, width: '23%'}}>
-                                                            <Text>{`${roItem.order_item.product.product_name}  ${roItem.order_item.product.variant}`}</Text>
-                                                        </View>
-                                                        <View style={{...invoiceStyle.tr, width: '10%'}}>
-                                                            <Text>{ Number(roItem.order_item.quantity)}</Text>
-                                                        </View>
-                                                        <View style={{...invoiceStyle.tr, width: '5%', textAlign:'center'}}>
-                                                            <Text>{'>'}</Text>
-                                                        </View>
-                                                        <View style={{...invoiceStyle.tr, width: '17%'}}>
-                                                            <Text>{Number(roItem.quantity)}</Text>
-                                                        </View>
-                                                        <View style={{...invoiceStyle.tr, width: '25%',}}>
-                                                            <Text>{roItem.reason}</Text>
-                                                        </View>
-                                                        <View style={{...invoiceStyle.tr, width: '15%',}}>
-                                                            <Text>{formatedNumber.format(roItem.return_value)}</Text>
-                                                        </View>
-                                                    </View>
-                                                    
-                                                    {index == ro.return_order_items.length-1 ?
-                                                        (
-                                                        <View style={{...invoiceStyle.tableEndNote1}}>
-                                                            <View style={{textAlign: 'right',marginRight:32, fontWeight: 600,}}><Text>total</Text></View>
-                                                            <View style={{width: '18%', fontWeight: 600}}><Text>{formatedNumber.format(ro.refund_total)}</Text></View>
-                                                        </View>
-                                                        ):''
-                                                    }
-                                                    </>
-                                                )
-                                            })}
-                                            {idx == data.ro.length-1 ? 
-                                                (
-                                                <View style={{...invoiceStyle.tableEndNote2}}>
-                                                    <View style={{textAlign: 'right', fontWeight: 600, marginRight:32}}><Text>total pengembalian</Text></View>
-                                                    <View style={{width: '18%', fontWeight: 600}}><Text>{formatedNumber.format(ro.refund_total)}</Text></View>
+                                    <View key={`return-table-${idx}`} >
+                                        <View style={invoiceStyle.returnHeader}>
+                                            <View style={invoiceStyle.returnHeaderInline}>
+                                                <View style={invoiceStyle.returnHeaderText}>
+                                                    <Text style={{fontWeight:600}}>order ID:</Text>
+                                                    <Text>{ro.order.order_id}</Text>
+                                                </View>    
+                                                <View style={invoiceStyle.returnHeaderText}>
+                                                    <Text style={{fontWeight:600}}>tanggal order:</Text>
+                                                    <Text>{ConvertDate.convertToFullDate(ro.order.order_date,"/")}</Text>
+                                                </View>    
+                                                <View style={invoiceStyle.returnHeaderText}>
+                                                    <Text style={{fontWeight:600}}>tanggal pengembalian:</Text>
+                                                    <Text>{ConvertDate.convertToFullDate(ro.return_date,"/")}</Text>
                                                 </View>
-                                                )
-                                            :""}
-                                            {/* </View> */}
+                                            </View>
+                                            <View style={invoiceStyle.returnHeaderText}>
+                                                <Text style={{fontWeight:600}}>Metode pengembalian:</Text>
+                                                <Text>{ro.return_method}</Text>
+                                            </View>
                                         </View>
-                                        
+                                        <View style={invoiceStyle.table} >
+                                            <View style={invoiceStyle.thead}>
+                                                <View style={invoiceStyle.rowHead}>
+                                                    <View style={{...invoiceStyle.th, width: '4%'}}><Text>#</Text></View>
+                                                    <View style={{...invoiceStyle.th, width: '27%' }}><Text>item</Text></View>
+                                                    <View style={{...invoiceStyle.th, width: '4%'}}><Text>qty</Text></View>
+                                                    <View style={{...invoiceStyle.th, width: '5%'}}><Text></Text></View>
+                                                    <View style={{...invoiceStyle.th, width: '17%'}}><Text>pengembalian</Text></View>
+                                                    <View style={{...invoiceStyle.th, width: '29%'}}><Text>Alasan pengembalian</Text></View>
+                                                    <View style={{...invoiceStyle.th, width: '13%'}}><Text>jumlah</Text></View>
+                                                </View>
+                                            </View>
+                                            <View style={{...invoiceStyle.tbody}}>
+                                                {ro.return_order_items?.map((roItem, index) => {
+                                                    return (
+                                                        // <View style={{...invoiceStyle.rowBody, width: '100%', }}>
+                                                        <>
+                                                        <View style={{...invoiceStyle.td, paddingHorizontal:'65px', 
+                                                            borderBottom: '2.25px', 
+                                                            borderStyle: 'solid' ,  
+                                                            borderColor: '#EBF1F6'}}
+                                                        >
+                                                            <View style={{...invoiceStyle.tr,  width: '4%'}}>
+                                                                <Text>{index+1}</Text>
+                                                            </View>
+                                                            <View style={{...invoiceStyle.tr, width: '27.5%'}}>
+                                                                <Text>{`${roItem.order_item.product.product_name}  ${roItem.order_item.product.variant}`}</Text>
+                                                            </View>
+                                                            <View style={{...invoiceStyle.tr, width: '4%'}}>
+                                                                <Text>{ Number(roItem.order_item.quantity)}</Text>
+                                                            </View>
+                                                            <View style={{...invoiceStyle.tr, width: '5%', textAlign:'center'}}>
+                                                                <Text>{'>'}</Text>
+                                                            </View>
+                                                            <View style={{...invoiceStyle.tr, width: '16.5%'}}>
+                                                                <Text>{Number(roItem.quantity)}</Text>
+                                                            </View>
+                                                            <View style={{...invoiceStyle.tr, width: '29%',}}>
+                                                                <Text>{roItem.reason}</Text>
+                                                            </View>
+                                                            <View style={{...invoiceStyle.tr, width: '13%',}}>
+                                                                <Text>{formatedNumber.format(roItem.return_value)}</Text>
+                                                            </View>
+                                                        </View>
+                                                        
+                                                        {index == ro.return_order_items.length-1 ?
+                                                            (
+                                                            <View style={{...invoiceStyle.tableEndNote1}}>
+                                                                <View style={{textAlign: 'right',marginRight:22, fontWeight: 600,}}><Text>total</Text></View>
+                                                                <View style={{width: '16.1%', fontWeight: 600}}><Text>{formatedNumber.format(ro.refund_total)}</Text></View>
+                                                            </View>
+                                                            ):''
+                                                        }
+                                                        </>
+                                                    )
+                                                })}
+                                                {idx == data.ro.length-1 ? 
+                                                    (
+                                                    <View style={{...invoiceStyle.tableEndNote2}}>
+                                                        <View style={{textAlign: 'right', fontWeight: 600, marginRight:22}}><Text>total pengembalian</Text></View>
+                                                        <View style={{width: '16.1%', fontWeight: 600}}><Text>{formatedNumber.format(ro.refund_total)}</Text></View>
+                                                    </View>
+                                                    )
+                                                :""}
+                                                {/* </View> */}
+                                            </View>
+                                            
+                                        </View>
                                     </View>
                                 </>
                                 )

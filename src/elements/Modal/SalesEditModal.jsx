@@ -56,6 +56,7 @@ export default function SalesEditModal({show, onHide, data}) {
     const [ sendTarget, setSendTarget ] = useState(null);
     const [ cantCanceled, setCantCanceled ] = useState(false);
     const [ paymentData, setPaymentData ] = useState(null);
+    const [ orderStatus, setOrderStatus ] = useState(null);
 
     const axiosPrivate = useAxiosPrivate();
     
@@ -195,6 +196,8 @@ export default function SalesEditModal({show, onHide, data}) {
             }
         })
         .then(resp => {
+            // console.log(resp.data[0])
+            // console.log(data)
             setOrderData(resp.data[0]);
             
         })
@@ -786,8 +789,8 @@ export default function SalesEditModal({show, onHide, data}) {
                     <button type="button" className={`btn btn-danger btn-w-icon ${editMode ? 'disabled' : ''}`} aria-label='cancelSales' onClick={handleModal}><i className='bx bx-trash'></i>cancel order</button>
                 </div>
                 <form autoComplete='off'>
-                    <div className="row xl:gap-0 lg:gap-0 md:gap-3 sm:row-gap-2 mb-4">
-                        <div className="col-lg-4 col-sm-12 col-md-12 col-12">
+                    <div className="row xl:gap-0 lg:gap-0 md:gap-0 sm:row-gap-2 mb-4">
+                        <div className="col-lg-3 col-sm-12 col-md-6 col-6">
                             {/* start: this is helper */}
                             <InputWLabel 
                                 type="text"
@@ -801,7 +804,7 @@ export default function SalesEditModal({show, onHide, data}) {
 
                             <div style={{position:'relative'}}>
                                 <InputWLabel 
-                                    label="Customer Name" 
+                                    label="nama pelanggan" 
                                     type="text"
                                     name="name" 
                                     textStyle={'capitalize'}   
@@ -830,7 +833,7 @@ export default function SalesEditModal({show, onHide, data}) {
                         </div>
                         <div className="col-lg-3 col-sm-6 col-md-6 col-6">
                             <InputWLabel 
-                                label="Date" 
+                                label="tanggal" 
                                 type="date"
                                 name="order_date"
                                 onChange={(e) => setValue('order_date', e.value)}
@@ -863,7 +866,7 @@ export default function SalesEditModal({show, onHide, data}) {
                         </div> */}
                         <div className="col-lg-3 col-sm-6 col-md-6 col-6">
                             <InputWSelect
-                                label={'Order type'}
+                                label={'tipe order'}
                                 name="order_type"
                                 selectLabel="Select order type"
                                 options={dataStatic.orderTypeList}
@@ -880,9 +883,27 @@ export default function SalesEditModal({show, onHide, data}) {
                                 disabled={data.delivery ? true : editMode ? false : true}  
                             />
                         </div>
-                        <div className="col-lg-2 col-sm-12 col-md-12 col-6">
+                        
+                        <div className="col-lg-3 col-sm-12 col-md-6 col-6">
+                            <InputWSelect
+                                label={'Status'}
+                                name="order_status"
+                                selectLabel="Select order status"
+                                options={dataStatic.orderStatusList}
+                                optionKeys={["id", "type"]}
+                                defaultValue={data.order_status}
+                                defaultValueKey={"type"}
+                                value={(selected) => {setOrderStatus(selected.value);setValue('order_status', selected.value);}}
+                                require={true}
+                                register={register}
+                                errors={errors}
+                                disabled={editMode ? false : true} 
+                                // width={"220px"}
+                            />
+                        </div>
+                        <div className="col-lg-3 col-sm-12 col-md-12 col-6">
                             <InputWLabel 
-                                label="note" 
+                                label="catatan" 
                                 as="textarea"
                                 name="note"
                                 defaultValue={orderData.note ? orderData.note : ""}
@@ -896,8 +917,8 @@ export default function SalesEditModal({show, onHide, data}) {
                 </form>
                 {/* <div className="row gy-1 mt-1"> */}
                     {/* <div className="col-lg-12 col-sm-12 col-md-12 col-12 mt-3 mb-4"> */}
-                    <div className="flex sm:flex-column md:flex-column lg:flex-row xl:flex-row xl:gap-3 lg:gap-0 md:gap-3 sm:flex-wrap add-product-control" >
-                        <div className='sm:w-12 lg:w-5'>
+                    <div className="flex sm:flex-column md:flex-row lg:flex-row xl:flex-row xl:gap-0 lg:gap-0 md:gap-0 sm:gap-0 sm:flex-wrap add-product-control" >
+                        <div className="col-lg-6 col-sm-12 col-md-6">
                             <InputWLabel 
                                 label="add product"
                                 type="text"
@@ -935,24 +956,25 @@ export default function SalesEditModal({show, onHide, data}) {
                                 }
                             </div>  
                         </div>
-
-                        <div className='flex sm:flex-row lg:flex-row gap-3'>
-                            {/* <div> */}
-                                {/* <Form.Label className="mb-1">qty</Form.Label> */}
-                                <QtyButton 
-                                    min={0} 
-                                    max={999} 
-                                    name={`qty-add-product`} 
-                                    width={"180px"} 
-                                    returnValue={(e) => setQtyVal(e)}
-                                    value={qtyVal} 
-                                    disabled={editMode ? false : true}  
-                                    label={"qty"}
-                                />
-                            {/* </div> */}
-                            {/* <div className='align-self-end'> */}
-                                <div className={`btn btn-primary ${editMode ? "" : "disabled"} qty-add-btn align-self-end`} onClick={addToSalesData}><i className="bx bx-plus"></i></div>
-                            {/* </div> */}
+                        <div className="col-lg-6 col-sm-12 col-md-6">
+                            <div className='flex sm:flex-row lg:flex-row gap-3'>
+                                {/* <div> */}
+                                    {/* <Form.Label className="mb-1">qty</Form.Label> */}
+                                    <QtyButton 
+                                        min={0} 
+                                        max={999} 
+                                        name={`qty-add-product`} 
+                                        width={isMobile ? "100%":"180px"} 
+                                        returnValue={(e) => setQtyVal(e)}
+                                        value={qtyVal} 
+                                        disabled={editMode ? false : true}  
+                                        label={"qty"}
+                                    />
+                                {/* </div> */}
+                                {/* <div className='align-self-end'> */}
+                                    <div className={`btn btn-primary ${editMode ? "" : "disabled"} qty-add-btn align-self-end`} onClick={addToSalesData}><i className="bx bx-plus"></i></div>
+                                {/* </div> */}
+                            </div>
                         </div>
                     </div>
                     {/* </div> */}

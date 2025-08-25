@@ -14,6 +14,8 @@ import {
   useAccordionButton,
 } from "react-bootstrap";
 import { DataTable } from "primereact/datatable";
+import { primeTableBodyStyle, primeTableHeaderStyle } from '../assets/js/primeStyling.js';
+
 import { Column } from "primereact/column";
 import { InputSwitch } from "primereact/inputswitch";
 import { ProgressSpinner } from "primereact/progressspinner";
@@ -1040,53 +1042,63 @@ export default function Customers({handleSidebar, showSidebar}) {
                         ></Column>
                         <Column
                           field="name"
-                          header="Customer Name"
+                          header="Nama Pelanggan"
                           body={cellWithImg}
-                          bodyStyle={{ textTransform: "capitalize" }}
+                          bodyStyle={primeTableBodyStyle}
+                          headerStyle={primeTableHeaderStyle}
                           style={{ textTransform: "uppercase" }}
                           sortable
                         ></Column>
                         <Column
                           field="customer_id"
-                          header="Customer ID"
+                          header="ID pelanggan"
                           sortable
                           style={{ textTransform: "uppercase" }}
+                          bodyStyle={primeTableBodyStyle}
+                          headerStyle={primeTableHeaderStyle}
                         ></Column>
                         <Column
                           field="phonenumber"
-                          header="phonenumber"
+                          header="nomor handphone"
                           sortable
                           style={{ textTransform: "uppercase" }}
+                          bodyStyle={primeTableBodyStyle}
+                          headerStyle={primeTableHeaderStyle}
                         ></Column>
                         <Column
                           field="debt_limit"
-                          header="limit"
+                          header="limit hutang"
                           body={formatedCurrencyLimit}
-                          bodyStyle={{textTransform: 'capitalize'}}
                           sortable
                           style={{ textTransform: "uppercase" }}
+                          bodyStyle={primeTableBodyStyle}
+                          headerStyle={primeTableHeaderStyle}
                         ></Column>
                         <Column
                           field="total_sales"
-                          header="Total sales"
+                          header="Total order"
                           body={formatedCurrencySales}
-                          bodyStyle={{textTransform: 'capitalize'}}
                           sortable
                           style={{ textTransform: "uppercase" }}
+                          bodyStyle={primeTableBodyStyle}
+                          headerStyle={primeTableHeaderStyle}
                         ></Column>
                         <Column
                           field="total_debt"
-                          header="Total debt"
+                          header="Total hutang"
                           body={formatedCurrencyDebt}
-                          bodyStyle={{textTransform: 'capitalize'}}
                           sortable
                           style={{ textTransform: "uppercase" }}
+                          bodyStyle={primeTableBodyStyle}
+                          headerStyle={primeTableHeaderStyle}
                         ></Column>
                         <Column
                           field=""
-                          header="Action"
+                          header="aksi"
                           body={actionCellCust}
                           style={{ textTransform: "uppercase" }}
+                          bodyStyle={primeTableBodyStyle}
+                          headerStyle={primeTableHeaderStyle}
                         ></Column>
                       </DataTable>
                     {/* </div> */}

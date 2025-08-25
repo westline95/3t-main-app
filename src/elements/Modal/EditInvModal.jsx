@@ -757,13 +757,15 @@ export default function EditInv({ show, onHide, data }){
                                                     : order.order_status == "pending" ? "secondary" 
                                                     : order.order_status == "in-delivery" ? "warning" 
                                                     : order.order_status == "canceled" ? "danger" 
+                                                    : order.order_status == "confirmed" ? "primary" 
                                                     : ""} light`}
                                                 >
                                                     {
-                                                        order.order_status == "completed" ? 'completed'
+                                                        order.order_status == "completed" ? 'selesai'
                                                         : order.order_status == "pending" ? 'pending'
                                                         : order.order_status == "in-delivery" ? 'in-delivery'
-                                                        : order.order_status == "canceled" ? 'canceled'
+                                                        : order.order_status == "canceled" ? 'batal'
+                                                        : order.order_status == "confirmed" ? 'dikonfirmasi'
                                                         : ""
                                                     }                                                                                
                                                 </span>
