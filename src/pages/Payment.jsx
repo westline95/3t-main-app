@@ -23,9 +23,15 @@ import FetchApi from "../assets/js/fetchApi.js";
 import EmptyState from "../../public/vecteezy_box-empty-state-single-isolated-icon-with-flat-style_11537753.jpg"; 
 import CreatePayment from "../elements/Modal/CreatePaymentModal.jsx";
 import InvoicePayment from "../elements/Modal/InvoicePayment.jsx";
+import useMediaQuery from "../hooks/useMediaQuery.js";
+import { DataView } from "primereact/dataview";
 
 
 export default function Payment() {
+  const isMobile = useMediaQuery('(max-width: 767px)');
+  const isMediumScr = useMediaQuery('(min-width: 768px) and (max-width: 1024px)');
+
+  const mobileSearchInput = useRef(null);
   const [isClose, setClose] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [allPayment, setAllPayment] = useState(null);
@@ -36,6 +42,8 @@ export default function Payment() {
   const [ globalFilterValue, setGlobalFilterValue ] = useState("");
   const [ totalRecords, setTotalRecords ] = useState(0);
   const [ selectedPayment, setSelectedPayment ] = useState(null);
+  const [ mobileSearchMode, setMobileSearchMode ] = useState(false);
+  const [ mobileFilterValue, setMobileFilterValue ] = useState("");
 
   const axiosPrivate = useAxiosPrivate();
   const toast = useRef(null);
@@ -118,21 +126,8 @@ export default function Payment() {
   const handleCloseModal = () => {
     setShowModal("");
   };
-  
-  useEffect(() => {
-    if (allPayment) {
-      setIsLoading(false);
-    }
-  }, [allPayment]);
 
-  useEffect(() => {
-    fetchAllPayment();
-  }, []);
-
-
-  if (isLoading) {
-    return;
-  }
+ 
  
   const emptyStateHandler = () => {
     return (
@@ -144,12 +139,12 @@ export default function Payment() {
   };
 
   const clearFilter = () => {
-      initFilters();
+    initFilters();
   };
     
   const onGlobalFilterChange = (e) => {
     const value = e.target.value;
-    let _filters = { ...invFilters };
+    let _filters = { ...paymentFilters };
 
     _filters["global"].value = value;
 
@@ -164,7 +159,7 @@ export default function Payment() {
             operator: FilterOperator.AND,
             constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
         },
-        invoice_id: {
+        'invoice.invoice_number': {
             operator: FilterOperator.AND,
             constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
         },
@@ -184,9 +179,15 @@ export default function Payment() {
             operator: FilterOperator.AND,
             constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
         },
+        payment_method: {
+            operator: FilterOperator.AND,
+            constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+        },
     });
     setGlobalFilterValue("");
   };
+
+ 
   
   const tableHeader = (rowData) => {
     return (
@@ -197,11 +198,11 @@ export default function Payment() {
                     <i className="zwicon-search"></i>
                     </span>
                     <input
-                    type="text"
-                    className="form-control input-w-icon-right"
-                    value={globalFilterValue}
-                    onChange={onGlobalFilterChange}
-                    placeholder="Keyword Search"
+                      type="text"
+                      className="form-control input-w-icon-right"
+                      value={globalFilterValue}
+                      onChange={onGlobalFilterChange}
+                      placeholder="Keyword Search"
                     />
                 </div>
                 <button
@@ -221,7 +222,7 @@ export default function Payment() {
                         setSelectedPayment && setSelectedPayment.length > 0 ? "block" : "none",
                     }}
                 >
-                    <p className="total-row-selected"></p>
+                    {/* <p className="total-row-selected"></p>
                     <button
                     type="button"
                     className=" btn btn-danger btn-w-icon"
@@ -230,7 +231,7 @@ export default function Payment() {
                     >
                     <i className="bx bx-trash" style={{ fontSize: "24px" }}></i>Delete
                     selected row
-                    </button>
+                    </button> */}
                 </div>
             </div>
 
@@ -282,8 +283,8 @@ export default function Payment() {
                     aria-label="addInvPayment"
                     onClick={handleModal}
                 >
-                    <i className="bx bx-plus" style={{ marginTop: -3 }}></i>
-                    tambah pembayaran
+                    <i className="bx bx-plus" style={{ marginTop: -2.25 }}></i>
+                    pembayaran
                 </button>
             </div>
         </div>
@@ -384,6 +385,189 @@ export default function Payment() {
     );
   };
 
+  // list setting
+  const mobileFilterFunc = (e) => {
+    setMobileFilterValue(e.target.value);
+    e.target.value == "" ? setMobileSearchMode(false):setMobileSearchMode(true)
+  }
+  
+  const itemTemplate = (rowData, index) => {
+    return (
+    <div className="col-12" key={rowData.invoice_id} 
+      style={{position:'relative'}} 
+      // aria-label="viewInvModal" onClick={(e) => handleModal(e, {id: rowData.invoice_id, items: rowData})}
+    >
+        <div className='flex flex-column xl:align-items-start gap-2'
+            style={{
+                backgroundColor: '#F8F9FD',
+                padding: '1rem',
+                boxShadow: '1px 1px 7px #9a9acc1a',
+                borderRadius: '9px',
+                position:'relative'
+            }}
+            aria-label="salesEditModal" 
+            // onClick={(e) => handleModalWData(e, {endpoint: "sales", id: rowData.order_id, action: 'update', ...rowData})}
+        >
+        
+        <div className="flex align-items-center gap-3" 
+            style={{
+                textTransform: 'capitalize', 
+                paddingBottom: '.75rem',
+                borderBottom: '1px solid rgba(146, 146, 146, .2509803922)'
+            }}
+        >
+            <span className="user-img" style={{marginRight: 0,}}>
+            {
+              rowData.payment_method == "cash" ? 
+              (
+                <i className='bx bx-money'></i>
+              ): rowData.payment_method == "transfer" ? 
+              (
+                <i className='bx bx-credit-card' ></i>
+              ): "?"
+
+            }
+            </span>
+            <div style={{width: '80%'}}>
+                <p style={{marginBottom: 0, fontSize: 15, fontWeight: 600, textTransform: 'uppercase'}}>{rowData.payment_id}</p>
+                <p style={{marginBottom: 0, fontSize: 13, color: '#7d8086'}}>{ConvertDate.LocaleStringDate(rowData.payment_date)}</p>
+                <div className='flex flex-row flex-wrap gap-2' style={{fontSize: 13, marginTop: '.5rem'}}>
+                    <span className={`badge badge-primary light`} style={{textTransform: 'uppercase'}}>
+                        {rowData.invoice.invoice_number}
+                    </span>
+                    {
+                      rowData.invoice.receipt ?
+                      (
+                        <span className={`badge badge-success light`}
+                        >{rowData.invoice.receipt.receipt_id}</span>
+                      ):''
+                    }
+                </div>
+            </div>
+        </div>
+        <div className="flex flex-column gap-1" 
+            style={{
+                textTransform: 'capitalize', 
+            }}
+        >
+            {/* <div className="flex flex-row justify-content-between">
+                <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Pelanggan:</p>
+                <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>{rowData.customer_id ? `${rowData.customer?.name} (${rowData.customer_id})` : `guest.name (non-member)`}</p>
+            </div> */}
+            <div className="flex flex-row justify-content-between">
+                <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Pelanggan:</p>
+                <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right'}}>{rowData.customer.name}</p>
+            </div>
+            <div className="flex flex-row justify-content-between">
+                <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Bayar:</p>
+                <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right'}}>
+                    <NumberFormat intlConfig={{
+                        value: rowData.amount_paid, 
+                        locale: "id-ID",
+                        style: "currency", 
+                        currency: "IDR",
+                    }} 
+                    />
+                </p>
+            </div>
+            {/* <div className="flex flex-row justify-content-between">
+                <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Metode:</p>
+                <span className={`badge badge-${
+                    rowData.payment_method == "cash" ? 'success'
+                    : rowData.payment_method == "transfer"? "primary"
+                    : ""} light`}
+                >
+                    {rowData.payment_method }                                                                                
+                </span>
+            </div> */}
+            {/* <div className="flex flex-row justify-content-between">
+                <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Sisa:</p>
+                <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right'}}>
+                    
+                </p>
+            </div> */}
+        </div>
+        </div>
+        {/* <Dropdown drop={index == invData.length - 1 ? "up" : "down"} style={{position: 'absolute', top: 10, right: 9, padding: '1rem 1rem .5rem 1rem'}}> */}
+        <Dropdown drop={"down"} style={{position: 'absolute', top: 10, right: 9, padding: '1rem 1rem .5rem 1rem'}}>
+            <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components" ></Dropdown.Toggle>
+            <Dropdown.Menu align={"end"} className='static-shadow'>
+                <Dropdown.Item eventKey="1" as="button" aria-label="viewInvModal" 
+                // onClick={(e) => {e.stopPropagation();handleModal(e, {id: rowData.invoice_id, items: rowData})}}
+                >
+                    <i className='bx bx-pencil'></i>Ubah pembayaran
+                </Dropdown.Item> 
+            </Dropdown.Menu>
+        </Dropdown>
+    </div>
+    );
+  };
+    
+  const listTemplate = (items) => {
+    if (!items || items.length === 0) return null;
+
+    let list = items.map((inv, index) => {
+        return itemTemplate(inv, index);
+    });
+
+    return (
+    <>
+    <div className="flex flex-column gap-2" style={{ width: "100%" }}>
+        <div className="flex gap-3 align-items-center mb-4" style={{ width: "100%" }}>
+            <div className="input-group-right" style={{ width: "100%" }}>
+                {mobileSearchMode ?
+                (
+                <span className="input-group-icon input-icon-right" 
+                    onClick={() => {
+                        setMobileFilterValue('');
+                        setMobileSearchMode(false);
+                        mobileSearchInput.current.focus();
+                    }}
+                >
+                    <i className='bx bx-x'></i>
+                </span>
+                ):(
+                <span className="input-group-icon input-icon-right">
+                    <i className="zwicon-search"></i>
+                </span>
+                )
+                }
+                <input
+                    ref={mobileSearchInput}
+                    type="text"
+                    className="form-control input-w-icon-right"
+                    value={mobileFilterValue}
+                    onChange={mobileFilterFunc}
+                    placeholder="Keyword Search"
+                    // onKeyDown={() => setMobileSearchMode(true)}
+                />
+            </div>
+        </div>
+    </div>
+    <div className="grid gap-1">{list}</div>
+    </>
+    );
+  };
+  
+  useEffect(() => {
+    fetchAllPayment();
+  }, []);
+  
+  useEffect(() => {
+    initFilters();
+  }, []);
+  
+  useEffect(() => {
+    if (allPayment) {
+      setIsLoading(false);
+    }
+  }, [allPayment]);
+
+
+  if (isLoading) {
+    return;
+  }
+
   return (
     <>
       {/* <main className={`main-content ${isClose ? "active" : ""}`}>
@@ -472,7 +656,8 @@ export default function Payment() {
                         </div>
                       </div>
                     </div> */}
-
+                  {!isMobile && !isMediumScr ?
+                  (
                     <div className="mt-4">
                         <DataTable
                             className="p-datatable"
@@ -602,6 +787,57 @@ export default function Payment() {
                         ></Column>
                         </DataTable>
                     </div>
+                  ):(
+                  <>
+                    <div
+                        className="wrapping-table-btn flex gap-3 justify-content-end"
+                        style={{ width: "100%", height: "inherit" }}
+                    >
+                      <Dropdown drop={"down"}>
+                        <Dropdown.Toggle variant="primary" style={{ height: "100%" }}>
+                            <i className="bx bx-download"></i> export
+                        </Dropdown.Toggle>
+                        <Dropdown.Menu align={"end"}>
+                            <Dropdown.Item
+                                eventKey="1"
+                                as="button"
+                                aria-label="viewInvModal"
+                                onClick={(e) =>
+                                    // console.log(e)
+                                    handleModal(e, { id: inv.invoice_id, items: { ...inv } })
+                                }
+                            >
+                                <i className="bx bx-show"></i> PDF (.pdf)
+                            </Dropdown.Item>
+                            <Dropdown.Item
+                                eventKey="1"
+                                as="button"
+                                aria-label="editInvModal"
+                                onClick={(e) => handleModal(e, inv.invoice_id)}
+                            >
+                                <i className="bx bxs-edit"></i> Microsoft Excel (.xlsx)
+                            </Dropdown.Item>
+                        </Dropdown.Menu>
+                      </Dropdown>
+                      <button
+                          type="button"
+                          className=" btn btn-primary btn-w-icon"
+                          style={{ height: "100%" }}
+                          >
+                          <i className="bx bxs-file-plus"></i> import
+                      </button>
+                      <button type="button" className="add-btn btn btn-primary btn-w-icon" 
+                          aria-label="addInvPayment"
+                          onClick={handleModal}
+                      >
+                          <i className="bx bx-plus"></i>
+                          pembayaran
+                      </button>
+                    </div>
+                    <DataView value={allPayment} listTemplate={listTemplate} style={{marginTop: '.5rem'}} emptyMessage='No data' />       
+                  </>
+                  )
+                  }
                     {/* <div className="table-responsive mt-4">
                       <table
                         className="table"

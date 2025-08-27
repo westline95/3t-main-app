@@ -394,9 +394,10 @@ export default function EditReturnOrderModal({ show, onHide, data }){
         })
     }
 
-    const fetchDetailedCust = async(custID) => {
+     const fetchDetailedCust = async(custID) => {
         await axiosPrivate.get(`/customer/detail?custid=${custID}`)
         .then(resp => {
+            console.log(resp.data)
             const sales = resp.data.sales ? resp.data.sales[0] : null;
             const debt = resp.data.debt ? resp.data.debt[0] : null;
 
@@ -405,12 +406,12 @@ export default function EditReturnOrderModal({ show, onHide, data }){
             + (sales && sales.orders_credit_uncanceled ? Number(sales.orders_credit_uncanceled.total) : 0);
             
             const orderBBNotInv = debt && debt.total_debt_grandtotal ? Number(debt.total_debt_grandtotal) : 0;
+            const orderReturn = debt && debt.return_refund ? Number(debt.return_refund) : 0;
             const orderPartialRemain = debt && debt.partial_sisa ? Number(debt.partial_sisa.sisa) : 0;
             const orderInvRemain = debt && debt.hutang_invoice ? Number(debt.hutang_invoice.sisa_hutang) : 0;
             const orderCreditUncomplete = debt && debt.orders_credit_uncomplete ? Number(debt.orders_credit_uncomplete.total) : 0;
-            const refundTotal = debt && debt.total_refund ? Number(debt.total_refund) : 0;
 
-            const updt_total_debt = (orderBBNotInv+orderPartialRemain+orderInvRemain+orderCreditUncomplete) - refundTotal;
+            const updt_total_debt = (orderBBNotInv+orderPartialRemain+orderInvRemain+orderCreditUncomplete)-orderReturn;
         
             axiosPrivate.patch(`/customer/sales-debt/${custID}/${updt_total_debt}/${updt_total_sales}`)
             .then(resp2 =>{

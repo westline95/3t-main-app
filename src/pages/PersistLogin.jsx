@@ -40,7 +40,7 @@ const PersistLogin = () => {
             {!persist
                 ? <Outlet />
                 : isLoading
-                    ? <p>Loading...</p>
+                    ? <div id='preLoader'></div>
                     : <Outlet />
             }
         </>

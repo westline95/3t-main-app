@@ -553,8 +553,8 @@ export default function InvoiceDoc({data, ref}) {
                                                     </View>
                                                     <View style={{...invoiceStyle.tr, width: '14.9%',}}>
                                                         <Text>{orderItem.return_order_item ? 
-                                                                (((Number(orderItem.quantity) - Number(orderItem.return_order_item.quantity)) * Number(orderItem.sell_price)) - ((Number(orderItem.quantity) - Number(orderItem.return_order_item.quantity))*orderItem.discount_prod_rec)) 
-                                                                : ((Number(orderItem.quantity) * Number(orderItem.sell_price)) - (Number(orderItem.quantity)*orderItem.discount_prod_rec))}
+                                                                (formatedNumber.format(((Number(orderItem.quantity) - Number(orderItem.return_order_item.quantity)) * Number(orderItem.sell_price)) - ((Number(orderItem.quantity) - Number(orderItem.return_order_item.quantity))*orderItem.discount_prod_rec))) 
+                                                                : formatedNumber.format((((Number(orderItem.quantity) * Number(orderItem.sell_price)) - (Number(orderItem.quantity)*orderItem.discount_prod_rec))))}
                                                         </Text>
                                                     </View>
                                                 </View>

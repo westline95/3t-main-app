@@ -9,8 +9,12 @@ import Tahu from "../assets/images/tahu.png";
 import TempeDaun from "../assets/images/tempe-daun.png";
 import TempePlastik from "../assets/images/tempe-plastik.png";
 import Tauge from "../assets/images/tauge.png";
+import useMediaQuery from '../hooks/useMediaQuery';
 
 export default function Dashboard({handleSidebar, showSidebar}){
+    const isMobile = useMediaQuery('(max-width: 767px)');
+    const isMediumScr = useMediaQuery('(min-width: 768px) and (max-width: 1024px)');
+
     const [ isClose, setClose ] = useState(false);
 
     return(
@@ -26,7 +30,7 @@ export default function Dashboard({handleSidebar, showSidebar}){
                             <input type="text" className="form-control input-w-icon-right" placeholder="Search product..." />
                         </div>
                     </div>
-                    <div className="row gy-4 cards-dash">
+                    <div className={`row gy-${isMediumScr || isMobile ? '0':'4'} cards-dash`}>
                         <div className="col-lg-4 col-sm-12 col-md-12 col-12">
                             <div className="card welcome-card">
                                 <div className="d-flex align-items-center gap-4">
@@ -42,7 +46,7 @@ export default function Dashboard({handleSidebar, showSidebar}){
                             </div>
                         </div>
                         <div className="col-lg-3 col-sm-12 col-md-12 col-12 card-stats">
-                            <div className="row gy-4">
+                            <div className={`row gy-${isMediumScr || isMobile ? '0':'4'}`}>
                                 <div className="col-lg-12 col-sm-6 col-md-6 col-12">
                                     <div className="card">
                                         <div className="d-flex align-items-center gap-3">
@@ -80,7 +84,7 @@ export default function Dashboard({handleSidebar, showSidebar}){
                             </div>
                         </div>
                         <div className="col-lg-3 col-sm-12 col-md-12 col-12 card-stats">
-                            <div className="row gy-4">
+                            <div className={`row gy-${isMediumScr || isMobile ? '0':'4'}`}>
                                 <div className="col-lg-12 col-sm-6 col-md-6 col-12">
                                     <div className="card">
                                         <div className="d-flex align-items-center gap-3">

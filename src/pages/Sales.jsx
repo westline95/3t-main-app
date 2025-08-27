@@ -522,6 +522,8 @@ export default function Sales({handleSidebar, showSidebar}){
                         });
                         setShowModal("");
                         fetchAllSales();
+                        // console.log(existInv.invData.customer_id)
+                        fetchDetailedCust(currentOrder.customer_id);
                     }
                 })
                 .catch(error => {
@@ -564,12 +566,12 @@ export default function Sales({handleSidebar, showSidebar}){
                 setValue('order_type', '');
                 setSalesItems([]);
 
-                toast.current.show({
-                    severity: "success",
-                    summary: "Success",
-                    detail: "Successfully insert order item",
-                    life: 3500,
-                });
+                // toast.current.show({
+                //     severity: "success",
+                //     summary: "Success",
+                //     detail: "Successfully insert order item",
+                //     life: 3500,
+                // });
                 // run to invoice
                 setAddOrderItem(true);
         })
@@ -611,6 +613,7 @@ export default function Sales({handleSidebar, showSidebar}){
     const fetchDetailedCust = async(custID) => {
         await axiosPrivate.get(`/customer/detail?custid=${custID}`)
         .then(resp => {
+            console.log(resp.data)
             const sales = resp.data.sales ? resp.data.sales[0] : null;
             const debt = resp.data.debt ? resp.data.debt[0] : null;
 
@@ -619,11 +622,12 @@ export default function Sales({handleSidebar, showSidebar}){
             + (sales && sales.orders_credit_uncanceled ? Number(sales.orders_credit_uncanceled.total) : 0);
             
             const orderBBNotInv = debt && debt.total_debt_grandtotal ? Number(debt.total_debt_grandtotal) : 0;
+            const orderReturn = debt && debt.return_refund ? Number(debt.return_refund) : 0;
             const orderPartialRemain = debt && debt.partial_sisa ? Number(debt.partial_sisa.sisa) : 0;
             const orderInvRemain = debt && debt.hutang_invoice ? Number(debt.hutang_invoice.sisa_hutang) : 0;
             const orderCreditUncomplete = debt && debt.orders_credit_uncomplete ? Number(debt.orders_credit_uncomplete.total) : 0;
 
-            const updt_total_debt = orderBBNotInv+orderPartialRemain+orderInvRemain+orderCreditUncomplete;
+            const updt_total_debt = (orderBBNotInv+orderPartialRemain+orderInvRemain+orderCreditUncomplete)-orderReturn;
         
             axiosPrivate.patch(`/customer/sales-debt/${custID}/${updt_total_debt}/${updt_total_sales}`)
             .then(resp2 =>{
@@ -662,11 +666,10 @@ export default function Sales({handleSidebar, showSidebar}){
         .then(resp => {
             toast.current.show({
                 severity: "success",
-                summary: "Success",
-                detail: "Successfully add new data",
+                summary: "Sukses",
+                detail: "Order baru berhasil dibuat",
                 life: 3500,
             });
-
             // check if customer has order credit with order id null
             axiosPrivate.get(`/orders-credit/available/${resp.data.customer_id}`)
             .then(resp1 => {
@@ -678,8 +681,8 @@ export default function Sales({handleSidebar, showSidebar}){
                     .then(resp2 => {
                         toast.current.show({
                             severity: "success",
-                            summary: "Success",
-                            detail: "Successfully update order credit",
+                            summary: "Sukses",
+                            detail: "order kredit ditambahkan",
                             life: 3500,
                         });
                         setCurrOrderCredit(resp1.data[0].return_order.refund_total);
@@ -759,6 +762,7 @@ export default function Sales({handleSidebar, showSidebar}){
         return new Date(invDate);
     }
 
+
     const updateTotalSalesCust = async(currentOrderData) => {
         await axiosPrivate.get("/customers/member", {params: { id: currentOrderData.customer_id }})
         .then((resp1) => {
@@ -814,7 +818,7 @@ export default function Sales({handleSidebar, showSidebar}){
 
     const runAddInvoice = () => {
         let data = {...currentOrder};
-        
+        console.log("masuk")
         let modelInv = {
             customer_id: data.customer_id,
             order_id: JSON.stringify([data.order_id]),
@@ -842,6 +846,7 @@ export default function Sales({handleSidebar, showSidebar}){
             // check if there is an invoice with same customer ID and payment type and is_paid false
             axiosPrivate.get("/inv/check", { params: { custid:  data.customer_id,  ispaid: false, type: "bayar nanti"} })
             .then(resp => {
+                console.log(resp.data)
                 if(resp.data && resp.data.length > 0){
                     let orderId = JSON.parse(resp.data[0].order_id);
                     let newOrderId = [...orderId, data.order_id];
@@ -852,8 +857,6 @@ export default function Sales({handleSidebar, showSidebar}){
                         total_discount: Number(resp.data[0].total_discount) + Number(discVal),
                         remaining_payment: Number(resp.data[0].remaining_payment) + Number(data.grandtotal),
                     };
-                    console.log(currOrderCredit);
-                    console.log(modelInv);
                     setExistInv({invId: resp.data[0].invoice_id, invData: modelInv});
                     setSalesList({endpoint: 'inv', action: 'warning', items: {...resp.data[0]}});
                     setShowModal("existInvOrderModal");
@@ -1267,7 +1270,7 @@ export default function Sales({handleSidebar, showSidebar}){
             toast.current.show({
                 severity: "error",
                 summary: "Error",
-                detail: "Please add product first",
+                detail: "Tambahkan produk terlebih dahulu",
                 life: 3500,
             });
         } else {
@@ -1851,11 +1854,11 @@ export default function Sales({handleSidebar, showSidebar}){
             rowData.invoice ?
             (
                 <span className="verified-inv">
-                    <i class='bx bx-check-shield' ></i>
+                    <i className='bx bx-check-shield' ></i>
                 </span>
             ):(
                 <span className="unverified-inv">
-                    <i class='bx bx-shield-x'></i>
+                    <i className='bx bx-shield-x'></i>
                 </span>
             )
         )
@@ -1953,8 +1956,8 @@ export default function Sales({handleSidebar, showSidebar}){
     // list setting
     const itemTemplate = (rowData, index) => {
         return (
-        <div className="col-12" key={rowData.id} style={{position:'relative'}}>
-            <div className='flex flex-column xl:align-items-start gap-2'
+        <div className="col-12" key={index} style={{position:'relative'}}>
+            <div className='flex flex-column xl:align-items-start gap-2 static-shadow'
                 style={{
                     backgroundColor: '#F8F9FD',
                     padding: '1rem',
@@ -2015,11 +2018,11 @@ export default function Sales({handleSidebar, showSidebar}){
                         {rowData.invoice ?
                             (
                             <span className="verified-inv">
-                                <i class='bx bx-check-shield'></i>
+                                <i className='bx bx-check-shield'></i>
                             </span>
                             ):(
                             <span className="unverified-inv">
-                                <i class='bx bx-shield-x'></i>
+                                <i className='bx bx-shield-x'></i>
                             </span>
                             )
                         }
@@ -2093,9 +2096,8 @@ export default function Sales({handleSidebar, showSidebar}){
     };
     
     const roItemTemplate = (rowData, index) => {
-        console.log(rowData)
         return (
-        <div className="col-12" key={rowData.id} style={{position:'relative'}}>
+        <div className="col-12" key={index} style={{position:'relative'}}>
             <div className='flex flex-column xl:align-items-start gap-2'
                 style={{
                     backgroundColor: '#F8F9FD',
@@ -2164,7 +2166,7 @@ export default function Sales({handleSidebar, showSidebar}){
                 </div>
                 <div className="flex flex-row justify-content-between">
                     <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Metode:</p>
-                    <p className="view-note" aria-label="viewReturnMethod" style={{marginBottom: 0, fontSize: 14, textAlign: 'right'}}> 
+                    <p className="view-note" aria-label="viewReturnMethod" style={{marginBottom: 0, fontSize: 12, textAlign: 'right', alignSelf: 'flex-end'}}> 
                         {/* <span className={`badge badge-${
                             rowData.payment_type == "unpaid" ? 'danger'
                             : rowData.payment_type == "paid"? "primary"
@@ -2375,7 +2377,7 @@ export default function Sales({handleSidebar, showSidebar}){
                             mobileSearchInput.current.focus();
                         }}
                     >
-                        <i class='bx bx-x'></i>
+                        <i className='bx bx-x'></i>
                     </span>
                     ):(
                     <span className="input-group-icon input-icon-right">
@@ -2423,7 +2425,7 @@ export default function Sales({handleSidebar, showSidebar}){
                             mobileSearchInput.current.focus();
                         }}
                     >
-                        <i class='bx bx-x'></i>
+                        <i className='bx bx-x'></i>
                     </span>
                     ):(
                     <span className="input-group-icon input-icon-right">
@@ -2510,9 +2512,9 @@ export default function Sales({handleSidebar, showSidebar}){
                 {salesEndNote ?
                 (
                 <div className='w-full order-cost-wrap'>
-                    <div class="order-cost-items">
-                        <p class="cost-text">{`items (${salesEndNote?.totalQty})`}</p>
-                        <p class="cost-price">
+                    <div className="order-cost-items">
+                        <p className="cost-text">{`items (${salesEndNote?.totalQty})`}</p>
+                        <p className="cost-price">
                             <NumberFormat intlConfig={{
                                 value: salesEndNote?.subtotal, 
                                 locale: "id-ID",
@@ -2522,9 +2524,9 @@ export default function Sales({handleSidebar, showSidebar}){
                             />
                         </p>
                     </div>
-                    <div class="order-cost-addon">
-                        <p class="cost-addon-text">Diskon order</p>
-                        <span class="d-flex gap-2">
+                    <div className="order-cost-addon">
+                        <p className="cost-addon-text">Diskon order</p>
+                        <span className="d-flex gap-2">
                             {salesDisc && salesDisc.discType == "percent" ?
                             (
                                 <>
@@ -2548,14 +2550,14 @@ export default function Sales({handleSidebar, showSidebar}){
                                 />
                             ):'Rp 0'
                             }
-                            <span class="order-sett" aria-label='addDiscount' onClick={(e) => handleModal(e)}>
-                                <i class="bx bx-cog"></i>
+                            <span className="order-sett" aria-label='addDiscount' onClick={(e) => handleModal(e)}>
+                                <i className="bx bx-cog"></i>
                             </span>
                         </span>
                     </div>
-                    <div class="order-cost-total mt-2">
-                        <p class="order-cost-total-text">total</p>
-                        <p class="order-cost-total-price">
+                    <div className="order-cost-total mt-2">
+                        <p className="order-cost-total-text">total</p>
+                        <p className="order-cost-total-price">
                             <NumberFormat intlConfig={{
                                 value: salesEndNote.grandtotal, 
                                 locale: "id-ID",
@@ -2565,8 +2567,8 @@ export default function Sales({handleSidebar, showSidebar}){
                             />
                         </p>
                     </div>
-                    <div class="order-cost-total">
-                        <p class="order-cost-total-text">Metode pembayaran</p>
+                    <div className="order-cost-total">
+                        <p className="order-cost-total-text">Metode pembayaran</p>
                         <div>
                             <span style={{textTransform: 'capitalize', fontWeight: 500, marginRight: '.7rem', fontSize:14}}>{`${paidData ?  paidData.payment_type : ""}`}</span>
                             <span className="edit-table-data" aria-label="createPayment" onClick={handleModal}>
@@ -2574,9 +2576,9 @@ export default function Sales({handleSidebar, showSidebar}){
                             </span>
                         </div>
                     </div>
-                     <div class="order-cost-total">
-                        <p class="order-cost-total-text">Total bayar</p>
-                        <p class="order-cost-total-text">
+                     <div className="order-cost-total">
+                        <p className="order-cost-total-text">Total bayar</p>
+                        <p className="order-cost-total-text">
                             <NumberFormat intlConfig={{
                                 value: paidData ? paidData.amountOrigin : 0, 
                                 locale: "id-ID",
@@ -2624,7 +2626,7 @@ export default function Sales({handleSidebar, showSidebar}){
 
     if(isLoading){
         return;
-    }
+    } 
 
     return(
         <>

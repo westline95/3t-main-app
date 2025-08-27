@@ -427,7 +427,7 @@ export default function InvoicePayment({ show, onHide }){
         <>
         <Modal size='md' show={show} onHide={onHide} scrollable={false} centered={true}>
             <Modal.Header closeButton>
-                <Modal.Title>Invoice payment</Modal.Title>
+                <Modal.Title>Pembayaran invoice</Modal.Title>
             </Modal.Header>
             <Modal.Body style={{overflowY: 'unset', height: 'fit-content'}}>
                 {/* <div className='action-choose-btn' style={{display: selectedMode ? 'none' : 'flex'}}>

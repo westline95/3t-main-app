@@ -28,6 +28,7 @@ import EditInv from '../elements/Modal/EditInvModal.jsx';
 import useMediaQuery from '../hooks/useMediaQuery.js';
 import { DataView } from 'primereact/dataview';
 import dataStatic from '../assets/js/dataStatic.js';
+import ReceiptModal from '../elements/Modal/ReceiptModal.jsx';
 
 export default function Invoice({handleSidebar, showSidebar}){
     const isMobile = useMediaQuery('(max-width: 767px)');
@@ -88,6 +89,15 @@ export default function Invoice({handleSidebar, showSidebar}){
                 setInvList(invData);
                 setShowModal("viewInvModal");
                 break;
+            case "viewReceiptModal":
+                // e.stopPropagation();
+                data = {
+                    id: invData.id, 
+                    items: invData.items
+                }
+                setInvList(invData);
+                setShowModal("viewReceiptModal");
+            break;
             case "editInvModal":
                  data = {
                     id: invData.id, 
@@ -142,7 +152,6 @@ export default function Invoice({handleSidebar, showSidebar}){
             } else {
                 invoices = resp.data;
             }
-            console.log(resp.data)
             // filter invoice status whch not canceled
             const activeInv = invoices.filter(({status}) => status !== 'canceled');
             setInvData(activeInv);
@@ -190,6 +199,52 @@ export default function Invoice({handleSidebar, showSidebar}){
         })
     };
 
+    const fetchUpdateSalesReceipt = async(receiptID, orderIDs) => {
+        if(orderIDs){
+            await axiosPrivate.patch(`/sales/receipt?id=${orderIDs}`, receiptID)
+            .then(resp => {
+                toast.current.show({
+                    severity: "success",
+                    summary: "Success",
+                    detail: "New receipt is created",
+                    life: 3500,
+                });
+
+            })
+            .catch(err => {
+                toast.current.show({
+                    severity: "error",
+                    summary: "Failed",
+                    detail: "Failed to create new receipt",
+                    life: 3500,
+                });
+            })
+        }
+    }
+
+    const fetchInsertreceipt = async (body, orderIDs) => {
+        let bodyData = JSON.stringify(body);
+        await axiosPrivate.post("/receipt/write", bodyData)
+          .then(resp => {
+                if(resp.data){
+                    const receiptID = JSON.stringify({receipt_id: resp.data.receipt_id})
+                    // update order->receipt_id
+                    fetchUpdateSalesReceipt(receiptID, orderIDs)
+                }
+                // setTimeout(() => {
+                //     window.location.reload();
+                // },1700)
+          })
+          .catch(error => {
+                toast.current.show({
+                    severity: "error",
+                    summary: "Failed",
+                    detail: "Failed to create new receipt",
+                    life: 3500,
+                });
+          })
+    };
+
     const fetchUpdateOrderStatus =  async(reqURL) => {
         let orderStatus = JSON.stringify({ order_status: "completed", is_complete: true });
         // check order type first
@@ -199,6 +254,9 @@ export default function Invoice({handleSidebar, showSidebar}){
                 // if not delivery a.k.a walk-in / dine in then update order_status to completed if invoice is paid true
                 axiosPrivate.patch(`/sales/update/status?id=${reqURL}`, orderStatus)
                 .then(resp => {
+                    fetchAllInv();
+                    fetchAllReceipt();
+                    
                     toast.current.show({
                         severity: "success",
                         summary: "Success",
@@ -206,7 +264,6 @@ export default function Invoice({handleSidebar, showSidebar}){
                         life: 3000,
                     });
 
-                    fetchAllInv();
                 })
                 .catch(err => {
                     throw new Error("error while updating order_status");
@@ -257,11 +314,12 @@ export default function Invoice({handleSidebar, showSidebar}){
             + (sales && sales.orders_credit_uncanceled ? Number(sales.orders_credit_uncanceled.total) : 0);
             
             const orderBBNotInv = debt && debt.total_debt_grandtotal ? Number(debt.total_debt_grandtotal) : 0;
+            const orderReturn = debt && debt.return_refund ? Number(debt.return_refund) : 0;
             const orderPartialRemain = debt && debt.partial_sisa ? Number(debt.partial_sisa.sisa) : 0;
             const orderInvRemain = debt && debt.hutang_invoice ? Number(debt.hutang_invoice.sisa_hutang) : 0;
             const orderCreditUncomplete = debt && debt.orders_credit_uncomplete ? Number(debt.orders_credit_uncomplete.total) : 0;
 
-            const updt_total_debt = orderBBNotInv+orderPartialRemain+orderInvRemain+orderCreditUncomplete;
+            const updt_total_debt = (orderBBNotInv+orderPartialRemain+orderInvRemain+orderCreditUncomplete)-orderReturn;
         
             axiosPrivate.patch(`/customer/sales-debt/${custID}/${updt_total_debt}/${updt_total_sales}`)
             .then(resp2 =>{
@@ -320,26 +378,32 @@ export default function Invoice({handleSidebar, showSidebar}){
 
         await axiosPrivate.post("/payment/write", JSON.stringify(paymentModel))
         .then(resp => {
-            
-            // if(invListObj.items.payment_type != "lunas"){
-            //     updateTotalDebtCust(paymentModel);
-            // }
             fetchDetailedCust(paymentModel.customer_id);
 
             axiosPrivate.patch("/inv/payment", JSON.stringify(invModel), { params: { id: invListObj.items.invoice_id } })
             .then(resp2 => {
-                
+                const totalPaid = invListObj.items.payments.length > 0 ? invListObj.items.payments.reduce((prev, curr) => prev + Number(curr.amount_paid),0) : 0;
                 // if invoice paid then check order_type if not delivery then update order_status to completed
                 if(invModel.is_paid){
+                    let receiptModel = {
+                        customer_id: invListObj.items.customer_id,
+                        invoice_id: invListObj.items.invoice_id,
+                        total_payment: (totalPaid + paidData.amountOrigin),
+                        change: paidData.change,
+                        receipt_date: new Date()
+                    }
+
+                    fetchInsertreceipt(receiptModel, reqURL);
+
                     fetchUpdateOrderStatus(reqURL);
                 } else {
+                    fetchAllInv();
                     toast.current.show({
                         severity: "success",
                         summary: "Success",
                         detail: "Successfully add payment",
                         life: 3000,
                     });
-                    fetchAllInv();
                 }
             })
             .catch(err2 => {
@@ -499,7 +563,7 @@ export default function Invoice({handleSidebar, showSidebar}){
 
     const tableHeader = (rowData) => {
         return (
-            <div className="flex justify-content-between" style={{ width: "100%" }}>
+            <div key={'inv-header'} className="flex justify-content-between" style={{ width: "100%" }}>
                 <div className="flex gap-3 align-items-center" style={{ width: "60%" }}>
                     <div className="input-group-right" style={{ width: "40%" }}>
                         <span className="input-group-icon input-icon-right">
@@ -614,123 +678,123 @@ export default function Invoice({handleSidebar, showSidebar}){
 
     const receiptTableHeader = (rowData) => {
         return (
-            <div className="flex justify-content-between" style={{ width: "100%" }}>
-            <div className="flex gap-3 align-items-center" style={{ width: "60%" }}>
-                <div className="input-group-right" style={{ width: "40%" }}>
-                    <span className="input-group-icon input-icon-right">
-                        <i className="zwicon-search"></i>
-                    </span>
-                    <input
-                        type="text"
-                        className="form-control input-w-icon-right"
-                        value={globalFilterValueReceipt}
-                        onChange={onGlobalFilterReceiptChange}
-                        placeholder="Keyword Search"
-                    />
-                </div>
-                <button
-                    type="button"
-                    className="btn btn-primary btn-w-icon"
-                    style={{ fontWeight: 500 }}
-                    onClick={clearFilterReceipt}
-                >
-                    <i className="bx bx-filter-alt" style={{ fontSize: "24px" }}></i>
-                    Clear filter
-                </button>
-                <div
-                    className="selected-row-stat"
-                    style={{
-                    height: "inherit",
-                    display:
-                        selectedInvoice && selectedInvoice.length > 0 ? "block" : "none",
-                    }}
-                >
-                    <p className="total-row-selected"></p>
+            <div key={'receipt-header'} className="flex justify-content-between" style={{ width: "100%" }}>
+                <div className="flex gap-3 align-items-center" style={{ width: "60%" }}>
+                    <div className="input-group-right" style={{ width: "40%" }}>
+                        <span className="input-group-icon input-icon-right">
+                            <i className="zwicon-search"></i>
+                        </span>
+                        <input
+                            type="text"
+                            className="form-control input-w-icon-right"
+                            value={globalFilterValueReceipt}
+                            onChange={onGlobalFilterReceiptChange}
+                            placeholder="Keyword Search"
+                        />
+                    </div>
                     <button
-                    type="button"
-                    className=" btn btn-danger btn-w-icon"
-                    style={{ height: "100%" }}
-                    onClick={selectedToDelete}
+                        type="button"
+                        className="btn btn-primary btn-w-icon"
+                        style={{ fontWeight: 500 }}
+                        onClick={clearFilterReceipt}
                     >
-                    <i className="bx bx-trash" style={{ fontSize: "24px" }}></i>Delete
-                    selected row
+                        <i className="bx bx-filter-alt" style={{ fontSize: "24px" }}></i>
+                        Clear filter
                     </button>
+                    <div
+                        className="selected-row-stat"
+                        style={{
+                        height: "inherit",
+                        display:
+                            selectedInvoice && selectedInvoice.length > 0 ? "block" : "none",
+                        }}
+                    >
+                        <p className="total-row-selected"></p>
+                        <button
+                        type="button"
+                        className=" btn btn-danger btn-w-icon"
+                        style={{ height: "100%" }}
+                        onClick={selectedToDelete}
+                        >
+                        <i className="bx bx-trash" style={{ fontSize: "24px" }}></i>Delete
+                        selected row
+                        </button>
+                    </div>
+                </div>
+        
+                <div
+                    className="wrapping-table-btn flex gap-3"
+                    style={{ width: "60%", height: "inherit" }}
+                >
+                    {/* <button
+                    type="button"
+                    className="btn btn-light light"
+                    style={{ height: "100%" }}
+                    >
+                    <i className="bx bx-printer"></i>
+                    </button> */}
+                    <Dropdown drop={"down"}>
+                        <Dropdown.Toggle variant="primary" style={{ height: "100%" }}>
+                            <i className="bx bx-download"></i> export
+                        </Dropdown.Toggle>
+                        <Dropdown.Menu align={"end"}>
+                            <Dropdown.Item
+                                eventKey="1"
+                                as="button"
+                                aria-label="viewInvModal"
+                                onClick={(e) =>
+                                    // console.log(e)
+                                    handleModal(e, { id: inv.invoice_id, items: { ...inv } })
+                                }
+                            >
+                                <i className="bx bx-show"></i> PDF (.pdf)
+                            </Dropdown.Item>
+                            <Dropdown.Item
+                                eventKey="1"
+                                as="button"
+                                aria-label="editInvModal"
+                                onClick={(e) => handleModal(e, inv.invoice_id)}
+                            >
+                                <i className="bx bxs-edit"></i> Microsoft Excel (.xlsx)
+                            </Dropdown.Item>
+                        </Dropdown.Menu>
+                    </Dropdown>
+                    <button
+                        type="button"
+                        className=" btn btn-primary btn-w-icon"
+                        style={{ height: "100%" }}
+                        >
+                        <i className="bx bxs-file-plus"></i> import
+                    </button>
+
+                    {/* <button type="button" className="add-btn btn btn-primary btn-w-icon" 
+                        aria-label="createInvModal"
+                        onClick={(e) =>
+                            handleModal(e, {
+                                endpoint: "custType",
+                                action: "insert",
+                            })
+                        }
+                    >
+                        <i className="bx bx-plus" style={{ marginTop: -3 }}></i>
+                        Buat receipt
+                    </button> */}
                 </div>
             </div>
-    
-            <div
-                className="wrapping-table-btn flex gap-3"
-                style={{ width: "60%", height: "inherit" }}
-            >
-                {/* <button
-                type="button"
-                className="btn btn-light light"
-                style={{ height: "100%" }}
-                >
-                <i className="bx bx-printer"></i>
-                </button> */}
-                <Dropdown drop={"down"}>
-                    <Dropdown.Toggle variant="primary" style={{ height: "100%" }}>
-                        <i className="bx bx-download"></i> export
-                    </Dropdown.Toggle>
-                    <Dropdown.Menu align={"end"}>
-                        <Dropdown.Item
-                            eventKey="1"
-                            as="button"
-                            aria-label="viewInvModal"
-                            onClick={(e) =>
-                                // console.log(e)
-                                handleModal(e, { id: inv.invoice_id, items: { ...inv } })
-                            }
-                        >
-                            <i className="bx bx-show"></i> PDF (.pdf)
-                        </Dropdown.Item>
-                        <Dropdown.Item
-                            eventKey="1"
-                            as="button"
-                            aria-label="editInvModal"
-                            onClick={(e) => handleModal(e, inv.invoice_id)}
-                        >
-                            <i className="bx bxs-edit"></i> Microsoft Excel (.xlsx)
-                        </Dropdown.Item>
-                    </Dropdown.Menu>
-                </Dropdown>
-                <button
-                    type="button"
-                    className=" btn btn-primary btn-w-icon"
-                    style={{ height: "100%" }}
-                    >
-                    <i className="bx bxs-file-plus"></i> import
-                </button>
-
-                <button type="button" className="add-btn btn btn-primary btn-w-icon" 
-                    aria-label="createInvModal"
-                    onClick={(e) =>
-                        handleModal(e, {
-                            endpoint: "custType",
-                            action: "insert",
-                        })
-                    }
-                >
-                    <i className="bx bx-plus" style={{ marginTop: -3 }}></i>
-                    Buat receipt
-                </button>
-            </div>
-        </div>
         );
     };
 
-    const formatedInvDate = (rowData) => {
-        return <span>{ConvertDate.convertToFullDate(rowData.invoice_date, "/")}</span>;
+    const formatedInvDate = (rowData, options) => {
+        return <span key={options.rowIndex}>{ConvertDate.convertToFullDate(rowData.invoice_date, "/")}</span>;
     };
     
-    const formatedReceiptDate = (rowData) => {
-        return <span>{ConvertDate.convertToFullDate(rowData.receipt_date, "/")}</span>;
+    const formatedReceiptDate = (rowData, options) => {
+        return <span key={options.rowIndex}>{ConvertDate.convertToFullDate(rowData.receipt_date, "/")}</span>;
     };
 
-    const formatedTotal = (rowData) => {
+    const formatedTotal = (rowData, options) => {
         return(
-            <NumberFormat intlConfig={{
+            <NumberFormat key={options.rowIndex} intlConfig={{
                 value: rowData.total_payment, 
                 locale: "id-ID",
                 style: "currency", 
@@ -739,9 +803,9 @@ export default function Invoice({handleSidebar, showSidebar}){
         )
     };
 
-    const paymentTypeCell = (rowData) => {
+    const paymentTypeCell = (rowData, options) => {
         return(
-            <span className={`badge badge-${
+            <span key={options.rowIndex} className={`badge badge-${
                 rowData.payment_type == "bayar nanti" ? 'danger'
                 : rowData.payment_type == "lunas"? "primary"
                 : rowData.payment_type == "sebagian"? "warning"
@@ -752,17 +816,17 @@ export default function Invoice({handleSidebar, showSidebar}){
         )
     };
     
-    const isPaidCell = (rowData) => {
+    const isPaidCell = (rowData, options) => {
         return(
-            <span className={`badge badge-${
+            <span key={options.rowIndex} className={`badge badge-${
                 rowData.is_paid ? "primary" : "danger"} light`}
             >{rowData.is_paid ? "lunas" : "belum lunas"}</span>
         )
     };
 
-    const invStatus = (rowData) => {
+    const invStatus = (rowData, options) => {
         return(
-            <span className={`badge badge-${
+            <span key={options.rowIndex} className={`badge badge-${
                 rowData.status == 0 ? "danger" :
                 rowData.is_paid ? "success"  : new Date() > new Date(rowData.invoice_due) ?  "danger" : 'warning'} light`}
             >{ rowData.status == 0 ? "canceled" : rowData.is_paid ? "completed" : new Date() > new Date(rowData.invoice_due) ? "due" : 'in-progress'}</span>
@@ -770,9 +834,9 @@ export default function Invoice({handleSidebar, showSidebar}){
         )
     };
 
-    const formatedAmountDue = (rowData) => {
+    const formatedAmountDue = (rowData, options) => {
         return(
-          <NumberFormat intlConfig={{
+          <NumberFormat key={options.rowIndex} intlConfig={{
               value: rowData.amount_due, 
               locale: "id-ID",
               style: "currency", 
@@ -781,9 +845,9 @@ export default function Invoice({handleSidebar, showSidebar}){
         )
     };
      
-    const formatedRemaining = (rowData) => {
+    const formatedRemaining = (rowData, options) => {
         return(
-          <NumberFormat intlConfig={{
+          <NumberFormat key={options.rowIndex} intlConfig={{
               value: rowData.remaining_payment, 
               locale: "id-ID",
               style: "currency", 
@@ -906,7 +970,7 @@ export default function Invoice({handleSidebar, showSidebar}){
 
     const invActionCell = (rowData, rowIndex) => {
         return (
-            <Dropdown drop={rowIndex == invData.length - 1 ? "up" : "down"}>
+            <Dropdown key={rowIndex} drop={rowIndex == invData.length - 1 ? "up" : "down"}>
                 <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components" ></Dropdown.Toggle>
                 <Dropdown.Menu align={"end"}>
                     <Dropdown.Item eventKey="1" as="button" aria-label="viewInvModal" onClick={(e) => {e.stopPropagation();handleModal(e, {id: rowData.invoice_id, items: rowData})}}>
@@ -926,24 +990,16 @@ export default function Invoice({handleSidebar, showSidebar}){
                                 </Dropdown.Item>
                                 ):''
                             }
+                            <Dropdown.Item eventKey="1" as="button" aria-label="deleteInvModal" onClick={(e) => {
+                                e.stopPropagation();
+                                handleModal(e, {endpoint: "inv", action: 'delete' , id: rowData.invoice_id, items: rowData});
+                            }}
+                            >
+                                <i className='bx bx-trash'></i> Hapus invoice
+                            </Dropdown.Item>
                             </>
                         ):""
                     }
-                    <Dropdown.Item eventKey="1" as="button" aria-label="deleteInvModal" onClick={(e) => {
-                        e.stopPropagation();
-                        // rowData.payments?.length > 0 ?
-                        //     toast.current.show({
-                        //         severity: "error",
-                        //         summary: "Restricted",
-                        //         detail: "Terdapat pembayaran yang sedang berlangsung",
-                        //         life: 3000,
-                        //     })
-                        // : 
-                        handleModal(e, {endpoint: "inv", action: 'delete' , id: rowData.invoice_id, items: rowData});
-                    }}
-                    >
-                        <i className='bx bx-trash'></i> Hapus invoice
-                    </Dropdown.Item>
                 </Dropdown.Menu>
             </Dropdown>
         );
@@ -951,18 +1007,18 @@ export default function Invoice({handleSidebar, showSidebar}){
 
     const receiptActionCell = (rowData, rowIndex) => {
         return (
-            <Dropdown drop={rowIndex == receiptData.length - 1 ? "up" : "down"}>
+            <Dropdown key={rowIndex} drop={rowIndex == receiptData.length - 1 ? "up" : "down"}>
                 <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components" ></Dropdown.Toggle>
                 <Dropdown.Menu align={"end"}>
-                    <Dropdown.Item eventKey="1" as="button" aria-label="viewInvModal" onClick={(e) => handleModal(e, {id: rowData.invoice_id, items:{...rowData.items}})}>
+                    <Dropdown.Item eventKey="1" as="button" aria-label="viewReceiptModal" onClick={(e) => {e.stopPropagation();handleModal(e, {id: rowData.receipt_id, items: rowData})}}>
                         <i className='bx bx-show'></i> Preview receipt
                     </Dropdown.Item> 
-                    <Dropdown.Item eventKey="1" as="button" aria-label="editInvModal" onClick={(e) => handleModal(e, rowData.invoice_id)}>
+                    {/* <Dropdown.Item eventKey="1" as="button" aria-label="editInvModal" onClick={(e) => handleModal(e, rowData.invoice_id)}>
                         <i className='bx bxs-edit'></i> Edit receipt
                     </Dropdown.Item>
                     <Dropdown.Item eventKey="1" as="button" aria-label="deleteInvModal" onClick={(e) => handleModal(e, {endpoint: "inv", id: rowData.invoice_id})}>
                         <i className='bx bx-trash'></i> Delete receipt
-                    </Dropdown.Item>
+                    </Dropdown.Item> */}
                 </Dropdown.Menu>
             </Dropdown>
         );
@@ -1020,9 +1076,10 @@ export default function Invoice({handleSidebar, showSidebar}){
                         <span className={`badge badge-${rowData.is_paid ? "primary" : "danger"} light`}>
                             {rowData.is_paid ? "lunas" : "belum lunas"}
                         </span>
-                        <span className={`badge badge-${rowData.is_paid ? "success"  : new Date() > new Date(rowData.invoice_due) ?  "danger" : 'warning'} light`}>
-                            {rowData.is_paid ? "completed" : new Date() > new Date(rowData.invoice_due) ? "due" : 'in-progress'}
-                        </span>
+                        <span className={`badge badge-${
+                            rowData.status == 0 ? "danger" :
+                            rowData.is_paid ? "success"  : new Date() > new Date(rowData.invoice_due) ?  "danger" : 'warning'} light`}
+                        >{ rowData.status == 0 ? "canceled" : rowData.is_paid ? "completed" : new Date() > new Date(rowData.invoice_due) ? "due" : 'in-progress'}</span>
                     </div>
                 </div>
             </div>
@@ -1097,31 +1154,23 @@ export default function Invoice({handleSidebar, showSidebar}){
 
                                 ):''
                             }
+                            <Dropdown.Item eventKey="1" as="button" aria-label="deleteInvModal" onClick={(e) => {
+                                e.stopPropagation();
+                                handleModal(e, {endpoint: "inv", action: 'delete' , id: rowData.invoice_id, items: rowData});
+                            }}
+                            >
+                                <i className='bx bx-trash'></i> Hapus invoice
+                            </Dropdown.Item>
                             
                             </>
                         ):""
                     }
-                    <Dropdown.Item eventKey="1" as="button" aria-label="deleteInvModal" onClick={(e) => {
-                        e.stopPropagation();
-                        // rowData.payments?.length > 0 ?
-                        //     toast.current.show({
-                        //         severity: "error",
-                        //         summary: "Restricted",
-                        //         detail: "Terdapat pembayaran yang sedang berlangsung",
-                        //         life: 3000,
-                        //     })
-                        // : 
-                        handleModal(e, {endpoint: "inv", action: 'delete' , id: rowData.invoice_id, items: rowData});
-                    }}
-                    >
-                        <i className='bx bx-trash'></i> Hapus invoice
-                    </Dropdown.Item>
                 </Dropdown.Menu>
             </Dropdown>
         </div>
         );
     };
-
+    
     const listTemplate = (items) => {
         if (!items || items.length === 0) return null;
 
@@ -1143,7 +1192,191 @@ export default function Invoice({handleSidebar, showSidebar}){
                             mobileSearchInput.current.focus();
                         }}
                     >
-                        <i class='bx bx-x'></i>
+                        <i className='bx bx-x'></i>
+                    </span>
+                    ):(
+                    <span className="input-group-icon input-icon-right">
+                        <i className="zwicon-search"></i>
+                    </span>
+                    )
+                    }
+                    <input
+                        ref={mobileSearchInput}
+                        type="text"
+                        className="form-control input-w-icon-right"
+                        value={mobileFilterValue}
+                        onChange={mobileFilterFunc}
+                        placeholder="Keyword Search"
+                        // onKeyDown={() => setMobileSearchMode(true)}
+                    />
+                </div>
+            </div>
+        </div>
+        <div className="grid gap-1">{list}</div>
+        </>
+        );
+    };
+
+    const receiptItemTemplate = (rowData, index) => {
+        return (
+        <div className="col-12" key={rowData.receipt_id} style={{position:'relative'}} aria-label="viewReceiptModal" onClick={(e) => {e.stopPropagation();handleModal(e, {id: rowData.receipt_id, items: rowData})}}>
+            <div className='flex flex-column xl:align-items-start gap-2'
+                style={{
+                    backgroundColor: '#F8F9FD',
+                    padding: '1rem',
+                    boxShadow: '1px 1px 7px #9a9acc1a',
+                    borderRadius: '9px',
+                    position:'relative'
+                }}
+                aria-label="salesEditModal" 
+                // onClick={(e) => handleModalWData(e, {endpoint: "sales", id: rowData.order_id, action: 'update', ...rowData})}
+            >
+            
+            <div className="flex align-items-center gap-3" 
+                style={{
+                    textTransform: 'capitalize', 
+                    paddingBottom: '.75rem',
+                    borderBottom: '1px solid rgba(146, 146, 146, .2509803922)'
+                }}
+            >
+                <span className="user-img" style={{marginRight: 0}}>
+                <img
+                    src={
+                    rowData.customer.img ? rowData.customer.img
+                        : `https://res.cloudinary.com/du3qbxrmb/image/upload/v1751378806/no-img_u5jpuh.jpg`
+                    }
+                    alt=""
+                />
+                </span>
+                <div style={{width: '80%'}}>
+                    <p style={{marginBottom: 0, fontSize: 15, fontWeight: 600, textTransform: 'uppercase'}}>{rowData.receipt_id}</p>
+                    <p style={{marginBottom: 0, fontSize: 13, color: '#7d8086'}}>{ConvertDate.LocaleStringDate(rowData.receipt_date)}</p>
+                    <div className='flex flex-row gap-2' style={{fontSize: 13, marginTop: '.25rem', textTransform:'uppercase'}}> 
+                        <span className={`badge badge-primary light`}>
+                            #{rowData.invoice?.invoice_number}
+                        </span>
+                    </div> 
+                </div>
+            </div>
+            <div className="flex flex-column gap-1" 
+                style={{
+                    textTransform: 'capitalize', 
+                }}
+            >
+                {/* <div className="flex flex-row justify-content-between">
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Pelanggan:</p>
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>{rowData.customer_id ? `${rowData.customer?.name} (${rowData.customer_id})` : `guest.name (non-member)`}</p>
+                </div> */}
+                <div className="flex flex-row justify-content-between">
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Pelanggan:</p>
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right'}}>{rowData.customer.name}</p>
+                </div>
+                <div className="flex flex-row justify-content-between">
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Total bayar:</p>
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right'}}>
+                        <NumberFormat intlConfig={{
+                            value: rowData.total_payment, 
+                            locale: "id-ID",
+                            style: "currency", 
+                            currency: "IDR",
+                        }} 
+                        />
+                    </p>
+                </div>
+                <div className="flex flex-row justify-content-between">
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>kembali:</p>
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right'}}>
+                        <NumberFormat intlConfig={{
+                            value: rowData.change, 
+                            locale: "id-ID",
+                            style: "currency", 
+                            currency: "IDR",
+                        }} 
+                        />
+                    </p>
+                </div>
+                {/* <div className="flex flex-row justify-content-between">
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Sisa:</p>
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right'}}>
+                       
+                    </p>
+                </div> */}
+            </div>
+            </div>
+            {/* <Dropdown drop={index == invData.length - 1 ? "up" : "down"} style={{position: 'absolute', top: 10, right: 9, padding: '1rem 1rem .5rem 1rem'}}> */}
+            <Dropdown drop={"down"} style={{position: 'absolute', top: 10, right: 9, padding: '1rem 1rem .5rem 1rem'}}>
+                <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components" ></Dropdown.Toggle>
+                <Dropdown.Menu align={"end"} className='static-shadow'>
+                    <Dropdown.Item eventKey="1" as="button" aria-label="viewReceiptModal" onClick={(e) => {e.stopPropagation();handleModal(e, {id: rowData.receipt_id, items: rowData})}}>
+                        <i className='bx bx-show'></i> Lihat receipt
+                    </Dropdown.Item> 
+                    {/* {
+                        !rowData.is_paid ?
+                        (
+                            <>
+                            <Dropdown.Item eventKey="1" as="button" aria-label="addPaymentModal" onClick={(e) => {e.stopPropagation();handleModal(e, {id: rowData.receipt_id, items:{...rowData}})}}>
+                                <i className='bx bx-money'></i> Tambah pembayaran
+                            </Dropdown.Item>
+                            {
+                                rowData.payment_type == "bayar nanti" ? 
+                                (
+                                    <Dropdown.Item eventKey="1" as="button" aria-label="editInvModal" onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleModal(e, {id: rowData.invoice_id, items: rowData})
+                                    }}>
+                                        <i className='bx bxs-edit'></i> Edit invoice
+                                    </Dropdown.Item>
+
+                                ):''
+                            }
+                            
+                            </>
+                        ):""
+                    } */}
+                    {/* <Dropdown.Item eventKey="1" as="button" aria-label="deleteInvModal" onClick={(e) => {
+                        e.stopPropagation();
+                        // rowData.payments?.length > 0 ?
+                        //     toast.current.show({
+                        //         severity: "error",
+                        //         summary: "Restricted",
+                        //         detail: "Terdapat pembayaran yang sedang berlangsung",
+                        //         life: 3000,
+                        //     })
+                        // : 
+                        handleModal(e, {endpoint: "inv", action: 'delete' , id: rowData.invoice_id, items: rowData});
+                    }}
+                    >
+                        <i className='bx bx-trash'></i> Hapus invoice
+                    </Dropdown.Item> */}
+                </Dropdown.Menu>
+            </Dropdown>
+        </div>
+        );
+    };
+
+    
+    const receiptListTemplate = (items) => {
+        if (!items || items.length === 0) return null;
+
+        let list = items.map((receipt, index) => {
+            return receiptItemTemplate(receipt, index);
+        });
+
+        return (
+        <>
+        <div className="flex flex-column gap-2" style={{ width: "100%" }}>
+            <div className="flex gap-3 align-items-center mb-4" style={{ width: "100%" }}>
+                <div className="input-group-right" style={{ width: "100%" }}>
+                    {mobileSearchMode ?
+                    (
+                    <span className="input-group-icon input-icon-right" 
+                        onClick={() => {
+                            setMobileFilterValue('');
+                            setMobileSearchMode(false);
+                            mobileSearchInput.current.focus();
+                        }}
+                    >
+                        <i className='bx bx-x'></i>
                     </span>
                     ):(
                     <span className="input-group-icon input-icon-right">
@@ -1344,6 +1577,7 @@ export default function Invoice({handleSidebar, showSidebar}){
                                                 headerStyle={{ width: "3.5rem" }}
                                             ></Column> */}
                                             <Column
+                                                key={1}
                                                 field="invoice_number"
                                                 header="nomor invoice"
                                                 sortable
@@ -1352,6 +1586,7 @@ export default function Invoice({handleSidebar, showSidebar}){
                                                 style={{ textTransform: "uppercase" }}
                                             ></Column>
                                             <Column
+                                                key={2}
                                                 field="invoice_date"
                                                 header="tanggal"
                                                 body={formatedInvDate}
@@ -1363,6 +1598,7 @@ export default function Invoice({handleSidebar, showSidebar}){
                                                 style={{ textTransform: "uppercase" }}
                                             ></Column>
                                             <Column
+                                                key={3}
                                                 field="customer.name"
                                                 header="pelanggan"
                                                 filter 
@@ -1372,6 +1608,7 @@ export default function Invoice({handleSidebar, showSidebar}){
                                                 headerStyle={primeTableHeaderStyle}
                                             ></Column>
                                              <Column
+                                                key={4}
                                                 field="customer_id"
                                                 header="ID pelanggan"
                                                 sortable
@@ -1380,6 +1617,7 @@ export default function Invoice({handleSidebar, showSidebar}){
                                                 headerStyle={primeTableHeaderStyle}
                                             ></Column>
                                             <Column
+                                                key={5}
                                                 field="amount_due"
                                                 header="tagihan"
                                                 filter 
@@ -1392,6 +1630,7 @@ export default function Invoice({handleSidebar, showSidebar}){
                                                 headerStyle={primeTableHeaderStyle}
                                             ></Column>
                                             <Column
+                                                key={6}
                                                 field="remaining_payment"
                                                 header="sisa"
                                                 filter 
@@ -1404,6 +1643,7 @@ export default function Invoice({handleSidebar, showSidebar}){
                                                 headerStyle={primeTableHeaderStyle}
                                             ></Column>
                                             <Column
+                                                key={7}
                                                 field="payment_type"
                                                 header="pembayaran"
                                                 body={paymentTypeCell}
@@ -1413,6 +1653,7 @@ export default function Invoice({handleSidebar, showSidebar}){
                                                 headerStyle={primeTableHeaderStyle}
                                             ></Column>
                                             <Column
+                                                key={8}
                                                 field="is_paid"
                                                 header="bayar"
                                                 body={isPaidCell}
@@ -1425,6 +1666,7 @@ export default function Invoice({handleSidebar, showSidebar}){
                                                 // filterElement={statusRowFilter}
                                             ></Column>
                                             <Column
+                                                key={9}
                                                 field="invoice_due"
                                                 header="status"
                                                 body={invStatus}
@@ -1437,6 +1679,7 @@ export default function Invoice({handleSidebar, showSidebar}){
                                                 style={{ textTransform: "uppercase" }}
                                             ></Column>
                                             <Column
+                                                key={10}
                                                 field=""
                                                 header="aksi"
                                                 body={(rowData, rowIndex) => invActionCell(rowData, rowIndex)}
@@ -1770,6 +2013,8 @@ export default function Invoice({handleSidebar, showSidebar}){
                                                 selectedOption={returnSelectVal} 
                                             /> 
                                         </div> */}
+                                        {!isMobile && !isMediumScr ?
+                                        (
                                         <div className="mt-4">
                                             <DataTable
                                                 className="p-datatable"
@@ -1803,10 +2048,12 @@ export default function Invoice({handleSidebar, showSidebar}){
                                                 rows={50}
                                             >
                                             <Column
+                                                key={1}
                                                 selectionMode="multiple"
                                                 headerStyle={{ width: "3.5rem" }}
                                             ></Column>
                                             <Column
+                                                key={2}
                                                 field="receipt_id"
                                                 header="nomor Receipt"
                                                 sortable
@@ -1815,14 +2062,16 @@ export default function Invoice({handleSidebar, showSidebar}){
                                                 headerStyle={primeTableHeaderStyle}
                                             ></Column>
                                              <Column
-                                                field="invoice_id"
+                                                key={3}
+                                                field="invoice.invoice_number"
                                                 header="nomor invoice"
                                                 sortable
                                                 style={{ textTransform: "uppercase" }}
-                                                bodyStyle={primeTableBodyStyle}
+                                                bodyStyle={{...primeTableBodyStyle, textTransform: "uppercase"}}
                                                 headerStyle={primeTableHeaderStyle}
                                             ></Column>
                                             <Column
+                                                key={4}
                                                 field="receipt_date"
                                                 header="tanggal"
                                                 body={formatedReceiptDate}
@@ -1834,6 +2083,7 @@ export default function Invoice({handleSidebar, showSidebar}){
                                                 style={{ textTransform: "uppercase" }}
                                             ></Column>
                                             <Column
+                                                key={5}
                                                 field="customer_id"
                                                 header="ID pelanggan"
                                                 sortable
@@ -1842,6 +2092,7 @@ export default function Invoice({handleSidebar, showSidebar}){
                                                 style={{ textTransform: "uppercase" }}
                                             ></Column>
                                             <Column
+                                                key={6}
                                                 field="customer.name"
                                                 header="pelanggan"
                                                 filter 
@@ -1851,6 +2102,7 @@ export default function Invoice({handleSidebar, showSidebar}){
                                                 headerStyle={primeTableHeaderStyle}
                                             ></Column>
                                             <Column
+                                                key={7}
                                                 field="total_payment"
                                                 header="total pembayaran"
                                                 // filter 
@@ -1864,6 +2116,7 @@ export default function Invoice({handleSidebar, showSidebar}){
                                                 style={{ textTransform: 'uppercase' }}
                                             ></Column>
                                             <Column
+                                                key={8}
                                                 field=""
                                                 header="aksi"
                                                 body={(rowData, rowIndex) => receiptActionCell(rowData, rowIndex)}
@@ -1873,6 +2126,62 @@ export default function Invoice({handleSidebar, showSidebar}){
                                             ></Column>
                                             </DataTable>
                                         </div>
+                                        ):
+                                        (
+                                             <>
+                                            <div
+                                                className="wrapping-table-btn flex gap-3 justify-content-end"
+                                                style={{ width: "100%", height: "inherit" }}
+                                            >
+                                                <Dropdown drop={"down"}>
+                                                    <Dropdown.Toggle variant="primary" style={{ height: "100%" }}>
+                                                        <i className="bx bx-download"></i> export
+                                                    </Dropdown.Toggle>
+                                                    <Dropdown.Menu align={"end"}>
+                                                    <Dropdown.Item
+                                                        eventKey="1"
+                                                        as="button"
+                                                        aria-label="viewInvModal"
+                                                        onClick={(e) =>
+                                                            handleModal(e, { id: inv.invoice_id, items: { ...inv } })
+                                                        }
+                                                    >
+                                                        <i className="bx bx-show"></i> PDF (.pdf)
+                                                    </Dropdown.Item>
+                                                    <Dropdown.Item
+                                                        eventKey="1"
+                                                        as="button"
+                                                        aria-label="editInvModal"
+                                                        onClick={(e) => handleModal(e, inv.invoice_id)}
+                                                    >
+                                                        <i className="bx bxs-edit"></i> Microsoft Excel (.xlsx)
+                                                    </Dropdown.Item>
+                                                    </Dropdown.Menu>
+                                                </Dropdown>
+                                                <button
+                                                    type="button"
+                                                    className=" btn btn-primary btn-w-icon"
+                                                    style={{ height: "100%" }}
+                                                >
+                                                    <i className="bx bxs-file-plus"></i> import
+                                                </button>
+                                                {/* <button type="button" className="add-btn btn btn-primary btn-w-icon" 
+                                                    aria-label="createInvModal"
+                                                    onClick={(e) =>
+                                                        handleModal(e, {
+                                                            endpoint: "custType",
+                                                            action: "insert",
+                                                        })
+                                                    }
+                                                >
+                                                    <i className="bx bx-plus"></i>
+                                                    Buat invoice
+                                                </button> */}
+                                            </div>
+                                            <DataView value={receiptData} listTemplate={receiptListTemplate} style={{marginTop: '.5rem'}} emptyMessage='No data' />       
+                                        </>
+                                        )
+                                        }
                                         {/* <div className="table-responsive mt-4">
                                             <table className="table" id="advancedTablesWFixedHeader" data-table-search="true"
                                                 data-table-sort="true" data-table-checkbox="true">
@@ -2074,6 +2383,14 @@ export default function Invoice({handleSidebar, showSidebar}){
                     <CreateInv 
                         show={showModal === "createInvModal" ? true : false} 
                         onHide={handleCloseModal} 
+                        returnAct={(returnValue) => {
+                            if(returnValue){
+                                fetchAllInv();
+                                setTimeout(() => {
+                                    setShowModal("");
+                                },1200)
+                            }
+                        }}
                     />
                 )
                 : showModal === "editInvModal" ?
@@ -2090,6 +2407,15 @@ export default function Invoice({handleSidebar, showSidebar}){
                         show={showModal === "viewInvModal" ? true : false} 
                         onHide={handleCloseModal} 
                         data={showModal === "viewInvModal" ? invListObj : null} 
+                        callModal={(modal, data) => handleModal(modal, data)}
+                    />
+                )
+                : showModal == "viewReceiptModal" ?
+                (
+                    <ReceiptModal
+                        show={showModal === "viewReceiptModal" ? true : false} 
+                        onHide={handleCloseModal} 
+                        data={showModal === "viewReceiptModal" ? invListObj : null} 
                         callModal={(modal, data) => handleModal(modal, data)}
                     />
                 )

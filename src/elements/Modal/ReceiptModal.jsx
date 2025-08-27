@@ -1,14 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Dropdown, Modal } from 'react-bootstrap';
 import { Toast } from 'primereact/toast';
-import NumberFormat from '../Masking/NumberFormat';
+import NumberFormat from '../Masking/NumberFormat.jsx';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import { useReactToPrint } from 'react-to-print';
 import FetchApi from '../../assets/js/fetchApi.js';
 import InvoiceDoc from '../../parts/InvoiceDoc.jsx';
 import ConvertDate from '../../assets/js/ConvertDate.js';
-import InputWLabel from '../Input/InputWLabel';
-import { CustomSelect } from '../CustomSelect';
+import InputWLabel from '../Input/InputWLabel.jsx';
+import { CustomSelect } from '../CustomSelect/index.jsx';
 import User from "../../assets/images/Avatar 1.jpg";
 import useAxiosPrivate from '../../hooks/useAxiosPrivate.js';
 import capitalizeEveryWord from '../../assets/js/CapitalizeEveryWord.js';
@@ -18,8 +18,11 @@ import InputWSelect from '../Input/InputWSelect.jsx';
 import useMediaQuery from '../../hooks/useMediaQuery.js';
 import ReceiptDoc from '../../parts/ReceiptDoc.jsx';
 
+import NoImg from "../../assets/images/no-img.jpg"
 
-export default function InvoiceModal({show, onHide, data}) {
+
+export default function ReceiptModal({show, onHide, data}) {
+    console.log(data)
     const isMobile = useMediaQuery('(max-width: 767px)');
     const isMediumScr = useMediaQuery('(min-width: 768px) and (max-width: 1024px)');
 
@@ -36,7 +39,7 @@ export default function InvoiceModal({show, onHide, data}) {
     const [ invStatus, setInvStatus ] = useState(null);
     const [ paymentData, setPaymentData] = useState(null);
     const [ totalPaid, setTotalPaid] = useState(0);
-    const [ invDupe, setInvDupe ] = useState(data ? {...data} : null); 
+    const [ invDupe, setInvDupe ] = useState(data ? {...data.items?.invoice} : null); 
     const axiosPrivate = useAxiosPrivate();
     const toast = useRef();
     const componentRef = useRef(null);
@@ -89,7 +92,7 @@ export default function InvoiceModal({show, onHide, data}) {
     };
 
     const fetchPaymentByInv = async () => {
-        await axiosPrivate.get("/payment/inv", { params: {invid: data.id}})
+        await axiosPrivate.get("/payment/inv", { params: {invid: data.items.invoice_id}})
         .then(resp => {
             setPaymentData(resp.data)
 
@@ -106,88 +109,95 @@ export default function InvoiceModal({show, onHide, data}) {
         })
     };
 
-    const fetchUpdateInvStatus = async () => {
-        let invStatusUpdate = JSON.stringify({status: invStatus});
-        await axiosPrivate.patch(`/inv/status?id=${invDupe.id}`, invStatusUpdate)
-        .then(resp => {
-            console.log(resp.data[1][0])
-            if(resp.data.length > 0 && resp.data[0] > 0){
-                toast.current.show({
-                    severity: "success",
-                    summary: "Success",
-                    detail: "Invoice status updated",
-                    life: 3000,
-                });
+    // const fetchUpdateInvStatus = async () => {
+    //     let invStatusUpdate = JSON.stringify({status: invStatus});
+    //     await axiosPrivate.patch(`/inv/status?id=${invDupe.id}`, invStatusUpdate)
+    //     .then(resp => {
+    //         console.log(resp.data[1][0])
+    //         if(resp.data.length > 0 && resp.data[0] > 0){
+    //             toast.current.show({
+    //                 severity: "success",
+    //                 summary: "Success",
+    //                 detail: "Invoice status updated",
+    //                 life: 3000,
+    //             });
 
-                axiosPrivate.get("/inv/by",{params:{id: invDupe.id}})
-                .then(resp2 => {
-                    console.log(resp2.data)
-                    setInvDupe({...data, items: resp2.data[0]});
-                })
-                .catch(err2 => {
+    //             axiosPrivate.get("/inv/by",{params:{id: invDupe.id}})
+    //             .then(resp2 => {
+    //                 setInvDupe({...data, items: resp2.data[0]});
+    //             })
+    //             .catch(err2 => {
 
-                })
-            }
-        })
-        .catch(err => {
-            toast.current.show({
-                severity: "error",
-                summary: "Failed",
-                detail: "Failed to update status",
-                life: 3000,
-            });
-        })
-    }
+    //             })
+    //         }
+    //     })
+    //     .catch(err => {
+    //         toast.current.show({
+    //             severity: "error",
+    //             summary: "Failed",
+    //             detail: "Failed to update status",
+    //             life: 3000,
+    //         });
+    //     })
+    // }
 
     useEffect(() => {
         if(invDupe){
-            let getSalesRef = JSON.parse(invDupe.items.order_id);
+            let getSalesRef = JSON.parse(invDupe.order_id);
             let sendReq;
             if(getSalesRef.length > 1){
                 sendReq = getSalesRef.join("&id=");
-                // fetchPaymentByInv();
             } else {
                 sendReq = getSalesRef[0];
-                // fetchSalesByID(sendReq);
-                // fetchPaymentByInv();
             }
 
-            setPaymentData(invDupe.items.payments);
+            setPaymentData(invDupe.payments);
 
-            let totalPaid = invDupe.items.payments?.reduce((sum, payment) => Number(sum) + Number(payment.amount_paid), 0);
-        //    console.log(totalPaid)
+            let totalPaid = invDupe.payments?.reduce((sum, payment) => Number(sum) + Number(payment.amount_paid), 0);
+
             setTotalPaid(totalPaid);
             fetchSalesByID(sendReq);
             fetchROByOrder(sendReq);
             
+        } else{
+            toast.current.show({
+                severity: "error",
+                summary: "Not Found",
+                detail: "Invoice not found",
+                life: 3000,
+            });
         }
     },[invDupe]);
     
     useEffect(() => {
-           if(paidData && invData){
-               fetchInsertPayment();
-            //    console.log(paidData)
-           }
-       },[paidData])
-    
-    useEffect(() => {
-        if(salesList && paymentData && invDupe){
-            setIsLoading(false);
+        if(paidData && invData){
+            fetchInsertPayment();
         }
-    },[salesList, paymentData, invDupe]);
+    },[paidData])
 
     useEffect(() => {
-        if(invStatus && invStatus !== invDupe.items.status){
-            fetchUpdateInvStatus();
+        if(data){
+            fetchPaymentByInv();
         }
-    },[invStatus])
+    },[data])
+    
+    useEffect(() => {
+        if(salesList && paymentData){
+            setIsLoading(false);
+        }
+    },[salesList, paymentData]);
+
+    // useEffect(() => {
+    //     if(invStatus && invStatus !== invDupe.items.status){
+    //         fetchUpdateInvStatus();
+    //     }
+    // },[invStatus])
 
 
     if(isLoading){
         return;
     }
 
-    console.log(invDupe)
     
     const handleModal = (e, inv) => {
         let data;
@@ -256,8 +266,6 @@ export default function InvoiceModal({show, onHide, data}) {
             });
         })
     };
-
-    console.log(invDupe)
 
     return(
         <>
@@ -461,9 +469,9 @@ export default function InvoiceModal({show, onHide, data}) {
                 </div>
             </div>
         </div> */}
-        <Modal dialogClassName={isMobile || isMediumScr ? 'modal-fullscreen' : 'modal-75w'} show={show} onHide={onHide} scrollable={true} centered={true}  id="invoiceDetailModal" >
+        <Modal dialogClassName={isMobile || isMediumScr ? 'modal-fullscreen' : 'modal-75w'}  show={show} onHide={onHide} scrollable={true} centered={true} >
             <Modal.Header closeButton>
-                <Modal.Title style={{marginRight: '1rem'}}>invoice ID: {invDupe !== "" ? `${invDupe.id}` : ""}</Modal.Title>
+                <Modal.Title style={{marginRight: '1rem'}}>receipt ID: {data.id}</Modal.Title>
                 <span>
                     {/* <InputWSelect
                                 // label={'status'}
@@ -485,45 +493,6 @@ export default function InvoiceModal({show, onHide, data}) {
                                 // errors={errors}
                             /> */}
                 </span>
-                {/* <div className="modal-btn-wrap">
-                    <Dropdown>
-                        <Dropdown.Toggle className="btn btn-primary btn-w-icon" style={{fontWeight: 600}}>
-                            <i className='bx bxs-send'></i>
-                            <span style={{marginRight: '.3rem'}}>Send</span>
-                        </Dropdown.Toggle>
-
-                        <Dropdown.Menu>
-                            <Dropdown.Item as="button" href="#/action-1"><i class='bx bx-envelope'></i>Email</Dropdown.Item>
-                            <Dropdown.Item as="button" href="#/action-2"><i class='bx bxl-whatsapp'></i>Whatsapp</Dropdown.Item>
-                        </Dropdown.Menu>
-                    </Dropdown>
-                    
-                    <button type="button" className={`btn btn-dark btn-w-icon`}>
-                        <i className='bx bxs-file-pdf'></i>
-                        <PDFDownloadLink style={{textDecoration: 'none', color: '#ffffff'}} 
-                            document={<InvoiceDoc data={{invoice: data.items, order: salesList, payment: paymentData}} />} 
-                            fileName={`${(data.items.invoice_number).toUpperCase()} - ${capitalizeEveryWord(data.items.customer?.name)}.pdf`}>
-                            {({ loading }) => (loading ? 'Loading...' : 'Download PDF')}
-                        </PDFDownloadLink>
-                    </button>
-                    {
-                        data.items.is_paid ? 
-                        (
-                            <button type="button" className={`btn btn-success btn-w-icon`}>
-                                <i className='bx bxs-receipt'></i>
-                                <PDFDownloadLink style={{textDecoration: 'none', color: '#ffffff'}} 
-                                    document={<InvoiceDoc data={{invoice: data.items, order: salesList, payment: paymentData}} />} 
-                                    fileName={`${(data.items.invoice_number).toUpperCase()} - ${capitalizeEveryWord(data.items.customer?.name)}.pdf`}>
-                                    {({ loading }) => (loading ? 'Loading...' : 'Receipt')}
-                                </PDFDownloadLink>
-                            </button>
-                        ):''
-                    }
-
-                    <button type="button" className={`btn btn-danger btn-w-icon`} onClick={handlePage}>
-                        <i className='bx bxs-printer'></i>Print
-                    </button>
-                </div> */}
                 {/* <div className="modal-btn-mobile dropdown">
                     <button type="button" className="modal-btn" data-bs-toggle="dropdown" aria-expanded="false">
                         <i className='bx bx-dots-vertical-rounded'></i>
@@ -540,26 +509,31 @@ export default function InvoiceModal({show, onHide, data}) {
                     </ul>
                 </div> */}
             </Modal.Header>
-            <Modal.Body ref={componentRef}>
+            <Modal.Body ref={componentRef} id='receiptModal'>
                 <div className='prev-inv-container' style={{display: 'flex', flexDirection: isMobile || isMediumScr ? 'column' : 'row', width: '100%', gap:'3rem'}}>
                     <div className='card static-shadow prev-inv-content' style={{width: isMobile || isMediumScr ? '100%' : '75%'}}>
                         <div className='invoice-wrapper'>
                             <div className="invoice-header">
                                 <div className="invoice-detail">
-                                    <h3 className="invoice-title">invoice</h3>
+                                    <h3 className="invoice-title">tanda terima</h3>
                                     <div className="invoice-info-group">
-                                        <p className="label-text">nomor invoice</p>
-                                        <p className="invoice-text" style={{textTransform: 'uppercase'}}>#{invDupe !== "" ? `${invDupe.items?.invoice_number}` : ""}</p>
+                                        <p className="label-text">tanggal</p>
+                                        <p className="invoice-text">{ConvertDate.convertToBeautyDate(data.items.receipt_date)}</p>
                                     </div>
+                                   
                                     <div style={{display: 'flex', flexDirection: 'row', gap: '2rem'}}>
                                         <div className="invoice-info-group">
-                                            <p className="label-text">tanggal</p>
-                                            <p className="invoice-text">{ConvertDate.convertToBeautyDate(invDupe.items.invoice_date)}</p>
+                                            <p className="label-text">nomor receipt</p>
+                                            <p className="invoice-text" style={{textTransform: 'uppercase'}}>#{data.items.receipt_id}</p>
                                         </div>
                                         <div className="invoice-info-group">
-                                            <p className="label-text">jatuh tempo</p>
-                                            <p className="invoice-text">{ConvertDate.convertToBeautyDate(invDupe.items.invoice_due)}</p>
+                                            <p className="label-text">nomor invoice</p>
+                                            <p className="invoice-text" style={{textTransform: 'uppercase'}}>#{data.items.invoice.invoice_number}</p>
                                         </div>
+                                        {/* <div className="invoice-info-group">
+                                            <p className="label-text">jatuh tempo</p>
+                                           <p className="invoice-text">{ConvertDate.convertToBeautyDate(invDupe.items.invoice_due)}</p>
+                                        </div>  */}
                                     </div>
                                 </div>
                                 <div className="company-detail" style={{}}>
@@ -577,71 +551,63 @@ export default function InvoiceModal({show, onHide, data}) {
                                 <div className="invoice-cust-info">
                                     <div className="invoice-info-group">
                                         <p className="label-text">nama pelanggan</p>
-                                        <p className="invoice-text" style={{marginBottom:17}}>{invDupe.items.customer.name}</p>
+                                        <p className="invoice-text" style={{marginBottom:17}}>{data.items.customer?.name}</p>
                                     </div>
                                     <div className="invoice-info-group">
                                         <p className="label-text">status</p>
-                                        <span className={`badge badge-${invDupe.items.is_paid ? 'success' : 'danger'} light`}>{invDupe.items.is_paid ? 'lunas' : 'belum lunas'}</span>
+                                        <span className={`badge badge-success light`}>lunas</span>
                                     </div>
                                 </div>
-                                <div className='inv-bank-info'>
-                                    <div class="invoice-info-group">
-                                        <p class="label-text" style={{marginBottom:3}}>Informasi Pembayaran</p>
-                                        <p class="invoice-text" style={{marginBottom:3}}><span className="label-text">Bank Transfer:</span> BRI</p>
-                                        <p class="invoice-text" style={{marginBottom:3}}><span className="label-text">A/N:</span> Anton Ruchiat</p>
-                                        <p class="invoice-text" style={{marginBottom:0}}><span className="label-text">Nomor rekening:</span> 01234567890123</p>
+                                <div className="invoice-amount">
+                                    <div className="card-amount">
+                                        <div className="invoice-info-group">
+                                            <p className="label-text">Total Transaksi</p>
+                                            <p className="invoice-text">
+                                                <NumberFormat intlConfig={{
+                                                    value: data.items.invoice?.amount_due, 
+                                                    locale: "id-ID",
+                                                    style: "currency", 
+                                                    currency: "IDR",
+                                                    }} 
+                                                />
+                                            </p>
+                                        </div>
                                     </div>
+                                    <div className="card-amount">
+                                        <div className="invoice-info-group">
+                                            <p className="label-text">Total Bayar</p>
+                                            <p className="invoice-text">
+                                                <NumberFormat intlConfig={{
+                                                    value: data.items.total_payment, 
+                                                    locale: "id-ID",
+                                                    style: "currency", 
+                                                    currency: "IDR",
+                                                    }} 
+                                                />
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="card-amount">
+                                        <div className="invoice-info-group">
+                                            <p className="label-text">Kembali</p>
+                                            <p className="invoice-text">
+                                                <NumberFormat intlConfig={{
+                                                    value: Math.abs(Number(data.items.change)), 
+                                                    locale: "id-ID",
+                                                    style: "currency", 
+                                                    currency: "IDR",
+                                                    }} 
+                                                />
+                                            </p>
+                                        </div>
+                                    </div>
+                                    {/* <div className="card-amount">
+                                        <div className="invoice-info-group">
+                                            <p className="label-text">sisa bon</p>
+                                            <p className="invoice-text"><span className="currency">Rp</span> 0</p>
+                                        </div>
+                                    </div> */}
                                 </div>
-                            </div>
-                            <div className="invoice-amount">
-                                <div className="card-amount">
-                                    <div className="invoice-info-group">
-                                        <p className="label-text">Total Transaksi</p>
-                                        <p className="invoice-text">
-                                            <NumberFormat intlConfig={{
-                                                value: invDupe.items.amount_due, 
-                                                locale: "id-ID",
-                                                style: "currency", 
-                                                currency: "IDR",
-                                                }} 
-                                            />
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="card-amount">
-                                    <div className="invoice-info-group">
-                                        <p className="label-text">Total Bayar</p>
-                                        <p className="invoice-text">
-                                            <NumberFormat intlConfig={{
-                                                value: totalPaid, 
-                                                locale: "id-ID",
-                                                style: "currency", 
-                                                currency: "IDR",
-                                                }} 
-                                            />
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="card-amount">
-                                    <div className="invoice-info-group">
-                                        <p className="label-text">jumlah yang harus dibayar</p>
-                                        <p className="invoice-text">
-                                            <NumberFormat intlConfig={{
-                                                value: totalPaid == 0 ? invDupe.items.amount_due : ((totalPaid - invDupe.items.amount_due) > 0 ? 0 :(invDupe.items.amount_due - totalPaid)), 
-                                                locale: "id-ID",
-                                                style: "currency", 
-                                                currency: "IDR",
-                                                }} 
-                                            />
-                                        </p>
-                                    </div>
-                                </div>
-                                {/* <div className="card-amount">
-                                    <div className="invoice-info-group">
-                                        <p className="label-text">sisa bon</p>
-                                        <p className="invoice-text"><span className="currency">Rp</span> 0</p>
-                                    </div>
-                                </div> */}
                             </div>
                             <div className="invoice-transaction mt-4">
                                 <p className="inv-table-title">detail transaksi</p>
@@ -669,7 +635,7 @@ export default function InvoiceModal({show, onHide, data}) {
                                             <tbody>
                                                 {sales.order_items.length > 0 && sales.order_items.map((orderItem, index) => {
                                                     return( 
-                                                        <tr key={index} style={{textTransform:'capitalize'}}>
+                                                        <tr style={{textTransform:'capitalize'}}>
                                                             {index == 0 ? 
                                                                 (
                                                                     <td rowSpan={`${sales.order_items.length}`}>{ConvertDate.convertToFullDate(sales.order_date,"/")}</td>
@@ -719,7 +685,7 @@ export default function InvoiceModal({show, onHide, data}) {
                                                     <>
                                                     {sales.orders_credit.return_order.return_order_items.map((roItem, roItemIdx) => {
                                                         return (
-                                                        <tr key={roItemIdx} style={{textTransform:'capitalize'}}>
+                                                        <tr style={{textTransform:'capitalize'}}>
                                                             <td></td>
                                                             {/* {roItemIdx == 0 ? 
                                                                 // (
@@ -800,7 +766,7 @@ export default function InvoiceModal({show, onHide, data}) {
                                                         <td className="each-total-title" style={{textAlign:'right'}}>Total seluruh transaksi</td>
                                                         <td className="each-total-text">
                                                             <NumberFormat intlConfig={{
-                                                                value: data.items.amount_due, 
+                                                                value: data.items.invoice?.amount_due, 
                                                                 locale: "id-ID",
                                                                 style: "currency", 
                                                                 currency: "IDR",
@@ -812,15 +778,11 @@ export default function InvoiceModal({show, onHide, data}) {
                                                 :""}
                                             </tbody>
                                         </table>
-
-                                    
-                                        
                                         </>
                                         )
                                     })):""}
                                 </div>
                             </div>
-                            
                             <div className="invoice-payment">
                                 {
                                     paymentData.length > 0 ? 
@@ -888,133 +850,9 @@ export default function InvoiceModal({show, onHide, data}) {
                                     ): ''
                                 }
                             </div>
-
-                            {/* return order detail if return method id is 2 or potong tagihan  */}
-                            
-                            {roList && roList.length >0 ? 
-                                (
-                                <div className="invoice-transaction">
-                                    <p className="inv-table-title">detail pengembalian</p>
-                                    <p className="inv-table-desc">Detail pengembalian ini hanya untuk transparansi data. Seluruh data transaksi sudah mencakup data pengembalian yang ada.</p>
-                                    {/* <div style={{width: '100%'}}> */}
-                                        {roList.map((ro, idx) => {
-                                            return(
-                                                <>
-                                                <div key={idx} className='table-top-desc-wrap'>
-                                                    <div className='table-desc-wrap-inline'>
-                                                        <div className='table-desc-inline'>
-                                                            <p className='table-desc-title'>order ID:</p>
-                                                            <p className='table-desc-value'>{ro.order.order_id}</p>
-                                                        </div>   
-                                                        <div className='table-desc-inline'>
-                                                            <p className='table-desc-title'>tanggal order:</p>
-                                                            <p className='table-desc-value'>{ConvertDate.convertToFullDate(ro.order.order_date,"/")}</p>
-                                                        </div>    
-                                                        <div className='table-desc-inline'>
-                                                            <p className='table-desc-title'>tanggal pengembalian:</p>
-                                                            <p className='table-desc-value'>{ConvertDate.convertToFullDate(ro.return_date,"/")}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className='table-desc-inline'>
-                                                        <p className='table-desc-title'>Metode pengembalian:</p>
-                                                        <p className='table-desc-value'>{ro.return_method}</p>
-                                                    </div>
-                                                </div>
-                                                <table className="table" key={`transaction-table-${idx}`}>
-                                                    <thead>
-                                                        <tr>
-                                                            <th>#</th>
-                                                            <th>item</th>
-                                                            <th>qty</th>
-                                                            <th></th>
-                                                            <th>pengembalian</th>
-                                                            <th>Alasan pengembalian</th>
-                                                            <th>jumlah</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                    {ro.return_order_items?.map((roItem, index) => {
-                                                        return (
-                                                            <>
-                                                            <tr key={index} style={{textTransform:'capitalize'}}>
-                                                                <td style={{fontWeight: 500, paddingLeft: '2rem'}}>{index+1}</td>
-                                                                <td>{`${roItem.order_item.product.product_name}  ${roItem.order_item.product.variant}`}</td>
-                                                                <td>
-                                                                    {
-                                                                        Number(roItem.order_item.quantity)
-                                                                    }
-                                                                </td>
-                                                                <td><i class='bx bxs-chevrons-right'></i></td>
-                                                                <td>
-                                                                    {/* {Number(roItem.quantity) - Number(orderItem.return_order_item.quantity)} */}
-                                                                    {Number(roItem.quantity)}
-                                                                </td>
-                                                                <td>
-                                                                    {roItem.reason}
-                                                                </td>
-                                                                <td>
-                                                                    <NumberFormat intlConfig={{
-                                                                        // value: (((Number(roItem.order_item.quantity) - Number(roItem.quantity)) * Number(roItem.order_item.sell_price)) - ((Number(roItem.order_item.quantity) - Number(roItem.quantity))*roItem.order_item.discount_prod_rec)),
-                                                                        value: roItem.return_value,
-                                                                        locale: "id-ID",
-                                                                        style: "currency", 
-                                                                        currency: "IDR",
-                                                                        }} 
-                                                                    />
-                                                                </td>
-                                                            </tr>
-                                                            {index == ro.return_order_items.length-1 ?
-                                                                (
-                                                                <tr>
-                                                                    <td colSpan="5"></td>
-                                                                    <td className="each-total-title" style={{textAlign:'right'}}>total</td>
-                                                                    <td className="each-total-text">
-                                                                        <NumberFormat intlConfig={{
-                                                                            value: ro.refund_total, 
-                                                                            locale: "id-ID",
-                                                                            style: "currency", 
-                                                                            currency: "IDR",
-                                                                            }} 
-                                                                        />
-                                                                    </td>
-                                                                </tr>
-                                                                ):''
-                                                            }
-                                                            
-                                                            </>
-                                                        )
-                                                    })}
-                                                    {idx == roList.length-1 ? 
-                                                                (
-                                                                <tr className="grand-total">
-                                                                    <td colSpan="5"></td>
-                                                                    <td className="each-total-title" style={{textAlign:'right'}}>Total pengembalian</td>
-                                                                    <td className="each-total-text">
-                                                                        <NumberFormat intlConfig={{
-                                                                            value: ro.refund_total, 
-                                                                            locale: "id-ID",
-                                                                            style: "currency", 
-                                                                            currency: "IDR",
-                                                                            }} 
-                                                                        />
-                                                                    </td>
-                                                                </tr>
-                                                                )
-                                                            :""}
-                                                    </tbody>
-                                                </table>
-                                            </>
-                                            )
-                                        })}
-                                    {/* </div> */}
-                                </div>
-                                )
-                                :''
-                            }
                             <div className="invoice-footer">
                                 <p className="invoice-footer-text">Thank you for your business!</p>
                             </div>
-
                         </div>
                     </div>
                     <div className='inv-tools' style={{width: isMobile || isMediumScr ? '100%' : '25%'}}>
@@ -1022,18 +860,18 @@ export default function InvoiceModal({show, onHide, data}) {
                         <div className='card static-shadow cust-card-inv' style={{minHeight: '200px', padding: '1.5rem 1.7rem'}}>
                             <div className="card-header">
                                 <div className='cust-img-wrap'>
-                                    <img src={invDupe.items.customer?.img} />
+                                    <img src={data.items.customer?.img !== "" ? data.items.customer?.img : NoImg} />
                                 </div>
-                                <span className='card-title'>{invDupe.items.customer.name}</span>
+                                <span className='card-title'>{data.items.customer.name}</span>
                             </div>
                             <div className="card-sub-header mb-3">
                                 <div className='inline-detail'>
                                     <p className='sub-header'>Email:</p>
-                                    <p className='sub-header'>{invDupe.items.customer.email ? invDupe.items.customer.email : "-"}</p>
+                                    <p className='sub-header'>{data.items.customer.email ? data.items.customer.email : "-"}</p>
                                 </div>
                                 <div className='inline-detail'>
                                     <p className='sub-header'>Phonenumber:</p>
-                                    <p className='sub-header'>{invDupe.items.customer.phonenumber}</p>
+                                    <p className='sub-header'>{data.items.customer.phonenumber}</p>
                                 </div>
                                 
                             </div>
@@ -1043,7 +881,7 @@ export default function InvoiceModal({show, onHide, data}) {
                             <Dropdown style={{marginBottom: '.25rem'}}>
                                 <Dropdown.Toggle className="btn btn-primary btn-w-icon" style={{fontWeight: 600, width: '100%'}}>
                                     {/* <i className='bx bxs-send'></i> */}
-                                    <span style={{marginRight: '.3rem'}}>Kirim invoice</span>
+                                    <span style={{marginRight: '.3rem'}}>Send receipt</span>
                                 </Dropdown.Toggle>
 
                                 <Dropdown.Menu>
@@ -1051,73 +889,19 @@ export default function InvoiceModal({show, onHide, data}) {
                                     <Dropdown.Item as="button" href="#/action-2"><i class='bx bxl-whatsapp'></i>Whatsapp</Dropdown.Item>
                                 </Dropdown.Menu>
                             </Dropdown>
-                            {
-                                invDupe.items.is_paid ?
-                                (
-                                    <Dropdown>
-                                        <Dropdown.Toggle className="btn btn-success btn-w-icon mt-2" style={{fontWeight: 600, width: '100%'}}>
-                                            {/* <i className='bx bxs-send'></i> */}
-                                            <span style={{marginRight: '.3rem'}}>Kirim receipt</span>
-                                        </Dropdown.Toggle>
-
-                                        <Dropdown.Menu>
-                                            <Dropdown.Item as="button" href="#/action-1"><i class='bx bx-envelope'></i>Email</Dropdown.Item>
-                                            <Dropdown.Item as="button" href="#/action-2"><i class='bx bxl-whatsapp'></i>Whatsapp</Dropdown.Item>
-                                        </Dropdown.Menu>
-                                    </Dropdown>
-                                    // <button type="button" className="btn btn-success btn-w-icon mt-2" onClick={onHide}>
-                                    //     {/* <i className='bx bxs-send'></i> */}
-                                    //     send receipt
-                                    // </button> 
-                                ):''
-                            }
                         </div>
                         
-                        {/* add payment card */}
-                        <div className='card static-shadow cust-card-inv' style={{minHeight: '100px', padding: '1.5rem 1.7rem'}}>
-                            <div className="card-header" style={{display: 'block'}}>
-                                <div className='remaining-payment'>
-                                    <p className='card-title' style={{marginBottom: '.8rem', color: '#929292'}}>remaining</p>
-                                    <NumberFormat intlConfig={{
-                                        value: invDupe.items.remaining_payment, 
-                                        locale: "id-ID",
-                                        style: "currency", 
-                                        currency: "IDR",
-                                        }} 
-                                    />
-                                </div>
-                            </div>
-                            <button type="button" className="btn btn-success btn-w-icon mt-2" disabled={invDupe.items.is_paid ? true : false} 
-                                aria-label='addPaymentModal' onClick={(e) => handleModal(e, {id: invDupe.id, items: {...invDupe.items}})}
-                            >
-                                <i className='bx bx-plus'></i>
-                                Add payment
-                            </button> 
-                        </div>
 
                         {/* buttons */}
                         <div className='inv-tool-btns card static-shadow'>
                             <button type="button" className={`btn btn-dark btn-w-icon`}>
                                 <i className='bx bxs-file-pdf'></i>
                                 <PDFDownloadLink style={{textDecoration: 'none', color: '#ffffff'}} 
-                                    document={<InvoiceDoc data={{invoice: invDupe.items, order: salesList, payment: paymentData, ro: roList}} />} 
-                                    fileName={`${(invDupe.items.invoice_number).toUpperCase()} - ${capitalizeEveryWord(invDupe.items.customer?.name)}.pdf`}>
+                                    document={<ReceiptDoc data={{invoice: data.items.invoice, receipt: data.items, order: salesList, payment: paymentData, ro: roList}} />} 
+                                    fileName={`${(data.items.receipt_id).toUpperCase()} - ${capitalizeEveryWord(data.items.customer?.name)}.pdf`}>
                                     {({ loading }) => (loading ? 'Loading...' : 'Download PDF')}
                                 </PDFDownloadLink>
                             </button>
-                            {
-                                data.items.is_paid ? 
-                                (
-                                    <button type="button" className={`btn btn-light light btn-w-icon`}>
-                                        <i className='bx bxs-receipt'></i>
-                                        <PDFDownloadLink style={{textDecoration: 'none', color: '#262626'}} 
-                                            document={<ReceiptDoc data={{invoice: invDupe.items, receipt: invDupe.items.receipt, order: salesList, payment: paymentData}} />} 
-                                            fileName={`${(invDupe.items.invoice_number).toUpperCase()} - ${capitalizeEveryWord(invDupe.items.customer?.name)}.pdf`}>
-                                            {({ loading }) => (loading ? 'Loading...' : 'Download Receipt')}
-                                        </PDFDownloadLink>
-                                    </button>
-                                ):''
-                            }
                             <div className='inline-group-btn' style={{display: 'inline-flex', gap: '.7rem'}}>
                                 <button type="button" className={`btn btn-danger light btn-w-icon`} onClick={handlePage}>
                                     <i className='bx bxs-printer'></i>Print

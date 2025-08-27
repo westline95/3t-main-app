@@ -11,7 +11,7 @@ import useAxiosPrivate from '../../hooks/useAxiosPrivate.js';
 import axios from '../../api/axios.js';
 import useMediaQuery from '../../hooks/useMediaQuery.js';
 
-export default function CreateInv({ show, onHide }){
+export default function CreateInv({ show, onHide, returnAct }){
     const isMobile = useMediaQuery('(max-width: 767px)');
     const isMediumScr = useMediaQuery('(min-width: 768px) and (max-width: 1024px)');
 
@@ -35,11 +35,14 @@ export default function CreateInv({ show, onHide }){
     const checkboxParent = useRef(null);
     const checkboxSingle = useRef([]);
     const axiosPrivate = useAxiosPrivate();
+
+
     const {
         getValues,
         setValue,
         setError,
         register,
+        watch,
         handleSubmit,
         formState: { errors },
         clearErrors
@@ -47,11 +50,23 @@ export default function CreateInv({ show, onHide }){
         defaultValues: {
             name: '',
             invoice_date: new Date(),
-            // invoice_due:
+            // invoice_due: (new Date().getDate() + 7)
         }
     });
 
-    const [ sevenDaysAdded, set7DaysAdded ] = useState(getValues('invoice_date'));
+    const [ sevenDaysAdded, set7DaysAdded ] = useState(() => {
+        const invDate = new Date(getValues('invoice_date'));
+        invDate.setDate(new Date(invDate).getDate() + 7);
+        setValue('invoice_due', invDate);
+        return invDate;
+    });
+
+    const add7days = (value) => {
+        const invDate = new Date(value);
+        invDate.setDate(new Date(value).getDate() + 7);
+        setValue('invoice_due', invDate);
+        set7DaysAdded(invDate);
+    }
 
     const fetchAllCust = async () => {
         await axiosPrivate.get("/customers")
@@ -90,14 +105,10 @@ export default function CreateInv({ show, onHide }){
                             remaining_payment: invRemainingPayment - totalPayment,
                             is_paid: (invRemainingPayment - totalPayment) <= 0 ? true : false
                         });
+
                         axiosPrivate.patch(`/inv/payment?id=${invID.invoice_id}`, invUpdate)
                         .then(resp2 => {
                             if(resp2.data){
-                                setTimeout(() => {
-                                    window.location.reload();
-                                },1700);
-                                
-
                                 toast.current.show({
                                     severity: "success",
                                     summary: "Sukses",
@@ -136,10 +147,6 @@ export default function CreateInv({ show, onHide }){
                 })
 
             } else {
-                setTimeout(() => {
-                    window.location.reload();
-                },1700);
-
                 toast.current.show({
                     severity: "success",
                     summary: "Sukses",
@@ -147,6 +154,7 @@ export default function CreateInv({ show, onHide }){
                     life: 1700,
                 });
             }
+            returnAct(true);
 
         })
         .catch(error => {
@@ -163,27 +171,24 @@ export default function CreateInv({ show, onHide }){
         let bodyData = JSON.stringify(body);
         
         await axiosPrivate.post("/inv/write", bodyData)
-            .then(resp => {
-                toast.current.show({
-                    severity: "success",
-                    summary: "Success",
-                    detail: "Invoice baru telah terbit",
-                    life: 1700,
-                });
+        .then(resp => {
+            toast.current.show({
+                severity: "success",
+                summary: "Success",
+                detail: "Invoice baru telah terbit",
+                life: 1700,
+            });
+            // update order table => add invoice id
+            let invoiceID = JSON.stringify({invoice_id: resp.data.invoice_id});
 
-                // update order table => add invoice id
-                let invoiceID = JSON.stringify({invoice_id: resp.data.invoice_id});
-
-                if(choosedOrderId.length > 1){
-                    let sendReq = choosedOrderId.join("&id=");
-                    fetchUpdateSales(sendReq, invoiceID, paymentIDs, totalPayment, resp.data.remaining_payment);
-                } else {
-                    let sendReq = choosedOrderId[0];
-                    fetchUpdateSales(sendReq, invoiceID, paymentIDs, totalPayment, resp.data.remaining_payment);
-                }
-
-                
-            })
+            if(choosedOrderId.length > 1){
+                let sendReq = choosedOrderId.join("&id=");
+                fetchUpdateSales(sendReq, invoiceID, paymentIDs, totalPayment, resp.data.remaining_payment);
+            } else {
+                let sendReq = choosedOrderId[0];
+                fetchUpdateSales(sendReq, invoiceID, paymentIDs, totalPayment, resp.data.remaining_payment);
+            }
+        })
         .catch(error => {
             toast.current.show({
                 severity: "error",
@@ -304,9 +309,6 @@ export default function CreateInv({ show, onHide }){
             })
             
             // check total order in new orders added to inv with amountPaid with same invoice id
-            // const getGrandtotalOrder = choosedOrder.reduce((prevValue, currValue) => Number(prevValue) + Number(currValue.grandtotal), 0);
-            // const getSubtotalOrder = choosedOrder.reduce((prevValue, currValue) => Number(prevValue) + Number(currValue.subtotal), 0);
-            // const getTotalOrderDisc = choosedOrder.reduce((prevValue, currValue) => Number(prevValue) + Number(currValue.order_discount), 0);
             const getGrandtotalOrder = choosedOrder.reduce((prevValue, currValue) => Number(prevValue) + (Number(currValue.grandtotal) - (currValue.return_order ? Number(currValue.return_order.refund_total):0) + (currValue.orders_credit ? Number(currValue.orders_credit.return_order.refund_total):0)), 0);
             const getSubtotalOrder = choosedOrder.reduce((prevValue, currValue) => Number(prevValue) + (Number(currValue.subtotal) - (currValue.return_order ? Number(currValue.return_order.refund_total):0) + (currValue.orders_credit ? Number(currValue.orders_credit.return_order.refund_total):0)), 0);
             const getTotalOrderDisc = choosedOrder.reduce((prevValue, currValue) => Number(prevValue) + Number(currValue.order_discount), 0);
@@ -316,7 +318,6 @@ export default function CreateInv({ show, onHide }){
             modelInv.amount_due = getGrandtotalOrder - getTotalOrderDisc;
 
             modelInv.remaining_payment = (getGrandtotalOrder - getTotalOrderDisc);
-            console.log(modelInv)
 
             fetchInsertInv(modelInv, paymentIDs, totalPaymentInvNull);
             // fetchSumOrder(formData.customer_id, pay_type, modelInv);
@@ -371,12 +372,15 @@ export default function CreateInv({ show, onHide }){
         }
     }
 
-    const add7days = (value) => {
-        const invDate = new Date(value);
-        invDate.setDate(new Date(value).getDate() + 7);
-        set7DaysAdded(invDate);
-        setValue('invoice_due', invDate);
-    }
+    
+
+    // useEffect(() => {
+    //     if(sevenDaysAdded){
+    //     }
+    // },[sevenDaysAdded])
+
+    watch('invoice_due')
+    
 
     const handleChooseCust = (e) => {
         setCust(e);
@@ -480,14 +484,14 @@ export default function CreateInv({ show, onHide }){
     
     useEffect(() => {
         fetchAllCust();
-        add7days(getValues('invoice_date'));
+        // add7days(new Date().toDateString());
     },[]);
 
     useEffect(() => {
-        if(ordersByCust && custData){
+        if(ordersByCust && custData && sevenDaysAdded){
             setIsLoading(false);
         }
-    },[ordersByCust])
+    },[ordersByCust, custData, sevenDaysAdded])
 
     useEffect(() => {
         if(isLoading){
@@ -539,12 +543,12 @@ export default function CreateInv({ show, onHide }){
                             label={'tanggal'}
                             type={'date'}
                             name={'invoice_date'}
-                            onChange={(e) => add7days(e.value)}
+                            onChange={(e) => {add7days(e.value)}}
                             require={true}
                             register={register}
                             errors={errors} 
                             defaultValue={getValues('invoice_date')}
-                            />
+                        />
                     </div>
                     <div className="col-lg-4 col-sm-12 col-md-12 col-12">
                         <InputWLabel 

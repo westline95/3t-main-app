@@ -40,7 +40,13 @@ const InputWLabel =  forwardRef((props, ref) => {
     } = props;
 
     const [ switched, setSwitch ] = useState(false);
-    const [ dateValue, setDateValue ] = useState(type == 'date' ? defaultValue ? defaultValue : null : null);
+    const [ dateValue, setDateValue ] = useState(null);
+
+    useEffect(() => {
+        if(type === 'date' && defaultValue){
+            setDateValue(defaultValue);
+        }
+    },[defaultValue])
      
     // const elRef = useRef(null);
     // if(inputRef){
@@ -130,7 +136,7 @@ const InputWLabel =  forwardRef((props, ref) => {
                         // value={new Date(defaultValue)}
                         disabled={disabled}
                         // onChange={(e) => setDateValue(e.value)}
-                        {...register ? {...register(name, { required: require, onBlur: onBlur, ref: inputRef, onChange:(e) => setDateValue(e.value)})} : ""}
+                        {...register ? {...register(name, { required: require, onBlur: onBlur, ref: inputRef, onChange: onChange})} : ""}
                     />
                     
                 </>
