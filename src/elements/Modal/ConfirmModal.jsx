@@ -1175,6 +1175,13 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
                         fetchDelRO();
                     }
                 break;
+                case "payment":
+                    if(data.action === "delete"){
+                        if(returnValue){
+                            return returnValue(true);
+                        } 
+                    } 
+                break;
             }
 
         } 
@@ -1233,7 +1240,7 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
                         onHide(); 
                         returnValue && returnValue(false)}}
                     >
-                        {data.endpoint == 'inv' && data.endpoint == 'warning' ? 'Tidak' : 'Batal'}
+                        { data.endpoint == 'warning' || data.endpoint == "delete" ? 'Tidak' : 'Batal'}
                     </button>
                     <button 
                         type="button" 

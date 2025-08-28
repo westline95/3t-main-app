@@ -37,11 +37,13 @@ export default function Payment() {
   const [allPayment, setAllPayment] = useState(null);
   const [openTab, setOpenTab] = useState("payListTab");
   const [invListObj, setInvList] = useState(null);
+  const [deletePayment, setDeletePayment] = useState(false);
   const [showModal, setShowModal] = useState("");
   const [ paymentFilters, setPaymentFilters ] = useState(null);
   const [ globalFilterValue, setGlobalFilterValue ] = useState("");
   const [ totalRecords, setTotalRecords ] = useState(0);
   const [ selectedPayment, setSelectedPayment ] = useState(null);
+  const [ paidData, setPaidData ] = useState(null);
   const [ mobileSearchMode, setMobileSearchMode ] = useState(false);
   const [ mobileFilterValue, setMobileFilterValue ] = useState("");
 
@@ -63,6 +65,112 @@ export default function Payment() {
         });
       });
   };
+
+  const fetchDetailedCust = async(custID) => {
+    await axiosPrivate.get(`/customer/detail?custid=${custID}`)
+    .then(resp => {
+        const sales = resp.data.sales ? resp.data.sales[0] : null;
+        const debt = resp.data.debt ? resp.data.debt[0] : null;
+
+        const updt_total_sales = (sales && sales.total_sales_grandtotal ? Number(sales.total_sales_grandtotal) : 0) 
+        - (sales && sales.return_refund ? Number(sales.return_refund) : 0)
+        + (sales && sales.orders_credit_uncanceled ? Number(sales.orders_credit_uncanceled.total) : 0);
+        
+        const orderBBNotInv = debt && debt.total_debt_grandtotal ? Number(debt.total_debt_grandtotal) : 0;
+        const orderReturn = debt && debt.return_refund ? Number(debt.return_refund) : 0;
+        const orderPartialRemain = debt && debt.partial_sisa ? Number(debt.partial_sisa.sisa) : 0;
+        const orderInvRemain = debt && debt.hutang_invoice ? Number(debt.hutang_invoice.sisa_hutang) : 0;
+        const orderCreditUncomplete = debt && debt.orders_credit_uncomplete ? Number(debt.orders_credit_uncomplete.total) : 0;
+
+        const updt_total_debt = (orderBBNotInv+orderPartialRemain+orderInvRemain+orderCreditUncomplete)-orderReturn;
+    
+        axiosPrivate.patch(`/customer/sales-debt/${custID}/${updt_total_debt}/${updt_total_sales}`)
+        .then(resp2 =>{
+            toast.current.show({
+                severity: "success",
+                summary: "Sukses",
+                detail: "Berhasil memperbarui data pelanggan!",
+                life:1200,
+            });
+        })
+        .catch(err2 => {
+            console.error(err2);
+            toast.current.show({
+                severity: "error",
+                summary: "Fatal Error",
+                detail: "Error saat memperbarui data pelanggan!",
+                life:1200,
+            });
+        })
+    })
+    .catch(err => {
+        console.error(err);
+        toast.current.show({
+            severity: "error",
+            summary: "Gagal",
+            detail: "Gagal memperbarui data pelanggan!",
+            life:1200,
+        });
+    })
+  };
+
+  const fetchEditPayment = async() => {
+    if(paidData){
+      let paymentModel = {
+        payment_date: paidData.payment_date,
+        change: Number(paidData.change),
+        ref: paidData.payment_ref,
+        note: paidData.note,
+        amount_paid: Number(paidData.amountOrigin),
+        payment_method: paidData.payment_method,
+        invoice_id: paidData.originData.invoice_id
+      }
+  
+      await axiosPrivate.patch(`/payment/minor-update?id=${paidData.originData.payment_id}`, paymentModel)
+      .then(res => {
+        fetchAllPayment();
+        fetchDetailedCust(paidData.originData.customer_id);
+
+        toast.current.show({
+          severity: "success",
+          summary: "Sukses",
+          detail: "Data pembayaran diperbarui",
+          life: 1200,
+        });
+      })
+      .catch(err => {
+        toast.current.show({
+          severity: "error",
+          summary: "Gagal",
+          detail: "Gagal memperbarui data pembayaran",
+          life: 3000,
+        });
+      })
+    }
+  }
+
+  const fetchDeletePayment = async() =>{
+    await axiosPrivate.delete(`/payment/del?id=${invListObj.id}`)
+    .then(res => {
+      fetchAllPayment();
+      fetchDetailedCust(invListObj.items.customer_id);
+
+      toast.current.show({
+        severity: "success",
+        summary: "Sukses",
+        detail: "Data pembayaran dihapus",
+        life: 1200,
+      });
+    })
+    .catch(err => {
+      toast.current.show({
+        severity: "error",
+        summary: "Gagal",
+        detail: "Gagal menghapus data pembayaran",
+        life: 3000,
+      });
+    })
+  }
 
   const handleClick = (e) => {
     switch (e.target.id) {
@@ -93,13 +201,9 @@ export default function Payment() {
         setInvList(data);
         setShowModal("invEditModal");
         break;
-      case "deleteInvModal":
-        data = {
-          origin: invListData,
-          items: InvRef != null ? JSON.parse(InvRef) : InvRef,
-        };
-        setInvList(data);
-        setShowModal("deleteInvModal");
+      case "deletePaymentModal":
+        setInvList(invData);
+        setShowModal("deletePaymentModal");
         break;
       case "viewPayRef":
         data = {
@@ -119,6 +223,16 @@ export default function Payment() {
         break;
        case "addInvPayment":
         setShowModal("addInvPayment");
+        break;
+      case "editPaymentModal":
+        data = {
+            id: invData.id, 
+            items: invData.items,
+            action: 'update',
+            source: 'payment'
+        }
+        setInvList(data);
+        setShowModal("editPaymentModal");
         break;
     }
   };
@@ -358,27 +472,25 @@ export default function Payment() {
         <Dropdown.Item
           eventKey="1"
           as="button"
-          aria-label="editInvModal"
-          onClick={(e) =>
-            handleModal(e, rowData.payment_id)
-          }
+          aria-label="editPaymentModal"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleModal(e, {id: rowData.invoice_id, items:{...rowData}})
+          }}
         >
-          <i className="bx bxs-edit"></i> Edit
-          payment
+          <i className="bx bxs-edit"></i> Ubah
+          pembayaran
         </Dropdown.Item>
         <Dropdown.Item
           eventKey="1"
           as="button"
-          aria-label="deleteInvModal"
-          onClick={(e) =>
-            handleModal(e, {
-              endpoint: "payment",
-              id: rowData.payment_id,
-            })
-          }
+          aria-label="deletePaymentModal" onClick={(e) => {
+              e.stopPropagation();
+              handleModal(e, {endpoint: "payment", action: 'delete' , id: rowData.payment_id, items: rowData});
+          }}
         >
-          <i className="bx bx-trash"></i>{" "}
-          Delete payment
+          <i className="bx bx-trash"></i>
+          Hapus pembayaran
         </Dropdown.Item>
       </Dropdown.Menu>
     </Dropdown>
@@ -393,7 +505,7 @@ export default function Payment() {
   
   const itemTemplate = (rowData, index) => {
     return (
-    <div className="col-12" key={rowData.invoice_id} 
+    <div className="col-12" key={index} 
       style={{position:'relative'}} 
       // aria-label="viewInvModal" onClick={(e) => handleModal(e, {id: rowData.invoice_id, items: rowData})}
     >
@@ -492,10 +604,23 @@ export default function Payment() {
         <Dropdown drop={"down"} style={{position: 'absolute', top: 10, right: 9, padding: '1rem 1rem .5rem 1rem'}}>
             <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components" ></Dropdown.Toggle>
             <Dropdown.Menu align={"end"} className='static-shadow'>
-                <Dropdown.Item eventKey="1" as="button" aria-label="viewInvModal" 
-                // onClick={(e) => {e.stopPropagation();handleModal(e, {id: rowData.invoice_id, items: rowData})}}
+                <Dropdown.Item eventKey="1" as="button" 
+                  aria-label="editPaymentModal"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleModal(e, {id: rowData.invoice_id, items:{...rowData}})
+                  }}
                 >
-                    <i className='bx bx-pencil'></i>Ubah pembayaran
+                    <i className='bx bxs-edit'></i>Ubah pembayaran
+                </Dropdown.Item> 
+                <Dropdown.Item eventKey="2" as="button" 
+                  aria-label="deletePaymentModal" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleModal(e, {endpoint: "payment", action: 'delete' , id: rowData.payment_id, items: rowData});
+                  }}
+                >
+                    <i className='bx bx-trash'></i>Hapus pembayaran
                 </Dropdown.Item> 
             </Dropdown.Menu>
         </Dropdown>
@@ -551,11 +676,18 @@ export default function Payment() {
   
   useEffect(() => {
     fetchAllPayment();
+    initFilters();
   }, []);
   
   useEffect(() => {
-    initFilters();
-  }, []);
+    fetchEditPayment();
+  }, [paidData]);
+
+  useEffect(() => {
+    if(deletePayment){
+      fetchDeletePayment();
+    }
+  },[deletePayment])
   
   useEffect(() => {
     if (allPayment) {
@@ -1165,27 +1297,37 @@ export default function Payment() {
             onHide={handleCloseModal} 
             data={showModal === "viewPayNote" ? invListObj : null} 
           />
-        ) : showModal === "addPaymentModal" ? 
+        ) : showModal === "editPaymentModal" ? 
         (
           <CreatePayment
-            show={showModal === "addPaymentModal" ? true : false} 
+            show={showModal === "editPaymentModal" ? true : false} 
             onHide={handleCloseModal} 
             source={'invoice'}
-            totalCart={showModal === "addPaymentModal" && invListObj ? invListObj.items.remaining_payment : ""} 
+            totalCart={showModal === "editPaymentModal" && invListObj ? invListObj.items.remaining_payment : ""} 
             data={invListObj}
-            returnValue={(paymentData) => {setPaidData(paymentData);console.log(paymentData)}} 
+            returnValue={(paymentData) => {setPaidData(paymentData)}} 
           />
         ) : 
         showModal === "addInvPayment" ?
           (
-            <InvoicePayment 
-                show={showModal === "addInvPayment" ? true : false} 
-                onHide={handleCloseModal} 
-            />
+          <InvoicePayment 
+            show={showModal === "addInvPayment" ? true : false} 
+            onHide={handleCloseModal} 
+          />
           )
-      : (
-        ""
-      )}
+      : showModal === "deletePaymentModal" ?
+        (
+        <ConfirmModal show={showModal === "deletePaymentModal" ? true : false} onHide={handleCloseModal} 
+          data={showModal === "deletePaymentModal" ? invListObj : ""} 
+          msg={
+            <p style={{marginBottom: 0}}>
+              Yakin ingin menghapus pembayaran ini?
+            </p>
+          }
+          returnValue={(confirmVal) => {setDeletePayment(confirmVal)}}
+        />
+        ) 
+      :""}
       <Toast ref={toast} />
       {/* <SalesDetailModal show={showModal === "salesDetailModal" ? true : false} onHide={handleCloseModal} data={showModal === "salesDetailModal" ? salesListObj : ""} /> */}
       {/* <ConfirmModal show={showModal === "deleteSalesModal" ? true : false} onHide={handleCloseModal} data={showModal === "deleteSalesModal" ? salesListObj : ""} /> */}

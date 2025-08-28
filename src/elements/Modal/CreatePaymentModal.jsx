@@ -39,13 +39,14 @@ export default function CreatePayment({show, onHide, totalCart, multiple, stack,
         formState: { errors },
     } = useForm({
         defaultValues: {
-            payment_date: new Date(),
-            payment_type: '',
-            payment_method:'',
+            payment_date: data.action && data.action == "insert" ? new Date() : new Date(data.items.payment_date),
+            payment_method: '',
             paid_amount: '0',
             partial_amount: '0',
             amountOrigin: 0,
-            pay_amount_default: totalCart,
+            payment_ref: data.action && data.action == "update" ? data.items.ref : '',
+            note: data.action && data.action == "update" ? data.items.note : '',
+            pay_amount: data.action && data.action == "update" ? Number(data.items.amount_paid) : totalCart,
         }
     });
 
@@ -136,71 +137,11 @@ export default function CreatePayment({show, onHide, totalCart, multiple, stack,
         // }
     };
 
-    const onSubsssmit =  (formData) => {
-        // const formData = getValues();
-        // if(formData.payment_type != ""){
-        //     clearErrors('payment_type');
-            
-        //     if(formData.payment_type !== 'unpaid' ){
-        //         if(formData.amountOrigin == 0){
-        //             setError('amount', {type: 'custom', message: `Paid amount can't be 0`})
-        //              trigger('amount', {shouldFocus: true});
-        //         }
-        //         if(formData.payment_type === 'cash'){
-        //             if(formData.amountOrigin < totalCart){
-        //                 setError('amount', {type: 'custom', message: 'Incorrect paid amount'})
-        //                  trigger('amount', {shouldFocus: true});
-        //             }
-        //         }
-
-        //         if(formData.paymentMethod){
-        //             if(data){
-        //                 let paymentModel = {
-        //                     customer_id: data.items.customer_id,
-        //                     invoice_id: data.items.invoice_id,
-        //                     payment_date: formData.payment_date,
-        //                     amount_paid: formData.amountOrigin,
-        //                     payment_method: formData.payment_type,
-        //                     note: formData.note,
-        //                     payment_ref: formData.payment_ref,
-        //                 };
-        //                 console.log(paymentModel);
-        //                 // fetchInsertPayment(paymentModel, formData);
-        //             }
-        //         }
-        //     } else {
-        //         returnValue(formData);
-        //         onHide();
-        //     }
-        // } else {
-        //     setError('payment_type', {type: 'custom', message: 'Incorrect paid amount'})       
-        // }
-        // if(formData.paymentMethod){
-        //     if(data){
-        //         let paymentModel = {
-        //             customer_id: data.items.customer_id,
-        //             invoice_id: data.items.invoice_id,
-        //             payment_date: formData.payment_date,
-        //             amount_paid: formData.amountOrigin,
-        //             payment_method: formData.payment_type,
-        //             note: formData.note,
-        //             payment_ref: formData.payment_ref,
-        //         };
-        //         console.log(paymentModel);
-        //         // fetchInsertPayment(paymentModel, formData);
-        //     }
-        // } else {
-        //     returnValue(formData);
-        //     onHide();
-        // }
-    }
-
     const onSubmit = async (formData) => {
         const isValid = await trigger();
 
         if(isValid){
-            // console.log(formData)
-            returnValue(formData);
+            returnValue({...formData, originData: {...data.items}});
             onHide();
         }
             
@@ -230,74 +171,82 @@ export default function CreatePayment({show, onHide, totalCart, multiple, stack,
         }
     };
 
-    useEffect(() => {
-        if(getValues('payment_method') == 'transfer'){
-            setValue('pay_amount_default', totalCart);
-            // setValue('pay_amount_default', totalCart);
-            // setValue('partial_amount', totalCart);
-            // setValue('paid_amount', totalCart);
+    // useEffect(() => {
+    //     if(getValues('payment_method') == 'transfer'){
+    //         setValue('pay_amount_default', totalCart);
+    //         // setValue('pay_amount_default', totalCart);
+    //         // setValue('partial_amount', totalCart);
+    //         // setValue('paid_amount', totalCart);
 
-            // setDefaultVal(totalCart);
-        } else{
-            setValue('pay_amount_default', '0');
-            // setValue('pay_amount_default', '0');
-            // setDefaultVal(0);
-            // setValue('partial_amount', 0);
-            // setValue('paid_amount', 0);
-        }
-    },[getValues('payment_method')]);
+    //         // setDefaultVal(totalCart);
+    //     } else{
+    //         setValue('pay_amount_default', '0');
+    //         // setValue('pay_amount_default', '0');
+    //         // setDefaultVal(0);
+    //         // setValue('partial_amount', 0);
+    //         // setValue('paid_amount', 0);
+    //     }
+    // },[getValues('payment_method')]);
 
-    const handlePaidAmount = (paymenMethod) => {
-        if(paymenMethod == 'transfer'){
-            setValue('pay_amount_default', totalCart);
-            // setValue('pay_amount', value.formatted);
-            // setValue('pay_amount_default', totalCart);
-            // setValue('partial_amount', totalCart);
-            // setValue('paid_amount', totalCart);
+    // const handlePaidAmount = (paymenMethod) => {
+    //     if(paymenMethod == 'transfer'){
+    //         setValue('pay_amount_default', totalCart);
+    //         // setValue('pay_amount', value.formatted);
+    //         // setValue('pay_amount_default', totalCart);
+    //         // setValue('partial_amount', totalCart);
+    //         // setValue('paid_amount', totalCart);
             
-            // setDefaultVal(totalCart);
-        } else{
-            console.log("bukan tf")
-            setValue('pay_amount_default', 0);
-            // setValue('pay_amount', '0');
-            // setValue('pay_amount_default', '0');
-            // setDefaultVal(0);
-            // setValue('partial_amount', 0);
-            // setValue('paid_amount', 0);
-        }
-    }
+    //         // setDefaultVal(totalCart);
+    //     } else{
+    //         console.log("bukan tf")
+    //         setValue('pay_amount_default', 0);
+    //         // setValue('pay_amount', '0');
+    //         // setValue('pay_amount_default', '0');
+    //         // setDefaultVal(0);
+    //         // setValue('partial_amount', 0);
+    //         // setValue('paid_amount', 0);
+    //     }
+    // }
 
 
     return(
         <>
         <Modal size='md' show={show} onHide={onHide} scrollable={true} centered={true}>
             <Modal.Header closeButton>
-                <Modal.Title>{source == 'order' ? 'create' : 'add'} payment</Modal.Title>
+                <Modal.Title>{
+                data.action && data.action == "insert" ? 'Tambah' 
+                : data.action == "update" ? 'Ubah'
+                : 'Buat'
+            } pembayaran</Modal.Title>
             </Modal.Header>
             <Modal.Body style={{maxHeight: '600px', overflowY: getValues('payment_method') ? 'auto' : 'unset'}}>
-                <div style={{
-                    textAlign: "center", 
-                    padding: "2rem 0 1rem 0",
-                    width: '100%', 
-                    position:'sticky', 
-                    top:0, 
-                    backgroundColor:"#FFFFFF", 
-                    zIndex:9999, 
-                    boxShadow: isScrolled ? '0px 12px 20px 10px rgba(154, 154, 204, 0.13)' : 'unset',
-                    marginBottom: '2rem'
-                }}>
-                    <h3>
-                        <NumberFormat intlConfig={{
-                            value: totalCart ? totalCart : 0,
-                            locale: "id-ID",
-                            style: "currency",
-                            currency: "IDR",
-                        }} /> 
-                    </h3>
-                </div>
+                {data.action != "update" ?
+                (
+                    <div style={{
+                        textAlign: "center", 
+                        padding: "2rem 0 1rem 0",
+                        width: '100%', 
+                        position:'sticky', 
+                        top:0, 
+                        backgroundColor:"#FFFFFF", 
+                        zIndex:9999, 
+                        boxShadow: isScrolled ? '0px 12px 20px 10px rgba(154, 154, 204, 0.13)' : 'unset',
+                        marginBottom: '2rem'
+                    }}>
+                        <h3>
+                            <NumberFormat intlConfig={{
+                                value: totalCart ? totalCart : 0,
+                                locale: "id-ID",
+                                style: "currency",
+                                currency: "IDR",
+                            }} /> 
+                        </h3>
+                    </div>
+                ):''
+                }
                 <form style={{display: 'flex', flexDirection: 'column', gap: '1.4rem'}}>
                     <InputWLabel 
-                        label="Payment date" 
+                        label="tanggal pembayaran" 
                         type="date"
                         defaultValue={getValues("payment_date")}
                         name="payment_date" 
@@ -309,31 +258,56 @@ export default function CreatePayment({show, onHide, totalCart, multiple, stack,
                         source == 'invoice' || source == 'payment' ?
                         (
                             <>
-                            <InputWSelect
-                                label={'payment method'}
-                                name={"payment_method"}
-                                selectLabel={"Pilih metode pembayaran"}
-                                options={DataStatic.invPayMethod}
-                                optionKeys={["id", "type"]}
-                                value={(selected) => {
-                                    setPaymentType(selected);
-                                    // setValue('payTypeId', selected.id);
-                                    setValue('payment_method', selected.value);
-                                    selected.value == 'transfer' ? setValue('pay_amount', Number(totalCart).toString()) : '0';
-                                    handlePaidAmount(selected.value);
-                                    // selected.value == 'cash' ? setValue('pay_amount_default', 0) : setValue('pay_amount_default', totalCart);
-                                   
-                                    // selected.value != "" ? clearErrors("payTypeId"):null;
-                                }}
-                                require={true}
-                                register={register}
-                                errors={errors}
-                                // watch={watch('payTypeId')}
-                            />
+                            {data.action && data.action == "update" ? 
+                            (
+                                <InputWSelect
+                                    label={'metode pembayaran'}
+                                    name={"payment_method"}
+                                    selectLabel={"Pilih metode pembayaran"}
+                                    options={DataStatic.invPayMethod}
+                                    optionKeys={["id", "type"]}
+                                    value={(selected) => {
+                                        setPaymentType(selected);
+                                        setValue('payment_method', selected.value);
+                                        // selected.value == 'transfer' ? setValue('pay_amount', Number(totalCart).toString()) : '0';
+                                        // handlePaidAmount(selected.value);
+                                    }}
+                                    defaultValue={data.action == "update" && data.items.payment_method}
+                                    defaultValueKey={'type'}
+                                    require={true}
+                                    register={register}
+                                    errors={errors}
+                                    // watch={watch('payTypeId')}
+                                />
+                            ):(
+                                <InputWSelect
+                                    label={'metode pembayaran'}
+                                    name={"payment_method"}
+                                    selectLabel={"Pilih metode pembayaran"}
+                                    options={DataStatic.invPayMethod}
+                                    optionKeys={["id", "type"]}
+                                    value={(selected) => {
+                                        setPaymentType(selected);
+                                        // setValue('payTypeId', selected.id);
+                                        setValue('payment_method', selected.value);
+                                        selected.value == 'transfer' ? setValue('pay_amount', Number(totalCart).toString()) : setValue('pay_amount', '0');
+                                        // handlePaidAmount(selected.value);
+                                        // selected.value == 'cash' ? setValue('pay_amount_default', 0) : setValue('pay_amount_default', totalCart);
+                                       
+                                        // selected.value != "" ? clearErrors("payTypeId"):null;
+                                    }}
+                                    
+                                    require={true}
+                                    register={register}
+                                    errors={errors}
+                                    // watch={watch('payTypeId')}
+                                />
+                            )
+                            }
                             <Collapse in={getValues('payment_method') == "transfer"}>
                                 <div>
                                     <InputWLabel 
-                                        label="reference" 
+                                        label="referensi" 
                                         type="text"
                                         name="payment_ref" 
                                         placeholder="" 
@@ -368,14 +342,15 @@ export default function CreatePayment({show, onHide, totalCart, multiple, stack,
                     }
                   
                     <InputWLabel 
-                        label="note" 
+                        label="catatan" 
                         type="text"
                         name="note" 
                         placeholder="" 
                         register={register}
                         require={false}
                         errors={errors}
-                    />  
+                    /> 
+
                     {
                         source == 'order'  ? 
                         (
@@ -396,6 +371,7 @@ export default function CreatePayment({show, onHide, totalCart, multiple, stack,
                                             selected.value == 'transfer' ? setValue('paid_amount', totalCart) : '0';
                                             selected.value != "" ? clearErrors("payment_method"):null;
                                         }}
+                                        
                                         require={getValues('payment_type') !== "bayar nanti" ? true : false}
                                         register={register}
                                         errors={errors}
@@ -517,78 +493,59 @@ export default function CreatePayment({show, onHide, totalCart, multiple, stack,
                         paymentType && getValues('payment_method') ?
                         (
                         <>
-                        
-                        {/* <InputGroup
-                            label="paid amount"
-                            groupLabel="Rp"
-                            type="text"
-                            position="left"
-                            name="pay_amount"
-                            inputMode="numeric" 
-                            mask="currency"
-                            placeholder={"0"}
-                            defaultValue={watch('pay_amount_default')}
-                            returnValue={(value) => {
-                                setChange(value.origin >= totalCart ? Number(value.origin - totalCart) : 0);
-                                setValue("pay_amount", value.formatted);
-                                setValue("amountOrigin", value.origin);
-                            }}
-                            require={true}
-                            register={register}
-                            errors={errors}
-                            disabled={getValues('payment_method') == 'transfer' ? true : false}
-                        /> */}
                         <Controller
-                                control={control}
-                                name="pay_amount"
-                                rules={{validate:{
-                                    condition1: (value) => Number(value) != 0 || `Paid amount can't be 0`,
-                                    // condition2: (value, formValues) =>  formValues.amountOrigin >= totalCart || "Jumlah tidak cukup" 
-                                }, required: true}}
-                                render={({
-                                    field: {ref, name, onChange, value}, fieldState
-                                }) => (
-                                    <div>
-                                        <InputGroup
-                                            inputRef={ref}
-                                            label="paid amount"
-                                            groupLabel="Rp"
-                                            type="text"
-                                            // min={'0'}
-                                            // onChange={onChange}
-                                            position="left"
-                                            name={name}
-                                            inputMode="numeric" 
-                                            mask="currency"
-                                            value={value}
-                                            defaultValue={getValues('pay_amount')}
-                                            require={true}
-                                            // register={register}
-                                            // errors={errors}
-                                            placeholder={"0"}
-                                            returnValue={(value) => {
-                                                // console.log("value => ",value)
-                                                setChange(value.origin >= totalCart ? (value.origin - totalCart) : 0);
-                                                setValue("change", value.origin >= totalCart ? (value.origin - totalCart) : 0);
-                                                setValue("pay_amount", value.formatted);
-                                                setValue("amountOrigin", value.origin);
-                                            }}
-                                            disabled={getValues("payment_method") == "transfer" ? true : false}
-                                            
-                                        />
-                                        {fieldState.error && <span className="field-msg-invalid">{fieldState.error.message}</span>}
-                                    </div>
-                                )}
-                            />
+                            control={control}
+                            name="pay_amount"
+                            rules={{validate:{
+                                condition1: (value) => Number(value) != 0 || `Paid amount can't be 0`,
+                                // condition2: (value, formValues) =>  formValues.amountOrigin >= totalCart || "Jumlah tidak cukup" 
+                            }, required: true}}
+                            render={({
+                                field: {ref, name, onChange, value}, fieldState
+                            }) => (
+                                <div>
+                                    <InputGroup
+                                        inputRef={ref}
+                                        label="bayar"
+                                        groupLabel="Rp"
+                                        type="text"
+                                        // min={'0'}
+                                        // onChange={onChange}
+                                        position="left"
+                                        name={name}
+                                        inputMode="numeric" 
+                                        mask="currency"
+                                        value={value}
+                                        defaultValue={getValues('pay_amount')}
+                                        require={true}
+                                        // register={register}
+                                        // errors={errors}
+                                        placeholder={"0"}
+                                        returnValue={(value) => {
+                                            // console.log("value => ",value)
+                                            setChange(value.origin >= totalCart ? (value.origin - totalCart) : 0);
+                                            setValue("change", value.origin >= totalCart ? (value.origin - totalCart) : 0);
+                                            setValue("pay_amount", value.formatted);
+                                            setValue("amountOrigin", value.origin);
+                                        }}
+                                        
+                                        
+                                    />
+                                    {fieldState.error && <span className="field-msg-invalid">{fieldState.error.message}</span>}
+                                </div>
+                            )}
+                        />
                         </>
                         ):''
                     :''
                     }
 
+                    {data.action && data.action == "insert" ? 
+                    (
                     <Collapse in={getValues("payment_method") == "cash"}>
                         <div>
                             <label style={{marginRight: ".3rem"}}>
-                                change
+                                kembali
                             </label>
                             <label>
                                 <NumberFormat intlConfig={{
@@ -601,6 +558,8 @@ export default function CreatePayment({show, onHide, totalCart, multiple, stack,
                             </label>
                         </div>
                     </Collapse>
+                    ):''
+                    }
                         
                 </form>
             </Modal.Body>

@@ -1088,10 +1088,10 @@ export default function InvoiceModal({show, onHide, data}) {
                                 </div>
                             </div>
                             <button type="button" className="btn btn-success btn-w-icon mt-2" disabled={invDupe.items.is_paid ? true : false} 
-                                aria-label='addPaymentModal' onClick={(e) => handleModal(e, {id: invDupe.id, items: {...invDupe.items}})}
+                                aria-label='addPaymentModal' onClick={(e) => handleModal(e, {id: invDupe.id, action: 'insert', source:'invoice', items: {...invDupe.items}})}
                             >
                                 <i className='bx bx-plus'></i>
-                                Add payment
+                                Tambah pembayaran
                             </button> 
                         </div>
 

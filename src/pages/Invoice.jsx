@@ -122,7 +122,8 @@ export default function Invoice({handleSidebar, showSidebar}){
              case "addPaymentModal":
                 data = {
                     id: invData.id, 
-                    items: invData.items
+                    items: invData.items,
+                    action: 'insert'
                 }
                 setInvList(data);
                 setShowModal("addPaymentModal");
@@ -362,60 +363,67 @@ export default function Invoice({handleSidebar, showSidebar}){
             payment_method: paidData.payment_method,
         };
 
-        let invModel = {
-            remaining_payment: (invListObj.items.remaining_payment - paidData.amountOrigin) <= 0 ? 0 : (invListObj.items.remaining_payment - paidData.amountOrigin),
-            is_paid: (invListObj.items.remaining_payment - paidData.amountOrigin) <= 0 ? true : false
-        }
+        // let invModel = {
+        //     remaining_payment: (invListObj.items.remaining_payment - paidData.amountOrigin) <= 0 ? 0 : (invListObj.items.remaining_payment - paidData.amountOrigin),
+        //     is_paid: (invListObj.items.remaining_payment - paidData.amountOrigin) <= 0 ? true : false
+        // }
 
         // untuk update order_status
-        let getOrderIds = JSON.parse(invListObj.items.order_id);
-        let reqURL;
-        if(getOrderIds.length > 1){
-            reqURL = getOrderIds.join("&id=");
-        } else {
-            reqURL = getOrderIds[0];
-        }
+        // let getOrderIds = JSON.parse(invListObj.items.order_id);
+        // let reqURL;
+        // if(getOrderIds.length > 1){
+        //     reqURL = getOrderIds.join("&id=");
+        // } else {
+        //     reqURL = getOrderIds[0];
+        // }
 
         await axiosPrivate.post("/payment/write", JSON.stringify(paymentModel))
         .then(resp => {
             fetchDetailedCust(paymentModel.customer_id);
+            fetchAllInv();
+            fetchAllReceipt();
+            toast.current.show({
+                severity: "success",
+                summary: "Sukses",
+                detail: "SBerhasil menambahkan pembayaran",
+                life: 3000,
+            });
+            // axiosPrivate.patch("/inv/payment", JSON.stringify(invModel), { params: { id: invListObj.items.invoice_id } })
+            // .then(resp2 => {
+            //     const totalPaid = invListObj.items.payments.length > 0 ? invListObj.items.payments.reduce((prev, curr) => prev + Number(curr.amount_paid),0) : 0;
+            //     // if invoice paid then check order_type if not delivery then update order_status to completed
+            //     if(invModel.is_paid){
+            //         let receiptModel = {
+            //             customer_id: invListObj.items.customer_id,
+            //             invoice_id: invListObj.items.invoice_id,
+            //             total_payment: (totalPaid + paidData.amountOrigin),
+            //             change: paidData.change,
+            //             receipt_date: new Date()
+            //         }
 
-            axiosPrivate.patch("/inv/payment", JSON.stringify(invModel), { params: { id: invListObj.items.invoice_id } })
-            .then(resp2 => {
-                const totalPaid = invListObj.items.payments.length > 0 ? invListObj.items.payments.reduce((prev, curr) => prev + Number(curr.amount_paid),0) : 0;
-                // if invoice paid then check order_type if not delivery then update order_status to completed
-                if(invModel.is_paid){
-                    let receiptModel = {
-                        customer_id: invListObj.items.customer_id,
-                        invoice_id: invListObj.items.invoice_id,
-                        total_payment: (totalPaid + paidData.amountOrigin),
-                        change: paidData.change,
-                        receipt_date: new Date()
-                    }
+            //         fetchInsertreceipt(receiptModel, reqURL);
 
-                    fetchInsertreceipt(receiptModel, reqURL);
-
-                    fetchUpdateOrderStatus(reqURL);
-                } else {
-                    fetchAllInv();
-                    toast.current.show({
-                        severity: "success",
-                        summary: "Success",
-                        detail: "Successfully add payment",
-                        life: 3000,
-                    });
-                }
-            })
-            .catch(err2 => {
-                // undo inserted payment if invoice detail failed to update
-                fetchDeletePayment(resp.data.payment_id);
-                toast.current.show({
-                    severity: "error",
-                    summary: "Failed",
-                    detail: "Error when update invoice payment",
-                    life: 3000,
-                });
-            })
+            //         fetchUpdateOrderStatus(reqURL);
+            //     } else {
+            //         fetchAllInv();
+            //         toast.current.show({
+            //             severity: "success",
+            //             summary: "Success",
+            //             detail: "Successfully add payment",
+            //             life: 3000,
+            //         });
+            //     }
+            // })
+            // .catch(err2 => {
+            //     // undo inserted payment if invoice detail failed to update
+            //     fetchDeletePayment(resp.data.payment_id);
+            //     toast.current.show({
+            //         severity: "error",
+            //         summary: "Failed",
+            //         detail: "Error when update invoice payment",
+            //         life: 3000,
+            //     });
+            // })
         })
         .catch(err => {
             toast.current.show({

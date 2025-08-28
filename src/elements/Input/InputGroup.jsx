@@ -23,9 +23,6 @@ const InputGroup = forwardRef((props, ref) => {
             case "currency":
                 let pattern = new RegExp("[0-9]*");
                 let matchPattern = pattern.test(+val);
-                console.log(+val)
-                let tes1 = '1000';
-                console.log(tes1.replace(/[.,]/g,""))
                 if(matchPattern){
                     // if(Number(+val) >= 0 ){
                         // console.log(+val >= 0)
@@ -54,7 +51,7 @@ const InputGroup = forwardRef((props, ref) => {
                 break;
         }
     };
-    console.log(defaultValue)
+
     const onChangeInput = (e) => {
         let val = e.target.value;
 
@@ -85,7 +82,6 @@ const InputGroup = forwardRef((props, ref) => {
             } 
 
             returnValue && returnValue({origin: unformatted, formatted: newVal});
-            console.log({origin: unformatted, formatted: newVal})
             
         } else if(mask == "phone"){
              setVal(val.toString());
