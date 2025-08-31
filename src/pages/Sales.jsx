@@ -48,8 +48,8 @@ export default function Sales({handleSidebar, showSidebar}){
     const isMediumScr = useMediaQuery('(min-width: 768px) and (max-width: 1024px)');
     const toast = useRef(null);
     const toastUpload = useRef(null);
-    const mobileSearchInput = useRef(null);
     const [progress, setProgress] = useState(0);
+    const mobileSearchInput = useRef(null);
     const [mobileSearchMode, setMobileSearchMode] = useState(false);
     const [mobileFilterValue, setMobileFilterValue] = useState("");
     const [ isLoading, setLoading ] = useState(true);
@@ -423,77 +423,78 @@ export default function Sales({handleSidebar, showSidebar}){
     }
 
     const fetchInsertInv = async (body) => {
-        let bodyData = JSON.stringify(body);
+        let bodyData = JSON.stringify({invoiceData: body, paidData: paidData ? paidData : null});
         await axiosPrivate.post("/inv/write", bodyData)
         .then(resp => {
+            console.log(resp.data)
             toast.current.show({
                 severity: "success",
                 summary: "Success",
-                detail: "New invoice is created",
-                life: 3500,
+                detail: "Invoice baru telah terbit",
+                life: 1200,
             });
 
-            // update order table => add invoice id
-            let invoiceID = JSON.stringify({invoice_id: resp.data.invoice_id});
-            axiosPrivate.patch(`/sales/${currentOrder.order_id}`, invoiceID)
-                .then(updateResp => {
-                    toast.current.show({
-                        severity: "success",
-                        summary: "Success",
-                        detail: "Successfully update sales",
-                        life: 3500,
-                    });
+            // // update order table => add invoice id
+            // let invoiceID = JSON.stringify({invoice_id: resp.data.invoice_id});
+            // axiosPrivate.patch(`/sales/${currentOrder.order_id}`, invoiceID)
+            //     .then(updateResp => {
+            //         toast.current.show({
+            //             severity: "success",
+            //             summary: "Success",
+            //             detail: "Successfully update sales",
+            //             life: 3500,
+            //         });
 
-                    // payment manage
-                    if(resp.data.is_paid){
-                        if(paidData){
-                            let paymentModel = {
-                                customer_id: resp.data.customer_id,
-                                invoice_id: resp.data.invoice_id,
-                                payment_date: paidData.payment_date,
-                                amount_paid: paidData.amountOrigin,
-                                payment_method: paidData.payment_method,
-                                payment_ref: paidData.payment_ref,
-                                note: paidData.note 
-                            };
-                            fetchInsertPayment(paymentModel, true);
-                        } else {
-                            toast.current.show({
-                                severity: "error",
-                                summary: "Error",
-                                detail: "Payment error not found",
-                                life: 3500,
-                            });
-                        }
-                    } else {
-                        if(resp.data.payment_type == "sebagian"){
-                            let paymentModel = {
-                                customer_id: resp.data.customer_id,
-                                invoice_id: resp.data.invoice_id,
-                                payment_date: paidData.payment_date,
-                                amount_paid: paidData.amountOrigin,
-                                payment_method: paidData.payment_method,
-                                payment_ref: paidData.payment_ref,
-                                note: paidData.note 
-                            };
-                            fetchInsertPayment(paymentModel, false);
-                        } 
-                        else {
-                            setTimeout(() => {
-                                window.location.reload();
-                            },1700)
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.log(error)
-                    toast.current.show({
-                        severity: "error",
-                        summary: "Failed",
-                        detail: "Failed to update sales",
-                        life: 3500,
-                    });
-            })
+            //         // payment manage
+            //         if(resp.data.is_paid){
+            //             if(paidData){
+            //                 let paymentModel = {
+            //                     customer_id: resp.data.customer_id,
+            //                     invoice_id: resp.data.invoice_id,
+            //                     payment_date: paidData.payment_date,
+            //                     amount_paid: paidData.amountOrigin,
+            //                     payment_method: paidData.payment_method,
+            //                     payment_ref: paidData.payment_ref,
+            //                     note: paidData.note 
+            //                 };
+            //                 fetchInsertPayment(paymentModel, true);
+            //             } else {
+            //                 toast.current.show({
+            //                     severity: "error",
+            //                     summary: "Error",
+            //                     detail: "Payment error not found",
+            //                     life: 3500,
+            //                 });
+            //             }
+            //         } else {
+            //             if(resp.data.payment_type == "sebagian"){
+            //                 let paymentModel = {
+            //                     customer_id: resp.data.customer_id,
+            //                     invoice_id: resp.data.invoice_id,
+            //                     payment_date: paidData.payment_date,
+            //                     amount_paid: paidData.amountOrigin,
+            //                     payment_method: paidData.payment_method,
+            //                     payment_ref: paidData.payment_ref,
+            //                     note: paidData.note 
+            //                 };
+            //                 fetchInsertPayment(paymentModel, false);
+            //             } 
+            //             else {
+            //                 setTimeout(() => {
+            //                     window.location.reload();
+            //                 },1700)
+            //             }
+            //         }
+            //     })
+            //     .catch(error => {
+            //         console.log(error)
+            //         toast.current.show({
+            //             severity: "error",
+            //             summary: "Failed",
+            //             detail: "Failed to update sales",
+            //             life: 3500,
+            //         });
+            // })
         })
         .catch(error => {
             toast.current.show({
@@ -522,6 +523,7 @@ export default function Sales({handleSidebar, showSidebar}){
                         });
                         setShowModal("");
                         fetchAllSales();
+                        fetchAllRO();
                         // console.log(existInv.invData.customer_id)
                         fetchDetailedCust(currentOrder.customer_id);
                     }
@@ -565,6 +567,7 @@ export default function Sales({handleSidebar, showSidebar}){
                 setResetInputWSelect(true);
                 setValue('order_type', '');
                 setSalesItems([]);
+                setAddOrderItem(true);
 
                 // toast.current.show({
                 //     severity: "success",
@@ -573,7 +576,6 @@ export default function Sales({handleSidebar, showSidebar}){
                 //     life: 3500,
                 // });
                 // run to invoice
-                setAddOrderItem(true);
         })
         .catch(error => {
             setAddOrderItem(false);
@@ -660,75 +662,139 @@ export default function Sales({handleSidebar, showSidebar}){
     };
 
     const fetchInsertSales = async (body, deliveryModel) => {
-        let bodyData = JSON.stringify(body);
-        let deliveryBody;
+        ///////////////////////////////////////////////////////////////////
+
+        salesItems.map(e => {
+            e.discount_prod_rec = e.discount;
+        });
+        
+        let bodyData = JSON.stringify({
+            sales:body, 
+            order_items: salesItems, 
+            delivery: deliveryModel, 
+            paidData: paidData ? paidData : null
+        });
+        // let deliveryBody;
         await axiosPrivate.post("/sales/write", bodyData)
         .then(resp => {
+            console.log(resp.data)
             toast.current.show({
                 severity: "success",
                 summary: "Sukses",
                 detail: "Order baru berhasil dibuat",
                 life: 3500,
             });
-            // check if customer has order credit with order id null
-            axiosPrivate.get(`/orders-credit/available/${resp.data.customer_id}`)
-            .then(resp1 => {
-                if(resp1.data.length > 0){
-                    // update order credits => order id to current order id
-                    const order_credit_id = resp1.data[0].order_credit_id;
-                    const order_id = JSON.stringify({order_id: resp.data.order_id});
-                    axiosPrivate.patch(`/order-credit/${order_credit_id}`, order_id)
-                    .then(resp2 => {
-                        toast.current.show({
-                            severity: "success",
-                            summary: "Sukses",
-                            detail: "order kredit ditambahkan",
-                            life: 3500,
-                        });
-                        setCurrOrderCredit(resp1.data[0].return_order.refund_total);
-                    })
-                    .catch(err2 => {
-                        toast.current.show({
-                            severity: "error",
-                            summary: "Failed",
-                            detail: `Failed to update order credit`,
-                            life: 3000,
-                        });
-                    })
-                }
-            })
-            .catch(err1 => {
-                console.error('something error in order credit');
-            })
+            // // check if customer has order credit with order id null
+            // axiosPrivate.get(`/orders-credit/available/${resp.data.customer_id}`)
+            // .then(resp1 => {
+            //     if(resp1.data.length > 0){
+            //         // update order credits => order id to current order id
+            //         const order_credit_id = resp1.data[0].order_credit_id;
+            //         const order_id = JSON.stringify({order_id: resp.data.order_id});
+            //         axiosPrivate.patch(`/order-credit/${order_credit_id}`, order_id)
+            //         .then(resp2 => {
+            //             toast.current.show({
+            //                 severity: "success",
+            //                 summary: "Sukses",
+            //                 detail: "order kredit ditambahkan",
+            //                 life: 3500,
+            //             });
+                        
+            //         })
+            //         .catch(err2 => {
+            //             toast.current.show({
+            //                 severity: "error",
+            //                 summary: "Failed",
+            //                 detail: `Failed to update order credit`,
+            //                 life: 3000,
+            //             });
+            //         })
+            //     }
+            // })
+            // .catch(err1 => {
+            //     console.error('something error in order credit');
+            // })
 
-            salesItems.map(e => {
-                e.order_id = resp.data.order_id;
-                e.discount_prod_rec = e.discount;
-            });
+            // salesItems.map(e => {
+            //     e.order_id = resp.data.order_id;
+            //     e.discount_prod_rec = e.discount;
+            // });
 
-            if(resp.data.order_type == 'delivery' && deliveryModel.courier_id !== "" || deliveryModel.courier_id){
-                let delivery = {
-                    order_id: resp.data.order_id,
-                    courier_id: deliveryModel.courier_id,
-                    courier_name: deliveryModel.courier_name,
-                    delivery_address: deliveryModel.delivery_address,
-                    ship_date: deliveryModel.ship_date
-                }
-                deliveryBody = JSON.stringify(delivery);
-            } 
+            // if(resp.data.order_type == 'delivery' && deliveryModel.courier_id !== "" || deliveryModel.courier_id){
+            //     let delivery = {
+            //         order_id: resp.data.order_id,
+            //         courier_id: deliveryModel.courier_id,
+            //         courier_name: deliveryModel.courier_name,
+            //         delivery_address: deliveryModel.delivery_address,
+            //         ship_date: deliveryModel.ship_date
+            //     }
+            //     deliveryBody = JSON.stringify(delivery);
+            // } 
+            if(resp.data.order_credit.length > 0) setCurrOrderCredit(resp.data.order_credit[0].return_order.refund_total);
 
-            setCurrentOrder(resp.data);
-            setDiscVal(Number(resp.data.order_discount));
+            setCurrentOrder(resp.data.order);
+            setDiscVal(Number(resp.data.order.order_discount));
             // updateTotalSalesCust(resp.data);
-            fetchDetailedCust(resp.data.customer_id);
-            return fetchInsertMultipleOrderItem(resp.data.order_id, salesItems);            
-        })
-        .then(orderItemResp => {
-            if(deliveryBody){
-                fetchCreateDelivery(deliveryBody);
+            reset();
+            setResetInputWSelect(true);
+            setValue('order_type', '');
+            setSalesItems([]);
+            // setAddOrderItem(true);
+            if(resp.data.checkInv){
+                axiosPrivate.get("/inv/check", { params: { custid:  resp.data.order.customer_id,  ispaid: false, type: "bayar nanti"} })
+                .then(resp2 => {
+                    if(resp2.data && resp2.data.length > 0){
+                        let orderId = JSON.parse(resp2.data[0].order_id);
+                        let newOrderId = [...orderId, resp.data.order.order_id];
+                        let totalPayment = 0;
+    
+                        if(resp2.data[0].payments && resp2.data[0].payments.length > 0){
+                            totalPayment = resp2.data[0].payments.reduce((prev, curr) => prev + Number(curr.amount_paid), 0);
+                        }
+    
+                        let modelInv = {
+                            order_id: JSON.stringify(newOrderId),
+                            subtotal: Number(resp2.data[0].subtotal) + Number(data.subtotal),
+                            amount_due: Number(resp2.data[0].amount_due) + Number(data.grandtotal) + (currOrderCredit ? Number(currOrderCredit): 0),
+                            total_discount: Number(resp2.data[0].total_discount) + Number(discVal),
+                            // remaining_payment: Number(resp.data[0].remaining_payment) + Number(data.grandtotal),
+                            remaining_payment: (Number(resp2.data[0].remaining_payment) + Number(data.grandtotal) + (currOrderCredit ? Number(currOrderCredit): 0)) - totalPayment,
+                        };
+                        setExistInv({invId: resp2.data[0].invoice_id, invData: modelInv});
+                        setSalesList({endpoint: 'inv', action: 'warning', items: {...resp2.data[0]}});
+                        setShowModal("existInvOrderModal");
+                    } 
+                })  
+                .catch(err => {
+                    toast.current.show({
+                        severity: "error",
+                        summary: "Failed",
+                        detail: `Failed to check invoice`,
+                        life: 3000,
+                    });
+                })
+            } else {
+                fetchAllSales();
+                fetchAllRO();
+                fetchDetailedCust(resp.data.customer_id);
             }
 
+            if(resp.data.delivery){
+                toast.current.show({
+                    severity: "success",
+                    summary: "Success",
+                    detail: "Delivery created",
+                    life: 3500,
+                });
+            }
+            // return fetchInsertMultipleOrderItem(resp.data.order_id, salesItems);            
         })
+        // .then(orderItemResp => {
+        //     if(deliveryBody){
+        //         fetchCreateDelivery(deliveryBody);
+        //     }
+
+        // })
         .catch(error => {
             toast.current.show({
                 severity: "error",
@@ -818,7 +884,7 @@ export default function Sales({handleSidebar, showSidebar}){
 
     const runAddInvoice = () => {
         let data = {...currentOrder};
-        console.log("masuk")
+
         let modelInv = {
             customer_id: data.customer_id,
             order_id: JSON.stringify([data.order_id]),
@@ -846,16 +912,22 @@ export default function Sales({handleSidebar, showSidebar}){
             // check if there is an invoice with same customer ID and payment type and is_paid false
             axiosPrivate.get("/inv/check", { params: { custid:  data.customer_id,  ispaid: false, type: "bayar nanti"} })
             .then(resp => {
-                console.log(resp.data)
                 if(resp.data && resp.data.length > 0){
                     let orderId = JSON.parse(resp.data[0].order_id);
                     let newOrderId = [...orderId, data.order_id];
+                    let totalPayment = 0;
+
+                    if(resp.data[0].payments && resp.data[0].payments.length > 0){
+                        totalPayment = resp.data[0].payments.reduce((prev, curr) => prev + Number(curr.amount_paid), 0);
+                    }
+
                     let modelInv = {
                         order_id: JSON.stringify(newOrderId),
                         subtotal: Number(resp.data[0].subtotal) + Number(data.subtotal),
-                        amount_due: Number(resp.data[0].amount_due) + Number(data.grandtotal),
+                        amount_due: Number(resp.data[0].amount_due) + Number(data.grandtotal) + (currOrderCredit ? Number(currOrderCredit): 0),
                         total_discount: Number(resp.data[0].total_discount) + Number(discVal),
-                        remaining_payment: Number(resp.data[0].remaining_payment) + Number(data.grandtotal),
+                        // remaining_payment: Number(resp.data[0].remaining_payment) + Number(data.grandtotal),
+                        remaining_payment: (Number(resp.data[0].remaining_payment) + Number(data.grandtotal) + (currOrderCredit ? Number(currOrderCredit): 0)) - totalPayment,
                     };
                     setExistInv({invId: resp.data[0].invoice_id, invData: modelInv});
                     setSalesList({endpoint: 'inv', action: 'warning', items: {...resp.data[0]}});
@@ -959,6 +1031,10 @@ export default function Sales({handleSidebar, showSidebar}){
                 setShowModal("addDiscount");
                 break;
             case 'createPayment':
+                let data = {
+                    action: 'insert'
+                }
+                setSalesList(data);
                 setShowModal("createPayment");
                 break;
             case 'returnOrderModal':
@@ -1303,7 +1379,6 @@ export default function Sales({handleSidebar, showSidebar}){
                     ship_date: formData.ship_date,
                     delivery_address: formData.delivery_address,
                 }
-
 
                 if(e.order_type == "walk-in"){
                     forming.shipped_date = formData.order_date;
@@ -1996,7 +2071,7 @@ export default function Sales({handleSidebar, showSidebar}){
                         >
                             {
                                 rowData.order_type
-                            }                                                                                
+                            }                                                                               
                         </span>
                         <span className={`badge badge-${
                             rowData.order_status == "completed" ? 'success'
@@ -3447,13 +3522,13 @@ export default function Sales({handleSidebar, showSidebar}){
                                                                                 <div key={`product-${e.product_id}`} className="res-item" onClick={() => 
                                                                                     
                                                                                     handleChooseProd({ 
-                                                                                    product_id: e.product_id, 
-                                                                                    product_name: e.product_name, 
-                                                                                    variant: e.variant, 
-                                                                                    img:e.img, 
-                                                                                    product_cost: e.product_cost , 
-                                                                                    sell_price: e.sell_price,
-                                                                                    discount: e.discount
+                                                                                        product_id: e.product_id, 
+                                                                                        product_name: e.product_name, 
+                                                                                        variant: e.variant, 
+                                                                                        img:e.img, 
+                                                                                        product_cost: e.product_cost , 
+                                                                                        sell_price: e.sell_price,
+                                                                                        discount: e.discount
                                                                                 })}
                                                                                 >{e. variant !== "" ? e.product_name + " " + e.variant : e.product_name}</div>
                                                                             )
@@ -4485,6 +4560,7 @@ export default function Sales({handleSidebar, showSidebar}){
                         show={showModal === "createPayment" ? true : false} 
                         onHide={handleCloseModal} 
                         source={'order'}
+                        data={salesListObj}
                         totalCart={showModal === "createPayment" && salesEndNote ? salesEndNote.grandtotal : ""} 
                         returnValue={(paymentData) => {setPaidData(paymentData)}} 
                     />

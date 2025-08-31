@@ -39,14 +39,14 @@ export default function CreatePayment({show, onHide, totalCart, multiple, stack,
         formState: { errors },
     } = useForm({
         defaultValues: {
-            payment_date: data.action && data.action == "insert" ? new Date() : new Date(data.items.payment_date),
+            payment_date: data.action == "insert" ? new Date() : new Date(data.items.payment_date) ,
             payment_method: '',
             paid_amount: '0',
             partial_amount: '0',
             amountOrigin: 0,
-            payment_ref: data.action && data.action == "update" ? data.items.ref : '',
-            note: data.action && data.action == "update" ? data.items.note : '',
-            pay_amount: data.action && data.action == "update" ? Number(data.items.amount_paid) : totalCart,
+            payment_ref: data.action == "update" ? data.items.ref : '' ,
+            note: data.action == "update" ? data.items.note : '' ,
+            pay_amount: data.action == "update" ? Number(data.items.amount_paid) : totalCart,
         }
     });
 
@@ -214,9 +214,10 @@ export default function CreatePayment({show, onHide, totalCart, multiple, stack,
         <Modal size='md' show={show} onHide={onHide} scrollable={true} centered={true}>
             <Modal.Header closeButton>
                 <Modal.Title>{
-                data.action && data.action == "insert" ? 'Tambah' 
+                data.action ? 
+                data.action == "insert" ? 'Tambah' 
                 : data.action == "update" ? 'Ubah'
-                : 'Buat'
+                : 'Tambah'  : 'Tambah'
             } pembayaran</Modal.Title>
             </Modal.Header>
             <Modal.Body style={{maxHeight: '600px', overflowY: getValues('payment_method') ? 'auto' : 'unset'}}>
@@ -401,7 +402,7 @@ export default function CreatePayment({show, onHide, totalCart, multiple, stack,
                                             name="partial_amount"
                                             rules={{validate:{
                                                 condition1: (value) => value != "0" || `Paid amount can't be 0`,
-                                                condition2: (value, formValues) =>  Number(formValues.amountOrigin) <= totalCart || "Change payment type for this amount"
+                                                condition2: (value, formValues) =>  Number(formValues.amountOrigin) < totalCart || "Change payment type for this amount"
                                             }, required: true}}
                                             render={({
                                                 field: {ref, name, onChange, value}, fieldState
@@ -428,7 +429,6 @@ export default function CreatePayment({show, onHide, totalCart, multiple, stack,
                                                             setValue("partial_amount", value.formatted);
                                                             setValue("amountOrigin", value.origin);
                                                         }}
-                                                        disabled={getValues("payment_method") == "transfer" ? true : false}
                                                         
                                                     />
                                                     {fieldState.error && <span className="field-msg-invalid">{fieldState.error.message}</span>}
@@ -540,7 +540,7 @@ export default function CreatePayment({show, onHide, totalCart, multiple, stack,
                     :''
                     }
 
-                    {data.action && data.action == "insert" ? 
+                    {!data.action || data.action !== "update" ? 
                     (
                     <Collapse in={getValues("payment_method") == "cash"}>
                         <div>

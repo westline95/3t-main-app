@@ -899,7 +899,7 @@ export default function ReceiptModal({show, onHide, data}) {
                                 <PDFDownloadLink style={{textDecoration: 'none', color: '#ffffff'}} 
                                     document={<ReceiptDoc data={{invoice: data.items.invoice, receipt: data.items, order: salesList, payment: paymentData, ro: roList}} />} 
                                     fileName={`${(data.items.receipt_id).toUpperCase()} - ${capitalizeEveryWord(data.items.customer?.name)}.pdf`}>
-                                    {({ loading }) => (loading ? 'Loading...' : 'Download PDF')}
+                                    {({ loading }) => (loading ? 'Loading...' : 'Download Receipt')}
                                 </PDFDownloadLink>
                             </button>
                             <div className='inline-group-btn' style={{display: 'inline-flex', gap: '.7rem'}}>

@@ -395,7 +395,6 @@ export default function EditInv({ show, onHide, data }){
     }
 
     const onSubmit = (formData) => {
-        console.log(formData)
         if(choosedOrderId.length > 0){
             let modelInv = {
                 customer_id: formData.customer_id,

@@ -785,7 +785,7 @@ export default function InvoiceModal({show, onHide, data}) {
                                                     <td className="each-total-title" style={{textAlign:'right'}}>total</td>
                                                     <td className="each-total-text">
                                                         <NumberFormat intlConfig={{
-                                                            value: Number(sales.grandtotal) + (sales.orders_credit ? (Number(sales.orders_credit.return_order.refund_total)):0) - (sales.return_order ? (Number(sales.return_order.refund_total)):0),
+                                                            value: Number(sales.grandtotal) - (sales.orders_credit ? (Number(sales.orders_credit.return_order.refund_total)):0) - (sales.return_order ? (Number(sales.return_order.refund_total)):0),
                                                             locale: "id-ID",
                                                             style: "currency", 
                                                             currency: "IDR",
@@ -1102,7 +1102,7 @@ export default function InvoiceModal({show, onHide, data}) {
                                 <PDFDownloadLink style={{textDecoration: 'none', color: '#ffffff'}} 
                                     document={<InvoiceDoc data={{invoice: invDupe.items, order: salesList, payment: paymentData, ro: roList}} />} 
                                     fileName={`${(invDupe.items.invoice_number).toUpperCase()} - ${capitalizeEveryWord(invDupe.items.customer?.name)}.pdf`}>
-                                    {({ loading }) => (loading ? 'Loading...' : 'Download PDF')}
+                                    {({ loading }) => (loading ? 'Loading...' : 'Download Invoice')}
                                 </PDFDownloadLink>
                             </button>
                             {
@@ -1112,7 +1112,7 @@ export default function InvoiceModal({show, onHide, data}) {
                                         <i className='bx bxs-receipt'></i>
                                         <PDFDownloadLink style={{textDecoration: 'none', color: '#262626'}} 
                                             document={<ReceiptDoc data={{invoice: invDupe.items, receipt: invDupe.items.receipt, order: salesList, payment: paymentData}} />} 
-                                            fileName={`${(invDupe.items.invoice_number).toUpperCase()} - ${capitalizeEveryWord(invDupe.items.customer?.name)}.pdf`}>
+                                            fileName={`${(invDupe.items.receipt.receipt_id).toUpperCase()} - ${capitalizeEveryWord(invDupe.items.customer?.name)}.pdf`}>
                                             {({ loading }) => (loading ? 'Loading...' : 'Download Receipt')}
                                         </PDFDownloadLink>
                                     </button>

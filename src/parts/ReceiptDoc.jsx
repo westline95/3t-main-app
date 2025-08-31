@@ -970,12 +970,12 @@ export default function ReceiptDoc({data, ref}) {
                     </View>
                     <View style={{display: 'flex', flexDirection:'row', gap:'64px'}}>
                         <View style={receiptStyle.headerInfo}>
-                            <Text style={receiptStyle.infoLabel}>Nomor invoice</Text>
-                            <Text style={{...receiptStyle.infoText, textTransform: 'uppercase'}}>{`#${data.invoice?.invoice_number}`}</Text>
+                            <Text style={receiptStyle.infoLabel}>Nomor receipt</Text>
+                            <Text style={receiptStyle.infoText}>{data.receipt.receipt_id}</Text>
                         </View>
                         <View style={receiptStyle.headerInfo}>
-                            <Text style={receiptStyle.infoLabel}>Jatuh Tempo</Text>
-                            <Text style={receiptStyle.infoText}>{ConvertDate.convertToBeautyDate(data.invoice?.invoice_due)}</Text>
+                            <Text style={receiptStyle.infoLabel}>Nomor invoice</Text>
+                            <Text style={{...receiptStyle.infoText, textTransform: 'uppercase'}}>{`#${data.invoice?.invoice_number}`}</Text>
                         </View>
                     </View>
                 </View>
@@ -1121,7 +1121,7 @@ export default function ReceiptDoc({data, ref}) {
                                                         </View>
                                                     </View>
                                                     <View style={{...invoiceStyle.tr, width: '14.9%',}}>
-                                                        <Text>{roItem.return_value}</Text>
+                                                        <Text>{formatedNumber.format(roItem.return_value)}</Text>
                                                     </View>
                                                 </View>
                                                 </>

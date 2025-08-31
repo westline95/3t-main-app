@@ -159,13 +159,13 @@ export default function AddCategoryModal({ show, onHide, categoryList }) {
                     <Row className="gy-4">
                         <Col lg={12} md={12} sm={12}>
                             <div className="add-prod-img-wrap" style={{textAlign:'center'}}>
-                                <label className="mb-1" htmlFor="name" >foto kategori</label>
+                                <label className="mb-1" htmlFor="name">foto kategori</label>
                                 <DropzoneFile
                                     name={"img"}
                                     register={register}
                                     require={false}
                                     errors={errors}
-                                    style={{position:'relative', left:'27%'}}
+                                    // style={{position:'relative', left:'27%'}}
                                 />
                             </div>
                         </Col>

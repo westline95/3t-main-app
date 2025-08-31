@@ -685,7 +685,7 @@ export default function Customers({handleSidebar, showSidebar}) {
   // list setting
   const itemTemplate = (rowData, index) => {
     return (
-      <div className="col-12" key={rowData.id} style={{position:'relative'}}>
+      <div className="col-12" key={index} style={{position:'relative'}}>
         <div className={classNames('flex flex-column xl:align-items-start gap-3')} 
           style={{
             backgroundColor: '#F8F9FD',
@@ -803,8 +803,8 @@ export default function Customers({handleSidebar, showSidebar}) {
   const listTemplate = (items) => {
     if (!items || items.length === 0) return null;
 
-    let list = items.map((product, index) => {
-        return itemTemplate(product, index);
+    let list = items.map((customer, index) => {
+        return itemTemplate(customer, index);
     });
 
     return (

@@ -585,7 +585,7 @@ export default function InvoiceDoc({data, ref}) {
                                                         </View>
                                                     </View>
                                                     <View style={{...invoiceStyle.tr, width: '14.9%',}}>
-                                                        <Text>{roItem.return_value}</Text>
+                                                        <Text>{formatedNumber.format(roItem.return_value)}</Text>
                                                     </View>
                                                 </View>
                                                 </>

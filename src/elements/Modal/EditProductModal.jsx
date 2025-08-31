@@ -9,8 +9,12 @@ import useAxiosPrivate from '../../hooks/useAxiosPrivate';
 import dataStatic from '../../assets/js/dataStatic';
 import InputGroup from '../Input/InputGroup';
 import { ProgressBar } from 'primereact/progressbar';
+import useMediaQuery from '../../hooks/useMediaQuery';
 
 export default function EditProductModal({show, onHide, data}) {
+    const isMobile = useMediaQuery('(max-width: 768px)');
+    const isMediumScr = useMediaQuery('(min-width: 768px) and (max-width: 1024px)');
+
     const axiosPrivate = useAxiosPrivate();
 
     const toast = useRef(null);
@@ -53,7 +57,6 @@ export default function EditProductModal({show, onHide, data}) {
                     };
                     categories.push(category);
                 })
-                console.log(categories)
                 setCategory(categories);
             } else {
                 setCategory(null);
@@ -173,7 +176,6 @@ export default function EditProductModal({show, onHide, data}) {
     
     useEffect(() => {
         if(category){
-            console.log(category)
             setIsLoading(false);
         }
     }, [category]);
@@ -189,7 +191,7 @@ export default function EditProductModal({show, onHide, data}) {
             show={show}
             onHide={() => {
             onHide();
-            handleCancel();
+            // handleCancel();
             }}
             scrollable={true}
             centered={true}
@@ -199,7 +201,7 @@ export default function EditProductModal({show, onHide, data}) {
             </Modal.Header>
             <Modal.Body>
                 <form>
-                    <div className="add-prod-area mt-2" style={{gap: '3.5rem', height: 'auto'}}>
+                    <div className="add-prod-area mt-2" style={{gap: !isMobile && !isMediumScr ? '3.5rem' : '2rem', height: 'auto'}}>
                         <div className="add-prod-img-wrap">
                             <label className="mb-1" htmlFor="cust-image">foto produk</label>
                             <DropzoneFile
@@ -261,7 +263,7 @@ export default function EditProductModal({show, onHide, data}) {
                                         optionKeys={["id", "category_name"]}
                                         defaultValue={getValues("category_name")}
                                         defaultValueKey={"category_name"}
-                                        value={(selected) => {setValue("category_name", selected.value);console.log(selected);setValue("category_id", selected.id);getValues("category_name") !== "" && clearErrors('category_name')}}
+                                        value={(selected) => {setValue("category_name", selected.value);setValue("category_id", selected.id);getValues("category_name") !== "" && clearErrors('category_name')}}
                                         width={"100%"}
                                         register={register}
                                         require={true}

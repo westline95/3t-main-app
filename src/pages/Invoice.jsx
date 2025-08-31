@@ -939,7 +939,7 @@ export default function Invoice({handleSidebar, showSidebar}){
                 operator: FilterOperator.AND,
                 constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
             },
-            invoice_id: {
+            'invoice.invoice_number': {
                 operator: FilterOperator.AND,
                 constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
             },
@@ -2030,7 +2030,7 @@ export default function Invoice({handleSidebar, showSidebar}){
                                                 size="normal"
                                                 removableSort
                                                 // stripedRows
-                                                selectionMode={"checkbox"}
+                                                // selectionMode={"checkbox"}
                                                 // selection={selectedInvoice}
                                                 // onSelectionChange={(e) => {
                                                 //     setSelected(e.value);
@@ -2041,7 +2041,7 @@ export default function Invoice({handleSidebar, showSidebar}){
                                                 filterDisplay='menu'
                                                 globalFilterFields={[
                                                     "receipt_id",
-                                                    "invoice_id",
+                                                    "invoice.invoice_number",
                                                     "receipt_date",
                                                     "customer.name",
                                                     "customer_id",
@@ -2055,11 +2055,6 @@ export default function Invoice({handleSidebar, showSidebar}){
                                                 totalRecords={receiptTotalRecords}
                                                 rows={50}
                                             >
-                                            <Column
-                                                key={1}
-                                                selectionMode="multiple"
-                                                headerStyle={{ width: "3.5rem" }}
-                                            ></Column>
                                             <Column
                                                 key={2}
                                                 field="receipt_id"

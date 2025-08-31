@@ -174,7 +174,6 @@ export default function EditCategoryModal({ show, onHide, categoryList, data }) 
                                     register={register}
                                     require={false}
                                     errors={errors}
-                                    style={{position:'relative', left:'27%'}}
                                     defaultValue={getValues('img')}
                                 />
                             </div>

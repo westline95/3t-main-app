@@ -760,24 +760,6 @@ export default function ReturnOrderModal({ show, onHide }){
        return(
         <>
             <p key={options.rowIndex}>{rowData.reason}</p>
-        {/* <InputWSelect
-            // label={'alasan pengembalian'}
-            name="reason"
-            position={choosedRowItem.length - 1 > 1 ? row.rowIndex == choosedRowItem.length - 1 ? "top" : "bottom" : "bottom"}
-            selectLabel="Pilih alasan pengembalian"
-            options={dataStatic.returnReasonList}
-            optionKeys={["id", "type"]}
-            value={(selected) => {
-                setValue('reason', selected.value);
-                selected.value != "" ? clearErrors("reason") : null;
-            }}
-            require={false}
-            register={register}
-            errors={errors}
-        /> */}
-        {/* <ListBox value={selectedOpt} onChange={(e) => setSelectedOpt(e.value)} options={dataStatic.returnReasonList} optionLabel="type" className="w-full md:w-14rem" /> */}
-        {/* <Dropdown value={selectedOpt} onChange={(e) => setSelectedOpt(e.value)} options={dataStatic.returnReasonList} optionLabel="type" 
-        placeholder="Pilih alasan pengembalian" className="w-full md:w-7rem" style={{textTransform: 'capitalize', zIndex: 999999999999}} /> */}
         
         </>
        )

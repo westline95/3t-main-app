@@ -40,14 +40,22 @@ import EditProduct from '../elements/Modal/EditProductModal.jsx';
 import EditProductModal from '../elements/Modal/EditProductModal.jsx';
 import AddCategoryModal from '../elements/Modal/AddCategoryModal.jsx';
 import EditCategoryModal from '../elements/Modal/EditCategoryModal.jsx';
+import useMediaQuery from '../hooks/useMediaQuery.js';
+import { DataView } from 'primereact/dataview';
 
 export default function Categories({handleSidebar, showSidebar}){
-    const axiosPrivate = useAxiosPrivate();
+    const isMobile = useMediaQuery('(max-width: 768px)');
+    const isMediumScr = useMediaQuery('(min-width: 768px) and (max-width: 1024px)');
 
+    const axiosPrivate = useAxiosPrivate();
     const toast = useRef(null);
     const toastUpload = useRef(null);
+    const mobileSearchInput = useRef(null);
+
     const [progress, setProgress] = useState(0);
     const [ isLoading, setLoading ] = useState(true);
+    const [mobileSearchMode, setMobileSearchMode] = useState(false);
+    const [mobileFilterValue, setMobileFilterValue] = useState("");
     const [ isClicked, setClicked ] = useState(false);
     const [ isClickedProd, setClickedProd ] = useState(false);
     const [ isClose, setClose ] = useState(false);
@@ -1011,7 +1019,120 @@ export default function Categories({handleSidebar, showSidebar}){
             <p style={{marginBottom: ".3rem"}}>No result found</p>
         </div>
         )
+    };
+
+    const mobileFilterFunc = (e) => {
+        setMobileFilterValue(e.target.value);
+        e.target.value == "" ? setMobileSearchMode(false):setMobileSearchMode(true)
     }
+
+    const itemTemplate = (rowData, index) => {
+        return (
+        <div className="col-12" key={rowData.category_id} style={{position:'relative'}}>
+            <div className='flex flex-column xl:align-items-start gap-2 static-shadow'
+                style={{
+                    backgroundColor: '#F8F9FD',
+                    padding: '1rem',
+                    boxShadow: '1px 1px 7px #9a9acc1a',
+                    borderRadius: '9px',
+                    position:'relative'
+                }}
+                aria-label="editCategoryModal"
+                onClick={(e) => {
+                    handleModal(e, {
+                        endpoint: "category",
+                        id: rowData.category_id,
+                        action: "update",
+                        ...rowData,
+                    });
+                }}
+            >
+            <div className="flex align-items-center gap-3" 
+                style={{
+                    textTransform: 'capitalize', 
+                }}
+            >
+                <span className="user-img" style={{marginRight: 0}}>
+                    <img
+                        src={
+                        rowData.img ? rowData.img
+                            : `https://res.cloudinary.com/du3qbxrmb/image/upload/v1751378806/no-img_u5jpuh.jpg`
+                        }
+                        alt=""
+                    />
+                </span>
+                <div style={{width: '80%'}}>
+                    <p style={{marginBottom: 0, fontSize: 15, fontWeight: 600}}>{rowData.category_name}</p>
+                </div>
+            </div>
+            </div>
+            <Dropdown drop={index == categoryList.length - 1 ? "up" : "down"}  style={{position: 'absolute', top: 10, right: 9, padding: '1rem 1rem .5rem 1rem'}}>
+                <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components" ></Dropdown.Toggle>
+                <Dropdown.Menu align={"end"}>
+                    <Dropdown.Item eventKey="1" as="button" 
+                        aria-label="confirmDelCategory"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleModal(e, {
+                                endpoint: "category",
+                                id: rowData.category_id,
+                                action: "delete",
+                            })
+                        }}
+                    >
+                        <i className='bx bx-trash'></i> Hapus kategori
+                    </Dropdown.Item>
+                </Dropdown.Menu>
+            </Dropdown>
+        </div>
+        );
+    };
+
+    const listTemplate = (items) => {
+        if (!items || items.length === 0) return null;
+
+        let list = items.map((category, index) => {
+            return itemTemplate(category, index);
+        });
+
+        return (
+        <>
+        <div className="flex flex-column gap-2" style={{ width: "100%" }}>
+            <div className="flex gap-3 align-items-center mb-4" style={{ width: "100%" }}>
+                <div className="input-group-right" style={{ width: "100%" }}>
+                    {mobileSearchMode ?
+                    (
+                    <span className="input-group-icon input-icon-right" 
+                        onClick={() => {
+                            setMobileFilterValue('');
+                            setMobileSearchMode(false);
+                            mobileSearchInput.current.focus();
+                        }}
+                    >
+                        <i className='bx bx-x'></i>
+                    </span>
+                    ):(
+                    <span className="input-group-icon input-icon-right">
+                        <i className="zwicon-search"></i>
+                    </span>
+                    )
+                    }
+                    <input
+                        ref={mobileSearchInput}
+                        type="text"
+                        className="form-control input-w-icon-right"
+                        value={mobileFilterValue}
+                        onChange={mobileFilterFunc}
+                        placeholder="Keyword Search"
+                        // onKeyDown={() => setMobileSearchMode(true)}
+                    />
+                </div>
+            </div>
+        </div>
+        <div className="grid gap-1">{list}</div>
+        </>
+        );
+    };
 
     useEffect(() => {
         initFilters();
@@ -1106,6 +1227,8 @@ export default function Categories({handleSidebar, showSidebar}){
                                                 value={(selected) => setProdTypeFilter(selected)}
                                             />
                                         </div> */}
+                                        {!isMobile && !isMediumScr ? 
+                                        (
                                         <div className="mt-4">
                                             <DataTable
                                                 className="p-datatable"
@@ -1149,6 +1272,69 @@ export default function Categories({handleSidebar, showSidebar}){
                                             ></Column>
                                             </DataTable>
                                         </div>
+                                        ):(
+                                            <>
+                                            <div
+                                                className="wrapping-table-btn flex flex-end gap-3"
+                                                style={{ width: "100%", height: "inherit"}}
+                                            >
+                                                {/* <button
+                                                    type="button"
+                                                    className="btn btn-light light"
+                                                    style={{ height: "100%" }}
+                                                >
+                                                    <i className="bx bx-printer"></i>
+                                                </button> */}
+                                                <Dropdown drop={"down"}>
+                                                    <Dropdown.Toggle variant="primary" style={{ height: "100%" }}>
+                                                        <i className="bx bx-download"></i> export
+                                                    </Dropdown.Toggle>
+                                                    <Dropdown.Menu align={"end"}>
+                                                        <Dropdown.Item
+                                                        eventKey="1"
+                                                        as="button"
+                                                        aria-label="viewInvModal"
+                                                        onClick={(e) =>
+                                                            handleModal(e, { id: inv.invoice_id, items: { ...inv } })
+                                                        }
+                                                        >
+                                                        <i className="bx bx-show"></i> PDF (.pdf)
+                                                        </Dropdown.Item>
+                                                        <Dropdown.Item
+                                                        eventKey="1"
+                                                        as="button"
+                                                        aria-label="editInvModal"
+                                                        onClick={(e) => handleModal(e, inv.invoice_id)}
+                                                        >
+                                                        <i className="bx bxs-edit"></i> Microsoft Excel (.xlsx)
+                                                        </Dropdown.Item>
+                                                    </Dropdown.Menu>
+                                                </Dropdown>
+                                                <button
+                                                    type="button"
+                                                    className=" btn btn-primary btn-w-icon"
+                                                    style={{ height: "100%" }}
+                                                >
+                                                    <i className="bx bxs-file-plus"></i> import
+                                                </button>
+                                                <button type="button" className="add-btn btn btn-primary btn-w-icon" 
+                                                    aria-label="addCategoryModal"
+                                                    onClick={(e) =>
+                                                        handleModal(e, {
+                                                            endpoint: "category",
+                                                            action: "insert",
+                                                        })
+                                                    }
+                                                >
+                                                    <i className="bx bx-plus"></i>
+                                                    kategori
+                                                </button>
+                                            </div>
+                                            <DataView value={categoryList} listTemplate={listTemplate} style={{marginTop: '.5rem'}} />         
+                                            </>
+                                        )}
+                                       
+
                                         {/* <div className="table-responsive mt-4">
                                             <table className="table" id="advancedTablesWFixedHeader" data-table-search="true"
                                                 data-table-sort="true" data-table-checkbox="true">

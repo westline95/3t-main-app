@@ -292,6 +292,7 @@ export default function CreateInv({ show, onHide, returnAct }){
 
             let totalPaymentInvNull = 0;
             let paymentIDs = [];
+            
             await axiosPrivate.get(`/payment/cust/nullish?custid=${formData.customer_id}`)
             .then(resp => {
                 if(resp.data){
