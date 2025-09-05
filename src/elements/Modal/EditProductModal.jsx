@@ -22,7 +22,7 @@ export default function EditProductModal({show, onHide, data}) {
     const [progress, setProgress] = useState(0);
     const [ isLoading, setIsLoading ] = useState(true);
     const [ category, setCategory ] = useState(null);
-
+    console.log(data)
     const {
         register,
         setError,
@@ -36,12 +36,12 @@ export default function EditProductModal({show, onHide, data}) {
             product_name: data?.product_name,
             variant: data?.variant,
             img: data?.img,
-            sell_price: data?.sell_price,
+            sell_price: Number(data?.sell_price),
             unit: data?.unit,
-            product_cost: data?.product_cost,
+            product_cost: Number(data?.product_cost),
             category_id: data?.category?.category_id,
             category_name: data?.category?.category_name,
-            discount: data?.discount,
+            discount: Number(data?.discount),
         }
     });
 
@@ -74,7 +74,9 @@ export default function EditProductModal({show, onHide, data}) {
 
     const fetchUpdateProduct = async (productData) => {
         let body = JSON.stringify(productData);
-        await axiosPrivate.put("/products", body, {params: {id: data.product_id}})
+        console.log(data)
+        console.log(productData)
+        await axiosPrivate.put(`/products?id=${data.product_id}`, body)
         .then(response => {
             if(response.data[0] == 1){
                 toast.current.show({
@@ -97,6 +99,7 @@ export default function EditProductModal({show, onHide, data}) {
             }
         })
         .catch(error => {
+            console.log(error)
             toast.current.show({
                 severity: "error",
                 summary: "Failed",
@@ -138,8 +141,8 @@ export default function EditProductModal({show, onHide, data}) {
                     detail: "Sucessfully upload image",
                     life: 3000,
                 });
-                const prodModel = JSON.stringify(newFormData);
-                fetchUpdateProduct(prodModel);
+                // const prodModel = JSON.stringify(newFormData);
+                fetchUpdateProduct(formData);
             })
             .catch((err) => {
                 setProgress(0);
@@ -151,16 +154,16 @@ export default function EditProductModal({show, onHide, data}) {
                 });
             });
         } else if(formData.img && typeof formData.img){
-            const prodModel = JSON.stringify(formData);
-            fetchUpdateProduct(prodModel);
+            // const prodModel = JSON.stringify(formData);
+            fetchUpdateProduct(formData);
         } else {
             const noimg = `https://res.cloudinary.com/du3qbxrmb/image/upload/v1751378806/no-img_u5jpuh.jpg`;
             let newFormData = {
                 ...formData,
                 img: noimg,
             };
-            const prodModel = JSON.stringify(formData);
-            fetchUpdateProduct(prodModel);
+            // const prodModel = JSON.stringify(formData);
+            fetchUpdateProduct(newFormData);
         } 
         
     };
@@ -263,7 +266,10 @@ export default function EditProductModal({show, onHide, data}) {
                                         optionKeys={["id", "category_name"]}
                                         defaultValue={getValues("category_name")}
                                         defaultValueKey={"category_name"}
-                                        value={(selected) => {setValue("category_name", selected.value);setValue("category_id", selected.id);getValues("category_name") !== "" && clearErrors('category_name')}}
+                                        value={(selected) => {
+                                            setValue("category_name", selected.value);
+                                            setValue("category_id", selected.id);getValues("category_name") !== "" && clearErrors('category_name')
+                                        }}
                                         width={"100%"}
                                         register={register}
                                         require={true}

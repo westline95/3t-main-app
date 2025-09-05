@@ -17,6 +17,7 @@ import dataStatic from '../../assets/js/dataStatic.js';
 import InputWSelect from '../Input/InputWSelect.jsx';
 import useMediaQuery from '../../hooks/useMediaQuery.js';
 import ReceiptDoc from '../../parts/ReceiptDoc.jsx';
+import axios from 'axios';
 
 
 export default function InvoiceModal({show, onHide, data}) {
@@ -137,6 +138,32 @@ export default function InvoiceModal({show, onHide, data}) {
                 life: 3000,
             });
         })
+    }
+
+    const testSend = async() => {
+        const send = await axios({
+            url: 'https://graph.facebook.com/v22.0/785616564632395/messages',
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer EAA1SsDF92sYBPWLuBsh3Px6NScFinNmyRLhMvQZCJQ5UcQ5yiuqWIU2oLC4HW7pbeKC6YUXcfPYrxlUulVBIZCtDsMOX7uncgCCcvYtpTpWX3gCn9GWs5dCUkgMtpSZA6uZBYWEZCz5fLGUFV8ZCN5QldZAFkm7urIQGU0uep4SqTNsU66So4ctP8t3oDYzAEzpq1YMGJ46AOTrjKeZBEsLuDJTmGZCdbTxZCZCSeUxzhTRG6e07oEESh8jekUFLHhQfwZDZD`,
+                'Content-Type': 'application/json'
+            },
+            data: JSON.stringify({
+                messaging_product: 'whatsapp',
+                to: '+6281270982995',
+                type: 'text',
+                // template: {
+                //     name: "hello_world",
+                //     language: {
+                //         code: 'en_US'
+                //     }
+                // }
+                text :{
+                    body: "Welcome and congratulations!! This message demonstrates your ability to send a WhatsApp message notification from the Cloud API, hosted by Meta. Thank you for taking the time to test with us."
+                }
+            }),
+        });
+        console.log(send);
     }
 
     useEffect(() => {
@@ -589,7 +616,7 @@ export default function InvoiceModal({show, onHide, data}) {
                                         <p class="label-text" style={{marginBottom:3}}>Informasi Pembayaran</p>
                                         <p class="invoice-text" style={{marginBottom:3}}><span className="label-text">Bank Transfer:</span> BRI</p>
                                         <p class="invoice-text" style={{marginBottom:3}}><span className="label-text">A/N:</span> Anton Ruchiat</p>
-                                        <p class="invoice-text" style={{marginBottom:0}}><span className="label-text">Nomor rekening:</span> 01234567890123</p>
+                                        <p class="invoice-text" style={{marginBottom:0}}><span className="label-text">Nomor rekening:</span> 005301102808501</p>
                                     </div>
                                 </div>
                             </div>
@@ -1048,7 +1075,7 @@ export default function InvoiceModal({show, onHide, data}) {
 
                                 <Dropdown.Menu>
                                     <Dropdown.Item as="button" href="#/action-1"><i class='bx bx-envelope'></i>Email</Dropdown.Item>
-                                    <Dropdown.Item as="button" href="#/action-2"><i class='bx bxl-whatsapp'></i>Whatsapp</Dropdown.Item>
+                                    <Dropdown.Item as="button" href="#/action-2" onClick={(e) => testSend()} ><i class='bx bxl-whatsapp'></i>Whatsapp</Dropdown.Item>
                                 </Dropdown.Menu>
                             </Dropdown>
                             {

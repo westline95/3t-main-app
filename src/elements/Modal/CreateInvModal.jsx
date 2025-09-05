@@ -178,16 +178,17 @@ export default function CreateInv({ show, onHide, returnAct }){
                 detail: "Invoice baru telah terbit",
                 life: 1700,
             });
+            returnAct(true);
             // update order table => add invoice id
-            let invoiceID = JSON.stringify({invoice_id: resp.data.invoice_id});
+            // let invoiceID = JSON.stringify({invoice_id: resp.data.invoice_id});
 
-            if(choosedOrderId.length > 1){
-                let sendReq = choosedOrderId.join("&id=");
-                fetchUpdateSales(sendReq, invoiceID, paymentIDs, totalPayment, resp.data.remaining_payment);
-            } else {
-                let sendReq = choosedOrderId[0];
-                fetchUpdateSales(sendReq, invoiceID, paymentIDs, totalPayment, resp.data.remaining_payment);
-            }
+            // if(choosedOrderId.length > 1){
+            //     let sendReq = choosedOrderId.join("&id=");
+            //     fetchUpdateSales(sendReq, invoiceID, paymentIDs, totalPayment, resp.data.remaining_payment);
+            // } else {
+            //     let sendReq = choosedOrderId[0];
+            //     fetchUpdateSales(sendReq, invoiceID, paymentIDs, totalPayment, resp.data.remaining_payment);
+            // }
         })
         .catch(error => {
             toast.current.show({

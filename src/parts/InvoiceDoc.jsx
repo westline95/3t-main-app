@@ -438,7 +438,7 @@ export default function InvoiceDoc({data, ref}) {
                     <View style={invoiceStyle.custInfo}>
                         <View style={invoiceStyle.infoGroup}>
                             <Text style={invoiceStyle.infoLabel}>Nama pelanggan</Text>
-                            <Text style={invoiceStyle.infoText}>Bang Paska Aritonang</Text>
+                            <Text style={invoiceStyle.infoText}>{data.invoice.customer.name}</Text>
                         </View>
                         <View style={{...invoiceStyle.infoGroup, width: 'auto'}}>
                             <Text style={invoiceStyle.infoLabel}>status</Text>
@@ -463,7 +463,7 @@ export default function InvoiceDoc({data, ref}) {
                             <Text style={{...invoiceStyle.infoLabel, marginBottom: '20px'}}>Informasi Pembayaran</Text>
                             <Text style={{...invoiceStyle.infoLabel}}>Bank Transfer: <Text style={{...invoiceStyle.infoText}}>BRI</Text></Text>
                             <Text style={{...invoiceStyle.infoLabel}}>A/N: <Text style={{...invoiceStyle.infoText}}>Anton Ruchiat</Text></Text>
-                            <Text style={{...invoiceStyle.infoLabel, marginBottom:0}}>Nomor rekening: <Text style={{...invoiceStyle.infoText}}>01234567890123</Text></Text>
+                            <Text style={{...invoiceStyle.infoLabel, marginBottom:0}}>Nomor rekening: <Text style={{...invoiceStyle.infoText}}>005301102808501</Text></Text>
                         </View>
                     </View>
                 </View>
