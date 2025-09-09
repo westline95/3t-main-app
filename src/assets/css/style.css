@@ -2835,7 +2835,7 @@ td .btn-group button i {
     display: flex;
     position: absolute;
     gap: 15px;
-    background-color: #42c0fb;
+    background-color: var(--sa-color-info);
     height: 130px;
     right: 0;
     top: 2.7rem;
@@ -2909,7 +2909,7 @@ td .btn-group button i {
 
 .invoice-amount .card-amount:last-of-type,
 .cards-amount .card-amount:last-of-type {
-  background-color: #42C0FB;
+  background-color: var(--sa-color-info);
 }
 
 .invoice-amount .card-amount .invoice-info-group>*,
@@ -2957,9 +2957,10 @@ td .btn-group button i {
 
 .inv-table-title,
 .invoice-transaction .table thead tr th:not(.inv-tab-primary),
+.invoice-transaction .table thead tr th:not(.inv-tab-info),
 .invoice-payment .table thead tr th {
   font-weight: 600;
-  color: #344050 !important;
+  color: #344050;
   font-size: 16px;
   text-transform: capitalize;
 }
@@ -2996,8 +2997,9 @@ td .btn-group button i {
 }
 
 .invoice-transaction .table thead tr th:not(.inv-tab-primary),
+.invoice-transaction .table thead tr th:not(.inv-tab-info),
 .invoice-payment .table thead tr th {
-  background-color: #F5F6F9 !important;
+  background-color: #F5F6F9 ;
 }
 
 .each-total-title,
@@ -3033,7 +3035,7 @@ tr.grand-total>* {
 .invoice-footer {
   width: 100%;
   height: 55px;
-  background-color: #42C0FB;
+  background-color: var(--sa-color-info);
   padding: 1rem;
   margin-top: 9rem;
 }
@@ -4314,11 +4316,16 @@ tr.hover-row:hover > * {
 
 .order-number-tab>th:last-of-type {
   border-top-right-radius: 17px;
-  
 }
 
 .order-number-tab .inv-tab-primary {
   background-color: var(--sa-color-primary) !important;
+  color: #ffffff !important;
+  text-transform: capitalize;
+}
+
+.order-number-tab .inv-tab-info {
+  background-color: var(--sa-color-info) !important;
   color: #ffffff !important;
   text-transform: capitalize;
 }

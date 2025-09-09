@@ -681,8 +681,8 @@ export default function InvoiceModal({show, onHide, data}) {
                                         <table className="table" key={`transaction-table-${idx}`} id='tes'>
                                             <thead>
                                                 <tr className='order-number-tab'>
-                                                    <th className='inv-tab-primary'>Order ID:</th>
-                                                    <th className='inv-tab-primary'>{sales.order_id}</th>
+                                                    <th className='inv-tab-info'>Order ID:</th>
+                                                    <th className='inv-tab-info'>{sales.order_id}</th>
                                                 </tr>
                                                 <tr>
                                                     <th>tanggal</th>

@@ -236,7 +236,8 @@ export default function CustEditModal({ show, onHide, data }) {
                         type="text"
                         position="left"
                         name="phonenumber"
-                        // defaultValue={data ? data.phonenumber : ''}
+                        mask="phone"
+                        defaultValue={getValues('phonenumber')}
                         require={true}
                         register={register}
                         errors={errors}
@@ -320,9 +321,11 @@ export default function CustEditModal({ show, onHide, data }) {
                         position="left"
                         name="debt_limit_formated"
                         mask={"currency"}
-                        returnValue={(value) =>
+                        returnValue={(value) => {
                           setValue("debt_limit", value.origin)
-                        }
+                          setValue("debt_limit_formated", value.formatted)
+                        }}
+                        defaultValue={getValues('debt_limit_formated')}
                         require={true}
                         register={register}
                         errors={errors}

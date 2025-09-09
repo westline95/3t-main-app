@@ -134,7 +134,10 @@ export default function Customers({handleSidebar, showSidebar}) {
     } else if(e.target.value == 'male' && e.target.checked){
       setDefaultAvatar(maleAvatar);
       setValue('img', maleAvatar);
-    } 
+    } else {
+      setDefaultAvatar(noImg);
+      setValue('img', noImg);
+    }
   };
 
   const handleClick = (e) => {
@@ -315,7 +318,7 @@ export default function Customers({handleSidebar, showSidebar}) {
           });
         });
     } else {
-      let newFormData = {...formData, img: noImg};
+      let newFormData = {...formData};
       fetchInsertCust(newFormData);
     }
   };
@@ -1356,7 +1359,7 @@ export default function Customers({handleSidebar, showSidebar}) {
                   }
                 >
                   <div className="card card-table add-on-shadow">
-                    <p className="card-title">Add customer</p>
+                    <p className="card-title">Tambah pelanggan</p>
                     <Accordion
                       defaultActiveKey={["0", "1"]}
                       alwaysOpen
@@ -1365,13 +1368,12 @@ export default function Customers({handleSidebar, showSidebar}) {
                       <form>
                         <Accordion.Item eventKey="0">
                           <Accordion.Header>
-                            <i className="bx bx-info-circle"></i>customer
-                            information
+                            <i className="bx bx-info-circle"></i>Informasi pelanggan
                           </Accordion.Header>
                           <Accordion.Body>
                             <div className="add-prod-area mt-4 mb-4">
                               <div className="add-prod-img-wrap">
-                                <label className="mb-1">customer image</label>
+                                <label className="mb-1">Foto</label>
                                 <DropzoneFile
                                   name={"imgDrop"}
                                   register={register}
@@ -1384,7 +1386,7 @@ export default function Customers({handleSidebar, showSidebar}) {
                                 <div className="row sm:gap-3 md:gap-0 md:row-gap-3 lg:gap-4 xl:gap-4">
                                   <div className="col-lg-4 col-sm-12 col-md-6 col-12">
                                     <InputWLabel
-                                      label="customer name"
+                                      label="Nama pelanggan"
                                       type="text"
                                       name="name"
                                       placeholder="Jane Doe"
@@ -1415,7 +1417,7 @@ export default function Customers({handleSidebar, showSidebar}) {
                                   </div> */}
                                   <div className="col-lg-4 col-sm-12 col-md-6 col-12">
                                     <InputWLabel
-                                      label="date of birth"
+                                      label="tanggal lahir"
                                       type="date"
                                       name="dob"
                                       placeholder="26-03-2002"
@@ -1427,7 +1429,7 @@ export default function Customers({handleSidebar, showSidebar}) {
                                   </div>
                                   <div className="col-lg-4 col-sm-12 col-md-6 col-12">
                                     <InputGroup
-                                      label="phonenumber"
+                                      label="nomor telepon (whatsapp)"
                                       groupLabel="+62"
                                       type="text"
                                       position="left"
@@ -1462,7 +1464,7 @@ export default function Customers({handleSidebar, showSidebar}) {
                                           <div>
                                               <InputGroup
                                                   inputRef={ref}
-                                                  label="credit/debt limit"
+                                                  label="limit hutang"
                                                   groupLabel="Rp"
                                                   type="text"
                                                   onChange={onChange}
@@ -1484,7 +1486,7 @@ export default function Customers({handleSidebar, showSidebar}) {
                                     />
                                   </div>
                                   <div className="col-lg-4 col-sm-12 col-md-6 col-12 sm:mt-3 md:mt-0 lg:mt-0 xl:mt-0">
-                                    <label className=" mb-1">Gender</label>
+                                    <label className=" mb-1">jenis kelamin</label>
                                     <div className="d-flex form-check-control">
                                       <div className="form-check">
                                         <input
@@ -1541,7 +1543,7 @@ export default function Customers({handleSidebar, showSidebar}) {
                         </Accordion.Item>
                         <Accordion.Item eventKey="1">
                           <Accordion.Header>
-                            <i className="bx bx-home-alt"></i>customer address
+                            <i className="bx bx-home-alt"></i>alamat pelanggan
                           </Accordion.Header>
                           <Accordion.Body>
                             <div className="row gy-2 mt-0">
@@ -1597,7 +1599,7 @@ export default function Customers({handleSidebar, showSidebar}) {
                                                             </div> */}
                               <div className="col-lg-4 col-sm-12 col-md-12 col-12">
                                 <InputWLabel
-                                  label="address"
+                                  label="alamat"
                                   as="textarea"
                                   name="address"
                                   placeholder="your address"
@@ -1618,7 +1620,7 @@ export default function Customers({handleSidebar, showSidebar}) {
                         onClick={handleSubmit(onSubmit, onError)}
                       >
                         <i className="bx bx-plus" style={{ marginTop: -3 }}></i>
-                        add customer
+                        tambah pelanggan
                       </button>
                     </div>
                   </div>
