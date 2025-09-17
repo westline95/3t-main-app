@@ -4,7 +4,7 @@ import Brand from './Brand';
 import "../assets/zwicon/zwicon.css";
 import "../assets/css/sidebar.css";
 import Wave from "../assets/images/wave.png";
-import { Collapse } from 'react-bootstrap';
+import { Col, Collapse } from 'react-bootstrap';
 import propTypes from 'prop-types';
 
 const Sidebar = forwardRef(({show, clickedMenu}, ref) => {
@@ -18,6 +18,8 @@ const Sidebar = forwardRef(({show, clickedMenu}, ref) => {
         // return location.pathname === path ? " active" : "";
     };
     const [ collapseToggle, setCollapseToggle ] = useState(null);
+    const [ collapseParentMenu, setCollapseParentMenu ] = useState(null);
+    const [ collapseChildMenu, setCollapseChildMenu ] = useState(null);
 
     // const handleSidebar = (e) => {
     //     if(e.classList.contains("active")){
@@ -175,6 +177,12 @@ const Sidebar = forwardRef(({show, clickedMenu}, ref) => {
                             <div className="collapse show" data-bs-parent="hrmMenu" id="hrmMenus">
                                 <ul className="sidebar-menu">
                                     <li className="menus dropdown-control">
+                                        <Link to={"/hrm/department"} className='item-menu'>
+                                            <i class='bx bx-git-branch'></i>
+                                            <span className="menu-label">department</span>
+                                        </Link>
+                                    </li>
+                                    <li className="menus dropdown-control">
                                         <Link to={"/hrm/employees"} className='item-menu'>
                                             <i className='bx bx-user'></i>
                                             <span className="menu-label">employees</span>
@@ -187,29 +195,29 @@ const Sidebar = forwardRef(({show, clickedMenu}, ref) => {
                                         </Link>
                                     </li>
                                     <li className="menus dropdown-control" id="payrollMenus">
-                                        <a className="item-menus collapsed" data-bs-toggle="collapse" href="#payrollMenu"
-                                            role="button" data-bs-target="#payrollMenu"
-                                            aria-expanded="false" aria-controls="payrollMenu">
+                                        <a className="item-menus" onClick={(e) => collapseParentMenu ? setCollapseParentMenu(null) : setCollapseParentMenu("payrollMenus")}>
                                             <i className='bx bx-dollar'></i>
                                             <span className="menu-label">payroll</span>
                                             <i className='bx bxs-chevron-down'></i>
                                         </a>
-                                        <div className="collapse" data-bs-parent="payrollMenus" id="payrollMenu">
-                                            <ul className="sidebar-menu">
-                                                <li className="menus dropdown-control">
-                                                    <Link to={"/hrm/loan"} className='sub-item-menu-1'>
-                                                        <i className='bx bxs-circle'></i>
-                                                        <span className="menu-label">loan</span>
-                                                    </Link>
-                                                </li>
-                                                <li className="menus dropdown-control">
-                                                    <Link to={"/hrm/payslip"} className='sub-item-menu-1'>
-                                                        <i className='bx bxs-circle'></i>
-                                                        <span className="menu-label">payslip</span>
-                                                    </Link>
-                                                </li>
-                                            </ul>
-                                        </div>
+                                        <Collapse in={collapseParentMenu == "payrollMenus"}>
+                                            <div>
+                                                <ul className="sidebar-menu">
+                                                    <li className="menus dropdown-control">
+                                                        <Link to={"/hrm/loan"} className='sub-item-menu-1'>
+                                                            <i className='bx bxs-circle'></i>
+                                                            <span className="menu-label">loan</span>
+                                                        </Link>
+                                                    </li>
+                                                    <li className="menus dropdown-control">
+                                                        <Link to={"/hrm/payslip"} className='sub-item-menu-1'>
+                                                            <i className='bx bxs-circle'></i>
+                                                            <span className="menu-label">payslip</span>
+                                                        </Link>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </Collapse>
                                     </li>
                                 </ul>
                             </div>

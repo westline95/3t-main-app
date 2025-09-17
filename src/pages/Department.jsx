@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Controller, get, useController, useForm } from 'react-hook-form';
-import Sidebar from '../parts/Sidebar';
-import Header from '../parts/Header';
-import { CustomSelect } from '../elements/CustomSelect';
-import NumberFormat from '../elements/Masking/NumberFormat';
-import DropzoneFile from '../elements/DropzoneFile';
-import SalesDetailModal from '../elements/Modal/salesDetailModal';
-import SalesEditModal from '../elements/Modal/SalesEditModal';
-import ConfirmModal from '../elements/Modal/ConfirmModal';
-import InputWLabel from '../elements/Input/InputWLabel';
-import InputWSelect from '../elements/Input/InputWSelect';
-import FetchApi from '../assets/js/fetchApi';
+import Sidebar from '../parts/Sidebar.jsx';
+import Header from '../parts/Header.jsx';
+import { CustomSelect } from '../elements/CustomSelect/index.jsx';
+import NumberFormat from '../elements/Masking/NumberFormat.jsx';
+import DropzoneFile from '../elements/DropzoneFile/index.jsx';
+import SalesDetailModal from '../elements/Modal/salesDetailModal.jsx';
+import SalesEditModal from '../elements/Modal/SalesEditModal.jsx';
+import ConfirmModal from '../elements/Modal/ConfirmModal.jsx';
+import InputWLabel from '../elements/Input/InputWLabel.jsx';
+import InputWSelect from '../elements/Input/InputWSelect.jsx';
+import FetchApi from '../assets/js/fetchApi.js';
 import { Accordion, Col, Collapse, Dropdown, Form, Row, 
     // Toast, ToastContainer 
 } from 'react-bootstrap';
@@ -26,10 +26,10 @@ import { FilterMatchMode, FilterOperator } from 'primereact/api';
 import dataStatic from '../assets/js/dataStatic.js';
 import useAxiosPrivate from '../hooks/useAxiosPrivate.js';
 
-import AutoComplete from '../elements/AutoComplete';
-import QtyButton from '../elements/QtyButton';
-import DiscountModal from '../elements/Modal/DiscModal';
-import CreatePayment from '../elements/Modal/CreatePaymentModal';
+import AutoComplete from '../elements/AutoComplete/index.jsx';
+import QtyButton from '../elements/QtyButton/index.jsx';
+import DiscountModal from '../elements/Modal/DiscModal.jsx';
+import CreatePayment from '../elements/Modal/CreatePaymentModal.jsx';
 import ConvertDate from '../assets/js/ConvertDate.js';
 import CustomToggle from '../elements/Custom/CustomToggle.jsx';
 import InputGroup from '../elements/Input/InputGroup.jsx';
@@ -38,27 +38,31 @@ import EmptyState from "../../public/vecteezy_box-empty-state-single-isolated-ic
 import NoImg from "../assets/images/no-img.jpg";
 import EditProduct from '../elements/Modal/EditProductModal.jsx';
 import EditProductModal from '../elements/Modal/EditProductModal.jsx';
+import AddCategoryModal from '../elements/Modal/AddCategoryModal.jsx';
+import EditCategoryModal from '../elements/Modal/EditCategoryModal.jsx';
 import useMediaQuery from '../hooks/useMediaQuery.js';
 import { DataView } from 'primereact/dataview';
+import DepartmentModal from '../elements/Modal/DepartmentModal.jsx';
 
-export default function Products({handleSidebar, showSidebar}){
-    const axiosPrivate = useAxiosPrivate();
+export default function Department({handleSidebar, showSidebar}){
     const isMobile = useMediaQuery('(max-width: 768px)');
     const isMediumScr = useMediaQuery('(min-width: 768px) and (max-width: 1024px)');
 
+    const axiosPrivate = useAxiosPrivate();
     const toast = useRef(null);
     const toastUpload = useRef(null);
+    const mobileSearchInput = useRef(null);
+
     const [progress, setProgress] = useState(0);
     const [ isLoading, setLoading ] = useState(true);
-    const mobileSearchInput = useRef(null);
     const [mobileSearchMode, setMobileSearchMode] = useState(false);
     const [mobileFilterValue, setMobileFilterValue] = useState("");
     const [ isClicked, setClicked ] = useState(false);
     const [ isClickedProd, setClickedProd ] = useState(false);
     const [ isClose, setClose ] = useState(false);
     const [ salesData, setSalesData ] = useState();
-    const [ openTab, setOpenTab ] = useState('productsListTab');
-    const [ prodListObj, setProdList ] = useState(null);
+    const [ openTab, setOpenTab ] = useState('departmentListTab');
+    const [ modalData, setModalData ] = useState(null);
     const [ showModal, setShowModal ] = useState("");
     const [ modalMsg, setModalMsg ] = useState("");
     const [ prodTypeFilter, setProdTypeFilter ] = useState(null);
@@ -72,7 +76,8 @@ export default function Products({handleSidebar, showSidebar}){
     const [ custTypeData, setCustType ] = useState(null);
     const [ statusCode, setStatusCode ] = useState(null);
     const [ allProdData, setAllProd ] = useState(null);
-    const [ categoryList, setCategoryList ] = useState(null);
+    const [ departmentList, setDepartmentList ] = useState(null);
+    const [ refetch, setRefetch ] = useState(false);
     const [ chooseCust, setCust] = useState("");
     const [ chooseCourier, setCourier] = useState("");
     const [ chooseProd, setProd] = useState(null);
@@ -106,9 +111,9 @@ export default function Products({handleSidebar, showSidebar}){
     const [ addInvID, setAddInvID] = useState(false);
     const [ resetInputWSelect, setResetInputWSelect] = useState(false);
     const [ selectedSales, setSelectedSales ] = useState(null);
-    const [ prodFilters, setProdFilters ] = useState(null);
+    const [ departmentFilters, setDepartmentFilters ] = useState(null);
     const [ globalFilterValue, setGlobalFilterValue ] = useState("");
-    const [ delProd, setDelProd ] = useState(false);
+    const [ delDepartment, setDelDepartment ] = useState(false);
     
     const [orderStatus] = useState(dataStatic.orderStatus);
 
@@ -158,28 +163,17 @@ export default function Products({handleSidebar, showSidebar}){
           })
     };
     
-    const fetchCategory = async () => {
-        await axiosPrivate.get("/categories")
+    const fetchDepartments = async () => {
+        await axiosPrivate.get("/department/all")
         .then(response => {
-            let categories = [];
-            if(response.data.length > 0){
-                response.data.map(e => {
-                    let category = {
-                        id: Number(e.category_id),
-                        category_name: e.category_name,
-                    };
-                    categories.push(category);
-                })
-                setCategoryList(categories);
-            } else {
-                setCategoryList([]);
-            }
+            console.log(response)
+            setDepartmentList(response.data);
         })
         .catch(error => {
             toast.current.show({
                 severity: "error",
                 summary: "Failed",
-                detail: "Error when get category data",
+                detail: "Error when get department data",
                 life: 3000,
             });
         })
@@ -271,12 +265,12 @@ export default function Products({handleSidebar, showSidebar}){
                     severity: "success",
                     summary: "Success",
                     detail: "Successfully update sales",
-                    life: 3000,
+                    life: 1500,
                 });
 
                 setTimeout(() => {
                     window.location.reload();
-                },1700)
+                },1500)
             })
             .catch(error => {
                 toast.current.show({
@@ -310,8 +304,8 @@ export default function Products({handleSidebar, showSidebar}){
    
     const handleClick = (e) => {
         switch(e.target.id) {
-            case "productsListTab":
-                setOpenTab("productsListTab");
+            case "departmentListTab":
+                setOpenTab("departmentListTab");
             break;
             case "addProdTab":
                 setOpenTab("addProdTab");
@@ -339,17 +333,17 @@ export default function Products({handleSidebar, showSidebar}){
                     origin: prodListData, 
                     // items: salesDataProd != null ? JSON.parse(salesDataProd) : salesDataProd
                 }
-                setProdList(prodListData);
+                setModalData(prodListData);
                 setShowModal("salesDetailModal");
                 break;
             case "salesEditModal":
                     // items: salesDataProd != null ? JSON.parse(salesDataProd) : salesDataProd
-                setProdList(prodListData);
+                setModalData(prodListData);
                 setShowModal("salesEditModal");
                 break;
             case "cancelSalesModal":
                
-                setProdList(prodListData);
+                setModalData(prodListData);
                 // console.log(data)
                 setShowModal("cancelSalesModal");
                 break;
@@ -369,11 +363,19 @@ export default function Products({handleSidebar, showSidebar}){
                 break;
             case 'editProdModal':
                 setShowModal("editProdModal");
-                setProdList(data);
+                setModalData(data);
                 break;
-            case 'confirmDelProd':
-                setShowModal("confirmDelProd");
-                setProdList(data);
+            case 'confirmDelDepartment':
+                setShowModal("confirmDelDepartment");
+                setModalData(data);
+                break;
+            case 'addDepartmentModal':
+                setShowModal("addDepartmentModal");
+                setModalData(data);
+                break;
+            case 'editDepartmentModal':
+                setShowModal("editDepartmentModal");
+                setModalData(data);
                 break;
         }
     }
@@ -590,34 +592,36 @@ export default function Products({handleSidebar, showSidebar}){
         })
     };
 
-     const fetchDelProduct = async (product_id) => {
-        await axiosPrivate.delete("/products", {params: {id: product_id}})
+     const fetchDelDepartment = async (department_id) => {
+        await axiosPrivate.delete(`/department/del/${department_id}`)
         .then(response => {
+            console.log(response)
             if(response.data == 1){
                 toast.current.show({
                     severity: "success",
                     summary: "Sukses",
-                    detail: "Data produk dihapus",
+                    detail: "Departemen berhasil dihapus",
                     life: 1500,
                 });
 
                 setTimeout(() => {
-                    window.location.reload();
-                },1500)
+                    setRefetch(true);
+                }, 1500);
             } else {
                 toast.current.show({
                     severity: "error",
                     summary: "Gagal",
-                    detail: "Gagal menghapus produk",
+                    detail: "Gagal menghapus departemen",
                     life: 3000,
                 });
             }
         })
         .catch(error => {
+            console.log(error)
             toast.current.show({
                 severity: "error",
                 summary: "Failed",
-                detail: "Error when deleting product",
+                detail: "Error when deleting department",
                 life: 3000,
             });
         })
@@ -639,7 +643,7 @@ export default function Products({handleSidebar, showSidebar}){
     };
 
     const onSubmitProd = async (formData) => {
-        if (formData.img && typeof formData.img == 'object') {
+        if (formData.img && formData.img.length > 0) {
             const imgFile = formData.img[0];
             const base64 = await convertBase64(imgFile);
 
@@ -688,6 +692,7 @@ export default function Products({handleSidebar, showSidebar}){
                 ...formData,
                 img: noimg,
             };
+            console.log(newFormData);
             const prodModel = JSON.stringify(newFormData);
             fetchInsertProd(prodModel);
         } 
@@ -707,15 +712,24 @@ export default function Products({handleSidebar, showSidebar}){
 
 
     useEffect(() => {
-        fetchAllProd();
-        fetchCategory();  
+        // fetchAllProd();
+        // fetchCategory(); 
+        fetchDepartments(); 
     },[]);
 
     useEffect(() => {
-        if(allProdData && categoryList){
+        if(departmentList){
             setLoading(false);
         } 
-    },[allProdData, categoryList]);
+    },[departmentList]);
+    
+    useEffect(() => {
+        if(refetch){
+            fetchDepartments();
+            setShowModal("");
+            setRefetch(false);
+        } 
+    },[refetch]);
 
     // control select filter
     useEffect(() => {
@@ -752,14 +766,6 @@ export default function Products({handleSidebar, showSidebar}){
                     <i className="bx bx-filter-alt" style={{ fontSize: "24px" }}></i>
                     Clear filter
                 </button>
-                <InputWSelect
-                    name="prodTypeFilter"
-                    selectLabel="Select category"
-                    options={categoryList}
-                    optionKeys={["id", "category_name"]}
-                    value={(selected) => setProdTypeFilter(selected.value)}
-                    width={"220px"}
-                />
             </div>
     
             <div
@@ -773,38 +779,49 @@ export default function Products({handleSidebar, showSidebar}){
               >
                 <i className="bx bx-printer"></i>
               </button> */}
-              <Dropdown drop={"down"}>
+            <Dropdown drop={"down"}>
                 <Dropdown.Toggle variant="primary" style={{ height: "100%" }}>
-                  <i className="bx bx-download"></i> export
+                    <i className="bx bx-download"></i> export
                 </Dropdown.Toggle>
                 <Dropdown.Menu align={"end"}>
-                  <Dropdown.Item
+                    <Dropdown.Item
                     eventKey="1"
                     as="button"
                     aria-label="viewInvModal"
                     onClick={(e) =>
-                      handleModal(e, { id: inv.invoice_id, items: { ...inv } })
+                        handleModal(e, { id: inv.invoice_id, items: { ...inv } })
                     }
-                  >
+                    >
                     <i className="bx bx-show"></i> PDF (.pdf)
-                  </Dropdown.Item>
-                  <Dropdown.Item
+                    </Dropdown.Item>
+                    <Dropdown.Item
                     eventKey="1"
                     as="button"
                     aria-label="editInvModal"
                     onClick={(e) => handleModal(e, inv.invoice_id)}
-                  >
+                    >
                     <i className="bx bxs-edit"></i> Microsoft Excel (.xlsx)
-                  </Dropdown.Item>
+                    </Dropdown.Item>
                 </Dropdown.Menu>
-              </Dropdown>
-              <button
+            </Dropdown>
+            <button
                 type="button"
                 className=" btn btn-primary btn-w-icon"
                 style={{ height: "100%" }}
-              >
+            >
                 <i className="bx bxs-file-plus"></i> import
-              </button>
+            </button>
+            <button type="button" className="add-btn btn btn-primary btn-w-icon" 
+                aria-label="addDepartmentModal"
+                onClick={(e) =>
+                    handleModal(e, {
+                        action: "insert",
+                    })
+                }
+            >
+                <i className="bx bx-plus" style={{ marginTop: -3 }}></i>
+                departemen
+            </button>
             </div>
           </div>
         );
@@ -816,42 +833,22 @@ export default function Products({handleSidebar, showSidebar}){
     
     const onGlobalFilterChange = (e) => {
         const value = e.target.value;
-        let _filters = { ...prodFilters };
+        let _filters = { ...departmentFilters };
 
         _filters["global"].value = value;
 
-        setProdFilters(_filters);
+        setDepartmentFilters(_filters);
         setGlobalFilterValue(value);
     };
     
     const initFilters = () => {
-        setProdFilters({
+        setDepartmentFilters({
             global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-            product_id: {
-              operator: FilterOperator.AND,
-              constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
-            },
-            'category.category_name': {
+            department_name: {
                 operator: FilterOperator.AND,
                 constraints: [{ value: null, matchMode: FilterMatchMode.IN }],
             },
-            variant: {
-                operator: FilterOperator.AND,
-                constraints: [{ value: null, matchMode: FilterMatchMode.IN }],
-            },
-            sku: {
-                operator: FilterOperator.AND,
-                constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
-            },
-            unit: {
-                operator: FilterOperator.AND,
-                constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
-            },
-            prod_cost: { 
-                operator: FilterOperator.AND,
-                constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }]
-            },
-            sell_price: {
+            department_id: {
                 operator: FilterOperator.AND,
                 constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
             },
@@ -896,7 +893,7 @@ export default function Products({handleSidebar, showSidebar}){
         return (
             <>
             <div className="d-flex align-items-center gap-2">
-                <div className='user-img'>
+                {/* <div className='user-img'>
                     <img
                         src={
                         rowData.img && rowData.img != ""
@@ -905,11 +902,8 @@ export default function Products({handleSidebar, showSidebar}){
                         }
                         alt=""
                     />
-                </div>
-                <div style={{display: 'flex', flexDirection: 'column'}}>
-                    <p style={{marginBottom: 0, fontSize: 14}}>{rowData.product_name}</p>
-                    <p style={{marginBottom: 0, fontSize: 12}}>{rowData.category.category_name}</p>
-                </div>
+                </div> */}
+                {rowData.department_name}
             </div>
             </>
         );
@@ -924,13 +918,12 @@ export default function Products({handleSidebar, showSidebar}){
         <div style={{ display: "inline-flex" }}>
             <span
                 className="table-btn edit-table-data"
-                aria-label="editProdModal"
+                aria-label="editDepartmentModal"
                 onClick={(e) => {
                     handleModal(e, {
-                        endpoint: "product",
-                        id: rowData.product_id,
+                        id: rowData.department_id,
                         action: "update",
-                        ...rowData,
+                        rowData,
                     });
                 }}
             >
@@ -938,11 +931,11 @@ export default function Products({handleSidebar, showSidebar}){
             </span>
             <span
                 className="table-btn del-table-data"
-                aria-label="confirmDelProd"
+                aria-label="confirmDelDepartment"
                 onClick={(e) =>
                     handleModal(e, {
-                        endpoint: "product",
-                        id: rowData.product_id,
+                        endpoint: "department",
+                        id: rowData.department_id,
                         action: "delete",
                     })
                 }
@@ -1049,7 +1042,7 @@ export default function Products({handleSidebar, showSidebar}){
 
     const itemTemplate = (rowData, index) => {
         return (
-        <div className="col-12" key={index} style={{position:'relative'}}>
+        <div className="col-12" key={rowData.category_id} style={{position:'relative'}}>
             <div className='flex flex-column xl:align-items-start gap-2 static-shadow'
                 style={{
                     backgroundColor: '#F8F9FD',
@@ -1058,107 +1051,50 @@ export default function Products({handleSidebar, showSidebar}){
                     borderRadius: '9px',
                     position:'relative'
                 }}
-                aria-label="editProdModal"
+                aria-label="editCategoryModal"
                 onClick={(e) => {
                     handleModal(e, {
-                        endpoint: "product",
-                        id: rowData.product_id,
+                        endpoint: "category",
+                        id: rowData.category_id,
                         action: "update",
                         ...rowData,
                     });
                 }}
             >
-            
             <div className="flex align-items-center gap-3" 
                 style={{
                     textTransform: 'capitalize', 
-                    paddingBottom: '.75rem',
-                    borderBottom: '1px solid rgba(146, 146, 146, .2509803922)'
                 }}
             >
                 <span className="user-img" style={{marginRight: 0}}>
-                <img
-                    src={
-                    rowData.img ? rowData.img
-                        : `https://res.cloudinary.com/du3qbxrmb/image/upload/v1751378806/no-img_u5jpuh.jpg`
-                    }
-                    alt=""
-                />
+                    <img
+                        src={
+                        rowData.img ? rowData.img
+                            : `https://res.cloudinary.com/du3qbxrmb/image/upload/v1751378806/no-img_u5jpuh.jpg`
+                        }
+                        alt=""
+                    />
                 </span>
                 <div style={{width: '80%'}}>
-                    <p style={{marginBottom: 0, fontSize: 15, fontWeight: 600, textTransform:'capitalize'}}>{rowData.product_name} {rowData.variant}</p>
-                    <p style={{marginBottom: 0, fontSize: 13, color: '#7d8086'}}>{rowData.category?.category_name}</p>
-                    {/* <div className='flex flex-row gap-2' style={{fontSize: 13, marginTop: '.5rem'}}>
-                        <span 
-                            className={`badge badge-primary light`}
-                            style={{textTransform: 'capitalize'}}
-                        >
-                            {rowData.unit}                                                                               
-                        </span>
-                        <span className={`badge badge-info light`}
-                        >
-                            {rowData.sku}                                                                                
-                        </span>
-                    </div> */}
-                </div>
-            </div>
-            <div className="flex flex-column gap-1" 
-                style={{
-                    textTransform: 'capitalize', 
-                }}
-            >
-                <div className="flex flex-row justify-content-between">
-                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Biaya produksi:</p>
-                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>
-                        <NumberFormat intlConfig={{
-                            value: rowData.product_cost, 
-                            locale: "id-ID",
-                            style: "currency", 
-                            currency: "IDR",
-                        }} />
-                    </p>
-                </div>
-                <div className="flex flex-row justify-content-between">
-                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Harga jual:</p>
-                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right'}}>
-                        <NumberFormat intlConfig={{
-                            value: rowData.sell_price, 
-                            locale: "id-ID",
-                            style: "currency", 
-                            currency: "IDR",
-                        }} 
-                        />
-                    </p>
-                </div>
-                <div className="flex flex-row justify-content-between">
-                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Diskon aktif:</p>
-                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right'}}>
-                        <NumberFormat intlConfig={{
-                            value: rowData.discount, 
-                            locale: "id-ID",
-                            style: "currency", 
-                            currency: "IDR",
-                        }} 
-                        />
-                    </p>
+                    <p style={{marginBottom: 0, fontSize: 15, fontWeight: 600}}>{rowData.category_name}</p>
                 </div>
             </div>
             </div>
-            <Dropdown drop={index == allProdData.length - 1 ? "up" : "down"}  style={{position: 'absolute', top: 10, right: 9, padding: '1rem 1rem .5rem 1rem'}}>
+            <Dropdown drop={index == departmentList.length - 1 ? "up" : "down"}  style={{position: 'absolute', top: 10, right: 9, padding: '1rem 1rem .5rem 1rem'}}>
                 <Dropdown.Toggle as={CustomToggle.CustomToggle1} id="dropdown-custom-components" ></Dropdown.Toggle>
                 <Dropdown.Menu align={"end"}>
                     <Dropdown.Item eventKey="1" as="button" 
-                        aria-label="confirmDelProd"
+                        aria-label="confirmdelDepartment"
                         onClick={(e) => {
                             e.stopPropagation();
                             handleModal(e, {
-                                endpoint: "product",
-                                id: rowData.product_id,
+                                endpoint: "category",
+                                id: rowData.category_id,
                                 action: "delete",
                             })
                         }}
                     >
-                        <i className='bx bx-trash'></i> Hapus produk
+                        <i className='bx bx-trash'></i> Hapus kategori
                     </Dropdown.Item>
                 </Dropdown.Menu>
             </Dropdown>
@@ -1169,8 +1105,8 @@ export default function Products({handleSidebar, showSidebar}){
     const listTemplate = (items) => {
         if (!items || items.length === 0) return null;
 
-        let list = items.map((product, index) => {
-            return itemTemplate(product, index);
+        let list = items.map((category, index) => {
+            return itemTemplate(category, index);
         });
 
         return (
@@ -1219,12 +1155,12 @@ export default function Products({handleSidebar, showSidebar}){
     useEffect(() => {
         if(cantCanceled){
             let data = {
-                id: prodListObj.id, 
+                id: modalData.id, 
                 endpoint: 'content',
                 action: 'info',
-                items: prodListObj.items
+                items: modalData.items
             }
-            setProdList(data);
+            setModalData(data);
             setShowModal("");
             setShowModal("warningCancelModal");
         } else {
@@ -1233,11 +1169,10 @@ export default function Products({handleSidebar, showSidebar}){
     },[cantCanceled]);
 
     useEffect(() => {
-        console.log(delProd)
-        if(delProd){
-            fetchDelProduct(prodListObj.id);
+        if(delDepartment){
+            fetchDelDepartment(modalData.id);
         }
-    },[delProd]);
+    },[delDepartment]);
 
 
     if(isLoading){
@@ -1254,21 +1189,14 @@ export default function Products({handleSidebar, showSidebar}){
                         <div className="col-lg-12 col-sm-12 col-md-12 col-12">
                             <div className="basic-tabs">
                                 <div className="tabs">
-                                    <div className={`tab-indicator ${openTab === "productsListTab" ? "active" : ""}`}  
-                                        id='productsListTab' 
+                                    <div className={`tab-indicator ${openTab === "departmentListTab" ? "active" : ""}`}  
+                                        id='departmentListTab' 
                                         onClick={(e) => handleClick(e)}
                                     >
-                                        <span className="tab-title">Produk</span>
+                                        <span className="tab-title">departemen</span>
                                     </div>
-                                    <div className={`tab-indicator ${openTab === "addProdTab" ? "active" : ""}`} 
-                                        id='addProdTab' 
-                                        onClick={(e) => handleClick(e)}
-                                    >
-                                        <span className="tab-title">Tambah Produk</span>
-                                    </div>
-                                    
                                 </div>
-                                <div className="tabs-content" style={openTab === "productsListTab" ? {display: "block"} : {display: "none"}}>
+                                <div className="tabs-content" style={openTab === "departmentListTab" ? {display: "block"} : {display: "none"}}>
                                     <div className="card card-table add-on-shadow">
                                         {/* <div className="wrapping-table-btn">
                                             <span className="selected-row-stat">s
@@ -1313,124 +1241,47 @@ export default function Products({handleSidebar, showSidebar}){
                                                 value={(selected) => setProdTypeFilter(selected)}
                                             />
                                         </div> */}
-                                        {!isMobile && !isMediumScr ? (
+                                        {!isMobile && !isMediumScr ? 
+                                        (
                                         <div className="mt-4">
                                             <DataTable
                                                 className="p-datatable"
-                                                value={allProdData}
+                                                value={departmentList}
                                                 size="normal"
                                                 removableSort
-                                                rowGroupMode="rowspan" 
-                                                groupRowsBy="product_name"
-                                                dataKey="product_id"
+                                                dataKey="category_id"
                                                 tableStyle={{ minWidth: "50rem", fontSize: '14px' }}
-                                                filters={prodFilters}
+                                                filters={departmentFilters}
                                                 filterDisplay='menu'
-                                                sortOrder={1}
-                                                sortField="product_name"
-                                                sortMode='single'
                                                 globalFilterFields={[
-                                                    "product_id",
-                                                    "product_name",
-                                                    "variant",
-                                                    "category.category_name",
-                                                    "sku",
-                                                    "unit",
-                                                    "prod_cost",
-                                                    "sell_price",
+                                                    "category_name",
                                                 ]}
                                                 emptyMessage={emptyStateHandler}
-                                                onFilter={(e) => setProdFilters(e.filters)}
+                                                onFilter={(e) => setDepartmentFilters(e.filters)}
                                                 header={tableHeader}
                                                 paginator
                                                 totalRecords={totalRecords}
-                                                rows={25}
+                                                rows={10}
                                             >
-                                            {/* <Column
-                                                selectionMode="multiple"
-                                                headerStyle={{ width: "3.5rem" }}
-                                            ></Column> */}
                                             <Column
-                                                field="product_name"
-                                                header="nama produk"
+                                                header="#"
+                                                body={(data, options) => options.rowIndex + 1}
+                                            ></Column>
+                                            <Column
+                                                header="ID departemen"
+                                                field='department_id'
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
+                                            ></Column>
+                                            <Column
+                                                field="department_name"
+                                                header="departemen"
                                                 // sortable
                                                 bodyStyle={primeTableBodyStyle}
                                                 headerStyle={primeTableHeaderStyle}
                                                 body={cellWithImg}
                                                 style={{ textTransform: "uppercase" }}
                                             ></Column>
-                                            <Column
-                                                field="variant"
-                                                header="varian"
-                                                bodyStyle={primeTableBodyStyle}
-                                                headerStyle={primeTableHeaderStyle}
-                                                // body={formatedOrderDate}
-                                                // dataType='date'
-                                                // filter 
-                                                // filterPlaceholder="Type a date"
-                                                style={{ textTransform: "uppercase" }}
-                                            ></Column>
-                                            <Column
-                                                field="sku"
-                                                header="sku"
-                                                bodyStyle={primeTableBodyStyle}
-                                                headerStyle={primeTableHeaderStyle}
-                                                // body={formatedOrderDate}
-                                                // dataType='date'
-                                                // filter 
-                                                // filterPlaceholder="Type a date"
-                                                style={{ textTransform: "uppercase" }}
-                                            ></Column>
-                                            <Column
-                                                field="unit"
-                                                header="unit"
-                                                bodyStyle={primeTableBodyStyle}
-                                                headerStyle={primeTableHeaderStyle}
-                                                // body={formatedOrderDate}
-                                                // dataType='date'
-                                                // filter 
-                                                // filterPlaceholder="Type a date"
-                                                style={{ textTransform: "uppercase" }}
-                                            ></Column>
-                                            <Column
-                                                field="product_cost"
-                                                header="biaya produksi"
-                                                body={formatedProductCost}
-                                                bodyStyle={primeTableBodyStyle}
-                                                headerStyle={primeTableHeaderStyle}
-                                                // sortable 
-                                                style={{ textTransform: "uppercase" }}
-                                            ></Column>
-                                             <Column
-                                                field="sell_price"
-                                                header="Harga jual"
-                                                body={formatedSellPrice}
-                                                bodyStyle={primeTableBodyStyle}
-                                                headerStyle={primeTableHeaderStyle}
-                                                // sortable 
-                                                style={{ textTransform: "uppercase" }}
-                                            ></Column>
-                                            <Column
-                                                field="discount"
-                                                header="diskon aktif"
-                                                bodyStyle={primeTableBodyStyle}
-                                                headerStyle={primeTableHeaderStyle}
-                                                body={formatedDisc}
-                                                // dataType='date'
-                                                // sortable
-                                                style={{ textTransform: "uppercase" }}
-                                            ></Column>
-                                            {/* <Column
-                                                field="status"
-                                                header="status"
-                                                body={statusCell}
-                                                bodyStyle={{textTransform: 'capitalize'}}
-                                                filter
-                                                showFilterMenu={false} 
-                                                filterMenuStyle={{ width: '100%' }}
-                                                filterElement={statusRowFilter}
-                                                style={{ textTransform: "uppercase" }}
-                                            ></Column> */}
                                             <Column
                                                 field=""
                                                 header="aksi"
@@ -1442,54 +1293,68 @@ export default function Products({handleSidebar, showSidebar}){
                                             </DataTable>
                                         </div>
                                         ):(
-                                        <>
-                                        <div
-                                            className="wrapping-table-btn flex gap-3"
-                                            style={{ height: "inherit" }}
-                                        >
-                                            {/* <button
-                                                type="button"
-                                                className="btn btn-light light"
-                                                style={{ height: "100%" }}
+                                            <>
+                                            <div
+                                                className="wrapping-table-btn flex flex-end gap-3"
+                                                style={{ width: "100%", height: "inherit"}}
                                             >
-                                                <i className="bx bx-printer"></i>
-                                            </button> */}
-                                            <Dropdown drop={"down"}>
-                                                <Dropdown.Toggle variant="primary" style={{ height: "100%" }}>
-                                                <i className="bx bx-download"></i> export
-                                                </Dropdown.Toggle>
-                                                <Dropdown.Menu align={"end"}>
-                                                <Dropdown.Item
-                                                    eventKey="1"
-                                                    as="button"
-                                                    aria-label="viewInvModal"
+                                                {/* <button
+                                                    type="button"
+                                                    className="btn btn-light light"
+                                                    style={{ height: "100%" }}
+                                                >
+                                                    <i className="bx bx-printer"></i>
+                                                </button> */}
+                                                <Dropdown drop={"down"}>
+                                                    <Dropdown.Toggle variant="primary" style={{ height: "100%" }}>
+                                                        <i className="bx bx-download"></i> export
+                                                    </Dropdown.Toggle>
+                                                    <Dropdown.Menu align={"end"}>
+                                                        <Dropdown.Item
+                                                        eventKey="1"
+                                                        as="button"
+                                                        aria-label="viewInvModal"
+                                                        onClick={(e) =>
+                                                            handleModal(e, { id: inv.invoice_id, items: { ...inv } })
+                                                        }
+                                                        >
+                                                        <i className="bx bx-show"></i> PDF (.pdf)
+                                                        </Dropdown.Item>
+                                                        <Dropdown.Item
+                                                        eventKey="1"
+                                                        as="button"
+                                                        aria-label="editInvModal"
+                                                        onClick={(e) => handleModal(e, inv.invoice_id)}
+                                                        >
+                                                        <i className="bx bxs-edit"></i> Microsoft Excel (.xlsx)
+                                                        </Dropdown.Item>
+                                                    </Dropdown.Menu>
+                                                </Dropdown>
+                                                <button
+                                                    type="button"
+                                                    className=" btn btn-primary btn-w-icon"
+                                                    style={{ height: "100%" }}
+                                                >
+                                                    <i className="bx bxs-file-plus"></i> import
+                                                </button>
+                                                <button type="button" className="add-btn btn btn-primary btn-w-icon" 
+                                                    aria-label="addCategoryModal"
                                                     onClick={(e) =>
-                                                        handleModal(e, { id: inv.invoice_id, items: { ...inv } })
+                                                        handleModal(e, {
+                                                            endpoint: "category",
+                                                            action: "insert",
+                                                        })
                                                     }
                                                 >
-                                                    <i className="bx bx-show"></i> PDF (.pdf)
-                                                </Dropdown.Item>
-                                                <Dropdown.Item
-                                                    eventKey="1"
-                                                    as="button"
-                                                    aria-label="editInvModal"
-                                                    onClick={(e) => handleModal(e, inv.invoice_id)}
-                                                >
-                                                    <i className="bx bxs-edit"></i> Microsoft Excel (.xlsx)
-                                                </Dropdown.Item>
-                                                </Dropdown.Menu>
-                                            </Dropdown>
-                                            <button
-                                                type="button"
-                                                className=" btn btn-primary btn-w-icon"
-                                                style={{ height: "100%" }}
-                                            >
-                                                <i className="bx bxs-file-plus"></i> import
-                                            </button>
-                                        </div>
-                                        <DataView value={allProdData} listTemplate={listTemplate} style={{marginTop: '.5rem'}} />         
-                                        </>
+                                                    <i className="bx bx-plus"></i>
+                                                    kategori
+                                                </button>
+                                            </div>
+                                            <DataView value={departmentList} listTemplate={listTemplate} style={{marginTop: '.5rem'}} />         
+                                            </>
                                         )}
+                                       
+
                                         {/* <div className="table-responsive mt-4">
                                             <table className="table" id="advancedTablesWFixedHeader" data-table-search="true"
                                                 data-table-sort="true" data-table-checkbox="true">
@@ -1725,185 +1590,6 @@ export default function Products({handleSidebar, showSidebar}){
                                         </div> */}
                                     </div>
                                 </div>
-                                <div className="tabs-content" style={openTab === "addProdTab" ? {display: "block"} : {display: "none"}}>
-                                    <div className="card card-table add-on-shadow">
-                                        <p className="card-title">Tambah produk</p>
-                                        <div className="accordion accordion-w-icon" id="addProdAccordion">
-                                                <div className="accordion-item">
-                                                    <h2 className="accordion-header">
-                                                        <button className="accordion-button" type="button" data-bs-toggle="collapse"
-                                                            data-bs-target="#prodInfoAcc" aria-expanded="true"
-                                                            aria-controls="prodInfoAcc">
-                                                            <i className='bx bx-info-circle'></i>informasi produk
-                                                        </button>
-                                                    </h2>
-                                                    <div id="prodInfoAcc" className="accordion-collapse collapse show">
-                                                        <div className="accordion-body">
-                                                            <form>
-                                                                <div className="add-prod-area mt-4 mb-2">
-                                                                    <div className="add-prod-img-wrap mb-3">
-                                                                        <label className="mb-1" htmlFor="name">foto produk</label>
-                                                                        <DropzoneFile
-                                                                            name={"img"}
-                                                                            register={register}
-                                                                            require={false}
-                                                                            errors={errors}
-                                                                            // defaultValue={defaultAvatar}
-                                                                        />
-                                                                    </div>
-                                                                    <div className="add-prod-detail-wrap" style={{display: 'block'}}>
-                                                                        <Row className='gy-4 mb-4'>
-                                                                            <Col lg={3} md={6} sm={12}>
-                                                                                <InputWLabel
-                                                                                    label="nama produk"
-                                                                                    type="text"
-                                                                                    name="product_name"
-                                                                                    placeholder="Tahu"
-                                                                                    register={register}
-                                                                                    require={true}
-                                                                                    errors={errors}
-                                                                                />
-                                                                            
-                                                                            </Col>
-                                                                            <Col lg={3} md={6} sm={12}>
-                                                                                <InputWLabel
-                                                                                    label="SKU"
-                                                                                    type="text"
-                                                                                    name="sku"
-                                                                                    placeholder=""
-                                                                                    register={register}
-                                                                                    require={false}
-                                                                                    errors={errors}
-                                                                                />
-                                                                            </Col>
-                                                                            <Col lg={3} md={6} sm={12}>
-                                                                                <InputWSelect
-                                                                                    label={"unit"}
-                                                                                    name="unit"
-                                                                                    selectLabel="Pilih unit pengukuran"
-                                                                                    options={dataStatic.unitOfProduct}
-                                                                                    optionKeys={["id", "type"]}
-                                                                                    value={(selected) => {setValue("unit", selected.value);getValues("unit") !== "" && clearErrors('unit')}}
-                                                                                    // width={"100%"}
-                                                                                    register={register}
-                                                                                    require={true}
-                                                                                    errors={errors}
-                                                                                />
-                                                                            </Col>
-                                                                            <Col lg={3} md={6} sm={12}>
-                                                                                <InputWSelect
-                                                                                    label={"kategori"}
-                                                                                    name="category_name"
-                                                                                    selectLabel="Pilih kategori produk"
-                                                                                    options={categoryList}
-                                                                                    optionKeys={["id", "category_name"]}
-                                                                                    value={(selected) => {setValue("category_name", selected.value);console.log(selected);setValue("category_id", selected.id);getValues("category_name") !== "" && clearErrors('category_name')}}
-                                                                                    // width={"220px"}
-                                                                                    register={register}
-                                                                                    require={true}
-                                                                                    errors={errors}
-                                                                                />
-                                                                            </Col>
-                                                                        </Row>
-                                                                        <Row className='gy-4 mb-4'>
-                                                                            <Col lg={3} sm={12}>
-                                                                                <InputWLabel 
-                                                                                    label={"variant"}
-                                                                                    type={'switch'}
-                                                                                    name={'variant_switch'}
-                                                                                    style={{alignItems:'center'}}
-                                                                                    onChange={(e) => {setValue('variant_switch', e.target.checked);setVariantSwitch(e.target.checked)}}
-                                                                                    register={register}
-                                                                                    require={false}
-                                                                                    errors={errors}
-                                                                                />
-                                                                            </Col>
-                                                                        </Row>
-                                                                        <Row className='gy-4'>
-                                                                            <Collapse in={variantSwitch == true}>
-                                                                                <Col lg={3} md={6} sm={12}>
-                                                                                    <InputWLabel
-                                                                                        label="nama varian"
-                                                                                        type="text"
-                                                                                        name="variant"
-                                                                                        placeholder="ex.eceran"
-                                                                                        register={register}
-                                                                                        require={variantSwitch ? true : false}
-                                                                                        errors={errors}
-                                                                                    />
-                                                                                </Col>
-                                                                            </Collapse>
-                                                                        </Row>
-                                                                    </div>
-                                                                </div>
-                                                            </form>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="accordion-item">
-                                                    <h2 className="accordion-header">
-                                                        <button className="accordion-button collapsed" type="button"
-                                                            data-bs-toggle="collapse" data-bs-target="#stockAndPricing"
-                                                            aria-expanded="false" aria-controls="stockAndPricing">
-                                                            <i className='bx bx-purchase-tag-alt'></i>stock & pricings
-                                                        </button>
-                                                    </h2>
-                                                    <div id="stockAndPricing" className="accordion-collapse collapse show">
-                                                        <div className="accordion-body">
-                                                            <Row className="gy-4 mt-1 mb-4">
-                                                                <Col lg={4} sm={12} md={6}>
-                                                                    <InputGroup
-                                                                        label="biaya produksi"
-                                                                        groupLabel="Rp"
-                                                                        type="text"
-                                                                        position="left"
-                                                                        name="prod_cost"
-                                                                        inputMode="numeric" 
-                                                                        mask="currency"
-                                                                        returnValue={(value) => setValue('product_cost', value.origin)}
-                                                                        register={register}
-                                                                        require={true}
-                                                                        errors={errors}
-                                                                    />
-                                                                </Col>
-                                                                <Col lg={4} sm={12} md={6}>
-                                                                    <InputGroup
-                                                                        label="harga jual"
-                                                                        groupLabel="Rp"
-                                                                        type="text"
-                                                                        position="left"
-                                                                        inputMode="numeric" 
-                                                                        mask="currency"
-                                                                        name="selling_price"
-                                                                        returnValue={(value) => setValue('sell_price', value.origin)}
-                                                                        register={register}
-                                                                        require={true}
-                                                                        errors={errors}
-                                                                    />
-                                                                </Col>
-                                                            </Row>
-                                                            {/* <Row>
-                                                                <Col lg={4} sm={12} md={6}>
-                                                                    <label className="mb-1" htmlFor="prod-stock">lacak inventory</label>
-                                                                    <div className="d-flex">
-                                                                        <div className="form-switch">
-                                                                            <input className="form-check-input switch-primary"
-                                                                                type="checkbox" id="flexSwitchCheckChecked"
-                                                                                checked=""/>
-                                                                            <label className="mx-2" htmlFor="variantYes"> Yes</label>
-                                                                        </div>
-                                                                    </div>
-                                                                </Col>
-                                                            </Row> */}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="wrapping-table-btn mt-5">
-                                                    <button type="button" className="add-btn btn btn-primary" onClick={handleSubmit(onSubmitProd, onError)}>Tambah produk</button>
-                                                </div>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -1912,25 +1598,37 @@ export default function Products({handleSidebar, showSidebar}){
 
             {showModal === "salesDetailModal" ? 
                 (
-                    <SalesDetailModal show={showModal === "salesDetailModal" ? true : false} onHide={handleCloseModal} data={showModal == "salesDetailModal" ? prodListObj : ""} />
+                    <SalesDetailModal show={showModal === "salesDetailModal" ? true : false} onHide={handleCloseModal} data={showModal == "salesDetailModal" ? modalData : ""} />
                 )
-             : showModal === "editProdModal" ?
+             : showModal === "editDepartmentModal" ?
                 (
-                    <EditProductModal show={showModal == "editProdModal" ? true : false} onHide={handleCloseModal} data={showModal == "editProdModal" ? prodListObj : ""} />
-                )
-             : showModal === "confirmDelProd" ? (
-                    <ConfirmModal
-                      show={showModal === "confirmDelProd" ? true : false}
-                      onHide={handleCloseModal}
-                      data={showModal === "confirmDelProd" ? prodListObj : ""}
-                      msg={"Yakin ingin menghapus produk ini?"}
-                      returnValue={(value) => {setDelProd(value); console.log(value)}}
+                    <DepartmentModal 
+                        show={showModal == "editDepartmentModal" ? true : false} 
+                        onHide={handleCloseModal}  
+                        data={showModal == "editDepartmentModal" ? modalData : ""} 
+                        returnAct={(act) => act ? setRefetch(true) : setRefetch(false)}
                     />
                 )
-            : showModal === "warningCancelModal" ?
+             : showModal === "confirmDelDepartment" ? (
+                    <ConfirmModal
+                      show={showModal === "confirmDelDepartment" ? true : false}
+                      onHide={handleCloseModal}
+                      data={showModal === "confirmDelDepartment" ? modalData : ""}
+                      msg={"Yakin ingin menghapus departemen ini?"}
+                      returnValue={(value) => {setDelDepartment(value)}}
+                    />
+            ): showModal === "addDepartmentModal" ? (
+                    <DepartmentModal 
+                        show={showModal === "addDepartmentModal" ? true : false}
+                        onHide={handleCloseModal}
+                        data={showModal === "addDepartmentModal" ? modalData : ""}
+                        returnAct={(act) => act ? setRefetch(true) : setRefetch(false)}
+                    />
+
+            ) : showModal === "warningCancelModal" ?
                 (
                     <ConfirmModal show={showModal === "warningCancelModal" ? true : false} onHide={handleCloseModal} 
-                        data={showModal === "warningCancelModal" ? prodListObj : ""} 
+                        data={showModal === "warningCancelModal" ? modalData : ""} 
                         msg={
                             <p style={{marginBottom: 0}}>
                                 Tidak dapat membatalkan order ini karena hanya satu-satunya order di invoice dan terdapat pembayaran yang belum penuh.<br />
@@ -1944,7 +1642,7 @@ export default function Products({handleSidebar, showSidebar}){
              : showModal === "existInvOrderModal" ?
                 (
                     <ConfirmModal show={showModal === "existInvOrderModal" ? true : false} onHide={handleCloseModal} 
-                        data={showModal === "existInvOrderModal" ? prodListObj : ""} 
+                        data={showModal === "existInvOrderModal" ? modalData : ""} 
                         msg={
                             <p style={{marginBottom: 0}}>
                                 Ada invoice dengan pelanggan yang sama, mau ditambahkan ke invoice?
@@ -1956,7 +1654,7 @@ export default function Products({handleSidebar, showSidebar}){
             : showModal === "confirmationModal" ?
                 (
                     <ConfirmModal show={showModal === "confirmationModal" ? true : false} onHide={handleCloseModal} 
-                        data={showModal === "confirmationModal" ? prodListObj : ""}  
+                        data={showModal === "confirmationModal" ? modalData : ""}  
                         msg={modalMsg}
                         returnValue={(confirm) => {setConfirm(confirm)}}
                     />

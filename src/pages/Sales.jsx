@@ -1820,7 +1820,7 @@ export default function Sales({handleSidebar, showSidebar}){
     const actionCell = (rowData, rowIndex) => {
         return (
             <Dropdown drop={rowIndex == salesData.length - 1 ? "up" : "down"}>
-                <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components" ></Dropdown.Toggle>
+                <Dropdown.Toggle as={CustomToggle.CustomToggle1} id="dropdown-custom-components" ></Dropdown.Toggle>
 
                 <Dropdown.Menu align={"end"}>
                     <Dropdown.Item eventKey="handleBg"  as="button" aria-label="salesEditModal" 
@@ -1856,7 +1856,7 @@ export default function Sales({handleSidebar, showSidebar}){
         console.log(rowData)
         return (
             <Dropdown drop={rowIndex == roData.length - 1 ? "up" : "down"}>
-                <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components" ></Dropdown.Toggle>
+                <Dropdown.Toggle as={CustomToggle.CustomToggle1} id="dropdown-custom-components" ></Dropdown.Toggle>
 
                 <Dropdown.Menu align={"end"}>
                     {rowData.status?.toLowerCase() !== "dikonfirmasi" ? 
@@ -2142,7 +2142,7 @@ export default function Sales({handleSidebar, showSidebar}){
             </div>
             </div>
             <Dropdown drop={index == custData.length - 1 ? "up" : "down"}  style={{position: 'absolute', top: 10, right: 9, padding: '1rem 1rem .5rem 1rem'}}>
-                <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components" ></Dropdown.Toggle>
+                <Dropdown.Toggle as={CustomToggle.CustomToggle1} id="dropdown-custom-components" ></Dropdown.Toggle>
                 <Dropdown.Menu align={"end"}>
                     <Dropdown.Item eventKey="1" as="button" 
                         aria-label="salesEditModal" 
@@ -2255,7 +2255,7 @@ export default function Sales({handleSidebar, showSidebar}){
             </div>
             </div>
             <Dropdown drop={index == roData.length - 1 ? "up" : "down"}  style={{position: 'absolute', top: 10, right: 9, padding: '1rem 1rem .5rem 1rem'}}>
-                <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components" ></Dropdown.Toggle>
+                <Dropdown.Toggle as={CustomToggle.CustomToggle1} id="dropdown-custom-components" ></Dropdown.Toggle>
                 <Dropdown.Menu align={"end"} className='static-shadow'>
                     {rowData.status?.toLowerCase() !== "dikonfirmasi" ? 
                         (

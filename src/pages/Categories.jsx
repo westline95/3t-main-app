@@ -1067,7 +1067,7 @@ export default function Categories({handleSidebar, showSidebar}){
             </div>
             </div>
             <Dropdown drop={index == categoryList.length - 1 ? "up" : "down"}  style={{position: 'absolute', top: 10, right: 9, padding: '1rem 1rem .5rem 1rem'}}>
-                <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components" ></Dropdown.Toggle>
+                <Dropdown.Toggle as={CustomToggle.CustomToggle1} id="dropdown-custom-components" ></Dropdown.Toggle>
                 <Dropdown.Menu align={"end"}>
                     <Dropdown.Item eventKey="1" as="button" 
                         aria-label="confirmDelCategory"

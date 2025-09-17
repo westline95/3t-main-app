@@ -561,6 +561,9 @@ export default function Delivery({handleSidebar, showSidebar}){
             case "deliveryListTab":
                 setOpenTab("deliveryListTab");
             break;
+            case "deliveryGroupListTab":
+                setOpenTab("deliveryGroupListTab");
+            break;
             case "addSalesTab":
                 setOpenTab("addSalesTab");
             break;
@@ -1149,7 +1152,7 @@ export default function Delivery({handleSidebar, showSidebar}){
     const actionCell = (rowData, rowIndex) => {
         return (
             <Dropdown drop={rowIndex == salesData.length - 1 ? "up" : "down"}>
-                <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components" ></Dropdown.Toggle>
+                <Dropdown.Toggle as={CustomToggle.CustomToggle1} id="dropdown-custom-components" ></Dropdown.Toggle>
 
                 <Dropdown.Menu align={"end"}>
                     <Dropdown.Item eventKey="handleBg"  as="button" aria-label="delivEditModal" 
@@ -1295,6 +1298,12 @@ export default function Delivery({handleSidebar, showSidebar}){
                                     >
                                         <span className="tab-title">delivery list</span>
                                     </div>
+                                    <div className={`tab-indicator ${openTab === "deliveryGroupListTab" ? "active" : ""}`}  
+                                        id='deliveryGroupListTab' 
+                                        onClick={(e) => handleClick(e)}
+                                    >
+                                        <span className="tab-title">delivery Group list</span>
+                                    </div>
                                     {/* <div className={`tab-indicator ${openTab === "addSalesTab" ? "active" : ""}`} 
                                         id='addSalesTab' 
                                         onClick={(e) => handleClick(e)}
@@ -1319,6 +1328,419 @@ export default function Delivery({handleSidebar, showSidebar}){
                                     
                                 </div>
                                 <div className="tabs-content" style={openTab === "deliveryListTab" ? {display: "block"} : {display: "none"}}>
+                                    <div className="card card-table add-on-shadow">
+                                        {/* <div className="wrapping-table-btn">
+                                            <span className="selected-row-stat">
+                                                <p className="total-row-selected"></p>
+                                                <button type="button" className=" btn btn-danger btn-w-icon">
+                                                    <i className='bx bx-trash'></i>Delete selected row
+                                                </button>
+                                            </span>
+                                            <button type="button" className="btn btn-light light"><i className='bx bx-filter-alt'></i>
+                                            </button>
+                                            <button type="button" className="btn btn-light light"><i className='bx bx-printer'></i>
+                                            </button>
+                                            <div className="btn-group">
+                                                <button type="button" className="btn btn-primary btn-w-icon dropdown-toggle"
+                                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <i className='bx bx-download'></i> export
+                                                </button>
+                                                <ul className="dropdown-menu">
+                                                    <li><a className="dropdown-item" href="#">PDF (.pdf)</a></li>
+                                                    <li><a className="dropdown-item" href="#">Microsoft Excel (.xlsx)</a></li>
+                                                </ul>
+                                            </div>
+                                            <button type="button" className=" btn btn-primary btn-w-icon">
+                                                <i className='bx bxs-file-plus'></i> import
+                                            </button>
+                                        </div>
+                                        <p className="card-title">filter</p>
+                                        <div className="filter-area">
+                                            <div className="table-search">
+                                                <div className="input-group-right">
+                                                    <span className="input-group-icon input-icon-right"><i
+                                                            className="zwicon-search"></i></span>
+                                                    <input type="text" className="form-control input-w-icon-right"
+                                                        placeholder="Search customer..." />
+                                                </div>
+                                            </div>
+                                            <InputWSelect
+                                                name="custTypeFilter"
+                                                selectLabel="Select customer type"
+                                                options={[{id: "member", value: "member"}, {id:"non-member", value:"non-member"}]}
+                                                optionKeys={["id", "value"]}
+                                                value={(selected) => setCustTypeFilter(selected)}
+                                            />
+                                        </div> */}
+                                         <div className="mt-4">
+                                            <DataTable
+                                                className="p-datatable"
+                                                value={deliveryList}
+                                                size="normal"
+                                                removableSort
+                                                // stripedRows
+                                                // selectionMode={"checkbox"}
+                                                // selection={selectedSales}
+                                                // onSelectionChange={(e) => {
+                                                //     setSelectedSales(e.value);
+                                                // }}
+                                                dataKey="delivery_id"
+                                                tableStyle={{ minWidth: "50rem", fontSize: '14px' }}
+                                                filters={salesFilters}
+                                                filterDisplay='menu'
+                                                globalFilterFields={[
+                                                    "delivery_id",
+                                                    "order_id",
+                                                    "tracking_number",
+                                                    "ship_date",
+                                                    "courier_id",
+                                                    "courier_name",
+                                                    "order.customer.name",
+                                                    "delivery_status",
+                                                    "shipped_date",
+                                                ]}
+                                                
+                                                emptyMessage={emptyStateHandler}
+                                                onFilter={(e) => setSalesFilters(e.filters)}
+                                                header={tableHeader}
+                                                paginator
+                                                totalRecords={totalRecords}
+                                                rows={50}
+                                            >
+                                            {/* <Column
+                                                selectionMode="multiple"
+                                                headerStyle={{ width: "3.5rem" }}
+                                            ></Column> */}
+                                            <Column
+                                                field="delivery_id"
+                                                header="ID Pengiriman"
+                                                sortable
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
+                                                style={{ textTransform: "uppercase" }}
+                                            ></Column>
+                                            <Column
+                                                field="order_id"
+                                                header="ID Order"
+                                                sortable
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
+                                                style={{ textTransform: "uppercase" }}
+                                            ></Column>
+                                            <Column
+                                                field="tracking_number"
+                                                header="Nomor Resi"
+                                                sortable
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
+                                                style={{ textTransform: "uppercase" }}
+                                            ></Column>
+                                            <Column
+                                                field="ship_date"
+                                                header="Tanggal Pengiriman"
+                                                body={formatedOrderDate}
+                                                dataType='date'
+                                                filter 
+                                                filterPlaceholder="Type a date"
+                                                style={{ textTransform: "uppercase" }}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
+                                            ></Column>
+                                            <Column
+                                                field="courier_id"
+                                                header="ID Kurir"
+                                                sortable
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
+                                                style={{ textTransform: "uppercase" }}
+                                            ></Column>
+                                            <Column
+                                                field="courier_name"
+                                                header="Kurir"
+                                                filter 
+                                                filterPlaceholder="Search by courier name"
+                                                style={{ textTransform: "uppercase" }}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
+                                            ></Column>
+                                             <Column
+                                                field="order.customer.name"
+                                                header="Pelanggan"
+                                                filter 
+                                                style={{ textTransform: "uppercase" }}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
+                                            ></Column>
+                                            <Column
+                                                field="delivery_address"
+                                                header="alamat"
+                                                filter 
+                                                showFilterMenu={false}
+                                                filterMenuStyle={{ width: '100%' }}
+                                                filterPlaceholder={"order type"}
+                                                body={deliveryAddress}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
+                                                style={{ textTransform: 'uppercase' }}
+                                            ></Column>
+                                            <Column
+                                                field="delivery_status"
+                                                header="status"
+                                                body={statusCell}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
+                                                filter
+                                                showFilterMenu={false} 
+                                                filterMenuStyle={{ width: '100%' }}
+                                                filterElement={statusRowFilter}
+                                                style={{ textTransform: "uppercase" }}
+                                            ></Column>
+                                            <Column
+                                                field=""
+                                                header="aksi"
+                                                body={(rowData, rowIndex) => actionCell(rowData, rowIndex)}
+                                                style={{ textTransform: "uppercase" }}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
+                                            ></Column>
+                                            </DataTable>
+                                        </div>
+                                        {/* <div className="table-responsive mt-4">
+                                            <table className="table" id="advancedTablesWFixedHeader" data-table-search="true"
+                                                data-table-sort="true" data-table-checkbox="true">
+                                                <thead>
+                                                    <tr>
+                                                        <th scope="col">
+                                                            <input className="form-check-input checkbox-primary checkbox-all"
+                                                                type="checkbox" />
+                                                        </th>
+                                                        <th scope="col" className="head-w-icon sorting" aria-label="product Name">
+                                                            Order ID
+                                                            <span className="sort-icon"></span>
+                                                        </th>
+                                                        <th scope="col" className="head-w-icon sorting" aria-label="category">
+                                                            Order Date
+                                                            <span className="sort-icon"></span>
+                                                        </th>
+                                                        <th scope="col" className="head-w-icon sorting" aria-label="variant">
+                                                            Customer Name
+                                                            <span className="sort-icon"></span>
+                                                        </th> 
+                                                        <th scope="col" className="head-w-icon sorting" aria-label="sub variant">
+                                                            Customer type
+                                                            <span className="sort-icon"></span>
+                                                        </th>
+                                                        <th scope="col" className="head-w-icon sorting" aria-label="sub variant">
+                                                            Order type
+                                                            <span className="sort-icon"></span>
+                                                        </th>
+                                                        <th scope="col" className="head-w-icon sorting" aria-label="qty">
+                                                            Total
+                                                            <span className="sort-icon"></span>
+                                                        </th>
+                                                        <th scope="col" className="head-w-icon sorting" aria-label="source">
+                                                            source
+                                                            <span className="sort-icon"></span>
+                                                        </th>
+                                                        <th scope="col" className="head-w-icon sorting" aria-label="sku">
+                                                            Status
+                                                            <span className="sort-icon"></span>
+                                                        </th>
+                                                        <th scope="col" aria-label="total">
+                                                            type
+                                                        </th>
+                                                        <th scope="col">Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="custListRender">
+                                                    {dupeDelivData ? 
+                                                        ( 
+                                                            dupeDelivData.map((sales, idx) => {
+                                                                console.log(sales)
+                                                                return (
+                                                                    <tr key={`sales-list- ${idx}`}>
+                                                                        <th scope="row">
+                                                                            <input className="form-check-input checkbox-primary checkbox-single" type="checkbox" value="" />
+                                                                        </th>
+                                                                        <td>{sales.order_id}</td>
+                                                                        <td>{ConvertDate.convertToFullDate(sales.order_date, "/")}</td>
+                                                                        <td style={{textTransform:'capitalize'}}>{sales.customer.name}</td>
+                                                                        <td style={{textTransform:'capitalize'}}>{sales.customer.cust_type}</td>
+                                                                        <td style={{textTransform:'capitalize'}}>{sales.order_type}</td>
+                                                                        <td>
+                                                                            <NumberFormat intlConfig={{
+                                                                                value: sales.grandtotal, 
+                                                                                locale: "id-ID",
+                                                                                style: "currency", 
+                                                                                currency: "IDR",
+                                                                            }} />
+                                                                        </td>
+                                                                        <td style={{textTransform:'capitalize'}}>{sales.source}</td>
+                                                                        <td style={{textTransform:'capitalize'}}>
+                                                                            <span className={`badge badge-${
+                                                                                sales.order_status == "completed" ? 'success'
+                                                                                : sales.order_status == "pending" ? "secondary" 
+                                                                                : sales.order_status == "in-delivery" ? "warning" 
+                                                                                : sales.order_status == "canceled" ? "danger" 
+                                                                                : ""} light`}
+                                                                            >
+                                                                                {
+                                                                                    sales.order_status == "completed" ? 'completed'
+                                                                                    : sales.order_status == "pending" ? 'pending'
+                                                                                    : sales.order_status == "in-delivery" ? 'in-delivery'
+                                                                                    : sales.order_status == "canceled" ? 'canceled'
+                                                                                    : ""
+                                                                                }                                                                                
+                                                                            </span>
+                                                                        </td>
+                                                                        <td style={{textTransform:'capitalize'}}>
+                                                                            <span className={`badge badge-${
+                                                                                sales.payment_type == "unpaid" ? 'danger'
+                                                                                : sales.payment_type == "paid"? "primary"
+                                                                                : sales.payment_type == "partial"? "warning"
+                                                                                : ""} light`}
+                                                                            >
+                                                                                {sales.payment_type }                                                                                
+                                                                            </span>
+                                                                        </td>
+                                                                        <td>
+                                                                            <Dropdown drop={idx == salesData.length - 1 ? "up" : "down"}>
+                                                                                <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components" ></Dropdown.Toggle>
+
+                                                                                <Dropdown.Menu align={"end"}>
+                                                                                    <Dropdown.Item eventKey="1" as="button" aria-label="delivEditModal" onClick={(e) => handleModalWData(e, {endpoint: "sales", id: sales.order_id, action: 'update', ...sales})}>
+                                                                                        <i className='bx bxs-edit'></i> Edit sales
+                                                                                    </Dropdown.Item>
+                                                                                    <Dropdown.Item eventKey="1" as="button" aria-label="cancelDelivModal" onClick={(e) => handleModalWData(
+                                                                                        e, 
+                                                                                        {
+                                                                                            endpoint: "sales", 
+                                                                                            id: sales.order_id, 
+                                                                                            action: 'canceled',
+                                                                                            data: {...sales}
+                                                                                        })}>
+                                                                                        <i className='bx bx-trash'></i> Cancel sales
+                                                                                    </Dropdown.Item>
+                                                                                </Dropdown.Menu>
+                                                                            </Dropdown>
+                                                                        </td>
+                                                                    </tr>
+                                                                )
+                                                            })
+                                                            
+                                                        ):""
+                                                    }
+                                                </tbody>
+                                            </table>
+                                            <div className="table-end d-flex justify-content-between">
+                                                <p className="table-data-capt" id="tableCaption"></p>
+                                                <ul className="basic-pagination" id="paginationBtnRender"></ul>
+                                            </div>
+                                        </div> */}
+                                        {/* <!-- mobile list -->
+                                        <div className="mobile-list-wrap">
+                                            <div className="mobile-list" id="custLists">
+                                                <div className="list-item mt-3">
+                                                    <div className="modal-area" data-bs-toggle="modal"
+                                                        data-bs-target="#custDetailModal">
+                                                        <div className="list-img">
+                                                            <img src="../assets/images/Avatar 1.jpg" alt="user-img">
+                                                        </div>
+                                                        <div className="list-content">
+                                                            <h4 className="list-title">Kiya</h4>
+                                                            <p className="list-sub-title">cust091</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="list-badge primary">
+                                                        <p className="badge-text">Delivery Order</p>
+                                                    </div>
+                                                    <div className="more-opt" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        <i className='bx bx-dots-horizontal-rounded'></i>
+                                                    </div>
+                                                    <ul className="dropdown-menu dropdown-menu-end">
+                                                        <li>
+                                                            <button className="dropdown-item" type="button" data-bs-toggle="modal"
+                                                                data-bs-target="#editCustModal">
+                                                                <i className='bx bxs-edit'></i> Edit
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button className="dropdown-item" type="button" data-bs-toggle="modal"
+                                                                data-bs-target="#dangerModal">
+                                                                <i className='bx bx-trash'></i> Delete
+                                                            </button>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                                <div className="list-item mt-3">
+                                                    <div className="modal-area" data-bs-toggle="modal"
+                                                        data-bs-target="#custDetailModal">
+                                                        <div className="list-img">
+                                                            <img src="../assets/images/Avatar 1.jpg" alt="user-img">
+                                                        </div>
+                                                        <div className="list-content">
+                                                            <h4 className="list-title">Kiya</h4>
+                                                            <p className="list-sub-title">cust091</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="list-badge primary">
+                                                        <p className="badge-text">Delivery Order</p>
+                                                    </div>
+                                                    <div className="more-opt" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        <i className='bx bx-dots-horizontal-rounded'></i>
+                                                    </div>
+                                                    <ul className="dropdown-menu dropdown-menu-end">
+                                                        <li>
+                                                            <button className="dropdown-item" type="button" data-bs-toggle="modal"
+                                                                data-bs-target="#editCustModal">
+                                                                <i className='bx bxs-edit'></i> Edit
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button className="dropdown-item" type="button" data-bs-toggle="modal"
+                                                                data-bs-target="#dangerModal">
+                                                                <i className='bx bx-trash'></i> Delete
+                                                            </button>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                                <div className="list-item mt-3">
+                                                    <div className="modal-area" data-bs-toggle="modal"
+                                                        data-bs-target="#custDetailModal">
+                                                        <div className="list-img">
+                                                            <img src="../assets/images/Avatar 1.jpg" alt="user-img">
+                                                        </div>
+                                                        <div className="list-content">
+                                                            <h4 className="list-title">Kiya</h4>
+                                                            <p className="list-sub-title">cust091</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="list-badge primary">
+                                                        <p className="badge-text">Delivery Order</p>
+                                                    </div>
+                                                    <div className="more-opt" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        <i className='bx bx-dots-horizontal-rounded'></i>
+                                                    </div>
+                                                    <ul className="dropdown-menu dropdown-menu-end">
+                                                        <li>
+                                                            <button className="dropdown-item" type="button" data-bs-toggle="modal"
+                                                                data-bs-target="#editCustModal">
+                                                                <i className='bx bxs-edit'></i> Edit
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button className="dropdown-item" type="button" data-bs-toggle="modal"
+                                                                data-bs-target="#dangerModal">
+                                                                <i className='bx bx-trash'></i> Delete
+                                                            </button>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div> */}
+                                    </div>
+                                </div>
+                                <div className="tabs-content" style={openTab === "deliveryGroupListTab" ? {display: "block"} : {display: "none"}}>
                                     <div className="card card-table add-on-shadow">
                                         {/* <div className="wrapping-table-btn">
                                             <span className="selected-row-stat">

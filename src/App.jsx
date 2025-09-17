@@ -16,6 +16,8 @@ import Products from "./pages/Products";
 import Categories from "./pages/Categories";
 import Sidebar from "./parts/Sidebar";
 import { useState } from "react";
+import Employees from "./pages/Employees";
+import Department from "./pages/Department";
 
 const roleList = {
     admin: "admin",
@@ -65,6 +67,12 @@ function App() {
                 </Route>
                 <Route element={<RequireAuth allowedRoles={[roleList.admin]} />}>
                   <Route path="logistic/delivery" element={<Delivery />} />
+                </Route>
+                <Route element={<RequireAuth allowedRoles={[roleList.admin]} />}>
+                  <Route path="hrm/department" element={<Department />} />
+                </Route>
+                <Route element={<RequireAuth allowedRoles={[roleList.admin]} />}>
+                  <Route path="hrm/employees" element={<Employees />} />
                 </Route>
                 <Route element={<RequireAuth allowedRoles={[roleList.admin]} />}>
                   <Route path="setting/app" element={<SettingApp />} />  

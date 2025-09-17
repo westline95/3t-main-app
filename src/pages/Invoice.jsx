@@ -979,7 +979,7 @@ export default function Invoice({handleSidebar, showSidebar}){
     const invActionCell = (rowData, rowIndex) => {
         return (
             <Dropdown key={rowIndex} drop={rowIndex == invData.length - 1 ? "up" : "down"}>
-                <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components" ></Dropdown.Toggle>
+                <Dropdown.Toggle as={CustomToggle.CustomToggle1} id="dropdown-custom-components" ></Dropdown.Toggle>
                 <Dropdown.Menu align={"end"}>
                     <Dropdown.Item eventKey="1" as="button" aria-label="viewInvModal" onClick={(e) => {e.stopPropagation();handleModal(e, {id: rowData.invoice_id, items: rowData})}}>
                         <i className='bx bx-show'></i> Lihat invoice
@@ -1016,7 +1016,7 @@ export default function Invoice({handleSidebar, showSidebar}){
     const receiptActionCell = (rowData, rowIndex) => {
         return (
             <Dropdown key={rowIndex} drop={rowIndex == receiptData.length - 1 ? "up" : "down"}>
-                <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components" ></Dropdown.Toggle>
+                <Dropdown.Toggle as={CustomToggle.CustomToggle1} id="dropdown-custom-components" ></Dropdown.Toggle>
                 <Dropdown.Menu align={"end"}>
                     <Dropdown.Item eventKey="1" as="button" aria-label="viewReceiptModal" onClick={(e) => {e.stopPropagation();handleModal(e, {id: rowData.receipt_id, items: rowData})}}>
                         <i className='bx bx-show'></i> Preview receipt
@@ -1138,7 +1138,7 @@ export default function Invoice({handleSidebar, showSidebar}){
             </div>
             {/* <Dropdown drop={index == invData.length - 1 ? "up" : "down"} style={{position: 'absolute', top: 10, right: 9, padding: '1rem 1rem .5rem 1rem'}}> */}
             <Dropdown drop={"down"} style={{position: 'absolute', top: 10, right: 9, padding: '1rem 1rem .5rem 1rem'}}>
-                <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components" ></Dropdown.Toggle>
+                <Dropdown.Toggle as={CustomToggle.CustomToggle1} id="dropdown-custom-components" ></Dropdown.Toggle>
                 <Dropdown.Menu align={"end"} className='static-shadow'>
                     <Dropdown.Item eventKey="1" as="button" aria-label="viewInvModal" onClick={(e) => {e.stopPropagation();handleModal(e, {id: rowData.invoice_id, items: rowData})}}>
                         <i className='bx bx-show'></i> Lihat invoice
@@ -1313,7 +1313,7 @@ export default function Invoice({handleSidebar, showSidebar}){
             </div>
             {/* <Dropdown drop={index == invData.length - 1 ? "up" : "down"} style={{position: 'absolute', top: 10, right: 9, padding: '1rem 1rem .5rem 1rem'}}> */}
             <Dropdown drop={"down"} style={{position: 'absolute', top: 10, right: 9, padding: '1rem 1rem .5rem 1rem'}}>
-                <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components" ></Dropdown.Toggle>
+                <Dropdown.Toggle as={CustomToggle.CustomToggle1} id="dropdown-custom-components" ></Dropdown.Toggle>
                 <Dropdown.Menu align={"end"} className='static-shadow'>
                     <Dropdown.Item eventKey="1" as="button" aria-label="viewReceiptModal" onClick={(e) => {e.stopPropagation();handleModal(e, {id: rowData.receipt_id, items: rowData})}}>
                         <i className='bx bx-show'></i> Lihat receipt

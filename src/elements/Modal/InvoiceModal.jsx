@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Dropdown, Modal } from 'react-bootstrap';
 import { Toast } from 'primereact/toast';
 import NumberFormat from '../Masking/NumberFormat';
-import { PDFDownloadLink } from '@react-pdf/renderer';
+import { BlobProvider, pdf, PDFDownloadLink } from '@react-pdf/renderer';
 import { useReactToPrint } from 'react-to-print';
 import FetchApi from '../../assets/js/fetchApi.js';
 import InvoiceDoc from '../../parts/InvoiceDoc.jsx';
@@ -141,29 +141,98 @@ export default function InvoiceModal({show, onHide, data}) {
     }
 
     const testSend = async() => {
-        const send = await axios({
-            url: 'https://graph.facebook.com/v22.0/785616564632395/messages',
-            method: 'POST',
+        const invDoc = <InvoiceDoc data={{invoice: invDupe.items, order: salesList, payment: paymentData, ro: roList}} />;
+        const blob = await pdf(invDoc).toBlob();
+       
+        const formData = new FormData();
+        formData.append('file', blob, { filename: 'tes-doc.pdf', contentType: "application/pdf" }); // Provide a filename and content type
+        formData.append('messaging_product', 'whatsapp');
+        formData.append('type', "application/pdf");
+
+        const accessToken= 'EAAQmpbkuRWoBPTYd8KNRCodL6vGNCsCkZBZAfTIMJLBO0A0vPcii9ZB8QweY13q0FYbB1amBqUeiJWuFpDRtnZCDkqKg2ZBWgFvPXvXWFlcsUvwdyXcO5ukB55KjyZAh3pMZCVkc5WJig2spSHmYcGKtyK2ZCuR28FwSZAcFcgSVHKlQS9Xoo9YsTd65DdG6fbganYtZCXwmCb82ULrZCYrAl6uDLATsTmYXJWhaKCbVRRMZAwZDZD';
+        // const pdfBlob = new Blob(['%PDF-1.4...'], { type: 'application/pdf' }); 
+        await axios.post('https://graph.facebook.com/v22.0/765819206619796/media', formData, {
             headers: {
-                'Authorization': `Bearer EAA1SsDF92sYBPWLuBsh3Px6NScFinNmyRLhMvQZCJQ5UcQ5yiuqWIU2oLC4HW7pbeKC6YUXcfPYrxlUulVBIZCtDsMOX7uncgCCcvYtpTpWX3gCn9GWs5dCUkgMtpSZA6uZBYWEZCz5fLGUFV8ZCN5QldZAFkm7urIQGU0uep4SqTNsU66So4ctP8t3oDYzAEzpq1YMGJ46AOTrjKeZBEsLuDJTmGZCdbTxZCZCSeUxzhTRG6e07oEESh8jekUFLHhQfwZDZD`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/pdf'
             },
-            data: JSON.stringify({
+        })
+        .then(res => {
+            const msgBody = JSON.stringify({
                 messaging_product: 'whatsapp',
-                to: '+6281270982995',
-                type: 'text',
-                // template: {
-                //     name: "hello_world",
-                //     language: {
-                //         code: 'en_US'
-                //     }
-                // }
-                text :{
-                    body: "Welcome and congratulations!! This message demonstrates your ability to send a WhatsApp message notification from the Cloud API, hosted by Meta. Thank you for taking the time to test with us."
+                recipient_type: "individual",
+                to: '+6282229990644',
+                type: "document",
+                document: {
+                    id: res.data.id,
+                    filename: `${(invDupe.items.invoice_number).toUpperCase()} - ${capitalizeEveryWord(invDupe.items.customer?.name)}.pdf`,
+                    caption: "Please review this document."
                 }
-            }),
-        });
-        console.log(send);
+            });
+            const send = axios.post('https://graph.facebook.com/v22.0/765819206619796/messages', msgBody, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                
+            });
+            console.log(send);
+        })
+        .catch(err => {
+            console.log(err)
+        })
+        // await axios({
+        //     url: 'https://graph.facebook.com/v22.0/765819s206619796/media',
+        //     method: 'POST',
+        //     headers: {
+        //         'Authorization': `Bearer EAAQmpbkuRWoBPe2mZC442Dbv4ke5wOZA6xV5nWdCvZBIVq2WkolIk3yIIpN1t5XFkZAmhZCAsvIc9VIhDnVXKPewBhZAIiisyZBXukUENF6Mvl8XmuLBtnXJ8553WiwJH9LElLBiDZBpNN1SbZCXV241vpim3mWBVLaeWUO6eZB0328drrhug8sq88vRC5INPiE4HMZBsan4iyOzm81sQ5uYhmtZB44d4B6RtDkJbM1cpgqhQwZDZD`,
+        //         'Content-Type': 'application/pdf'
+        //     },
+        //     data: JSON.stringify({
+        //         messaging_product: 'whatsapp',
+        //         file: formData
+        //         // text :{
+        //         //     body: "Welcome and congratulations!! This message demonstrates your ability to send a WhatsApp message notification from the Cloud API, hosted by Meta. Thank you for taking the time to test with us."
+        //         // }
+        //     }),
+        // })
+        // .then(resp => {
+        //     console.log(resp)
+        //     if(resp.data){
+        //         const send = axios({
+        //             url: 'https://graph.facebook.com/v22.0/765819206619796/messages',
+        //             method: 'POST',
+        //             headers: {
+        //                 'Authorization': `Bearer EAAQmpbkuRWoBPe2mZC442Dbv4ke5wOZA6xV5nWdCvZBIVq2WkolIk3yIIpN1t5XFkZAmhZCAsvIc9VIhDnVXKPewBhZAIiisyZBXukUENF6Mvl8XmuLBtnXJ8553WiwJH9LElLBiDZBpNN1SbZCXV241vpim3mWBVLaeWUO6eZB0328drrhug8sq88vRC5INPiE4HMZBsan4iyOzm81sQ5uYhmtZB44d4B6RtDkJbM1cpgqhQwZDZD`,
+        //                 'Content-Type': 'application/json'
+        //             },
+        //             data: JSON.stringify({
+        //                 messaging_product: 'whatsapp',
+        //                 to: '+6281270982995',
+        //                 // type: 'template',
+        //                 // template: {
+        //                 //     name: "hello_world",
+        //                 //     language: {
+        //                 //         code: 'en_US'
+        //                 //     }
+        //                 // }
+        //                 type: "document",
+        //                 document: {
+        //                     "id": resp.data.id,
+        //                     "filename": `${(invDupe.items.invoice_number).toUpperCase()} - ${capitalizeEveryWord(invDupe.items.customer?.name)}.pdf`,
+        //                     "caption": "Please review this document."
+        //                 }
+        //                 // text :{
+        //                 //     body: "Welcome and congratulations!! This message demonstrates your ability to send a WhatsApp message notification from the Cloud API, hosted by Meta. Thank you for taking the time to test with us."
+        //                 // }
+        //             }),
+        //         });
+        //         console.log(send);
+        //     }
+        // })
+        // .catch(err => {
+        //     console.log(err)
+        // })
     }
 
     useEffect(() => {
@@ -1065,8 +1134,6 @@ export default function InvoiceModal({show, onHide, data}) {
                                 
                             </div>
 
-                            
-
                             <Dropdown style={{marginBottom: '.25rem'}}>
                                 <Dropdown.Toggle className="btn btn-primary btn-w-icon" style={{fontWeight: 600, width: '100%'}}>
                                     {/* <i className='bx bxs-send'></i> */}
@@ -1075,7 +1142,10 @@ export default function InvoiceModal({show, onHide, data}) {
 
                                 <Dropdown.Menu>
                                     <Dropdown.Item as="button" href="#/action-1"><i class='bx bx-envelope'></i>Email</Dropdown.Item>
-                                    <Dropdown.Item as="button" href="#/action-2" onClick={(e) => testSend()} ><i class='bx bxl-whatsapp'></i>Whatsapp</Dropdown.Item>
+                                    <Dropdown.Item as="button" href="#/action-2" onClick={(e) => {
+                                        testSend();
+                                        
+                                    }} ><i class='bx bxl-whatsapp'></i>Whatsapp</Dropdown.Item>
                                 </Dropdown.Menu>
                             </Dropdown>
                             {

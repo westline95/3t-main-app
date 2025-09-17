@@ -1182,6 +1182,13 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
                         } 
                     } 
                 break;
+                case "department":
+                    if(data.action === "delete"){
+                        if(returnValue){
+                            return returnValue(true);
+                        } 
+                    } 
+                break;
             }
 
         } 
@@ -1240,7 +1247,7 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
                         onHide(); 
                         returnValue && returnValue(false)}}
                     >
-                        { data.endpoint == 'warning' || data.endpoint == "delete" ? 'Tidak' : 'Batal'}
+                        { data.action == 'warning' || data.action == "delete" ? 'Tidak' : 'Batal'}
                     </button>
                     <button 
                         type="button" 

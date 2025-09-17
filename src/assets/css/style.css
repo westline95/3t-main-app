@@ -4524,6 +4524,113 @@ tr.hover-row:hover > * {
   width: 35%;
 }
 
+.profile-card-1-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: start;
+  gap: 2rem;
+}
+
+.profile-card-1.card {
+  position: relative;
+  width: 360px;
+  height: auto;
+  cursor: pointer;
+}
+
+.more-opt-profile-card-1 {
+  position: absolute;
+  right: 24px;
+  top: 18px;
+  padding: .5rem;
+}
+
+.profile-card-1-card-stack {
+  /* position: absolute; */
+  margin-top: 1.2rem;
+  width: 100%;
+  height: auto;
+  left: 5%;
+  /* bottom: -20%; */
+  bottom: 0;
+  background-color: var(--sa-color-info);
+  border-radius: 17px;
+}
+
+.profile-card-1-card-body .wrapping-inline {
+  display: inline-flex;
+  width: 100%;
+  gap: 1rem;
+}
+
+.profile-card-1-card-body .profile-img-wrap {
+  text-align: center;
+  width: 75px;
+  height: 75px;
+
+}
+
+.profile-card-1-card-body .profile-img-wrap img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.profile-card-1-card-body .profile-detail {
+  width: calc(100% - 91px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.profile-card-1-card-body .profile-detail>p {
+  margin-bottom: 0;
+  text-transform: capitalize;
+}
+
+.profile-card-1-card-body .profile-detail .name {
+  font-weight: 600;
+  color: var(--sa-color-text-blue-black);
+  font-size: 16px;
+  /* margin-bottom: 2px; */
+}
+
+.profile-card-1-card-body .profile-detail .sub-detail {
+  font-weight: 600;
+  color: #929292;
+  font-size: 13px;
+  margin-bottom: 5px;
+}
+
+.profile-card-1-card-body .profile-detail .badge-wrapping {
+  font-size: 13px;
+}
+
+.profile-card-1-card-stack{
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: .3rem;
+}
+
+.card-stack-text-wrap>p {
+  margin-bottom: 0;
+}
+
+.card-stack-text-wrap {
+  display: inline-flex;
+  justify-content: space-between;
+  color: var(--sa-color-white);
+  text-transform: capitalize;
+  font-size: 14px;
+  font-weight: 600;
+
+}
+
+.dropdown .table-btn i {
+  font-size: 22px;
+  color: var(--sa-black-blue);
+}
 
 /* media queries for responsiveness */
 /* for mobile */

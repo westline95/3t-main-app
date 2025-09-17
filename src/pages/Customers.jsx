@@ -767,7 +767,7 @@ export default function Customers({handleSidebar, showSidebar}) {
           </div>
         </div>
           <Dropdown drop={index == custData.length - 1 ? "up" : "down"}  style={{position: 'absolute', top: 10, right: 9, padding: '1rem 1rem .5rem 1rem'}}>
-            <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components" ></Dropdown.Toggle>
+            <Dropdown.Toggle as={CustomToggle.CustomToggle1} id="dropdown-custom-components" ></Dropdown.Toggle>
             <Dropdown.Menu align={"end"}>
               <Dropdown.Item eventKey="1" as="button" aria-label="editCustModal"
                   onClick={(e) => {
@@ -1463,22 +1463,22 @@ export default function Customers({handleSidebar, showSidebar}) {
                                       }) => (
                                           <div>
                                               <InputGroup
-                                                  inputRef={ref}
-                                                  label="limit hutang"
-                                                  groupLabel="Rp"
-                                                  type="text"
-                                                  onChange={onChange}
-                                                  position="left"
-                                                  name={name}
-                                                  // inputMode="numeric" 
-                                                  mask="currency"
-                                                  defaultValue={value}
-                                                  require={true}
-                                                  placeholder={"0"}
-                                                  returnValue={(value) => {
-                                                      setValue("debt_limit", value.origin);
-                                                      setValue("debt_limit_formated", value.formatted);
-                                                  }}                                                  
+                                                inputRef={ref}
+                                                label="limit hutang"
+                                                groupLabel="Rp"
+                                                type="text"
+                                                onChange={onChange}
+                                                position="left"
+                                                name={name}
+                                                // inputMode="numeric" 
+                                                mask="currency"
+                                                defaultValue={value}
+                                                require={true}
+                                                placeholder={"0"}
+                                                returnValue={(value) => {
+                                                    setValue("debt_limit", value.origin);
+                                                    setValue("debt_limit_formated", value.formatted);
+                                                }}                                                  
                                               />
                                               {fieldState.error && <span className="field-msg-invalid">{fieldState.error.message}</span>}
                                           </div>
