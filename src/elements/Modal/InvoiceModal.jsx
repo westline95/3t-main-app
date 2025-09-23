@@ -149,7 +149,7 @@ export default function InvoiceModal({show, onHide, data}) {
         formData.append('messaging_product', 'whatsapp');
         formData.append('type', "application/pdf");
 
-        const accessToken= 'EAAQmpbkuRWoBPTYd8KNRCodL6vGNCsCkZBZAfTIMJLBO0A0vPcii9ZB8QweY13q0FYbB1amBqUeiJWuFpDRtnZCDkqKg2ZBWgFvPXvXWFlcsUvwdyXcO5ukB55KjyZAh3pMZCVkc5WJig2spSHmYcGKtyK2ZCuR28FwSZAcFcgSVHKlQS9Xoo9YsTd65DdG6fbganYtZCXwmCb82ULrZCYrAl6uDLATsTmYXJWhaKCbVRRMZAwZDZD';
+        const accessToken= 'EAAQmpbkuRWoBPgegdmJM8w7G4IxIoGYszQbVNZBtvZC2LRMX72LzC9Bb6YIC5RwIkNQ34dTlC8Y9EZAYmbw13ClpqofMbXeGiM3m8126A1AAYSivSTzMps02U6DHjaa3vMk3SnFpkFxa9ee8ZCuZAqDL3BZA1w60JyP6jqL5BKTopg61kGVUDrmHGdOIVlhK1ILgZDZD';
         // const pdfBlob = new Blob(['%PDF-1.4...'], { type: 'application/pdf' }); 
         await axios.post('https://graph.facebook.com/v22.0/765819206619796/media', formData, {
             headers: {
