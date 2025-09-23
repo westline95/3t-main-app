@@ -166,7 +166,6 @@ export default function InvoiceModal({show, onHide, data}) {
                 document: {
                     id: res.data.id,
                     filename: `${(invDupe.items.invoice_number).toUpperCase()} - ${capitalizeEveryWord(invDupe.items.customer?.name)}.pdf`,
-                    caption: "Please review this document."
                 }
             });
             const send = axios.post('https://graph.facebook.com/v22.0/765819206619796/messages', msgBody, {

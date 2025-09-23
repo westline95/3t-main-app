@@ -198,6 +198,17 @@ const orderPayMethod = [
     }
 ];
 
+const salaryType = [
+    {
+        id: 1, 
+        type: "harian"
+    },
+    {
+        id: 2, 
+        type: "bulanan"
+    },
+];
+
 const invStatus = [
     {id: 1, type: "paid"},{id: 2, type: "in-progress"},{id: 3, type: "due"}
 ];
@@ -217,5 +228,6 @@ export default {
     returnMethod,
     returnOrderStatus,
     roStatus,
-    invStatus
+    invStatus,
+    salaryType
 };

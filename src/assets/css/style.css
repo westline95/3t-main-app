@@ -5383,6 +5383,20 @@ tr.hover-row:hover > * {
     font-size: 13px;
   }
 
+  .profile-card-1-container {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .profile-card-1.card {
+    width: 100%;
+  }
+
+  .profile-card-1-card-body .profile-img-wrap{
+    width: 60px;
+    height: 60px;
+  }
+
 }
 
 @media (min-width: 481px) and (max-width: 767px) {
@@ -6076,6 +6090,20 @@ tr.hover-row:hover > * {
     text-align: center;
   }
 
+  .profile-card-1-container {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .profile-card-1.card {
+    width: 100%;
+  }
+
+  .profile-card-1-card-body .profile-img-wrap{
+    width: 60px;
+    height: 60px;
+  }
+
 }
 
 /* for tablets or ipad */
@@ -6710,6 +6738,26 @@ tr.hover-row:hover > * {
 
   .add-prod-img-wrap {
     text-align: center;
+  }
+
+  .profile-card-1-container {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    width: 100%;
+    gap: 0;
+    row-gap: 1.5rem;
+    /* flex-basis: 50% !important; */
+  }
+
+  .profile-card-1.card {
+    width: 48.5%;
+  }
+
+  .profile-card-1-card-body .profile-img-wrap{
+    width: 60px;
+    height: 60px;
   }
 }
 

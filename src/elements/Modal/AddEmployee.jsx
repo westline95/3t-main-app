@@ -34,23 +34,27 @@ export default function AddEmployeeModal({ show, onHide, data, returnAct }) {
     formState: { errors },
   } = useForm({
     defaultValues: {
-      name: data?.name,
-      gender: data?.gender,
-      phonenumber: data?.phonenumber,
-      is_active: data.action == "insert" ? true : data.is_active,
-      img: data?.img,
-      debt_limit: data?.debt_limit,
+      name: data.rowData?.name,
+      gender: data.rowData?.gender,
+      phonenumber: data.rowData?.phonenumber,
+      is_active: data.action == "insert" ? true : data.rowData?.is_active,
+      img: data.action == "insert" ? "" : data.rowData?.img,
+      debt_limit: data.rowData?.debt_limit,
       debt_limit_formated: "0",
-      address: data?.address,
-      dob: data?.dob
+      address: data.rowData?.address,
+      dob: data.rowData?.dob,
+      position: data.rowData?.department_histories[0]?.position,
+      date: data.rowData?.department_histories[0]?.date ? new Date(data.rowData.department_histories[0].date) : "",
+      // hired_date: data.rowData?.hired_date ? new Date(data.rowData.hired_date) : ""
     },
   });
 
-    
+    console.log(getValues())
   const [showModal, setShowModal] = useState(false);
   const [statusSwitch, setStatusSwitch] = useState(false);
   const [targetKey, setTarget] = useState("");
   const [showToast, setShowToast] = useState(false);
+  const [controlUiBtn, setControlUiBtn] = useState(false);
   const [toastContent, setToastContent] = useState({
     variant: "",
     msg: "",
@@ -62,10 +66,10 @@ export default function AddEmployeeModal({ show, onHide, data, returnAct }) {
   const [isLoading, setLoading] = useState(true);
   const [sendTarget, setSendTarget] = useState(null);
   const [selectedDob, setSelectedDob] = useState(
-    data?.dob ? data.dob : null
+    data.rowData?.dob ? new Date(data.rowData?.dob) : null
   );
-  const [selectedHiredDate, setSelectedHiredDate] = useState(null);
-  const [selectedDepartmentDate, setSelectedDepartmentDate] = useState(null);
+  const [selectedHiredDate, setSelectedHiredDate] = useState(data.rowData?.hired_date ? new Date(data.rowData.hired_date) : null);
+  const [selectedDepartmentDate, setSelectedDepartmentDate] = useState(data.rowData?.department_histories[0]?.date ? new Date(data.rowData.department_histories[0].date) : null);
   const [ defaultAvatar, setDefaultAvatar ] = useState(data.img ? data.img : null)
 
   const femaleAvatar = `https://res.cloudinary.com/du3qbxrmb/image/upload/v1749183325/Avatar_1_hhww7p.jpg`;
@@ -141,6 +145,7 @@ export default function AddEmployeeModal({ show, onHide, data, returnAct }) {
   };
 
   const onError = () => {
+    setControlUiBtn(false);
     console.log(errors);
   };
 
@@ -154,8 +159,9 @@ export default function AddEmployeeModal({ show, onHide, data, returnAct }) {
         detail: "Berhasil menambahkan karyawan",
         life: 1500,
       });
-
+      
       setTimeout(() => {
+        setControlUiBtn(false);
         return returnAct(true);
       }, 1500);
     })
@@ -167,8 +173,33 @@ export default function AddEmployeeModal({ show, onHide, data, returnAct }) {
         life: 3000,
       });
     })
-  }
-  
+  };
+
+  const fetchUpdateEmployee = async(employeeData) => {
+    const body = JSON.stringify(employeeData);
+    await axiosPrivate.put("/employee/update", body, {params: {id: data.rowData.employee_id}})
+    .then(resp => {
+      toast.current.show({
+        severity: "success",
+        summary: "Sukses",
+        detail: "Berhasil memperbarui karyawan",
+        life: 1500,
+      });
+
+      setTimeout(() => {
+        setControlUiBtn(false);
+        return returnAct(true);
+      }, 1500);
+    })
+    .catch(err => {
+      toast.current.show({
+        severity: "error",
+        summary: "Gagal",
+        detail: "Gagal memperbarui karyawan",
+        life: 3000,
+      });
+    })
+  };
 
   const onSubmit = async(formData) => {
     setProgress(0);
@@ -238,6 +269,39 @@ export default function AddEmployeeModal({ show, onHide, data, returnAct }) {
     } else {
       if(data.action == "insert"){
         fetchInsertEmployee(employeeData);
+      } else {
+        let updateEmployeeData = {
+          employee: {
+            name: formData.name,
+            dob: formData.dob,
+            phonenumber: formData.phonenumber,
+            is_active: formData.is_active,
+            address: formData.address,
+            hired_date: formData.hired_date,
+            gender: formData.gender,
+            debt_limit: formData.debt_limit,
+            img: formData.img
+          },
+          department_history: {
+            date: formData.date,
+            position: formData.position
+          },
+          department_history_id: data.rowData.department_histories[0].department_history_id
+        }
+        // checking if department changed
+        if(formData.department_id !== data.rowData.department_histories[0].department_id){
+          // update employee then make new row department history 
+          updateEmployeeData.exist = false;
+          updateEmployeeData.department_history.department_id = formData.department_id;
+          updateEmployeeData.department_history.employee_id = data.rowData.employee_id;
+          updateEmployeeData.department_history.now_active = true;
+          
+        } else {
+          // update employee then update department history
+          updateEmployeeData.exist = true;
+        }
+        // fetch
+        fetchUpdateEmployee(updateEmployeeData);
       }
     }
   }
@@ -261,6 +325,7 @@ export default function AddEmployeeModal({ show, onHide, data, returnAct }) {
   // if(isLoading){
   //     return;
   // }
+  console.log(data)
 
   return (
     <>
@@ -287,14 +352,14 @@ export default function AddEmployeeModal({ show, onHide, data, returnAct }) {
                   <label className="mb-1">Foto karyawan</label>
                   <DropzoneFile
                     name="img"
-                    defaultValue={defaultAvatar}
+                    defaultValue={!getValues('img') ? defaultAvatar : getValues('img')}
                     require={false}
                     register={register}
                     error={errors}
                     // returnValue={(value) => setValue('img', value)}
                   />
                   <div className="mt-3" style={{textAlign: 'center'}}>
-                    <label className="mb-1">Status karyawan<span className="required-label" style={{ display: 'inline'}}>*</span></label>
+                    <label className="mb-1">Status karyawan</label>
                     <InputWLabel 
                       label={statusSwitch ? 'aktif' : 'tidak aktif'}
                       type={'switch'}
@@ -354,7 +419,7 @@ export default function AddEmployeeModal({ show, onHide, data, returnAct }) {
                           setValue("debt_limit", value.origin)
                           setValue("debt_limit_formated", value.formatted)
                         }}
-                        defaultValue={getValues('debt_limit_formated')}
+                        defaultValue={getValues('debt_limit') ? Number(getValues('debt_limit')) : "0"}
                         require={true}
                         register={register}
                         errors={errors}
@@ -368,7 +433,7 @@ export default function AddEmployeeModal({ show, onHide, data, returnAct }) {
                         defaultValue={selectedHiredDate}
                         onChange={(e) => {
                           setSelectedHiredDate(e.value);
-                          setValue("hired_date", e.value)
+                          setValue("hired_date", e.value);
                         }}
                         register={register}
                         require={false}
@@ -437,7 +502,8 @@ export default function AddEmployeeModal({ show, onHide, data, returnAct }) {
                         options={data.department}
                         optionKeys={["department_id", "department_name"]}
                         value={(selected) => {setValue("department_id", selected.id);setValue("department", selected.value);getValues("department") !== "" && clearErrors('department')}}
-                        // width={"100%"}
+                        defaultValue={data.rowData?.department_histories[0]?.department_id ?? ""}
+                        defaultValueKey={"department_id"}
                         register={register}
                         require={true}
                         errors={errors}
@@ -448,7 +514,7 @@ export default function AddEmployeeModal({ show, onHide, data, returnAct }) {
                         label="tanggal masuk departemen"
                         type="date"
                         name="date"
-                        // defaultValue={selectedDob}
+                        defaultValue={selectedDepartmentDate}
                         onChange={(e) => {
                           setSelectedDepartmentDate(e.value);
                           setValue("date",e.value);
@@ -467,6 +533,7 @@ export default function AddEmployeeModal({ show, onHide, data, returnAct }) {
                         require={true}
                         register={register}
                         errors={errors}
+                        textStyle={"capitalize"}
                       />
                     </div>
                   </div>
@@ -488,7 +555,11 @@ export default function AddEmployeeModal({ show, onHide, data, returnAct }) {
           <button
             type="button"
             className="btn btn-primary"
-            onClick={handleSubmit(onSubmit, onError)}
+            disabled={controlUiBtn}
+            onClick={() => {
+              setControlUiBtn(true);
+              handleSubmit(onSubmit, onError)();
+            }}
           >
             simpan
           </button>

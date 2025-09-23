@@ -1189,6 +1189,13 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
                         } 
                     } 
                 break;
+                case "employee":
+                    if(data.action === "delete"){
+                        if(returnValue){
+                            return returnValue(true);
+                        } 
+                    } 
+                break;
             }
 
         } 

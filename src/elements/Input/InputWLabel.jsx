@@ -37,6 +37,7 @@ const InputWLabel =  forwardRef((props, ref) => {
         autoComplete,
         inputWidth,
         display,
+        minDate
     } = props;
 
     const [ switched, setSwitch ] = useState(false);
@@ -133,6 +134,7 @@ const InputWLabel =  forwardRef((props, ref) => {
                         name={name}
                         dateFormat="dd/mm/yy"
                         value={dateValue}
+                        minDate={minDate && minDate}
                         // value={new Date(defaultValue)}
                         disabled={disabled}
                         // onChange={(e) => setDateValue(e.value)}

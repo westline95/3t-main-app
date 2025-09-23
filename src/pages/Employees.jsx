@@ -42,6 +42,7 @@ import { Menu } from "primereact/menu";
 import AddEmployeeModal from "../elements/Modal/AddEmployee.jsx";
 import ConvertDate from "../assets/js/ConvertDate.js";
 import EmployeeDetailModal from "../elements/Modal/EmployeeDetailModal.jsx";
+import SalarySettingModal from "../elements/Modal/SalarySettingModal.jsx";
 
 export default function Employees({handleSidebar, showSidebar}) {
   const toast = useRef(null);
@@ -55,7 +56,8 @@ export default function Employees({handleSidebar, showSidebar}) {
   const [employeeData, setEmployeeData] = useState(null);
   const [departmentData, setDepartmentData] = useState(null);
   const [ refetch, setRefetch ] = useState(false);
-  const [custObj, setCustObj] = useState({});
+  const [employeeObj, setEmployeeObj] = useState({});
+  const [delEmployee, setDelEmployee] = useState(false);
   const [custFilters, setCustFilters] = useState(null);
   const [globalFilterValue, setGlobalFilterValue] = useState("")
   const [selectedCusts, setSelectedCusts] = useState(null);
@@ -108,19 +110,23 @@ export default function Employees({handleSidebar, showSidebar}) {
   const handleModal = (e, data) => {
     switch (e.currentTarget.ariaLabel) {
       case "addEmployee":
-        setCustObj(data);
+        setEmployeeObj(data);
         setShowModal("addEmployee");
         break;
+      case "setSalaryModal":
+        setEmployeeObj(data);
+        setShowModal("setSalaryModal");
+        break;
       case "viewEmployeeDetail":
-        setCustObj(data);
+        setEmployeeObj(data);
         setShowModal("viewEmployeeDetail");
         break;
-      case "editCustModal":
-        setCustObj(data);
-        setShowModal("editCustModal");
+      case "editEmployeeModal":
+        setEmployeeObj(data);
+        setShowModal("editEmployeeModal");
         break;
       case "confirmModal":
-        setCustObj(data);
+        setEmployeeObj(data);
         setShowModal("confirmModal");
         break;
       case "custTypeModal":
@@ -129,7 +135,7 @@ export default function Employees({handleSidebar, showSidebar}) {
         } else if (data.action === "update") {
           setActionModal("update");
         }
-        setCustObj(data);
+        setEmployeeObj(data);
         setShowModal("custTypeModal");
         break;
     }
@@ -197,6 +203,29 @@ export default function Employees({handleSidebar, showSidebar}) {
         });
       });
   };
+
+  const fetchDelEmployee = async() => {
+    await axiosPrivate.delete(`/employee/del`, {params: {id: employeeObj.id}})
+    .then(resp => {
+        toast.current.show({
+          severity: "success",
+          summary: "Sukses",
+          detail: "Data karyawan berhasil dihapus",
+          life: 1500,
+        });
+       
+        setRefetch(true);
+    })
+    .catch(error => {
+      console.log(error)
+      toast.current.show({
+        severity: "error",
+        summary: "Failed",
+        detail: "Error when deleting employee",
+        life: 3000,
+      });
+    })
+  }
 
   const convertBase64 = (file) => {
     return new Promise((resolve, reject) => {
@@ -399,7 +428,7 @@ export default function Employees({handleSidebar, showSidebar}) {
     const getOnlyID = selectedCusts.map(e => {
       return e.customer_id
     });
-    setCustObj({
+    setEmployeeObj({
       endpoint: "customer",
       id: getOnlyID,
       action: "delete",
@@ -425,6 +454,12 @@ export default function Employees({handleSidebar, showSidebar}) {
       setRefetch(false);
     } 
   },[refetch]);
+
+   useEffect(() => {
+      if(delEmployee){
+        fetchDelEmployee(employeeObj.id);
+      }
+    },[delEmployee]);
 
   // if (isLoading) {
   //   return;
@@ -482,7 +517,7 @@ export default function Employees({handleSidebar, showSidebar}) {
               Karyawan
           </button>
           <button type="button" className="add-btn btn btn-primary btn-w-icon" 
-              aria-label="addEmployee"
+              aria-label="setSalaryModal"
               onClick={(e) =>
                   handleModal(e, {
                       action: "insert",
@@ -539,26 +574,41 @@ export default function Employees({handleSidebar, showSidebar}) {
               <Dropdown drop={"down"}  style={{position: 'absolute', top: 3, right: 12, padding: '1rem 1rem .5rem 1rem'}}>
                 <Dropdown.Toggle as={CustomToggle.CustomToggle2} id="dropdown-custom-components" style={{width: 24}}></Dropdown.Toggle>
                 <Dropdown.Menu align={"end"} className="static-shadow">
-                  <Dropdown.Item eventKey="1" as="button" aria-label="editCustModal"
+                  <Dropdown.Item eventKey="1" as="button" aria-label="editEmployeeModal"
                       onClick={(e) => {
+                        e.stopPropagation();
                         handleModal(e, {
-                          endpoint: "customer",
-                          id: rowData.customer_id,
+                          id: employee.employee_id,
                           action: "update",
-                          ...rowData,
+                          rowData: {...employee},
+                          department: departmentData
                         });
                       }} 
                     >
-                      <i className='bx bxs-edit'></i> Ubah data
+                      <i className='bx bxs-edit'></i> Ubah profil
+                  </Dropdown.Item>
+                  <Dropdown.Item eventKey="1" as="button" aria-label="editEmployeeModal"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleModal(e, {
+                          id: employee.employee_id,
+                          action: "update",
+                          rowData: {...employee},
+                          department: departmentData
+                        });
+                      }} 
+                    >
+                      <i className='bx bxs-edit'></i> Ubah gaji
                   </Dropdown.Item>
                   <Dropdown.Item eventKey="1" as="button" aria-label="confirmModal"
-                    onClick={(e) =>
+                    onClick={(e) => {
+                      e.stopPropagation();
                       handleModal(e, {
-                        endpoint: "customer",
-                        id: [rowData.customer_id],
+                        endpoint: "employee",
+                        id: employee.employee_id,
                         action: "delete",
                       })
-                    } 
+                    }} 
                   >
                     <i className='bx bx-trash'></i> Hapus data
                   </Dropdown.Item>
@@ -571,38 +621,47 @@ export default function Employees({handleSidebar, showSidebar}) {
       </div>
       {/* modal area */}
       
-      {showModal === "addEmployee" ? (
+      {showModal === "addEmployee" || showModal == "editEmployeeModal" ? (
         <AddEmployeeModal
-          show={showModal === "addEmployee" ? true : false}
+          show={showModal === "addEmployee" || "editEmployeeModal" ? true : false}
           onHide={handleCloseModal}
-          data={showModal === "addEmployee" ? custObj : ""}
+          data={showModal === "addEmployee" || "editEmployeeModal" ? employeeObj : ""}
           returnAct={(act) => act ? setRefetch(true) : setRefetch(false)}
         />
-      ): showModal === "viewEmployeeDetail" ? (
+      ): showModal === "setSalaryModal" ? (
+        <SalarySettingModal
+          show={showModal === "setSalaryModal" ? true : false}
+          onHide={handleCloseModal}
+          data={showModal === "setSalaryModal" ? employeeObj : ""}
+          returnAct={(act) => act ? setRefetch(true) : setRefetch(false)}
+        />
+      )
+      : showModal === "viewEmployeeDetail" ? (
         <EmployeeDetailModal
           show={showModal === "viewEmployeeDetail" ? true : false}
           onHide={handleCloseModal}
-          data={showModal === "viewEmployeeDetail" ? custObj : ""}
+          data={showModal === "viewEmployeeDetail" ? employeeObj : ""}
         />
       ): showModal === "editCustModal" ? (
         <CustEditModal
           show={showModal === "editCustModal" ? true : false}
           onHide={handleCloseModal}
-          data={showModal === "editCustModal" ? custObj : ""}
+          data={showModal === "editCustModal" ? employeeObj : ""}
         />
       ) : showModal === "confirmModal" ? (
         <ConfirmModal
           show={showModal === "confirmModal" ? true : false}
           onHide={handleCloseModal}
-          data={showModal === "confirmModal" ? custObj : ""}
-          msg={"Are you sure want to permanently remove this data?"}
+          data={showModal === "confirmModal" ? employeeObj : ""}
+          msg={"Yakin ingin menghapus data ini?"}
+          returnValue={(value) => {setDelEmployee(value)}}
         />
       ) : showModal === "custTypeModal" ? (
         <CustTypeModal
           show={showModal === "custTypeModal" ? true : false}
           onHide={handleCloseModal}
           action={actionModal}
-          data={showModal === "custTypeModal" ? custObj : ""}
+          data={showModal === "custTypeModal" ? employeeObj : ""}
         />
       ) : (
         ""

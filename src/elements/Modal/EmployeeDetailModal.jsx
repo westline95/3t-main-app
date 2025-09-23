@@ -83,7 +83,7 @@ export default function EmployeeDetailModal({show, onHide, data}) {
                                 </div>
                             </div>
                         </div> */}
-                        <div className="col-lg-12 col-sm-12 col-md-6 col-12 cust-group-stat">
+                        <div className="col-lg-12 col-sm-12 col-md-12 col-12 cust-group-stat">
                             <div className="card static-shadow">
                                 <div className="row gy-4">
                                     <div className="col-lg-4 col-sm-6 col-12">
@@ -201,7 +201,12 @@ export default function EmployeeDetailModal({show, onHide, data}) {
                                     </div>
                                     <div className="cards-info-group d-flex justify-content-between">
                                         <p className="label-text">status uang rokok</p>
-                                        <p className="cards-text">{salary.status_uang_rokok ? "disimpan" : "tidak disimpan"}</p>
+                                        {/* <p className="cards-text"> */}
+                                        <div className="badge-wraping">
+                                            <span className={`badge badge-${salary.status_uang_rokok ? 'success' : 'danger'} light`} style={{borderRadius: 17, textTransform:'capitalize'}}>
+                                                {salary.status_uang_rokok ? "disimpan" : "tidak disimpan"}
+                                            </span>
+                                        </div>
                                     </div>
                                     {/* <div className="cards-info-group d-flex justify-content-between">
                                         <p className="label-text">email</p>
