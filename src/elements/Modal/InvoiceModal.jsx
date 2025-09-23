@@ -140,7 +140,7 @@ export default function InvoiceModal({show, onHide, data}) {
         })
     }
 
-    const testSend = async() => {
+    const testSend = async(receipientNumer) => {
         const invDoc = <InvoiceDoc data={{invoice: invDupe.items, order: salesList, payment: paymentData, ro: roList}} />;
         const blob = await pdf(invDoc).toBlob();
        
@@ -161,7 +161,7 @@ export default function InvoiceModal({show, onHide, data}) {
             const msgBody = JSON.stringify({
                 messaging_product: 'whatsapp',
                 recipient_type: "individual",
-                to: '+6282229990644',
+                to: `+62${receipientNumer}`,
                 type: "document",
                 document: {
                     id: res.data.id,
@@ -1142,9 +1142,13 @@ export default function InvoiceModal({show, onHide, data}) {
                                 <Dropdown.Menu>
                                     <Dropdown.Item as="button" href="#/action-1"><i class='bx bx-envelope'></i>Email</Dropdown.Item>
                                     <Dropdown.Item as="button" href="#/action-2" onClick={(e) => {
-                                        testSend();
+                                        testSend(invDupe.items.customer.phonenumber);
                                         
-                                    }} ><i class='bx bxl-whatsapp'></i>Whatsapp</Dropdown.Item>
+                                    }} ><i class='bx bxl-whatsapp'></i>Whatsapp customer</Dropdown.Item>
+                                    <Dropdown.Item as="button" href="#/action-2" onClick={(e) => {
+                                        testSend('81270982995');
+                                        
+                                    }} ><i class='bx bxl-whatsapp'></i>Whatsapp admin</Dropdown.Item>
                                 </Dropdown.Menu>
                             </Dropdown>
                             {
