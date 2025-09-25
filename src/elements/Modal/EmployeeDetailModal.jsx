@@ -4,9 +4,7 @@ import User from "../../assets/images/Avatar 1.jpg";
 import ConvertDate from '../../assets/js/ConvertDate';
 import NumberFormat from '../Masking/NumberFormat';
 
-export default function EmployeeDetailModal({show, onHide, data}) {
-    console.log(data)
-    
+export default function EmployeeDetailModal({show, onHide, data}) {    
     return(
         <Modal size='lg' show={show} onHide={onHide} scrollable={true} centered={true} id="custDetailModal">
             <Modal.Header closeButton>
@@ -177,56 +175,56 @@ export default function EmployeeDetailModal({show, onHide, data}) {
                         </div>
                         
                         {/* salary setting info*/}
-                        <p className="modal-section-title">Informasi gaji</p>
-                        <div className="cards-content" style={{paddingTop: 16}}>
-                            <div className="card card-table w-100 static-shadow">
+                        <p className="modal-section-title">Informasi gaji awal</p>
+                        <div key={`container-sett`} className="cards-content" style={{paddingTop: 16}}>    
                             {data.salary_settings[0] ? data.salary_settings.map((salary, index) => {
                                 return(
-                                    <>
-                                    <div className="cards-info-group d-flex justify-content-between">
-                                        <p className="label-text">Tipe gaji</p>
-                                        <p className="cards-text">{salary.salary_type}</p>
-                                    </div>
-                                    <div className="cards-info-group d-flex justify-content-between">
-                                        <p className="label-text">gaji</p>
-                                        <p className="cards-text">
-                                            <NumberFormat intlConfig={{
-                                                value: salary.salary_amount, 
-                                                locale: "id-ID",
-                                                style: "currency", 
-                                                currency: "IDR",
-                                            }} 
-                                            />
-                                        </p>
-                                    </div>
-                                    <div className="cards-info-group d-flex justify-content-between">
-                                        <p className="label-text">status uang rokok</p>
-                                        {/* <p className="cards-text"> */}
-                                        <div className="badge-wraping">
-                                            <span className={`badge badge-${salary.status_uang_rokok ? 'success' : 'danger'} light`} style={{borderRadius: 17, textTransform:'capitalize'}}>
-                                                {salary.status_uang_rokok ? "disimpan" : "tidak disimpan"}
-                                            </span>
+                                    <div className="card card-table w-100 static-shadow" key={index}>
+                                        {/* <div className="cards-info-group d-flex justify-content-between">
+                                            <p className="label-text">Tipe gaji</p>
+                                            <p className="cards-text">{salary.salary_type}</p>
+                                        </div> */}
+                                        <div className="cards-info-group d-flex justify-content-between">
+                                            <p className="label-text">gaji</p>
+                                            <p className="cards-text">
+                                                <NumberFormat intlConfig={{
+                                                    value: salary.base_salary, 
+                                                    locale: "id-ID",
+                                                    style: "currency", 
+                                                    currency: "IDR",
+                                                }} 
+                                                />
+                                            </p>
                                         </div>
+                                        <div className="cards-info-group d-flex justify-content-between">
+                                            <p className="label-text">status uang rokok</p>
+                                            {/* <p className="cards-text"> */}
+                                            <div className="badge-wraping">
+                                                <span className={`badge badge-${salary.status_uang_rokok ? 'success' : 'danger'} light`} style={{borderRadius: 17, textTransform:'capitalize'}}>
+                                                    {salary.status_uang_rokok ? "disimpan" : "tidak disimpan"}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        {/* <div className="cards-info-group d-flex justify-content-between">
+                                            <p className="label-text">email</p>
+                                            <p className="cards-text" style={{textTransform: "unset"}}>{data.email}</p>
+                                        </div> */}
+                                        <div className="cards-info-group d-flex justify-content-between">
+                                            <p className="label-text">berlaku tanggal</p>
+                                            <p className="cards-text">{salary.effective_date ? ConvertDate.convertToFullDate(salary.effective_date, "/") : '???'}</p>
+                                        </div>
+                                        {/* <div className="cards-info-group d-flex justify-content-between">
+                                            <p className="label-text">berakhir tanggal</p>
+                                            <p className="cards-text">{salary.end_date ? ConvertDate.convertToFullDate(salary.end_date, "/") : '???'}</p>
+                                        </div> */}
+
                                     </div>
-                                    {/* <div className="cards-info-group d-flex justify-content-between">
-                                        <p className="label-text">email</p>
-                                        <p className="cards-text" style={{textTransform: "unset"}}>{data.email}</p>
-                                    </div> */}
-                                    <div className="cards-info-group d-flex justify-content-between">
-                                        <p className="label-text">mulai tanggal</p>
-                                        <p className="cards-text">{salary.start_date ? ConvertDate.convertToFullDate(salary.start_date, "/") : '???'}</p>
-                                    </div>
-                                    <div className="cards-info-group d-flex justify-content-between">
-                                        <p className="label-text">berakhir tanggal</p>
-                                        <p className="cards-text">{salary.end_date ? ConvertDate.convertToFullDate(salary.end_date, "/") : '???'}</p>
-                                    </div>
-                                    </>
                                 )
                             }):(
-                                <p className="label-text" style={{marginBottom: 0, fontSize: 14}}>Pengaturan gaji belum ditentukan.</p>
-                            )
-                            }
-                            </div>
+                                <div className="card card-table w-100 static-shadow">
+                                    <p className="label-text" style={{marginBottom: 0, fontSize: 14}}>Pengaturan gaji belum ditentukan.</p>
+                                </div>
+                            )}
                         </div>
 
                         {/* department info */}
@@ -235,20 +233,20 @@ export default function EmployeeDetailModal({show, onHide, data}) {
                             <div className="card card-table w-100 static-shadow">
                             {data.department_histories[0] ? data.department_histories.map((dh, index) => {
                                 return(
-                                    <>
-                                    <div className="cards-info-group d-flex justify-content-between">
-                                        <p className="label-text">team</p>
-                                        <p className="cards-text">{dh.department?.department_name}</p>
+                                    <div key={`dh-${index}`}>
+                                        <div className="cards-info-group d-flex justify-content-between">
+                                            <p className="label-text">team</p>
+                                            <p className="cards-text">{dh.department?.department_name}</p>
+                                        </div>
+                                        <div className="cards-info-group d-flex justify-content-between">
+                                            <p className="label-text">posisi</p>
+                                            <p className="cards-text">{dh.position}</p>
+                                        </div>
+                                        <div className="cards-info-group d-flex justify-content-between">
+                                            <p className="label-text">ditentukan tanggal</p>
+                                            <p className="cards-text">{ConvertDate.convertToFullDate(dh.date, "/")}</p>
+                                        </div>
                                     </div>
-                                    <div className="cards-info-group d-flex justify-content-between">
-                                        <p className="label-text">posisi</p>
-                                        <p className="cards-text">{dh.position}</p>
-                                    </div>
-                                    <div className="cards-info-group d-flex justify-content-between">
-                                        <p className="label-text">ditentukan tanggal</p>
-                                        <p className="cards-text">{ConvertDate.convertToFullDate(dh.date, "/")}</p>
-                                    </div>
-                                    </>
                                 )
                             }):(
                                 <p className="label-text" style={{marginBottom: 0, fontSize: 14}}>Penempatan posisi dan departmen belum ditentukan.</p>

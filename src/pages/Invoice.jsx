@@ -36,6 +36,7 @@ export default function Invoice({handleSidebar, showSidebar}){
 
     const mobileSearchInput = useRef(null);
     const [ isLoading, setLoading ] = useState(true);
+    const [ refetch, setRefetch ] = useState(false);
     const [ isClose, setClose ] = useState(false);
     const [ deleteInv, setDeleteInv ] = useState(false);
     const [ invData, setInvData ] = useState(null);
@@ -1458,6 +1459,14 @@ export default function Invoice({handleSidebar, showSidebar}){
         } 
     },[invData]);
 
+    useEffect(() => {
+        if(refetch){
+            fetchAllInv();
+            setShowModal("");
+            setRefetch(false);
+        } 
+    },[refetch]);
+
     if(isLoading){
         return;
     }
@@ -2387,12 +2396,7 @@ export default function Invoice({handleSidebar, showSidebar}){
                         show={showModal === "createInvModal" ? true : false} 
                         onHide={handleCloseModal} 
                         returnAct={(returnValue) => {
-                            if(returnValue){
-                                fetchAllInv();
-                                setTimeout(() => {
-                                    setShowModal("");
-                                },1200)
-                            }
+                            returnValue ? setRefetch(true) : setRefetch(false);
                         }}
                     />
                 )

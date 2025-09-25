@@ -9,7 +9,11 @@ import NumberFormat from '../elements/Masking/NumberFormat.jsx';
 const invoiceStyle = StyleSheet.create({
     page: {
         backgroundColor: '#ffffff',
-        padding: 32,
+        paddingTop: 32,
+        paddingRight: 32,
+        paddingBottom: 32,
+        paddingLeft: 32,
+        // padding: '25 32 30 32',
         height: 'auto'
     },
     header: {
@@ -114,9 +118,9 @@ const invoiceStyle = StyleSheet.create({
         justifyContent:'space-between',
         gap: '27px',
         width:'100%',
-        marginBottom: 24
+        marginBottom: 22
     },
-    cardAmount :{
+    cardAmount: {
         // minWidth: '490px',
         width:'32%',
         height: '300px',
@@ -205,6 +209,7 @@ const invoiceStyle = StyleSheet.create({
     table: {
        
         fontSize: '40px',
+        height:'auto',
         // display: 'flex',
         // flexDirection: 'column',
         width: '100%',
@@ -224,7 +229,7 @@ const invoiceStyle = StyleSheet.create({
         borderTopLeftRadius: 12,
         borderTopRightRadius: 12,
         width: '38%',
-        paddingVertical: '45px',
+        paddingVertical: '35px',
         paddingHorizontal: '65px',
     },
     orderNumberTabText: {
@@ -254,7 +259,7 @@ const invoiceStyle = StyleSheet.create({
         flexWrap: 'wrap',
         alignItems: 'center',
         // paddingVertical: '52px',
-        height: 'auto'
+        // height: '100%'
         
     },
     trBorder:{
@@ -284,11 +289,13 @@ const invoiceStyle = StyleSheet.create({
         backgroundColor: '#ffffff',
         color: '#344050',
         fontWeight: 500,
-        paddingVertical: '36px',
+        paddingVertical: 10
+        // paddingVertical: '36px',
         // flexBasis: 'auto'
     },
     tbody: {
         width: '100%',
+        height: 'auto'
     },
     tdHighlight1: {
         fontWeight: 500,
@@ -354,7 +361,10 @@ const invoiceStyle = StyleSheet.create({
         flexDirection: 'row', 
         width: '100%', 
         justifyContent: 'flex-end',
-        paddingVertical: '36px',
+        height: 'auto',
+        paddingVertical: 10,
+        // paddingTop: '36px',
+        // paddingBottom: '36px',
         backgroundColor: '#F5F6F9',
         color: '#344050',
     },
@@ -429,7 +439,7 @@ export default function InvoiceDoc({data, ref}) {
                         </View>
                         <View style={invoiceStyle.companyProfile}>
                             <Text style={invoiceStyle.profileText1}>tahu tempe tauge</Text>
-                            <Text style={invoiceStyle.profileText2}>+628123456789</Text>
+                            <Text style={invoiceStyle.profileText2}>+6282229990644</Text>
                             <Text style={invoiceStyle.profileText2}>pangururan, samosir</Text>
                         </View>
                     </View>
@@ -496,12 +506,12 @@ export default function InvoiceDoc({data, ref}) {
                        <Text style={invoiceStyle.invTableTitle}>detail transaksi</Text>
                         {data.order ? (data.order.map((sales, idx) => {
                             return(
-                            <View style={invoiceStyle.table} key={`transaction-table-${idx}`}>
-                                <View style={invoiceStyle.orderNumberTab}>
+                            <View style={{...invoiceStyle.table}} key={`transaction-table-${idx}`}>
+                                <View style={invoiceStyle.orderNumberTab} wrap={false}>
                                     <View style={{...invoiceStyle.orderNumberTabText}}><Text>order ID: {sales.order_id}</Text></View>
                                 </View>
-                                <View style={invoiceStyle.thead}>
-                                    <View style={invoiceStyle.rowHead}>
+                                <View style={invoiceStyle.thead} wrap={false}>
+                                    <View style={invoiceStyle.rowHead} wrap={false}>
                                         <View style={{...invoiceStyle.th, width: '13.2%'}}><Text>tanggal</Text></View>
                                         <View style={{...invoiceStyle.th, width: '30%' }}><Text>item</Text></View>
                                         <View style={{...invoiceStyle.th, width: '9.5%'}}><Text>qty</Text></View>
@@ -511,11 +521,11 @@ export default function InvoiceDoc({data, ref}) {
                                     </View>
                                 </View>
                                 <View style={{...invoiceStyle.tbody}}>
-                                    <View style={{...invoiceStyle.rowBody, width: '100%', }}>
-                                        <View style={{height: '100%', paddingLeft:'75px', width: '12%', ...invoiceStyle.trBorder, justifyContent: 'center'}}>
+                                    <View style={{...invoiceStyle.rowBody, width: '100%'}}>
+                                        <View  style={{height: '100%',paddingLeft:'75px', paddingVertical: 10, width: '12%', ...invoiceStyle.trBorder, justifyContent: 'flex-start'}}>
                                             <Text style={{ color: '#344050',fontWeight: 600}}>{ConvertDate.convertToFullDate(sales.order_date,"/")}</Text>
                                         </View>
-                                        <View style={{width: '88%',...invoiceStyle.trBorder, paddingLeft:'75px'}}>
+                                        <View style={{width: '88%', height: '100%',...invoiceStyle.trBorder, paddingLeft:'75px'}}>
                                         {sales.order_items.length > 0 && sales.order_items.map((orderItem, index) => {
                                             return( 
                                                 <>
@@ -610,7 +620,7 @@ export default function InvoiceDoc({data, ref}) {
                                     </View>
                                     {idx == data.order.length-1 ? 
                                         (
-                                        <View style={{...invoiceStyle.tableEndNote2}}>
+                                        <View style={{...invoiceStyle.tableEndNote2}} wrap={false}>
                                             <View style={{textAlign: 'right', fontWeight: 600, marginRight:24}}><Text>total seluruh transaksi</Text></View>
                                             <View style={{width: '17.8%', fontWeight: 600}}><Text>{formatedNumber.format(data.invoice.amount_due)}</Text></View>
                                         </View>

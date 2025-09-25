@@ -61,7 +61,8 @@ export default function Login() {
             console.log(response.data.roles)
             const access_token = response?.data?.access_token;
             const roles = response?.data?.roles;
-            setAuth({ user_mail, user_pass, roles, access_token });
+            const name = response?.data?.name;
+            setAuth({ user_mail, name, user_pass, roles, access_token });
             toast.current.show({
                 severity: "success",
                 summary: "Sukses",

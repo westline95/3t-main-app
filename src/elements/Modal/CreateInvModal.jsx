@@ -26,7 +26,9 @@ export default function CreateInv({ show, onHide, returnAct }){
     const [ showToast, setShowToast ] = useState(false);
     const [ checkAll, setCheckAll ] = useState(false);
     const [ orderSum, setOrderSum ] = useState(null);
+    const [ controlUiBtn, setControlUiBtn ] = useState(false);
     const [ totalRecords, setTotalRecords ] = useState(0);
+    
     // const [ controlledCheckAll, setControlledCheckAll ] = useState(false);
     const [ toastContent, setToastContent ] = useState({variant: "", msg: "", title: ""});
     
@@ -178,7 +180,11 @@ export default function CreateInv({ show, onHide, returnAct }){
                 detail: "Invoice baru telah terbit",
                 life: 1700,
             });
-            returnAct(true);
+
+            setTimeout(() => {
+                setControlUiBtn(false);
+                return returnAct(true);
+            }, 1500);
             // update order table => add invoice id
             // let invoiceID = JSON.stringify({invoice_id: resp.data.invoice_id});
 
@@ -715,7 +721,11 @@ export default function CreateInv({ show, onHide, returnAct }){
             </Modal.Body>
             <Modal.Footer>
                 <button type="button" className="btn btn-secondary light" onClick={onHide}>batal</button>
-                <button type="button" className="btn btn-primary" onClick={handleSubmit(onSubmit,onError)}>buat invoice</button>
+                <button type="button" className="btn btn-primary" onClick={(e) => {
+                    setControlUiBtn(true);
+                    handleSubmit(onSubmit,onError)();
+                }}
+                >{controlUiBtn ? "Loading..." : "buat invoice"}</button>
             </Modal.Footer>
         </Modal>
         

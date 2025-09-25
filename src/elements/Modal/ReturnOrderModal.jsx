@@ -1356,11 +1356,11 @@ export default function ReturnOrderModal({ show, onHide }){
                                                 {order.invoice ?
                                                 (
                                                     <span className="verified-inv" style={{fontSize: 20}}>
-                                                        <i class='bx bx-check-shield' ></i>
+                                                        <i className='bx bx-check-shield' ></i>
                                                     </span>
                                                 ):(
                                                     <span className="unverified-inv" style={{fontSize: 20}}>
-                                                        <i class='bx bx-shield-x'></i>
+                                                        <i className='bx bx-shield-x'></i>
                                                     </span>
                                                 )
                                                 }

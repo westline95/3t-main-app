@@ -57,6 +57,7 @@ export default function InvoiceModal({show, onHide, data}) {
     const fetchSalesByID = async (request) => {
         await axiosPrivate.get(`/sales/order-items?id=${request}`)
         .then(resp => {
+            console.log(resp.data)
             if(resp.data){
                 setSalesList(resp.data);
             }
@@ -140,7 +141,7 @@ export default function InvoiceModal({show, onHide, data}) {
         })
     }
 
-    const testSend = async(receipientNumer) => {
+    const testSend = async(receipientNumber) => {
         const invDoc = <InvoiceDoc data={{invoice: invDupe.items, order: salesList, payment: paymentData, ro: roList}} />;
         const blob = await pdf(invDoc).toBlob();
        
@@ -150,8 +151,9 @@ export default function InvoiceModal({show, onHide, data}) {
         formData.append('type', "application/pdf");
 
         const accessToken= 'EAAQmpbkuRWoBPgegdmJM8w7G4IxIoGYszQbVNZBtvZC2LRMX72LzC9Bb6YIC5RwIkNQ34dTlC8Y9EZAYmbw13ClpqofMbXeGiM3m8126A1AAYSivSTzMps02U6DHjaa3vMk3SnFpkFxa9ee8ZCuZAqDL3BZA1w60JyP6jqL5BKTopg61kGVUDrmHGdOIVlhK1ILgZDZD';
+        // const accessToken= 'EAAQmpbkuRWoBPhr0Ns58VSOWBT4VmXuWmbJQSidgZB6LGMWgTEQdZAnRldhwd4WBWV7xFvm3FakUfCUXHu7o4wOe9wioaHsKsFyooudnG5chFjWeRAZCyHAZBmtrq1IjZCfqF0ZBmz60boB1oLxNVDXuG5texOYu2ODq1m6zTg2YeZCHVrWQvcfMHwivEylw3yh2ZBHx7ZC68Gvqh0JbQL5HsJZALySTuvI0y3OXwq8vfeeBvRlAZDZD';
         // const pdfBlob = new Blob(['%PDF-1.4...'], { type: 'application/pdf' }); 
-        await axios.post('https://graph.facebook.com/v22.0/765819206619796/media', formData, {
+        await axios.post('https://graph.facebook.com/v23.0/765819206619796/media', formData, {
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/pdf'
@@ -160,15 +162,15 @@ export default function InvoiceModal({show, onHide, data}) {
         .then(res => {
             const msgBody = JSON.stringify({
                 messaging_product: 'whatsapp',
-                recipient_type: "individual",
-                to: `+62${receipientNumer}`,
+                // recipient_type: "individual",
+                to: `62${receipientNumber}`,
                 type: "document",
                 document: {
                     id: res.data.id,
                     filename: `${(invDupe.items.invoice_number).toUpperCase()} - ${capitalizeEveryWord(invDupe.items.customer?.name)}.pdf`,
                 }
             });
-            const send = axios.post('https://graph.facebook.com/v22.0/765819206619796/messages', msgBody, {
+            const send = axios.post('https://graph.facebook.com/v23.0/765819206619796/messages', msgBody, {
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
                     'Content-Type': 'application/json'
@@ -588,8 +590,8 @@ export default function InvoiceModal({show, onHide, data}) {
                         </Dropdown.Toggle>
 
                         <Dropdown.Menu>
-                            <Dropdown.Item as="button" href="#/action-1"><i class='bx bx-envelope'></i>Email</Dropdown.Item>
-                            <Dropdown.Item as="button" href="#/action-2"><i class='bx bxl-whatsapp'></i>Whatsapp</Dropdown.Item>
+                            <Dropdown.Item as="button" href="#/action-1"><i className='bx bx-envelope'></i>Email</Dropdown.Item>
+                            <Dropdown.Item as="button" href="#/action-2"><i className='bx bxl-whatsapp'></i>Whatsapp</Dropdown.Item>
                         </Dropdown.Menu>
                     </Dropdown>
                     
@@ -625,7 +627,7 @@ export default function InvoiceModal({show, onHide, data}) {
                     </button>
                     <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="modalFeature">
                         <li>
-                            <a href="" className="dropdown-item"><i class='bx bx-send'></i>Download xlsx</a></li>
+                            <a href="" className="dropdown-item"><i className='bx bx-send'></i>Download xlsx</a></li>
                         <li>
                             <a href="./sett-profile.html" className="dropdown-item"><i className='bx bxs-file-pdf'></i>Download PDF</a>
                         </li>
@@ -663,7 +665,7 @@ export default function InvoiceModal({show, onHide, data}) {
                                     </div>
                                     <div className="company-profile">
                                         <p className="label-text">tahu tempe tauge</p>
-                                        <p className="label-text">+628123456789</p>
+                                        <p className="label-text">+6282229990644</p>
                                         <p className="label-text">pangururan, samosir</p>
                                     </div>
                                 </div>
@@ -680,11 +682,11 @@ export default function InvoiceModal({show, onHide, data}) {
                                     </div>
                                 </div>
                                 <div className='inv-bank-info'>
-                                    <div class="invoice-info-group">
-                                        <p class="label-text" style={{marginBottom:3}}>Informasi Pembayaran</p>
-                                        <p class="invoice-text" style={{marginBottom:3}}><span className="label-text">Bank Transfer:</span> BRI</p>
-                                        <p class="invoice-text" style={{marginBottom:3}}><span className="label-text">A/N:</span> Anton Ruchiat</p>
-                                        <p class="invoice-text" style={{marginBottom:0}}><span className="label-text">Nomor rekening:</span> 005301102808501</p>
+                                    <div className="invoice-info-group">
+                                        <p className="label-text" style={{marginBottom:3}}>Informasi Pembayaran</p>
+                                        <p className="invoice-text" style={{marginBottom:3}}><span className="label-text">Bank Transfer:</span> BRI</p>
+                                        <p className="invoice-text" style={{marginBottom:3}}><span className="label-text">A/N:</span> Anton Ruchiat</p>
+                                        <p className="invoice-text" style={{marginBottom:0}}><span className="label-text">Nomor rekening:</span> 005301102808501</p>
                                     </div>
                                 </div>
                             </div>
@@ -1039,7 +1041,7 @@ export default function InvoiceModal({show, onHide, data}) {
                                                                         Number(roItem.order_item.quantity)
                                                                     }
                                                                 </td>
-                                                                <td><i class='bx bxs-chevrons-right'></i></td>
+                                                                <td><i className='bx bxs-chevrons-right'></i></td>
                                                                 <td>
                                                                     {/* {Number(roItem.quantity) - Number(orderItem.return_order_item.quantity)} */}
                                                                     {Number(roItem.quantity)}
@@ -1140,15 +1142,15 @@ export default function InvoiceModal({show, onHide, data}) {
                                 </Dropdown.Toggle>
 
                                 <Dropdown.Menu>
-                                    <Dropdown.Item as="button" href="#/action-1"><i class='bx bx-envelope'></i>Email</Dropdown.Item>
+                                    <Dropdown.Item as="button" href="#/action-1"><i className='bx bx-envelope'></i>Email</Dropdown.Item>
                                     <Dropdown.Item as="button" href="#/action-2" onClick={(e) => {
-                                        testSend(invDupe.items.customer.phonenumber);
+                                        testSend(82229990644);
                                         
-                                    }} ><i class='bx bxl-whatsapp'></i>Whatsapp customer</Dropdown.Item>
+                                    }} ><i className='bx bxl-whatsapp'></i>Whatsapp customer</Dropdown.Item>
                                     <Dropdown.Item as="button" href="#/action-2" onClick={(e) => {
-                                        testSend('81270982995');
+                                        testSend(81270982995);
                                         
-                                    }} ><i class='bx bxl-whatsapp'></i>Whatsapp admin</Dropdown.Item>
+                                    }} ><i className='bx bxl-whatsapp'></i>Whatsapp admin</Dropdown.Item>
                                 </Dropdown.Menu>
                             </Dropdown>
                             {
@@ -1161,8 +1163,8 @@ export default function InvoiceModal({show, onHide, data}) {
                                         </Dropdown.Toggle>
 
                                         <Dropdown.Menu>
-                                            <Dropdown.Item as="button" href="#/action-1"><i class='bx bx-envelope'></i>Email</Dropdown.Item>
-                                            <Dropdown.Item as="button" href="#/action-2"><i class='bx bxl-whatsapp'></i>Whatsapp</Dropdown.Item>
+                                            <Dropdown.Item as="button" href="#/action-1"><i className='bx bx-envelope'></i>Email</Dropdown.Item>
+                                            <Dropdown.Item as="button" href="#/action-2"><i className='bx bxl-whatsapp'></i>Whatsapp</Dropdown.Item>
                                         </Dropdown.Menu>
                                     </Dropdown>
                                     // <button type="button" className="btn btn-success btn-w-icon mt-2" onClick={onHide}>

@@ -868,7 +868,7 @@ export default function Customers({handleSidebar, showSidebar}) {
                   mobileSearchInput.current.focus();
                 }}
               >
-                <i class='bx bx-x'></i>
+                <i className='bx bx-x'></i>
               </span>
               ):(
               <span className="input-group-icon input-icon-right">

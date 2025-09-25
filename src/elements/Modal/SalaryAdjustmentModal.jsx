@@ -14,9 +14,12 @@ import InputWSelect from "../Input/InputWSelect";
 import DropzoneFile from "../DropzoneFile";
 import dataStatic from "../../assets/js/dataStatic";
 import NumberFormat from "../Masking/NumberFormat";
+import useAuth from "../../hooks/useAuth";
 
-export default function SalarySettingModal({ show, onHide, data, returnAct }) {
+export default function SalaryAdjustmentModal({ show, onHide, data, returnAct }) {
   const axiosPrivate = useAxiosPrivate();
+  const { auth } = useAuth();
+
   let locale = "id-ID";
   const formatedNumber = new Intl.NumberFormat(locale);
 
@@ -155,7 +158,7 @@ export default function SalarySettingModal({ show, onHide, data, returnAct }) {
     await axiosPrivate.get("/employee/all")
     .then((response) => {
       if(response.data && response.data.length > 0){
-        const fiteredNoBaseSalary = response.data.filter(({salary_settings}) => salary_settings.length == 0);
+        const fiteredNoBaseSalary = response.data.filter(({salary_settings}) => salary_settings.length > 0);
         setEmployeeData(fiteredNoBaseSalary);
       }
     })
@@ -169,14 +172,14 @@ export default function SalarySettingModal({ show, onHide, data, returnAct }) {
     });
   };
 
-  const fetchInsertSalarySett = async(employeeData) =>{
-    const body = JSON.stringify(employeeData);
-    await axiosPrivate.post("/salary-setting", body)
+  const fetchInsertSalaryAdj = async(salaryData) =>{
+    const body = JSON.stringify(salaryData);
+    await axiosPrivate.post("/salary-adj", body)
     .then(resp => {
       toast.current.show({
         severity: "success",
         summary: "Sukses",
-        detail: "Berhasil menyimpan pengaturan gaji",
+        detail: "Berhasil menyimpan penyesuaian gaji",
         life: 1500,
       });
       
@@ -190,7 +193,7 @@ export default function SalarySettingModal({ show, onHide, data, returnAct }) {
       toast.current.show({
         severity: "error",
         summary: "Gagal",
-        detail: "Gagal menyimpan pengaturan gaji",
+        detail: "Gagal menyimpan penyesuaian gaji",
         life: 3000,
       });
     })
@@ -224,11 +227,26 @@ export default function SalarySettingModal({ show, onHide, data, returnAct }) {
 
   const onSubmit = async(formData) => {
     if(data.action == "insert"){
-      const salary = {
-        salary: {...formData}
+      const salaryAdjNeeds = {
+        employee_id: formData.employee_id,
+        salary_adj: {
+          employee_id: formData.employee_id,
+          old_salary: Number(currSalarySetting.base_salary),
+          new_salary: Number(formData.new_salary),
+          effective_date: formData.effective_date,
+          approved_by: auth.name,
+          notes: formData.notes,
+          old_status_uang_rokok: currSalarySetting.status_uang_rokok,
+          new_status_uang_rokok: formData.status_uang_rokok,
+        },
+        salary_sett: {
+          base_salary: Number(formData.new_salary),
+          effective_date: formData.effective_date,
+          status_uang_rokok: formData.status_uang_rokok,
+        },
       }
-      salary.salary.now_active = true;
-      fetchInsertSalarySett(salary);
+      console.log(salaryAdjNeeds)
+      fetchInsertSalaryAdj(salaryAdjNeeds);
     } else {
 
     }
@@ -343,7 +361,7 @@ export default function SalarySettingModal({ show, onHide, data, returnAct }) {
         centered={true}
       >
         <Modal.Header closeButton>
-          <Modal.Title>{data.action == "insert" ? "tambah" : "ubah"} pengaturan gaji karyawan</Modal.Title>
+          <Modal.Title>{data.action == "insert" ? "tambah" : "ubah"} penyesuaian gaji</Modal.Title>
         </Modal.Header>
           <Modal.Body>
             <form>
@@ -379,25 +397,24 @@ export default function SalarySettingModal({ show, onHide, data, returnAct }) {
                     </div>   
                 </div>
                 </div>
-                {/* <Collapse in={currSalarySetting != null}>
-                  <p className="modal-section-title">data aktif</p>
+                <Collapse in={currSalarySetting != null}>
                   <div className="col-lg-12 col-sm-12 col-12" style={{marginTop:0}}>
                   <p className="modal-section-title mb-2">data aktif</p>
                     <div className="modal-table-wrap">
                       <div className="card card-table w-100 static-shadow" style={{padding: '1.5rem'}}>
                         <p className="modal-section-title">Informasi gaji aktif</p>
                           <div className="cards-info-group d-flex justify-content-between">
-                            <p className="label-text">mulai tanggal</p>
-                            <p className="cards-text">{currSalarySetting && ConvertDate.convertToFullDate(currSalarySetting.start_date, "/")}</p>
+                            <p className="label-text">berlaku tanggal</p>
+                            <p className="cards-text">{currSalarySetting && ConvertDate.convertToFullDate(currSalarySetting.effective_date, "/")}</p>
                           </div>
-                          <div className="cards-info-group d-flex justify-content-between">
+                          {/* <div className="cards-info-group d-flex justify-content-between">
                             <p className="label-text">berakhir tanggal</p>
                             <p className="cards-text">{currSalarySetting && ConvertDate.convertToFullDate(currSalarySetting.end_date, "/")}</p>
                           </div> 
                           <div className="cards-info-group d-flex justify-content-between">
                             <p className="label-text">tipe gaji</p>
                             <p className="cards-text">{currSalarySetting && currSalarySetting.salary_type}</p>
-                          </div>
+                          </div> */}
                           <div className="cards-info-group d-flex justify-content-between">
                             <p className="label-text">jumlah gaji</p>
                             <p className="cards-text">
@@ -421,21 +438,39 @@ export default function SalarySettingModal({ show, onHide, data, returnAct }) {
                       </div>
                     </div>
                   </div>
-                </Collapse> */}
-                {/* <p className="modal-section-title mt-2">data baru</p> */}
-                <div className="col-lg-6 col-sm-6 col-12">
+                </Collapse>
+                <p className="modal-section-title mt-2">penyesuaian gaji baru</p>
+                {/* <div className="col-lg-6 col-sm-6 col-12">
                   <InputGroup
                     label="Jumlah gaji"
                     groupLabel="Rp"
                     type="text"
                     position="left"
-                    name="base_salary_formated"
+                    name="old_salary_formated"
                     mask={"currency"}
                     returnValue={(value) => {
-                      setValue("base_salary", value.origin)
-                      setValue("base_salary_formated", value.formatted)
+                      setValue("old_salary", value.origin)
+                      setValue("old_salary_formated", value.formatted)
                     }}
-                    defaultValue={getValues('base_salary') ? Number(getValues('base_salary')) : "0"}
+                    defaultValue={getValues('old_salary') ? Number(getValues('old_salary')) : "0"}
+                    require={true}
+                    register={register}
+                    errors={errors}
+                  />
+                </div> */}
+                <div className="col-lg-6 col-sm-6 col-12">
+                  <InputGroup
+                    label="Gaji baru"
+                    groupLabel="Rp"
+                    type="text"
+                    position="left"
+                    name="new_salary_formated"
+                    mask={"currency"}
+                    returnValue={(value) => {
+                      setValue("new_salary", value.origin)
+                      setValue("new_salary_formated", value.formatted)
+                    }}
+                    defaultValue={getValues('new_salary') ? Number(getValues('new_salary')) : "0"}
                     require={true}
                     register={register}
                     errors={errors}
@@ -451,28 +486,25 @@ export default function SalarySettingModal({ show, onHide, data, returnAct }) {
                       setSelectedStartDate(e.value);
                       setValue("effective_date", e.value);
                     }}
+                    minDate={currSalarySetting && new Date(currSalarySetting?.effective_date)}
                     register={register}
                     require={true}
                     errors={errors}
                   />
                 </div>
-                {/* <div className="col-lg-6 col-sm-6 col-12">
-                  <InputWLabel
-                    label="berakhir tanggal"
-                    type="date"
-                    name="end_date"
-                    defaultValue={selectedEndDate}
-                    minDate={selectedStartDate}
-                    onChange={(e) => {
-                      setSelectedEndDate(e.value);
-                      setValue("end_date",e.value);
-                    }}
+                <div className="col-lg-6 col-sm-6 col-12">
+                  <InputWLabel 
+                    label="catatan" 
+                    as="textarea"
+                    name="notes"
+                    // defaultValue={orderData.note ? orderData.note : ""}
+                    require={false}
                     register={register}
-                    require={true}
-                    errors={errors}
+                    errors={errors} 
+                    // disabled={editMode ? false : true}  
                   />
-                </div> */}
-                <div className="mt-3" style={{textAlign: 'left'}}>
+                </div>
+                <div className="col-lg-6 col-sm-6 col-12 mt-3" style={{textAlign: 'left'}}>
                   <label className="mb-1">Status uang rokok</label>
                   <InputWLabel 
                     label={statusRokok ? 'disimpan' : 'tidak disimpan'}

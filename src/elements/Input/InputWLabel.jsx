@@ -103,11 +103,12 @@ const InputWLabel =  forwardRef((props, ref) => {
                         // onChange={onChange}
                         
 
-                        {...register != null ? {...register(name, { required: require, onChange: onChange })} : ""}
+                        {...register != null ? {...register(name, { required: require ? "This field is required" :'', onChange: onChange })} : ""}
                     />
                     <label className="form-check-label">{label}</label>
                     
                 </div>
+                
             </>)
             : type === "switch" ?
             (

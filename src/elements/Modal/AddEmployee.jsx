@@ -51,7 +51,7 @@ export default function AddEmployeeModal({ show, onHide, data, returnAct }) {
 
     console.log(getValues())
   const [showModal, setShowModal] = useState(false);
-  const [statusSwitch, setStatusSwitch] = useState(false);
+  const [statusSwitch, setStatusSwitch] = useState(true);
   const [targetKey, setTarget] = useState("");
   const [showToast, setShowToast] = useState(false);
   const [controlUiBtn, setControlUiBtn] = useState(false);
@@ -456,16 +456,16 @@ export default function AddEmployeeModal({ show, onHide, data, returnAct }) {
                       />
                     </div>
                     <div className="col-lg-6 col-sm-6 col-12">
-                      <label className="mb-1">jenis kelamin</label>
+                      <label className="mb-1">jenis kelamin<span className="required-label">*</span></label>
                       <div className="d-flex form-check-control">
                         <InputWLabel
                           type="customRadio"
                           label="perempuan"
                           value="female"
                           name="gender"
-                          require={false}
+                          require={true}
                           register={register}
-                          error={errors}
+                          errors={errors}
                           onChange={handleAvatar}
                         />
                         <InputWLabel
@@ -473,12 +473,13 @@ export default function AddEmployeeModal({ show, onHide, data, returnAct }) {
                           label="laki-laki"
                           value="male"
                           name="gender"
-                          require={false}
+                          require={true}
                           register={register}
-                          error={errors}
+                          errors={errors}
                           onChange={handleAvatar}
                         />
                       </div>
+                      {errors ? errors["gender"] && <span className="field-msg-invalid">{errors["gender"].message}</span>: ""}
                     </div>
                     <div className="col-lg-6 col-sm-6 col-12">
                       <InputWLabel
@@ -561,7 +562,7 @@ export default function AddEmployeeModal({ show, onHide, data, returnAct }) {
               handleSubmit(onSubmit, onError)();
             }}
           >
-            simpan
+            {controlUiBtn ? "Loading..." : "simpan"}
           </button>
         </Modal.Footer>
       </Modal>

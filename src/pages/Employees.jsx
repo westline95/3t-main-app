@@ -43,6 +43,7 @@ import AddEmployeeModal from "../elements/Modal/AddEmployee.jsx";
 import ConvertDate from "../assets/js/ConvertDate.js";
 import EmployeeDetailModal from "../elements/Modal/EmployeeDetailModal.jsx";
 import SalarySettingModal from "../elements/Modal/SalarySettingModal.jsx";
+import SalaryAdjustmentModal from "../elements/Modal/SalaryAdjustmentModal.jsx";
 
 export default function Employees({handleSidebar, showSidebar}) {
   const toast = useRef(null);
@@ -116,6 +117,10 @@ export default function Employees({handleSidebar, showSidebar}) {
       case "setSalaryModal":
         setEmployeeObj(data);
         setShowModal("setSalaryModal");
+        break;
+      case "setSalaryAdjModal":
+        setEmployeeObj(data);
+        setShowModal("setSalaryAdjModal");
         break;
       case "viewEmployeeDetail":
         setEmployeeObj(data);
@@ -524,8 +529,19 @@ export default function Employees({handleSidebar, showSidebar}) {
                   })
               }
           >
-             <i class='bx bx-money-withdraw'></i>
+             <i className='bx bx-money-withdraw'></i>
               Set gaji
+          </button>
+          <button type="button" className="add-btn btn btn-primary btn-w-icon" 
+              aria-label="setSalaryAdjModal"
+              onClick={(e) =>
+                  handleModal(e, {
+                      action: "insert",
+                  })
+              }
+          >
+             <i className="bx bx-plus"></i>
+              penyesuaian gaji
           </button>
         </div>
         <div className="profile-card-1-container mt-5">
@@ -587,19 +603,6 @@ export default function Employees({handleSidebar, showSidebar}) {
                     >
                       <i className='bx bxs-edit'></i> Ubah profil
                   </Dropdown.Item>
-                  <Dropdown.Item eventKey="1" as="button" aria-label="editEmployeeModal"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleModal(e, {
-                          id: employee.employee_id,
-                          action: "update",
-                          rowData: {...employee},
-                          department: departmentData
-                        });
-                      }} 
-                    >
-                      <i className='bx bxs-edit'></i> Ubah gaji
-                  </Dropdown.Item>
                   <Dropdown.Item eventKey="1" as="button" aria-label="confirmModal"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -633,6 +636,13 @@ export default function Employees({handleSidebar, showSidebar}) {
           show={showModal === "setSalaryModal" ? true : false}
           onHide={handleCloseModal}
           data={showModal === "setSalaryModal" ? employeeObj : ""}
+          returnAct={(act) => act ? setRefetch(true) : setRefetch(false)}
+        />
+      ): showModal === "setSalaryAdjModal" ? (
+        <SalaryAdjustmentModal
+          show={showModal === "setSalaryAdjModal" ? true : false}
+          onHide={handleCloseModal}
+          data={showModal === "setSalaryAdjModal" ? employeeObj : ""}
           returnAct={(act) => act ? setRefetch(true) : setRefetch(false)}
         />
       )

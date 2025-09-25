@@ -499,7 +499,7 @@ export default function ReceiptModal({show, onHide, data}) {
                     </button>
                     <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="modalFeature">
                         <li>
-                            <a href="" className="dropdown-item"><i class='bx bx-send'></i>Download xlsx</a></li>
+                            <a href="" className="dropdown-item"><i className='bx bx-send'></i>Download xlsx</a></li>
                         <li>
                             <a href="./sett-profile.html" className="dropdown-item"><i className='bx bxs-file-pdf'></i>Download PDF</a>
                         </li>
@@ -885,8 +885,8 @@ export default function ReceiptModal({show, onHide, data}) {
                                 </Dropdown.Toggle>
 
                                 <Dropdown.Menu>
-                                    <Dropdown.Item as="button" href="#/action-1"><i class='bx bx-envelope'></i>Email</Dropdown.Item>
-                                    <Dropdown.Item as="button" href="#/action-2"><i class='bx bxl-whatsapp'></i>Whatsapp</Dropdown.Item>
+                                    <Dropdown.Item as="button" href="#/action-1"><i className='bx bx-envelope'></i>Email</Dropdown.Item>
+                                    <Dropdown.Item as="button" href="#/action-2"><i className='bx bxl-whatsapp'></i>Whatsapp</Dropdown.Item>
                                 </Dropdown.Menu>
                             </Dropdown>
                         </div>

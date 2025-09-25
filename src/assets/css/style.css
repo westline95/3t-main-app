@@ -2816,17 +2816,31 @@ td .btn-group button i {
   color: #929292;
   font-weight: 500;
   font-size: 16px;
-    text-transform: capitalize;
+  text-transform: capitalize;
+}
 
+.modal-table-wrap .cards-info-group .label-text {
+  color: #929292;
+  font-weight: 500;
+  font-size: 14px;
+  text-transform: capitalize;
 }
 
 .invoice-detail .invoice-info-group .invoice-text,
 .invoice-content .invoice-info-group .invoice-text,
 .cards-detail .cards-info-group .cards-text,
-.cards-content .cards-info-group .cards-text {
+.cards-content .cards-info-group .cards-text,
+.modal-table-wrap .cards-info-group .cards-text {
   color: #344050;
   font-weight: 600;
   font-size: 16px;
+  text-transform: capitalize;
+}
+
+.modal-table-wrap .cards-info-group .cards-text {
+  color: #344050;
+  font-weight: 600;
+  font-size: 14px;
   text-transform: capitalize;
 }
 
@@ -4630,6 +4644,15 @@ tr.hover-row:hover > * {
 .dropdown .table-btn i {
   font-size: 22px;
   color: var(--sa-black-blue);
+}
+
+.modal-table-wrap .cards-info-group>* {
+  font-size: 14px;
+  margin-bottom: .5rem;
+}
+
+.modal-table-wrap .modal-section-title {
+  margin-bottom: 1rem;
 }
 
 /* media queries for responsiveness */

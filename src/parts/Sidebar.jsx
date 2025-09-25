@@ -178,7 +178,7 @@ const Sidebar = forwardRef(({show, clickedMenu}, ref) => {
                                 <ul className="sidebar-menu">
                                     <li className="menus dropdown-control">
                                         <Link to={"/hrm/department"} className='item-menu'>
-                                            <i class='bx bx-git-branch'></i>
+                                            <i className='bx bx-git-branch'></i>
                                             <span className="menu-label">department</span>
                                         </Link>
                                     </li>
