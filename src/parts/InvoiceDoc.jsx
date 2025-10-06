@@ -448,7 +448,7 @@ export default function InvoiceDoc({data, ref}) {
                     <View style={invoiceStyle.custInfo}>
                         <View style={invoiceStyle.infoGroup}>
                             <Text style={invoiceStyle.infoLabel}>Nama pelanggan</Text>
-                            <Text style={invoiceStyle.infoText}>{data.invoice.customer.name}</Text>
+                            <Text style={invoiceStyle.infoText}>{data.invoice.customer ? data.invoice.customer.name : data.invoice.guest_name}</Text>
                         </View>
                         <View style={{...invoiceStyle.infoGroup, width: 'auto'}}>
                             <Text style={invoiceStyle.infoLabel}>status</Text>

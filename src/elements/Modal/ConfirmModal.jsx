@@ -1094,6 +1094,61 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
         }
     }
 
+    const fetchDelDG = async(delivery_group_id) => {
+        await axiosPrivate.delete("/del/delivery-group", {
+            params: {
+                id: delivery_group_id
+            }
+        })
+        .then(resp => {
+            toast.current.show({
+                severity: "success",
+                summary: "Sukses",
+                detail: "Berhasil menghapus data delivery group",
+                life: 1500,
+            });
+
+            setTimeout(() => {
+                return returnValue(true);
+            }, 1500);
+        })
+        .catch(err => {
+            toast.current.show({
+                severity: "error",
+                summary: "Gagal",
+                detail: "Gagal menghapus data delivery group",
+                life: 3000,
+            });
+        })
+    }
+
+    const fetchCancelDG = async(delivery_group_id) => {
+        await axiosPrivate.delete("/cancel/delivery-group", {
+            params: {
+                id: delivery_group_id
+            }
+        })
+        .then(resp => {
+            toast.current.show({
+                severity: "success",
+                summary: "Sukses",
+                detail: "Berhasil membatalkan data delivery group",
+                life: 1500,
+            });
+
+            setTimeout(() => {
+                return returnValue(true);
+            }, 1500);
+        })
+        .catch(err => {
+            toast.current.show({
+                severity: "error",
+                summary: "Gagal",
+                detail: "Gagal membatalkan data delivery group",
+                life: 3000,
+            });
+        })
+    }
 
     const handleAction = () => {
         console.log(data)
@@ -1195,6 +1250,13 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
                             return returnValue(true);
                         } 
                     } 
+                break;
+                case "delivery_group":
+                    if(data.action === "delete"){
+                        fetchDelDG(data.id);
+                    } else if(data.action == "canceled"){
+                        fetchCancelDG(data.id);
+                    }
                 break;
             }
 

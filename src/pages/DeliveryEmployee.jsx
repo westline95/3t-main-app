@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Controller, get, useController, useForm } from 'react-hook-form';
-import Sidebar from '../parts/Sidebar';
-import Header from '../parts/Header';
-import { CustomSelect } from '../elements/CustomSelect';
-import NumberFormat from '../elements/Masking/NumberFormat';
-import DropzoneFile from '../elements/DropzoneFile';
-import SalesDetailModal from '../elements/Modal/salesDetailModal';
-import SalesEditModal from '../elements/Modal/SalesEditModal';
-import ConfirmModal from '../elements/Modal/ConfirmModal';
-import InputWLabel from '../elements/Input/InputWLabel';
-import InputWSelect from '../elements/Input/InputWSelect';
-import FetchApi from '../assets/js/fetchApi';
+import Sidebar from '../parts/Sidebar.jsx';
+import Header from '../parts/Header.jsx';
+import { CustomSelect } from '../elements/CustomSelect/index.jsx';
+import NumberFormat from '../elements/Masking/NumberFormat.jsx';
+import DropzoneFile from '../elements/DropzoneFile/index.jsx';
+import SalesDetailModal from '../elements/Modal/salesDetailModal.jsx';
+import SalesEditModal from '../elements/Modal/SalesEditModal.jsx';
+import ConfirmModal from '../elements/Modal/ConfirmModal.jsx';
+import InputWLabel from '../elements/Input/InputWLabel.jsx';
+import InputWSelect from '../elements/Input/InputWSelect.jsx';
+import FetchApi from '../assets/js/fetchApi.js';
 import { Accordion, Col, Dropdown, Form, Row, 
     // Toast, ToastContainer 
 } from 'react-bootstrap';
@@ -25,10 +25,10 @@ import { FilterMatchMode, FilterOperator } from 'primereact/api';
 import dataStatic from '../assets/js/dataStatic.js';
 import useAxiosPrivate from '../hooks/useAxiosPrivate.js';
 
-import AutoComplete from '../elements/AutoComplete';
-import QtyButton from '../elements/QtyButton';
-import DiscountModal from '../elements/Modal/DiscModal';
-import CreatePayment from '../elements/Modal/CreatePaymentModal';
+import AutoComplete from '../elements/AutoComplete/index.jsx';
+import QtyButton from '../elements/QtyButton/index.jsx';
+import DiscountModal from '../elements/Modal/DiscModal.jsx';
+import CreatePayment from '../elements/Modal/CreatePaymentModal.jsx';
 import ConvertDate from '../assets/js/ConvertDate.js';
 import CustomToggle from '../elements/Custom/CustomToggle.jsx';
 import EmptyState from "../../public/vecteezy_box-empty-state-single-isolated-icon-with-flat-style_11537753.jpg"; 
@@ -36,9 +36,12 @@ import ModalTextContent from '../elements/Modal/ModalTextContent.jsx';
 import DeliveryGroupListModal from '../elements/Modal/DeliveryGroupListModal.jsx';
 import DelivGroupsModal from '../elements/Modal/DelivGroupsModal.jsx';
 import useAuth from '../hooks/useAuth.js';
-import { useLocation } from 'react-router-dom';
+import DeliveryGroupListReportModal from '../elements/Modal/DeliveryGroupListReporModal.jsx';
+import WriteDelivGroupItemsModal from '../elements/Modal/WriteDelivGroupItemsModal.jsx';
 
-export default function Delivery({handleSidebar, showSidebar}){
+export default function DeliveryEmployee({handleSidebar, showSidebar}){
+    const { auth } = useAuth();
+
     const toast = useRef(null);
     const toastUpload = useRef(null);
     const [progress, setProgress] = useState(0);
@@ -48,7 +51,7 @@ export default function Delivery({handleSidebar, showSidebar}){
     const [ isClose, setClose ] = useState(false);
     const [ salesData, setSalesData ] = useState();
     const [ openTab, setOpenTab ] = useState('deliveryGroupListTab');
-    const [ salesListObj, setSalesList ] = useState(null);
+    const [ modalData, setModalData ] = useState(null);
     const [ showModal, setShowModal ] = useState("");
     const [ modalMsg, setModalMsg ] = useState("");
     const [ statusFilter, setStatusFilter ] = useState(null);
@@ -410,7 +413,7 @@ export default function Delivery({handleSidebar, showSidebar}){
     };
 
     const fetchAllDG = async() =>{
-        await axiosPrivate.get("/all/delivery-group")
+        await axiosPrivate.get("/delivery-group/by/emp", {params: {emp_id: auth.staff_id}})
         .then(resp => {
             setDG(resp.data);
         })
@@ -451,25 +454,20 @@ export default function Delivery({handleSidebar, showSidebar}){
     const returnSelectVal = (val) => {
     }
 
-    const handleModalWData = (e, salesListData) => {
-        let data;
+    const handleModalWData = (e, data) => {
         switch (e.currentTarget.ariaLabel) {
             case "salesDetailModal":
-                data = {
-                    origin: salesListData, 
-                    // items: salesDataProd != null ? JSON.parse(salesDataProd) : salesDataProd
-                }
-                setSalesList(salesListData);
+                setModalData(data);
                 setShowModal("salesDetailModal");
                 break;
             case "delivEditModal":
                     // items: salesDataProd != null ? JSON.parse(salesDataProd) : salesDataProd
-                setSalesList(salesListData);
+                setModalData(data);
                 setShowModal("delivEditModal");
                 break;
             case "cancelDelivModal":
                
-                setSalesList(salesListData);
+                setModalData(data);
                 // console.log(data)
                 setShowModal("cancelDelivModal");
                 break;
@@ -478,19 +476,23 @@ export default function Delivery({handleSidebar, showSidebar}){
                 break;
             case "createDelivGroups":
                 setShowModal("createDelivGroups");
-                setSalesList(salesListData);
+                setModalData(data);
                 break;
             case "editDelivGroups":
                 setShowModal("editDelivGroups");
-                setSalesList(salesListData);
+                setModalData(data);
                 break;
             case "viewDGList":
                 setShowModal("viewDGList");
-                setSalesList(salesListData);
+                setModalData(data);
                 break;
             case "confirmModal":
                 setShowModal("confirmModal");
-                setSalesList(salesListData);
+                setModalData(data);
+                break;
+            case "writeDelivGroupsReport":
+                setShowModal("writeDelivGroupsReport");
+                setModalData(data);
                 break;
         }
     }
@@ -802,7 +804,7 @@ export default function Delivery({handleSidebar, showSidebar}){
                                             currency: "IDR",
                                             minimumFractionDigits: 0,
                                         })
-                        setSalesList(send);
+                        setModalData(send);
                         setModalMsg(`Pelanggan ini sudah mencapai limit!`);
                         setShowModal('confirmationModal');
     
@@ -856,20 +858,6 @@ export default function Delivery({handleSidebar, showSidebar}){
             setDupeDelivData(salesData);
         }
     },[statusFilter])
-
-    useEffect(() => {
-        fetchAllDelivery();
-        // fetchCustType();
-        // fetchStatus();
-        fetchAllCust();
-        fetchAllProd()    
-    },[])
-
-    useEffect(() => {
-        if(salesData && allProdData && custData){
-            setLoading(false);
-        } 
-    },[salesData, allProdData, custData]);
 
     const tableHeader = () => {
         return (
@@ -949,18 +937,18 @@ export default function Delivery({handleSidebar, showSidebar}){
               >
                 <i className="bx bxs-file-plus"></i> import
               </button>
-            <button type="button" className="add-btn btn btn-primary btn-w-icon" 
-                aria-label="createInvModal"
-                onClick={(e) =>
-                    handleModal(e, {
-                        endpoint: "custType",
-                        action: "insert",
-                    })
-                }
-            >
-                <i className="bx bx-plus" style={{ marginTop: -3 }}></i>
-                Pengantaran
-            </button>
+                <button type="button" className="add-btn btn btn-primary btn-w-icon" 
+                    aria-label="createInvModal"
+                    onClick={(e) =>
+                        handleModal(e, {
+                            endpoint: "custType",
+                            action: "insert",
+                        })
+                    }
+                >
+                    <i className="bx bx-plus" style={{ marginTop: -3 }}></i>
+                    Pengantaran
+                </button>
             </div>
           </div>
         );
@@ -1033,6 +1021,10 @@ export default function Delivery({handleSidebar, showSidebar}){
     const formatedOrderDate = (rowData) => {
         return <span>{ConvertDate.convertToFullDate(rowData.ship_date, "/")}</span>;
     };
+    
+    const dgDateBody = (rowData) => {
+        return <span>{ConvertDate.convertToFullDate(rowData.delivery_group_date, "/")}</span>;
+    };
 
     const formatedNumberQty = (rowData) => {
         return <span>{Number(rowData.total_item)}</span>;
@@ -1076,12 +1068,13 @@ export default function Delivery({handleSidebar, showSidebar}){
         </span>
         <span
           className="table-btn edit-table-data"
-          aria-label="editDelivGroups"
+          aria-label="writeDelivGroupsReport"
           onClick={(e) => {
-            rowData.status == 0 ?
+            rowData.status == 1 ?
             handleModalWData(e, {
               id: rowData.delivery_group_id,
-              action: "update",
+              delivery_group_date: rowData.delivery_group_date,
+              action: "insert",
             })
             : toast.current.show({
                     severity: "error",
@@ -1092,20 +1085,6 @@ export default function Delivery({handleSidebar, showSidebar}){
           }}
         >
           <i className="bx bxs-edit"></i>
-        </span>
-        <span
-          className="table-btn del-table-data"
-          aria-label="confirmModal"
-          onClick={(e) => {
-              setModalMsg("Yakin untuk membatalkan pengantaran ini?");
-              handleModalWData(e, {
-                endpoint: "delivery_group",
-                id: rowData.delivery_group_id,
-                action: "canceled",
-              })
-          }}
-        >
-          <i className="bx bx-trash"></i>
         </span>
       </div>
     );
@@ -1129,16 +1108,31 @@ export default function Delivery({handleSidebar, showSidebar}){
     const statusDGCell = (rowData) => {
         return(
             <span className={`badge badge-${
-                rowData.status == 0 ? 'warning'
-                : rowData.status == 1 ? "primary" 
-                : rowData.status == 2 ? "danger" 
-                : "secondary"} light`}
+                rowData.delivery_group_report ? "success" 
+                : rowData.delivery_group_report?.report_status == 0 ? "warning"
+                : "danger"
+            } light`}
             >
                 {
-                    rowData.status == 0 ? 'menunggu konfirmasi'
-                    : rowData.status == 1 ? "dikonfirmasi" 
-                    : rowData.status == 2 ? "dibatalkan" 
-                    : "??"
+                    rowData.delivery_group_report ? "laporan telah disetujui" 
+                    : rowData.delivery_group_report?.report_status == 0 ? "laporan sedang ditinjau"
+                    : "laporan belum dibuat"
+                }                                                                                
+            </span>
+        )
+    };
+    const statusDeliveryCell = (rowData) => {
+        return(
+            <span className={`badge badge-${
+                rowData.delivery_group_report ? "success" 
+                : rowData.delivery_group_report?.report_status == 0 ? "warning"
+                : "danger"
+            } light`}
+            >
+                {
+                    rowData.delivery_group_report ? "selesai" 
+                    : rowData.delivery_group_report?.report_status == 0 ? "menunggu konfirmasi"
+                    : "dalam proses"
                 }                                                                                
             </span>
         )
@@ -1155,18 +1149,6 @@ export default function Delivery({handleSidebar, showSidebar}){
                 {rowData.payment_type }                                                                                
             </span>
         )
-    };
-
-    const selectedToDelete = () => {
-        const getOnlyID = selectedSales.map(e => {
-            return e.order_id
-        });
-        set({
-            endpoint: "sales",
-            id: getOnlyID,
-            action: "cancel",
-        });
-        setShowModal("confirmModal");
     };
 
     const statusItemTemplate = (option) => {
@@ -1211,7 +1193,7 @@ export default function Delivery({handleSidebar, showSidebar}){
                     textContent: rowData.delivery_address, 
                     title: "Delivery address"
                 }
-                setSalesList(data);
+                setModalData(data);
                 setShowModal("viewDelivAddr");
             }}>View address</p>
         )
@@ -1228,11 +1210,6 @@ export default function Delivery({handleSidebar, showSidebar}){
     }
 
     useEffect(() => {
-        initFilters();
-        fetchAllDG();
-    }, []);
-    
-    useEffect(() => {
         if(refetch){
             fetchAllDG();
             setShowModal("");
@@ -1240,6 +1217,23 @@ export default function Delivery({handleSidebar, showSidebar}){
         }
     }, [refetch]);
 
+    useEffect(() => {
+        fetchAllDelivery();
+        fetchAllCust();
+        fetchAllProd();
+        fetchAllDG();
+    },[])
+
+    useEffect(() => {
+        if(salesData && allProdData && custData && dg){
+            setLoading(false);
+        } 
+    },[salesData, allProdData, custData, dg]);
+
+    useEffect(() => {
+        initFilters();
+    }, []);
+    
     if(isLoading){
         return;
     }
@@ -1258,7 +1252,7 @@ export default function Delivery({handleSidebar, showSidebar}){
                                         id='deliveryGroupListTab' 
                                         onClick={(e) => handleClick(e)}
                                     >
-                                        <span className="tab-title">delivery Group list</span>
+                                        <span className="tab-title">list pengantaran</span>
                                     </div>
                                     <div className={`tab-indicator ${openTab === "deliveryListTab" ? "active" : ""}`}  
                                         id='deliveryListTab' 
@@ -1266,7 +1260,6 @@ export default function Delivery({handleSidebar, showSidebar}){
                                     >
                                         <span className="tab-title">delivery list</span>
                                     </div>
-                                    
                                     {/* <div className={`tab-indicator ${openTab === "addSalesTab" ? "active" : ""}`} 
                                         id='addSalesTab' 
                                         onClick={(e) => handleClick(e)}
@@ -1288,7 +1281,6 @@ export default function Delivery({handleSidebar, showSidebar}){
                                         onClick={(e) => handleClick(e)}>
                                         <span className="tab-title">canceled order</span>
                                     </div> */}
-                                    
                                 </div>
                                 <div className="tabs-content" style={openTab === "deliveryListTab" ? {display: "block"} : {display: "none"}}>
                                     <div className="card card-table add-on-shadow">
@@ -1772,14 +1764,14 @@ export default function Delivery({handleSidebar, showSidebar}){
                                                         <i className="bx bx-filter-alt" style={{ fontSize: "24px" }}></i>
                                                         Clear filter
                                                     </button>
-                                                    <InputWSelect
+                                                    {/* <InputWSelect
                                                         name="delivery_status"
                                                         selectLabel="Select delivery status"
                                                         options={[{id: 1, type: "pending"},{id: 2, type: "loading"},{id: 3, type: "on the way"},{id: 4, type: "delivered"}, {id: 5, type: 'failed'}]}
                                                         optionKeys={["id", "type"]}
                                                         value={(selected) => setStatusFilter(selected.value)}
                                                         width={"220px"}
-                                                    />
+                                                    /> */}
                                                 </div>
                                         
                                                 <div
@@ -1793,50 +1785,7 @@ export default function Delivery({handleSidebar, showSidebar}){
                                                 >
                                                     <i className="bx bx-printer"></i>
                                                 </button> */}
-                                                <Dropdown drop={"down"}>
-                                                    <Dropdown.Toggle variant="primary" style={{ height: "100%" }}>
-                                                    <i className="bx bx-download"></i> export
-                                                    </Dropdown.Toggle>
-                                                    <Dropdown.Menu align={"end"}>
-                                                    <Dropdown.Item
-                                                        eventKey="1"
-                                                        as="button"
-                                                        aria-label="viewInvModal"
-                                                        onClick={(e) =>
-                                                        handleModal(e, { id: inv.invoice_id, items: { ...inv } })
-                                                        }
-                                                    >
-                                                        <i className="bx bx-show"></i> PDF (.pdf)
-                                                    </Dropdown.Item>
-                                                    <Dropdown.Item
-                                                        eventKey="1"
-                                                        as="button"
-                                                        aria-label="editInvModal"
-                                                        onClick={(e) => handleModal(e, inv.invoice_id)}
-                                                    >
-                                                        <i className="bx bxs-edit"></i> Microsoft Excel (.xlsx)
-                                                    </Dropdown.Item>
-                                                    </Dropdown.Menu>
-                                                </Dropdown>
-                                                <button
-                                                    type="button"
-                                                    className=" btn btn-primary btn-w-icon"
-                                                    style={{ height: "100%" }}
-                                                >
-                                                    <i className="bx bxs-file-plus"></i> import
-                                                </button>
-                                                <button type="button" className="add-btn btn btn-primary btn-w-icon" 
-                                                    aria-label="createDelivGroups"
-                                                    onClick={(e) => {
-                                                        handleModalWData(e, {
-                                                            endpoint: "deliveryGroup",
-                                                            action: "insert",
-                                                        })
-                                                    }}
-                                                >
-                                                    <i className="bx bx-plus" style={{ marginTop: -3 }}></i>
-                                                    Pengantaran
-                                                </button>
+                                                
                                                 </div>
                                             </div>
                                             <DataTable
@@ -1884,16 +1833,17 @@ export default function Delivery({handleSidebar, showSidebar}){
                                                 style={{ textTransform: "uppercase" }}
                                             ></Column>
                                             <Column
-                                                field="employee_id"
-                                                header="ID karyawan"
+                                                field="delivery_group_date"
+                                                header="tanggal"
                                                 sortable
+                                                body={dgDateBody}
                                                 bodyStyle={primeTableBodyStyle}
                                                 headerStyle={primeTableHeaderStyle}
                                                 style={{ textTransform: "uppercase" }}
                                             ></Column>
                                             <Column
                                                 field="employee.name"
-                                                header="nama karyawan"
+                                                header="ditugaskan"
                                                 sortable
                                                 bodyStyle={primeTableBodyStyle}
                                                 headerStyle={primeTableHeaderStyle}
@@ -1901,7 +1851,7 @@ export default function Delivery({handleSidebar, showSidebar}){
                                             ></Column>
                                             <Column
                                                 field="total_item"
-                                                header="total Qty barang"
+                                                header="jumlah barang"
                                                 body={formatedNumberQty}
                                                 dataType='date'
                                                 filter 
@@ -1911,18 +1861,21 @@ export default function Delivery({handleSidebar, showSidebar}){
                                                 headerStyle={primeTableHeaderStyle}
                                             ></Column>
                                             <Column
-                                                field="total_value"
-                                                header="nilai"
-                                                sortable
-                                                body={formatedGrandtotal}
+                                                field="status"
+                                                header="status laporan"
+                                                body={statusDGCell}
                                                 bodyStyle={primeTableBodyStyle}
                                                 headerStyle={primeTableHeaderStyle}
+                                                filter
+                                                showFilterMenu={false} 
+                                                filterMenuStyle={{ width: '100%' }}
+                                                filterElement={statusRowFilter}
                                                 style={{ textTransform: "uppercase" }}
                                             ></Column>
                                             <Column
                                                 field="status"
-                                                header="status"
-                                                body={statusDGCell}
+                                                header="status pengantaran"
+                                                body={statusDeliveryCell}
                                                 bodyStyle={primeTableBodyStyle}
                                                 headerStyle={primeTableHeaderStyle}
                                                 filter
@@ -2176,7 +2129,6 @@ export default function Delivery({handleSidebar, showSidebar}){
                                         </div> */}
                                     </div>
                                 </div>
-                                
                             </div>
                         </div>
                     </div>
@@ -2185,23 +2137,23 @@ export default function Delivery({handleSidebar, showSidebar}){
 
             {showModal === "salesDetailModal" ? 
             (
-                <SalesDetailModal show={showModal === "salesDetailModal" ? true : false} onHide={handleCloseModal} data={showModal == "salesDetailModal" ? salesListObj : ""} />
+                <SalesDetailModal show={showModal === "salesDetailModal" ? true : false} onHide={handleCloseModal} data={showModal == "salesDetailModal" ? modalData : ""} />
             )
             : showModal === "delivEditModal" ?
             (
-                <SalesEditModal show={showModal === "delivEditModal" ? true : false} onHide={handleCloseModal} data={showModal == "delivEditModal" ? salesListObj : ""} />
+                <SalesEditModal show={showModal === "delivEditModal" ? true : false} onHide={handleCloseModal} data={showModal == "delivEditModal" ? modalData : ""} />
             )
             : showModal === "cancelDelivModal" ?
             (
                 <ConfirmModal show={showModal === "cancelDelivModal" ? true : false} onHide={handleCloseModal} 
-                    data={showModal === "cancelDelivModal" ? salesListObj : ""} 
+                    data={showModal === "cancelDelivModal" ? modalData : ""} 
                     msg={"Are you sure want to delete this data?"}
                 />
             )
             : showModal === "confirmationModal" ?
             (
                 <ConfirmModal show={showModal === "confirmationModal" ? true : false} onHide={handleCloseModal} 
-                    data={showModal === "confirmationModal" ? salesListObj : ""}  
+                    data={showModal === "confirmationModal" ? modalData : ""}  
                     msg={modalMsg}
                     returnValue={(confirm) => {setConfirm(confirm)}}
                 />
@@ -2225,7 +2177,7 @@ export default function Delivery({handleSidebar, showSidebar}){
                 <ModalTextContent 
                     show={showModal === "viewDelivAddr" ? true : false} 
                     onHide={handleCloseModal} 
-                    data={showModal === "viewDelivAddr" ? salesListObj : null} 
+                    data={showModal === "viewDelivAddr" ? modalData : null} 
                 />
             )
             : showModal === "createDelivGroups" || showModal === "editDelivGroups" ? 
@@ -2233,7 +2185,7 @@ export default function Delivery({handleSidebar, showSidebar}){
                 <DelivGroupsModal
                     show={showModal === "createDelivGroups" || "editDelivGroups" ? true : false}
                     onHide={handleCloseModal}
-                    data={showModal === "createDelivGroups" || "editDelivGroups" ? salesListObj : ""}
+                    data={showModal === "createDelivGroups" || "editDelivGroups" ? modalData : ""}
                     returnAct={(act) => 
                     act ? setRefetch(true) 
                     : setRefetch(false)
@@ -2245,7 +2197,8 @@ export default function Delivery({handleSidebar, showSidebar}){
                 <DeliveryGroupListModal
                     show={showModal === "viewDGList" ? true : false} 
                     onHide={handleCloseModal} 
-                    data={showModal === "viewDGList" ? salesListObj : null} 
+                    data={showModal === "viewDGList" ? modalData : null} 
+                    
                     returnAct={(act) => 
                         act ? setRefetch(true) 
                         : setRefetch(false)
@@ -2258,11 +2211,35 @@ export default function Delivery({handleSidebar, showSidebar}){
                 <ConfirmModal 
                     show={showModal === "confirmModal" ? true : false} 
                     onHide={handleCloseModal} 
-                    data={showModal === "confirmModal" && salesListObj ? salesListObj : ""} 
+                    data={showModal === "confirmModal" && modalData ? modalData : ""} 
                     msg={modalMsg}
                     multiple={true} 
                     stack={1} 
                     returnValue={(value) => setRefetch(value)}
+                />
+            )
+            // : showModal === "writeDelivGroupsReport" ?
+            // (
+            //     <DeliveryGroupListReportModal 
+            //         show={showModal === "writeDelivGroupsReport" ? true : false} 
+            //         onHide={handleCloseModal} 
+            //         data={showModal === "writeDelivGroupsReport" && modalData ? modalData : ""} 
+            //         // msg={modalMsg}
+            //         multiple={true} 
+            //         stack={1} 
+            //         returnValue={(value) => setRefetch(value)}
+            //     />
+            // )
+            : showModal === "writeDelivGroupsReport" ?
+            (
+                <WriteDelivGroupItemsModal
+                    show={showModal === "writeDelivGroupsReport" ? true : false}
+                    onHide={handleCloseModal}
+                    data={showModal === "writeDelivGroupsReport" ? modalData : ""}
+                    returnAct={(act) => 
+                        act ? setRefetch(true) 
+                        : setRefetch(false)
+                    }
                 />
             )
              : ""
@@ -2276,15 +2253,15 @@ export default function Delivery({handleSidebar, showSidebar}){
             </ToastContainer> */}
             <Toast ref={toast} />
             <Toast
-            ref={toastUpload}
-            content={({ message }) => (
+                ref={toastUpload}
+                content={({ message }) => (
                 <section
-                className="flex p-3 gap-3 w-full shadow-2 fadeindown"
-                style={{
-                    borderRadius: "10px",
-                    backgroundColor: "#262626",
-                    color: "#ffffff",
-                }}
+                    className="flex p-3 gap-3 w-full shadow-2 fadeindown"
+                    style={{
+                        borderRadius: "10px",
+                        backgroundColor: "#262626",
+                        color: "#ffffff",
+                    }}
                 >
                 <i className="bx bx-cloud-upload" style={{ fontSize: 24 }}></i>
                 <div className="flex flex-column gap-3 w-full">

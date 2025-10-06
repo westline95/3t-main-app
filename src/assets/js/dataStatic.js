@@ -198,6 +198,17 @@ const orderPayMethod = [
     }
 ];
 
+const orderPayGuestMethod = [
+    {
+        id: 1, 
+        type: "lunas"
+    },
+    {
+        id: 3, 
+        type: "sebagian"
+    }
+];
+
 const salaryType = [
     {
         id: 1, 
@@ -206,6 +217,21 @@ const salaryType = [
     {
         id: 2, 
         type: "bulanan"
+    },
+];
+
+const deliveryGroupStatus = [
+    {
+        id: 0, 
+        type: "menunggu konfirmasi"
+    },
+    {
+        id: 1, 
+        type: "dikonfirmasi"
+    },
+    {
+        id: 2, 
+        type: "dibatalkan"
     },
 ];
 
@@ -224,10 +250,12 @@ export default {
     returnReasonList,
     invPayMethod,
     orderPayMethod,
+    orderPayGuestMethod,
     returnMethodWPaidStatus,
     returnMethod,
     returnOrderStatus,
     roStatus,
     invStatus,
-    salaryType
+    salaryType,
+    deliveryGroupStatus
 };

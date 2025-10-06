@@ -30,7 +30,7 @@ export default function SalaryAdjustmentModal({ show, onHide, data, returnAct })
   const [isLoading, setLoading] = useState(true);
   const [ openPopup, setOpenPopup ] = useState(false);
   const [ filterName, setFilteredName ] = useState([]);
-  const [ chooseEmployee, setEmployee] = useState(null);
+  const [ chooseEmployee, setEmployee] = useState(data.choosedData ? data.choosedData : null);
 
   const {
     register,
@@ -155,11 +155,17 @@ export default function SalaryAdjustmentModal({ show, onHide, data, returnAct })
   };
 
   const fetchAllEmployee = async () => {
-    await axiosPrivate.get("/employee/all")
+    await axiosPrivate.get("/employee/all/active", {
+      params: {
+        active: true
+      }
+    })
     .then((response) => {
       if(response.data && response.data.length > 0){
         const fiteredNoBaseSalary = response.data.filter(({salary_settings}) => salary_settings.length > 0);
         setEmployeeData(fiteredNoBaseSalary);
+      } else {
+        return returnAct("empty");
       }
     })
     .catch((error) => {
@@ -337,6 +343,17 @@ export default function SalaryAdjustmentModal({ show, onHide, data, returnAct })
   useEffect(() => {
     fetchAllEmployee();
   },[]);
+  
+  useEffect(() => {
+    if(data.choosedData){
+      if(data.choosedData.salary_settings && data.choosedData.salary_settings.length > 0){
+        setCurrSalarySetting(data.choosedData.salary_settings[0]);
+      }
+        
+      setValue('employee_id', data.choosedData.employee_id);
+      setValue('name', data.choosedData.name);
+    }
+  },[]);
 
   useEffect(() => {
     if(employeeData){
@@ -392,7 +409,9 @@ export default function SalaryAdjustmentModal({ show, onHide, data, returnAct })
                                           ...e
                                     })}>{e.name}</div>
                                 )
-                            }) : ""
+                            }) : (
+                              <div className="res-item">Tidak ada data</div>
+                            )
                         }
                     </div>   
                 </div>
@@ -540,7 +559,7 @@ export default function SalaryAdjustmentModal({ show, onHide, data, returnAct })
               handleSubmit(onSubmit, onError)();
             }}
           >
-            simpan
+            {controlUiBtn ? 'Loading...' : 'simpan'}
           </button>
         </Modal.Footer>
       </Modal>

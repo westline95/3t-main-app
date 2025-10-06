@@ -793,6 +793,14 @@ export default function Invoice({handleSidebar, showSidebar}){
         );
     };
 
+    const customerOrGuestName = (rowData) => {
+        return <span>{rowData.customer ? rowData.customer.name : rowData.guest_name}</span>;
+    };
+    
+    const customerOrGuest = (rowData) => {
+        return <span>{rowData.customer_id ? rowData.customer_id : "-"}</span>;
+    };
+
     const formatedInvDate = (rowData, options) => {
         return <span key={options.rowIndex}>{ConvertDate.convertToFullDate(rowData.invoice_date, "/")}</span>;
     };
@@ -1064,7 +1072,7 @@ export default function Invoice({handleSidebar, showSidebar}){
                 <span className="user-img" style={{marginRight: 0}}>
                 <img
                     src={
-                    rowData.customer.img ? rowData.customer.img
+                    rowData.customer ? rowData.customer.img
                         : `https://res.cloudinary.com/du3qbxrmb/image/upload/v1751378806/no-img_u5jpuh.jpg`
                     }
                     alt=""
@@ -1462,6 +1470,7 @@ export default function Invoice({handleSidebar, showSidebar}){
     useEffect(() => {
         if(refetch){
             fetchAllInv();
+            fetchAllReceipt();
             setShowModal("");
             setRefetch(false);
         } 
@@ -1618,6 +1627,7 @@ export default function Invoice({handleSidebar, showSidebar}){
                                                 key={3}
                                                 field="customer.name"
                                                 header="pelanggan"
+                                                body={customerOrGuestName}
                                                 filter 
                                                 filterPlaceholder="Search by customer name"
                                                 style={{ textTransform: "uppercase" }}
@@ -1628,6 +1638,7 @@ export default function Invoice({handleSidebar, showSidebar}){
                                                 key={4}
                                                 field="customer_id"
                                                 header="ID pelanggan"
+                                                body={customerOrGuest}
                                                 sortable
                                                 style={{ textTransform: "uppercase" }}
                                                 bodyStyle={primeTableBodyStyle}
@@ -2095,23 +2106,25 @@ export default function Invoice({handleSidebar, showSidebar}){
                                                 style={{ textTransform: "uppercase" }}
                                             ></Column>
                                             <Column
-                                                key={5}
-                                                field="customer_id"
-                                                header="ID pelanggan"
-                                                sortable
-                                                bodyStyle={primeTableBodyStyle}
-                                                headerStyle={primeTableHeaderStyle}
-                                                style={{ textTransform: "uppercase" }}
-                                            ></Column>
-                                            <Column
                                                 key={6}
                                                 field="customer.name"
                                                 header="pelanggan"
+                                                body={customerOrGuestName}
                                                 filter 
                                                 filterPlaceholder="Search by customer name"
                                                 style={{ textTransform: "uppercase" }}
                                                 bodyStyle={primeTableBodyStyle}
                                                 headerStyle={primeTableHeaderStyle}
+                                            ></Column>
+                                            <Column
+                                                key={5}
+                                                field="customer_id"
+                                                header="ID pelanggan"
+                                                body={customerOrGuest}
+                                                sortable
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
+                                                style={{ textTransform: "uppercase" }}
                                             ></Column>
                                             <Column
                                                 key={7}
@@ -2395,8 +2408,8 @@ export default function Invoice({handleSidebar, showSidebar}){
                     <CreateInv 
                         show={showModal === "createInvModal" ? true : false} 
                         onHide={handleCloseModal} 
-                        returnAct={(returnValue) => {
-                            returnValue ? setRefetch(true) : setRefetch(false);
+                        returnAct={(act) => {
+                            act ? setRefetch(true) : setRefetch(false);
                         }}
                     />
                 )

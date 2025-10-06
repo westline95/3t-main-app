@@ -1,14 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Dropdown, Modal } from 'react-bootstrap';
 import { Toast } from 'primereact/toast';
-import NumberFormat from '../Masking/NumberFormat';
+import NumberFormat from '../Masking/NumberFormat.jsx';
 import { BlobProvider, pdf, PDFDownloadLink } from '@react-pdf/renderer';
 import { useReactToPrint } from 'react-to-print';
 import FetchApi from '../../assets/js/fetchApi.js';
 import InvoiceDoc from '../../parts/InvoiceDoc.jsx';
 import ConvertDate from '../../assets/js/ConvertDate.js';
-import InputWLabel from '../Input/InputWLabel';
-import { CustomSelect } from '../CustomSelect';
+import InputWLabel from '../Input/InputWLabel.jsx';
+import { CustomSelect } from '../CustomSelect/index.jsx';
 import User from "../../assets/images/Avatar 1.jpg";
 import useAxiosPrivate from '../../hooks/useAxiosPrivate.js';
 import capitalizeEveryWord from '../../assets/js/CapitalizeEveryWord.js';
@@ -20,15 +20,19 @@ import ReceiptDoc from '../../parts/ReceiptDoc.jsx';
 import axios from 'axios';
 
 import NoImg from "../../assets/images/no-img.jpg";
+import { useForm } from 'react-hook-form';
+import useAuth from '../../hooks/useAuth.js';
 
 
-export default function InvoiceModal({show, onHide, data}) {
+export default function DeliveryGroupListModal({show, onHide, data, returnAct}) {
+    const { auth } = useAuth();
     const isMobile = useMediaQuery('(max-width: 767px)');
     const isMediumScr = useMediaQuery('(min-width: 768px) and (max-width: 1024px)');
 
     const [ countItem, setCountItem ] = useState(0);
     const [ dataPoint, setDataPoint ] = useState(null);
     const [ showToast, setShowToast ] = useState(false);
+    const [ controlUiBtn, setControlUiBtn ] = useState(false);
     const [ invData, setInvData ] = useState(false);
     const [ showModal, setShowModal ] = useState("");
     const [ paidData, setPaidData ] = useState(null);
@@ -39,10 +43,31 @@ export default function InvoiceModal({show, onHide, data}) {
     const [ invStatus, setInvStatus ] = useState(null);
     const [ paymentData, setPaymentData] = useState(null);
     const [ totalPaid, setTotalPaid] = useState(0);
-    const [ invDupe, setInvDupe ] = useState(data ? {...data} : null); 
+    const [ dGList, setDGList ] = useState(data ? {...data} : null); 
+
     const axiosPrivate = useAxiosPrivate();
+
     const toast = useRef();
     const componentRef = useRef(null);
+
+    const {
+        register,
+        handleSubmit,
+        watch,
+        control,
+        reset,
+        setValue,
+        getValues,
+        clearErrors,
+        setError,
+        trigger,
+        formState: { errors },
+      } = useForm({
+        defaultValues: {
+        },
+      });
+
+
     const handlePrint = useReactToPrint({
         contentRef: componentRef,
         documentTitle: `My_HeaderText_Print`,
@@ -110,41 +135,78 @@ export default function InvoiceModal({show, onHide, data}) {
         })
     };
 
-    const fetchUpdateInvStatus = async () => {
-        let invStatusUpdate = JSON.stringify({status: invStatus});
-        await axiosPrivate.patch(`/inv/status?id=${invDupe.id}`, invStatusUpdate)
-        .then(resp => {
-            console.log(resp.data[1][0])
-            if(resp.data.length > 0 && resp.data[0] > 0){
-                toast.current.show({
-                    severity: "success",
-                    summary: "Success",
-                    detail: "Invoice status updated",
-                    life: 3000,
-                });
+    const fetchUpdateStatus = async() => {
+        const body = JSON.stringify({
+            delivery_group: {
+                status: Number(getValues('status'))
+            },
+            delivery_group_items: null
+        });
 
-                axiosPrivate.get("/inv/by",{params:{id: invDupe.id}})
-                .then(resp2 => {
-                    console.log(resp2.data)
-                    setInvDupe({...data, items: resp2.data[0]});
-                })
-                .catch(err2 => {
-
-                })
+        await axiosPrivate.patch("/edit-minor/delivery-group", body, {
+            params:{
+                id: dGList.delivery_group_id,
             }
         })
+        .then(resp => {
+            toast.current.show({
+                severity: "success",
+                summary: "Sukses",
+                detail: "berhasil memperbarui status",
+                life: 1500,
+            });
+
+            setTimeout(() => {
+                setControlUiBtn(false);
+                return returnAct(true);
+            }, 1500);
+        })
         .catch(err => {
+             setControlUiBtn(false);
             toast.current.show({
                 severity: "error",
                 summary: "Failed",
-                detail: "Failed to update status",
+                detail: "Gagal memperbarui status",
                 life: 3000,
             });
         })
     }
 
+    // const fetchUpdateInvStatus = async () => {
+    //     let invStatusUpdate = JSON.stringify({status: invStatus});
+    //     await axiosPrivate.patch(`/inv/status?id=${dGList.id}`, invStatusUpdate)
+    //     .then(resp => {
+    //         console.log(resp.data[1][0])
+    //         if(resp.data.length > 0 && resp.data[0] > 0){
+    //             toast.current.show({
+    //                 severity: "success",
+    //                 summary: "Success",
+    //                 detail: "Invoice status updated",
+    //                 life: 3000,
+    //             });
+
+    //             axiosPrivate.get("/inv/by",{params:{id: dGList.id}})
+    //             .then(resp2 => {
+    //                 console.log(resp2.data)
+    //                 setDGList({...data, items: resp2.data[0]});
+    //             })
+    //             .catch(err2 => {
+
+    //             })
+    //         }
+    //     })
+    //     .catch(err => {
+    //         toast.current.show({
+    //             severity: "error",
+    //             summary: "Failed",
+    //             detail: "Failed to update status",
+    //             life: 3000,
+    //         });
+    //     })
+    // }
+
     const testSend = async(receipientNumber) => {
-        const invDoc = <InvoiceDoc data={{invoice: invDupe.items, order: salesList, payment: paymentData, ro: roList}} />;
+        const invDoc = <InvoiceDoc data={{invoice: dGList.items, order: salesList, payment: paymentData, ro: roList}} />;
         const blob = await pdf(invDoc).toBlob();
        
         const formData = new FormData();
@@ -169,7 +231,7 @@ export default function InvoiceModal({show, onHide, data}) {
                 type: "document",
                 document: {
                     id: res.data.id,
-                    filename: `${(invDupe.items.invoice_number).toUpperCase()} - ${capitalizeEveryWord(invDupe.items.customer?.name)}.pdf`,
+                    filename: `${(dGList.items.invoice_number).toUpperCase()} - ${capitalizeEveryWord(dGList.items.customer?.name)}.pdf`,
                 }
             });
             const send = axios.post('https://graph.facebook.com/v23.0/765819206619796/messages', msgBody, {
@@ -222,7 +284,7 @@ export default function InvoiceModal({show, onHide, data}) {
         //                 type: "document",
         //                 document: {
         //                     "id": resp.data.id,
-        //                     "filename": `${(invDupe.items.invoice_number).toUpperCase()} - ${capitalizeEveryWord(invDupe.items.customer?.name)}.pdf`,
+        //                     "filename": `${(dGList.items.invoice_number).toUpperCase()} - ${capitalizeEveryWord(dGList.items.customer?.name)}.pdf`,
         //                     "caption": "Please review this document."
         //                 }
         //                 // text :{
@@ -238,55 +300,49 @@ export default function InvoiceModal({show, onHide, data}) {
         // })
     }
 
-    useEffect(() => {
-        if(invDupe){
-            let getSalesRef = JSON.parse(invDupe.items.order_id);
-            let sendReq;
-            if(getSalesRef.length > 1){
-                sendReq = getSalesRef.join("&id=");
-                // fetchPaymentByInv();
-            } else {
-                sendReq = getSalesRef[0];
-                // fetchSalesByID(sendReq);
-                // fetchPaymentByInv();
-            }
+    // useEffect(() => {
+    //     if(dGList){
+    //         let getSalesRef = JSON.parse(dGList.items.order_id);
+    //         let sendReq;
+    //         if(getSalesRef.length > 1){
+    //             sendReq = getSalesRef.join("&id=");
+    //             // fetchPaymentByInv();
+    //         } else {
+    //             sendReq = getSalesRef[0];
+    //             // fetchSalesByID(sendReq);
+    //             // fetchPaymentByInv();
+    //         }
 
-            setPaymentData(invDupe.items.payments);
+    //         setPaymentData(dGList.items.payments);
 
-            let totalPaid = invDupe.items.payments?.reduce((sum, payment) => Number(sum) + Number(payment.amount_paid), 0);
-        //    console.log(totalPaid)
-            setTotalPaid(totalPaid);
-            fetchSalesByID(sendReq);
-            fetchROByOrder(sendReq);
+    //         let totalPaid = dGList.items.payments?.reduce((sum, payment) => Number(sum) + Number(payment.amount_paid), 0);
+    //     //    console.log(totalPaid)
+    //         setTotalPaid(totalPaid);
+    //         fetchSalesByID(sendReq);
+    //         fetchROByOrder(sendReq);
             
-        }
-    },[invDupe]);
+    //     }
+    // },[dGList]);
+    
+    // useEffect(() => {
+    //        if(paidData && invData){
+    //            fetchInsertPayment();
+    //         //    console.log(paidData)
+    //        }
+    //    },[paidData])
     
     useEffect(() => {
-           if(paidData && invData){
-               fetchInsertPayment();
-            //    console.log(paidData)
-           }
-       },[paidData])
-    
-    useEffect(() => {
-        if(salesList && paymentData && invDupe){
+        if(dGList){
             setIsLoading(false);
         }
-    },[salesList, paymentData, invDupe]);
-
-    useEffect(() => {
-        if(invStatus && invStatus !== invDupe.items.status){
-            fetchUpdateInvStatus();
-        }
-    },[invStatus])
+    },[dGList]);
 
 
     if(isLoading){
         return;
     }
 
-    console.log(invDupe)
+    console.log(dGList)
     
     const handleModal = (e, inv) => {
         let data;
@@ -356,7 +412,7 @@ export default function InvoiceModal({show, onHide, data}) {
         })
     };
 
-    console.log(invDupe)
+    console.log(dGList)
 
     return(
         <>
@@ -560,9 +616,9 @@ export default function InvoiceModal({show, onHide, data}) {
                 </div>
             </div>
         </div> */}
-        <Modal dialogClassName={isMobile || isMediumScr ? 'modal-fullscreen' : 'modal-75w'} show={show} onHide={onHide} scrollable={true} centered={true}  id="invoiceDetailModal" >
+        <Modal dialogClassName={auth.roles == "admin" ? isMobile || isMediumScr ? 'modal-fullscreen' : 'modal-75w': "modal-lg"} show={show} onHide={onHide} scrollable={true} centered={true}  id="" >
             <Modal.Header closeButton>
-                <Modal.Title style={{marginRight: '1rem'}}>invoice ID: {invDupe !== "" ? `${invDupe.id}` : ""}</Modal.Title>
+                <Modal.Title style={{marginRight: '1rem'}}>invoice ID: {dGList !== "" ? `${dGList.delivery_group_id}` : ""}</Modal.Title>
                 <span>
                     {/* <InputWSelect
                                 // label={'status'}
@@ -570,7 +626,7 @@ export default function InvoiceModal({show, onHide, data}) {
                                 // selectLabel="Select order type"
                                 options={dataStatic.statusInvList}
                                 optionKeys={["id", "type"]}
-                                defaultValue={invDupe.items.status}
+                                defaultValue={dGList.items.status}
                                 defaultValueKey={"type"}
                                 value={(selected) => {
                                     setInvStatus(selected.value);
@@ -641,23 +697,23 @@ export default function InvoiceModal({show, onHide, data}) {
             </Modal.Header>
             <Modal.Body ref={componentRef}>
                 <div className='prev-inv-container' style={{display: 'flex', flexDirection: isMobile || isMediumScr ? 'column' : 'row', width: '100%', gap:'3rem'}}>
-                    <div className='card static-shadow prev-inv-content' style={{width: isMobile || isMediumScr ? '100%' : '75%'}}>
+                    <div className='card static-shadow prev-inv-content' style={{width: auth.roles == "admin" ? isMobile || isMediumScr ? '100%' : '75%' : '100%'}}>
                         <div className='invoice-wrapper'>
                             <div className="invoice-header">
                                 <div className="invoice-detail">
-                                    <h3 className="invoice-title">invoice</h3>
+                                    <h3 className="invoice-title">Pengantaran grup</h3>
                                     <div className="invoice-info-group">
-                                        <p className="label-text">nomor invoice</p>
-                                        <p className="invoice-text" style={{textTransform: 'uppercase'}}>#{invDupe !== "" ? `${invDupe.items?.invoice_number}` : ""}</p>
+                                        <p className="label-text">ID pengantaran</p>
+                                        <p className="invoice-text" style={{textTransform: 'uppercase'}}>#{dGList.delivery_group_id}</p>
                                     </div>
                                     <div style={{display: 'flex', flexDirection: 'row', gap: '2rem'}}>
                                         <div className="invoice-info-group">
                                             <p className="label-text">tanggal</p>
-                                            <p className="invoice-text">{ConvertDate.convertToBeautyDate(invDupe.items.invoice_date)}</p>
+                                            <p className="invoice-text">{ConvertDate.convertToBeautyDate(dGList.delivery_group_date)}</p>
                                         </div>
                                         <div className="invoice-info-group">
-                                            <p className="label-text">jatuh tempo</p>
-                                            <p className="invoice-text">{ConvertDate.convertToBeautyDate(invDupe.items.invoice_due)}</p>
+                                            <p className="label-text">dibuat tanggal</p>
+                                            <p className="invoice-text">{ConvertDate.convertToBeautyDate(dGList.createdAt)}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -672,33 +728,55 @@ export default function InvoiceModal({show, onHide, data}) {
                                     </div>
                                 </div>
                             </div>
-                            <div className="invoice-content" style={{ overflowX: 'auto'}}>
+                            <div className="invoice-content" style={{ overflowX: 'auto', justifyContent: 'space-between'}}>
                                 <div className="invoice-cust-info">
                                     <div className="invoice-info-group">
-                                        <p className="label-text">nama pelanggan</p>
-                                        <p className="invoice-text" style={{marginBottom:17}}>{invDupe.items.customer ? invDupe.items.customer.name : invDupe.items.guest_name}</p>
+                                        <p className="label-text">nama karyawan</p>
+                                        <p className="invoice-text" style={{marginBottom:17}}>{dGList.employee?.name}</p>
                                     </div>
                                     <div className="invoice-info-group">
-                                        <p className="label-text">status</p>
-                                        <span className={`badge badge-${invDupe.items.is_paid ? 'success' : 'danger'} light`}>{invDupe.items.is_paid ? 'lunas' : 'belum lunas'}</span>
+                                        <p className="label-text">ID karyawan</p>
+                                        <p className="invoice-text" style={{marginBottom:17}}>{dGList.employee_id}</p>
                                     </div>
                                 </div>
-                                <div className='inv-bank-info'>
+                                <div className="invoice-info-group">
+                                    <p className="label-text">status</p>
+                                    <span className={`badge badge-${
+                                        dGList.status == 0  ? 'warning' 
+                                        : dGList.status == 1 ? 'primary'
+                                        : dGList.status == 2 ? 'danger'
+                                        : 'secondary'} light`}
+                                    >
+                                        {
+                                            dGList.status == 0 ? 'menunggu konfirmasi' 
+                                            : dGList.status == 1 ? 'dikonfirmasi'
+                                            : dGList.status == 2 ? 'dibatalkan'
+                                            : '???'
+                                        }
+                                    </span>
+                                </div>
+                                {/* <div className='inv-bank-info'>
                                     <div className="invoice-info-group">
                                         <p className="label-text" style={{marginBottom:3}}>Informasi Pembayaran</p>
                                         <p className="invoice-text" style={{marginBottom:3}}><span className="label-text">Bank Transfer:</span> BRI</p>
                                         <p className="invoice-text" style={{marginBottom:3}}><span className="label-text">A/N:</span> Anton Ruchiat</p>
                                         <p className="invoice-text" style={{marginBottom:0}}><span className="label-text">Nomor rekening:</span> 005301102808501</p>
                                     </div>
-                                </div>
+                                </div> */}
                             </div>
                             <div className="invoice-amount">
                                 <div className="card-amount">
                                     <div className="invoice-info-group">
-                                        <p className="label-text">Total Transaksi</p>
+                                        <p className="label-text">Total qty item</p>
+                                        <p className="invoice-text">{Number(dGList.total_item)}</p>
+                                    </div>
+                                </div>
+                                <div className="card-amount">
+                                    <div className="invoice-info-group">
+                                        <p className="label-text">Nilai pengantaran awal</p>
                                         <p className="invoice-text">
                                             <NumberFormat intlConfig={{
-                                                value: invDupe.items.amount_due, 
+                                                value: dGList.total_value, 
                                                 locale: "id-ID",
                                                 style: "currency", 
                                                 currency: "IDR",
@@ -709,10 +787,10 @@ export default function InvoiceModal({show, onHide, data}) {
                                 </div>
                                 <div className="card-amount">
                                     <div className="invoice-info-group">
-                                        <p className="label-text">Total Bayar</p>
+                                        <p className="label-text">Nilai pengantaran akhir</p>
                                         <p className="invoice-text">
                                             <NumberFormat intlConfig={{
-                                                value: totalPaid, 
+                                                value: 0, 
                                                 locale: "id-ID",
                                                 style: "currency", 
                                                 currency: "IDR",
@@ -721,43 +799,17 @@ export default function InvoiceModal({show, onHide, data}) {
                                         </p>
                                     </div>
                                 </div>
-                                <div className="card-amount">
-                                    <div className="invoice-info-group">
-                                        <p className="label-text">jumlah yang harus dibayar</p>
-                                        <p className="invoice-text">
-                                            <NumberFormat intlConfig={{
-                                                value: totalPaid == 0 ? invDupe.items.amount_due : ((totalPaid - invDupe.items.amount_due) > 0 ? 0 :(invDupe.items.amount_due - totalPaid)), 
-                                                locale: "id-ID",
-                                                style: "currency", 
-                                                currency: "IDR",
-                                                }} 
-                                            />
-                                        </p>
-                                    </div>
-                                </div>
-                                {/* <div className="card-amount">
-                                    <div className="invoice-info-group">
-                                        <p className="label-text">sisa bon</p>
-                                        <p className="invoice-text"><span className="currency">Rp</span> 0</p>
-                                    </div>
-                                </div> */}
                             </div>
                             <div className="invoice-transaction mt-4">
-                                <p className="inv-table-title">detail transaksi</p>
+                                <p className="inv-table-title">detail pengantaran awal</p>
                                 <div className='table-responsive'>
-                                    {/* <table className="table"> */}
-                                    {/* <InvoiceDoc data={{invoice: data.items, order: salesList, payment: paymentData}} /> */}
-                                    {salesList ? (salesList.map((sales, idx) => {
-                                        return(
+                                    {dGList ? 
+                                        (
                                         <>
-                                        <table className="table" key={`transaction-table-${idx}`} id='tes'>
+                                        <table className="table">
                                             <thead>
-                                                <tr className='order-number-tab'>
-                                                    <th className='inv-tab-info'>Order ID:</th>
-                                                    <th className='inv-tab-info'>{sales.order_id}</th>
-                                                </tr>
                                                 <tr>
-                                                    <th>tanggal</th>
+                                                    <th>#</th>
                                                     <th>item</th>
                                                     <th>qty</th>
                                                     <th>satuan</th>
@@ -766,23 +818,24 @@ export default function InvoiceModal({show, onHide, data}) {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {sales.order_items.length > 0 && sales.order_items.map((orderItem, index) => {
+                                                {dGList.delivery_group_items.length > 0 && dGList.delivery_group_items.map((group_items, index) => {
                                                     return( 
                                                         <tr key={index} style={{textTransform:'capitalize'}}>
-                                                            {index == 0 ? 
-                                                                (
-                                                                    <td rowSpan={`${sales.order_items.length}`}>{ConvertDate.convertToFullDate(sales.order_date,"/")}</td>
-                                                                ):''
-                                                            }
-                                                            <td>{`${orderItem.product.product_name}  ${orderItem.product.variant}`}</td>
-                                                            <td>{orderItem.return_order_item ? 
-                                                                `${Number(orderItem.quantity)} (-${Number(orderItem.return_order_item.quantity)})`
-                                                                : `${Number(orderItem.quantity)}`
-                                                            }
+                                                            <td>{index+1}</td>
+                                                            <td>{`${group_items.product.product_name}  ${group_items.product.variant}`}</td>
+                                                            <td>{Number(group_items.quantity)}</td>
+                                                            <td>
+                                                                <NumberFormat intlConfig={{
+                                                                    value: group_items.sell_price, 
+                                                                    locale: "id-ID",
+                                                                    style: "currency", 
+                                                                    currency: "IDR",
+                                                                    }} 
+                                                                />
                                                             </td>
                                                             <td>
                                                                 <NumberFormat intlConfig={{
-                                                                        value: orderItem.sell_price, 
+                                                                        value: Number(group_items.disc_prod_rec), 
                                                                         locale: "id-ID",
                                                                         style: "currency", 
                                                                         currency: "IDR",
@@ -791,100 +844,22 @@ export default function InvoiceModal({show, onHide, data}) {
                                                             </td>
                                                             <td>
                                                                 <NumberFormat intlConfig={{
-                                                                    value: orderItem.discount_prod_rec, 
-                                                                    locale: "id-ID",
-                                                                    style: "currency", 
-                                                                    currency: "IDR",
-                                                                    }} 
-                                                                />
-                                                                {/* <span style={{textTransform: 'lowercase'}}>{`(x${Number(orderItem.quantity)})`}</span> */}
-                                                            </td>
-                                                            <td>
-                                                                <NumberFormat intlConfig={{
-                                                                    value: orderItem.return_order_item ? 
-                                                                    (((Number(orderItem.quantity) - Number(orderItem.return_order_item.quantity)) * Number(orderItem.sell_price)) - ((Number(orderItem.quantity) - Number(orderItem.return_order_item.quantity))*orderItem.discount_prod_rec)) 
-                                                                    : ((Number(orderItem.quantity) * Number(orderItem.sell_price)) - (Number(orderItem.quantity)*orderItem.discount_prod_rec)), 
-                                                                    locale: "id-ID",
-                                                                    style: "currency", 
-                                                                    currency: "IDR",
+                                                                        value: (Number(group_items.quantity) * Number(group_items.sell_price))-(Number(group_items.quantity)*Number(group_items.disc_prod_rec)), 
+                                                                        locale: "id-ID",
+                                                                        style: "currency", 
+                                                                        currency: "IDR",
                                                                     }} 
                                                                 />
                                                             </td>
                                                         </tr>
                                                     )
                                                 })}
-                                                {sales.orders_credit ?
-                                                (
-                                                    <>
-                                                    {sales.orders_credit.return_order.return_order_items.map((roItem, roItemIdx) => {
-                                                        return (
-                                                        <tr key={roItemIdx} style={{textTransform:'capitalize'}}>
-                                                            <td></td>
-                                                            {/* {roItemIdx == 0 ? 
-                                                                // (
-                                                                //     // <td rowSpan={`${sales.orders_credit.return_order.return_order_items.length}`}>{ConvertDate.convertToFullDate(sales.order_date,"/")}</td>
-                                                                // ):''
-                                                            } */}
-                                                            <td>{`+${roItem.order_item.product.product_name}  ${roItem.order_item.product.variant}`}</td>
-                                                            <td>{Number(roItem.quantity)}</td>
-                                                            <td>
-                                                                <NumberFormat intlConfig={{
-                                                                        value: roItem.order_item.sell_price, 
-                                                                        locale: "id-ID",
-                                                                        style: "currency", 
-                                                                        currency: "IDR",
-                                                                    }} 
-                                                                />
-                                                            </td>
-                                                            <td>
-                                                                <NumberFormat intlConfig={{
-                                                                    value: roItem.order_item.discount_prod_rec, 
-                                                                    locale: "id-ID",
-                                                                    style: "currency", 
-                                                                    currency: "IDR",
-                                                                    }} 
-                                                                />
-                                                                {/* <span style={{textTransform: 'lowercase'}}>{`(x${Number(orderItem.quantity)})`}</span> */}
-                                                            </td>
-                                                            <td>
-                                                                <NumberFormat intlConfig={{
-                                                                    value: roItem.return_value,
-                                                                    locale: "id-ID",
-                                                                    style: "currency", 
-                                                                    currency: "IDR",
-                                                                    }} 
-                                                                />
-                                                            </td>
-                                                        </tr>
-                                                        )
-                                                    })}
-                                                    
-                                                    </>
-                                                )
-                                                :''}
-                                                {sales.order_discount && Number(sales.order_discount) !== 0 ?
-                                                    (
-                                                    <tr>
-                                                        <td colSpan="4"></td>
-                                                        <td className="each-total-title"  style={{fontWeight: 500}}>diskon order</td>
-                                                        <td className="each-total-text"  style={{fontWeight: 500}}>
-                                                            <NumberFormat intlConfig={{
-                                                                value: sales.order_discount, 
-                                                                locale: "id-ID",
-                                                                style: "currency", 
-                                                                currency: "IDR",
-                                                                }} 
-                                                            />
-                                                        </td>
-                                                    </tr>
-                                                    ): null
-                                                }
                                                 <tr>
                                                     <td colSpan="4"></td>
                                                     <td className="each-total-title" style={{textAlign:'right'}}>total</td>
                                                     <td className="each-total-text">
                                                         <NumberFormat intlConfig={{
-                                                            value: Number(sales.grandtotal) - (sales.orders_credit ? (Number(sales.orders_credit.return_order.refund_total)):0) - (sales.return_order ? (Number(sales.return_order.refund_total)):0),
+                                                            value: Number(dGList.total_value),
                                                             locale: "id-ID",
                                                             style: "currency", 
                                                             currency: "IDR",
@@ -892,7 +867,7 @@ export default function InvoiceModal({show, onHide, data}) {
                                                         />
                                                     </td>
                                                 </tr>
-                                                {idx == salesList.length-1 ? 
+                                                {/* {idx == salesList.length-1 ? 
                                                     (
                                                     <tr className="grand-total">
                                                         <td colSpan="4"></td>
@@ -908,7 +883,7 @@ export default function InvoiceModal({show, onHide, data}) {
                                                         </td>
                                                     </tr>
                                                     )
-                                                :""}
+                                                :""} */}
                                             </tbody>
                                         </table>
 
@@ -916,11 +891,11 @@ export default function InvoiceModal({show, onHide, data}) {
                                         
                                         </>
                                         )
-                                    })):""}
+                                    :""}
                                 </div>
                             </div>
                             
-                            <div className="invoice-payment">
+                            {/* <div className="invoice-payment">
                                 {
                                     paymentData.length > 0 ? 
                                     (
@@ -986,256 +961,88 @@ export default function InvoiceModal({show, onHide, data}) {
                                         </>
                                     ): ''
                                 }
-                            </div>
-
-                            {/* return order detail if return method id is 2 or potong tagihan  */}
-                            
-                            {roList && roList.length >0 ? 
-                                (
-                                <div className="invoice-transaction">
-                                    <p className="inv-table-title">detail pengembalian</p>
-                                    <p className="inv-table-desc">Detail pengembalian ini hanya untuk transparansi data. Seluruh data transaksi sudah mencakup data pengembalian yang ada.</p>
-                                    {/* <div style={{width: '100%'}}> */}
-                                        {roList.map((ro, idx) => {
-                                            return(
-                                                <>
-                                                <div key={idx} className='table-top-desc-wrap'>
-                                                    <div className='table-desc-wrap-inline'>
-                                                        <div className='table-desc-inline'>
-                                                            <p className='table-desc-title'>order ID:</p>
-                                                            <p className='table-desc-value'>{ro.order.order_id}</p>
-                                                        </div>   
-                                                        <div className='table-desc-inline'>
-                                                            <p className='table-desc-title'>tanggal order:</p>
-                                                            <p className='table-desc-value'>{ConvertDate.convertToFullDate(ro.order.order_date,"/")}</p>
-                                                        </div>    
-                                                        <div className='table-desc-inline'>
-                                                            <p className='table-desc-title'>tanggal pengembalian:</p>
-                                                            <p className='table-desc-value'>{ConvertDate.convertToFullDate(ro.return_date,"/")}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className='table-desc-inline'>
-                                                        <p className='table-desc-title'>Metode pengembalian:</p>
-                                                        <p className='table-desc-value'>{ro.return_method}</p>
-                                                    </div>
-                                                </div>
-                                                <table className="table" key={`transaction-table-${idx}`}>
-                                                    <thead>
-                                                        <tr>
-                                                            <th>#</th>
-                                                            <th>item</th>
-                                                            <th>qty</th>
-                                                            <th></th>
-                                                            <th>pengembalian</th>
-                                                            <th>Alasan pengembalian</th>
-                                                            <th>jumlah</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                    {ro.return_order_items?.map((roItem, index) => {
-                                                        return (
-                                                            <>
-                                                            <tr key={index} style={{textTransform:'capitalize'}}>
-                                                                <td style={{fontWeight: 500, paddingLeft: '2rem'}}>{index+1}</td>
-                                                                <td>{`${roItem.order_item.product.product_name}  ${roItem.order_item.product.variant}`}</td>
-                                                                <td>
-                                                                    {
-                                                                        Number(roItem.order_item.quantity)
-                                                                    }
-                                                                </td>
-                                                                <td><i className='bx bxs-chevrons-right'></i></td>
-                                                                <td>
-                                                                    {/* {Number(roItem.quantity) - Number(orderItem.return_order_item.quantity)} */}
-                                                                    {Number(roItem.quantity)}
-                                                                </td>
-                                                                <td>
-                                                                    {roItem.reason}
-                                                                </td>
-                                                                <td>
-                                                                    <NumberFormat intlConfig={{
-                                                                        // value: (((Number(roItem.order_item.quantity) - Number(roItem.quantity)) * Number(roItem.order_item.sell_price)) - ((Number(roItem.order_item.quantity) - Number(roItem.quantity))*roItem.order_item.discount_prod_rec)),
-                                                                        value: roItem.return_value,
-                                                                        locale: "id-ID",
-                                                                        style: "currency", 
-                                                                        currency: "IDR",
-                                                                        }} 
-                                                                    />
-                                                                </td>
-                                                            </tr>
-                                                            {index == ro.return_order_items.length-1 ?
-                                                                (
-                                                                <tr>
-                                                                    <td colSpan="5"></td>
-                                                                    <td className="each-total-title" style={{textAlign:'right'}}>total</td>
-                                                                    <td className="each-total-text">
-                                                                        <NumberFormat intlConfig={{
-                                                                            value: ro.refund_total, 
-                                                                            locale: "id-ID",
-                                                                            style: "currency", 
-                                                                            currency: "IDR",
-                                                                            }} 
-                                                                        />
-                                                                    </td>
-                                                                </tr>
-                                                                ):''
-                                                            }
-                                                            
-                                                            </>
-                                                        )
-                                                    })}
-                                                    {idx == roList.length-1 ? 
-                                                                (
-                                                                <tr className="grand-total">
-                                                                    <td colSpan="5"></td>
-                                                                    <td className="each-total-title" style={{textAlign:'right'}}>Total pengembalian</td>
-                                                                    <td className="each-total-text">
-                                                                        <NumberFormat intlConfig={{
-                                                                            value: ro.refund_total, 
-                                                                            locale: "id-ID",
-                                                                            style: "currency", 
-                                                                            currency: "IDR",
-                                                                            }} 
-                                                                        />
-                                                                    </td>
-                                                                </tr>
-                                                                )
-                                                            :""}
-                                                    </tbody>
-                                                </table>
-                                            </>
-                                            )
-                                        })}
-                                    {/* </div> */}
-                                </div>
-                                )
-                                :''
-                            }
-                            <div className="invoice-footer">
-                                <p className="invoice-footer-text">Thank you for your business!</p>
-                            </div>
+                            </div> */}
 
                         </div>
                     </div>
-                    <div className='inv-tools' style={{width: isMobile || isMediumScr ? '100%' : '25%'}}>
-                        {/* send invoice card */}
-                        <div className='card static-shadow cust-card-inv' style={{minHeight: '200px', padding: '1.5rem 1.7rem'}}>
-                            <div className="card-header">
-                                <div className='cust-img-wrap'>
-                                    <img src={invDupe.items.customer?.img || NoImg} />
-                                </div>
-                                <span className='card-title'>{invDupe.items.customer ? invDupe.items.customer.name : invDupe.items.guest_name}</span>
-                            </div>
-                            <div className="card-sub-header mb-3">
-                                <div className='inline-detail'>
-                                    <p className='sub-header'>ID pelanggan:</p>
-                                    <p className='sub-header'>{invDupe.items.customer ? invDupe.items.customer_id : "-"}</p>
-                                </div>
-                                <div className='inline-detail'>
-                                    <p className='sub-header'>Email:</p>
-                                    <p className='sub-header'>{invDupe.items.customer?.email ? invDupe.items.customer?.email : "-"}</p>
-                                </div>
-                                <div className='inline-detail'>
-                                    <p className='sub-header'>Phonenumber:</p>
-                                    <p className='sub-header'>{invDupe.items.customer?.phonenumber}</p>
-                                </div>
-                                
-                            </div>
-
-                            <Dropdown style={{marginBottom: '.25rem'}}>
-                                <Dropdown.Toggle className="btn btn-primary btn-w-icon" style={{fontWeight: 600, width: '100%'}}>
-                                    {/* <i className='bx bxs-send'></i> */}
-                                    <span style={{marginRight: '.3rem'}}>Kirim invoice</span>
-                                </Dropdown.Toggle>
-
-                                <Dropdown.Menu>
-                                    <Dropdown.Item as="button" href="#/action-1"><i className='bx bx-envelope'></i>Email</Dropdown.Item>
-                                    <Dropdown.Item as="button" href="#/action-2" onClick={(e) => {
-                                        testSend(82229990644);
-                                        
-                                    }} ><i className='bx bxl-whatsapp'></i>Whatsapp customer</Dropdown.Item>
-                                    <Dropdown.Item as="button" href="#/action-2" onClick={(e) => {
-                                        testSend(81270982995);
-                                        
-                                    }} ><i className='bx bxl-whatsapp'></i>Whatsapp admin</Dropdown.Item>
-                                </Dropdown.Menu>
-                            </Dropdown>
-                            {
-                                invDupe.items.is_paid ?
-                                (
-                                    <Dropdown>
-                                        <Dropdown.Toggle className="btn btn-success btn-w-icon mt-2" style={{fontWeight: 600, width: '100%'}}>
-                                            {/* <i className='bx bxs-send'></i> */}
-                                            <span style={{marginRight: '.3rem'}}>Kirim receipt</span>
-                                        </Dropdown.Toggle>
-
-                                        <Dropdown.Menu>
-                                            <Dropdown.Item as="button" href="#/action-1"><i className='bx bx-envelope'></i>Email</Dropdown.Item>
-                                            <Dropdown.Item as="button" href="#/action-2"><i className='bx bxl-whatsapp'></i>Whatsapp</Dropdown.Item>
-                                        </Dropdown.Menu>
-                                    </Dropdown>
-                                    // <button type="button" className="btn btn-success btn-w-icon mt-2" onClick={onHide}>
-                                    //     {/* <i className='bx bxs-send'></i> */}
-                                    //     send receipt
-                                    // </button> 
-                                ):''
-                            }
-                        </div>
+                   
                         
-                        {/* add payment card */}
-                        <div className='card static-shadow cust-card-inv' style={{minHeight: '100px', padding: '1.5rem 1.7rem'}}>
-                            <div className="card-header" style={{display: 'block'}}>
-                                <div className='remaining-payment'>
-                                    <p className='card-title' style={{marginBottom: '.8rem', color: '#929292'}}>remaining</p>
-                                    <NumberFormat intlConfig={{
-                                        value: invDupe.items.remaining_payment, 
-                                        locale: "id-ID",
-                                        style: "currency", 
-                                        currency: "IDR",
-                                        }} 
-                                    />
+                        {auth.roles == "admin" && (
+                        <div className='inv-tools' style={{width: isMobile || isMediumScr ? '100%' : '25%'}}>
+                        {/* send invoice card */}
+                            <div className='card static-shadow cust-card-inv' style={{height: 'auto', padding: '1.5rem 1.7rem'}}>
+                                <div className="card-header">
+                                    <div className='cust-img-wrap'>
+                                        <img src={dGList.employee?.img || NoImg} />
+                                    </div>
+                                    <span className='card-title'>{dGList.employee.name}</span>
+                                </div>
+                                <div className="card-sub-header mb-3">
+                                    <div className='inline-detail'>
+                                        <p className='sub-header'>ID karyawan:</p>
+                                        <p className='sub-header'>{dGList.employee_id}</p>
+                                    </div>
+                                    <div className='inline-detail'>
+                                        <p className='sub-header'>Nomor telepon:</p>
+                                        <p className='sub-header'>{dGList.employee?.phonenumber}</p>
+                                    </div>
+                                    
                                 </div>
                             </div>
-                            <button type="button" className="btn btn-success btn-w-icon mt-2" disabled={invDupe.items.is_paid ? true : false} 
-                                aria-label='addPaymentModal' onClick={(e) => handleModal(e, {id: invDupe.id, action: 'insert', source:'invoice', items: {...invDupe.items}})}
-                            >
-                                <i className='bx bx-plus'></i>
-                                Tambah pembayaran
-                            </button> 
-                        </div>
-
-                        {/* buttons */}
-                        <div className='inv-tool-btns card static-shadow'>
-                            <button type="button" className={`btn btn-dark btn-w-icon`}>
-                                <i className='bx bxs-file-pdf'></i>
-                                <PDFDownloadLink style={{textDecoration: 'none', color: '#ffffff'}} 
-                                    document={<InvoiceDoc data={{invoice: invDupe.items, order: salesList, payment: paymentData, ro: roList}} />} 
-                                    fileName={`${(invDupe.items.invoice_number).toUpperCase()} - ${capitalizeEveryWord(invDupe.items.customer?.name)}.pdf`}>
-                                    {({ loading }) => (loading ? 'Loading...' : 'Download Invoice')}
-                                </PDFDownloadLink>
-                            </button>
-                            {
-                                data.items.is_paid ? 
-                                (
-                                    <button type="button" className={`btn btn-light light btn-w-icon`}>
-                                        <i className='bx bxs-receipt'></i>
-                                        <PDFDownloadLink style={{textDecoration: 'none', color: '#262626'}} 
-                                            document={<ReceiptDoc data={{invoice: invDupe.items, receipt: invDupe.items.receipt, order: salesList, payment: paymentData}} />} 
-                                            fileName={`${(invDupe.items.receipt.receipt_id).toUpperCase()} - ${capitalizeEveryWord(invDupe.items.customer?.name)}.pdf`}>
-                                            {({ loading }) => (loading ? 'Loading...' : 'Download Receipt')}
-                                        </PDFDownloadLink>
-                                    </button>
-                                ):''
-                            }
-                            <div className='inline-group-btn' style={{display: 'inline-flex', gap: '.7rem'}}>
-                                <button type="button" className={`btn btn-danger light btn-w-icon`} onClick={handlePage}>
-                                    <i className='bx bxs-printer'></i>Print
-                                </button>
-                                <button type="button" className={`btn btn-success light btn-w-icon`} onClick={handlePage}>
-                                    <i className='bx bxs-printer'></i>excel
-                                </button>
+                            <div className='card static-shadow cust-card-inv' style={{minHeight: '100px', padding: '1.5rem 1.7rem'}}>
+                                <div className="card-header" style={{display: 'block'}}>
+                                    <div className='remaining-payment'>
+                                        <p className='card-title' style={{marginBottom: '.8rem', color: '#929292'}}>konfirmasi pengantaran</p>
+                                        <InputWSelect
+                                            // label={"status pengantaran"}
+                                            name="status_pengantaran"
+                                            selectLabel="Pilih status"
+                                            options={dataStatic.deliveryGroupStatus}
+                                            optionKeys={["id", "type"]}
+                                            value={(selected) => {setValue("status", selected.id);setValue("status_pengantaran", selected.value);getValues("status_pengantaran") !== "" && clearErrors('status_pengantaran')}}
+                                            defaultValue={dGList.status ?? ""}
+                                            defaultValueKey={"id"}
+                                            register={register}
+                                            require={true}
+                                            errors={errors}
+                                        />
+                                    </div>
+                                </div>
+                                <button type="button" className="btn btn-success btn-w-icon mt-2" 
+                                onClick={(e) => {
+                                    setControlUiBtn(true);
+                                    fetchUpdateStatus();
+                                }}
+                                disabled={controlUiBtn}
+                                >
+                                    <i className='bx bx-plus'></i>
+                                    {controlUiBtn ? "Loading..." : "konfirmasi pengantaran"}
+                                    
+                                </button> 
                             </div>
+
+                            {/* buttons */}
+                            <div className='inv-tool-btns card static-shadow'>
+                                <button type="button" className={`btn btn-dark btn-w-icon`}>
+                                    <i className='bx bxs-file-pdf'></i>
+                                    {/* <PDFDownloadLink style={{textDecoration: 'none', color: '#ffffff'}} 
+                                        document={<InvoiceDoc data={{invoice: dGList.items, order: salesList, payment: paymentData, ro: roList}} />} 
+                                        fileName={`${(dGList.items.invoice_number).toUpperCase()} - ${capitalizeEveryWord(dGList.items.customer?.name)}.pdf`}>
+                                        {({ loading }) => (loading ? 'Loading...' : 'Download Invoice')}
+                                    </PDFDownloadLink> */}
+                                </button>
+                                <div className='inline-group-btn' style={{display: 'inline-flex', gap: '.7rem'}}>
+                                    <button type="button" className={`btn btn-danger light btn-w-icon`} onClick={handlePage}>
+                                        <i className='bx bxs-printer'></i>Print
+                                    </button>
+                                    <button type="button" className={`btn btn-success light btn-w-icon`} onClick={handlePage}>
+                                        <i className='bx bxs-printer'></i>excel
+                                    </button>
+                                </div>
+                            </div> 
                         </div>
-                    </div>
+                        )}
+                        
                 </div>
             </Modal.Body>
                 
@@ -1246,21 +1053,7 @@ export default function InvoiceModal({show, onHide, data}) {
         </Modal>
 
         {/* modal */}
-        { showModal === "addPaymentModal" ? 
-            (
-                <CreatePayment
-                    show={showModal === "addPaymentModal" ? true : false} 
-                    onHide={() => setShowModal("")} 
-                    source={'invoice'}
-                    totalCart={showModal === "addPaymentModal" && invData ? invData.items.remaining_payment : ""} 
-                    data={invData}
-                    multiple={true}
-                    stack={1}
-                    returnValue={(newPaymentData) => {setPaidData(newPaymentData);console.log(newPaymentData)}} 
-                />
-            ):''
-        }
-
+        
         {/* toast area */}
         <Toast ref={toast} />
         </>

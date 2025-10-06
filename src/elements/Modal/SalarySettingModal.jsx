@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Collapse, Modal } from "react-bootstrap";
 import { Toast } from "primereact/toast";
 import { useForm, useController } from "react-hook-form";
@@ -66,10 +66,7 @@ export default function SalarySettingModal({ show, onHide, data, returnAct }) {
   const [custTypeData, setCustType] = useState(null);
   const [employeeData, setEmployeeData] = useState(null);
   const [sendTarget, setSendTarget] = useState(null);
-  const [selectedEndDate, setSelectedEndDate] = useState(
-    data.rowData?.end_date ? new Date(data.rowData?.end_date) : null
-  );
-  const [selectedStartDate, setSelectedStartDate] = useState(data.rowData?.start_date ? new Date(data.rowData.start_date) : null);
+  const [selectedStartDate, setSelectedStartDate] = useState(null);
   const [selectedDepartmentDate, setSelectedDepartmentDate] = useState(data.rowData?.department_histories[0]?.date ? new Date(data.rowData.department_histories[0].date) : null);
   const [ defaultAvatar, setDefaultAvatar ] = useState(data.img ? data.img : null)
   const [ currSalarySetting, setCurrSalarySetting ] = useState(null)
@@ -152,11 +149,16 @@ export default function SalarySettingModal({ show, onHide, data, returnAct }) {
   };
 
   const fetchAllEmployee = async () => {
-    await axiosPrivate.get("/employee/all")
+    await axiosPrivate.get("/employee/all/active", {params: {
+      active: true
+    }})
     .then((response) => {
       if(response.data && response.data.length > 0){
         const fiteredNoBaseSalary = response.data.filter(({salary_settings}) => salary_settings.length == 0);
-        setEmployeeData(fiteredNoBaseSalary);
+        (fiteredNoBaseSalary);
+      } else {
+        // setEmployeeData(null);
+        return returnAct("empty");
       }
     })
     .catch((error) => {
@@ -293,17 +295,17 @@ export default function SalarySettingModal({ show, onHide, data, returnAct }) {
   }  
 
   const handleChooseEmployee = (e) => {
-        setEmployee(e);
-        console.log(e)
-        if(e.salary_settings && e.salary_settings.length > 0){
-          setCurrSalarySetting(e.salary_settings[0]);
-        }
-        
-        setValue('employee_id', e.employee_id);
-        setValue('name', e.name);
-        setOpenPopup(false);
-        clearErrors("name");
+    setEmployee(e);
+    console.log(e)
+    if(e.salary_settings && e.salary_settings.length > 0){
+      setCurrSalarySetting(e.salary_settings[0]);
     }
+    
+    setValue('employee_id', e.employee_id);
+    setValue('name', e.name);
+    setOpenPopup(false);
+    clearErrors("name");
+  }
     
   const handleKeyDown = (e) => {
     if(e){
@@ -321,9 +323,9 @@ export default function SalarySettingModal({ show, onHide, data, returnAct }) {
   },[]);
 
   useEffect(() => {
-    if(employeeData){
+    if(employeeData && employeeData.length >0){
       setLoading(false);
-    }
+    } 
   },[employeeData]);
 
   if(isLoading){
@@ -374,7 +376,9 @@ export default function SalarySettingModal({ show, onHide, data, returnAct }) {
                                           ...e
                                     })}>{e.name}</div>
                                 )
-                            }) : ""
+                            }) : (
+                              <div className="res-item">Tidak ada data</div>
+                            )
                         }
                     </div>   
                 </div>
@@ -508,7 +512,7 @@ export default function SalarySettingModal({ show, onHide, data, returnAct }) {
               handleSubmit(onSubmit, onError)();
             }}
           >
-            simpan
+            {controlUiBtn ? 'Loading...' : 'simpan'}
           </button>
         </Modal.Footer>
       </Modal>
@@ -560,3 +564,22 @@ export default function SalarySettingModal({ show, onHide, data, returnAct }) {
     </>
   );
 }
+
+// const NotFound = () => {
+//   const toast2 = useRef(null);
+
+//   const callToast = (e) => {
+//     console.log(e)
+//     e.current?.show({
+//       severity: "error",
+//       summary: "Not Found",
+//       detail: "Tidak ada data karyawan, tambahkan data karyawan terlebih dahulu!",
+//       life: 1500,
+//     });
+
+//   }
+    
+//   return (
+    
+//     )
+// }

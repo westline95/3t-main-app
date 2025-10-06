@@ -174,11 +174,12 @@ export default function CreateInv({ show, onHide, returnAct }){
         
         await axiosPrivate.post("/inv/write", bodyData)
         .then(resp => {
+            console.log(resp)
             toast.current.show({
                 severity: "success",
                 summary: "Success",
                 detail: "Invoice baru telah terbit",
-                life: 1700,
+                life: 1500,
             });
 
             setTimeout(() => {
@@ -721,10 +722,14 @@ export default function CreateInv({ show, onHide, returnAct }){
             </Modal.Body>
             <Modal.Footer>
                 <button type="button" className="btn btn-secondary light" onClick={onHide}>batal</button>
-                <button type="button" className="btn btn-primary" onClick={(e) => {
-                    setControlUiBtn(true);
-                    handleSubmit(onSubmit,onError)();
-                }}
+                <button 
+                    type="button" 
+                    disabled={controlUiBtn} 
+                    className="btn btn-primary" 
+                    onClick={(e) => {
+                        setControlUiBtn(true);
+                        handleSubmit(onSubmit,onError)();
+                    }}
                 >{controlUiBtn ? "Loading..." : "buat invoice"}</button>
             </Modal.Footer>
         </Modal>

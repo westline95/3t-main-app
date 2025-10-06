@@ -994,7 +994,7 @@ export default function ReceiptDoc({data, ref}) {
                     <View style={{...invoiceStyle.custInfo}}>
                         <View style={{...invoiceStyle.infoGroup, textAlign:'left'}}>
                             <Text style={invoiceStyle.infoLabel}>Nama pelanggan</Text>
-                            <Text style={invoiceStyle.infoText}>{data.invoice.customer.name}</Text>
+                            <Text style={invoiceStyle.infoText}>{data.invoice.customer ? data.invoice.customer.name : data.invoice.guest_name}</Text>
                         </View>
                         <View style={{...invoiceStyle.infoGroup, textAlign:'left'}}>
                             <Text style={invoiceStyle.infoLabel}>status</Text>

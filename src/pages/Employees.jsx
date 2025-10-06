@@ -44,6 +44,10 @@ import ConvertDate from "../assets/js/ConvertDate.js";
 import EmployeeDetailModal from "../elements/Modal/EmployeeDetailModal.jsx";
 import SalarySettingModal from "../elements/Modal/SalarySettingModal.jsx";
 import SalaryAdjustmentModal from "../elements/Modal/SalaryAdjustmentModal.jsx";
+import EmptyState from "../State-pages/EmptyState.jsx";
+import CreateEmployeeAcc from "../elements/Modal/CreateEmployeeAcc.jsx";
+
+// import EmptyState from "../../public/empty state transparent-bg.png"; 
 
 export default function Employees({handleSidebar, showSidebar}) {
   const toast = useRef(null);
@@ -129,6 +133,10 @@ export default function Employees({handleSidebar, showSidebar}) {
       case "editEmployeeModal":
         setEmployeeObj(data);
         setShowModal("editEmployeeModal");
+        break;
+      case "createEmployeeAcc":
+        setEmployeeObj(data);
+        setShowModal("createEmployeeAcc");
         break;
       case "confirmModal":
         setEmployeeObj(data);
@@ -218,7 +226,7 @@ export default function Employees({handleSidebar, showSidebar}) {
           detail: "Data karyawan berhasil dihapus",
           life: 1500,
         });
-       
+        setDelEmployee(false);
         setRefetch(true);
     })
     .catch(error => {
@@ -452,12 +460,21 @@ export default function Employees({handleSidebar, showSidebar}) {
   },[]);
 
   useEffect(() => {
-    if(refetch){
+    if(refetch == true){
       fetchAllEmployee();
       fetchAllDepartment();
       setShowModal("");
       setRefetch(false);
-    } 
+    } else if(refetch == "empty") {
+      toast.current.show({
+        severity: "error",
+        summary: "Not Found",
+        detail: "Tidak ada data karyawan, tambahkan data karyawan terlebih dahulu!",
+        life: 1500,
+      });
+      setShowModal("");
+      setRefetch(false);
+    }
   },[refetch]);
 
    useEffect(() => {
@@ -524,20 +541,21 @@ export default function Employees({handleSidebar, showSidebar}) {
           <button type="button" className="add-btn btn btn-primary btn-w-icon" 
               aria-label="setSalaryModal"
               onClick={(e) =>
-                  handleModal(e, {
-                      action: "insert",
-                  })
+                handleModal(e, {
+                  action: "insert",
+                })
               }
           >
-             <i className='bx bx-money-withdraw'></i>
-              Set gaji
+             {/* <i className='bx bx-money-withdraw'></i> */}
+             <i className='bx bx-plus'></i>
+              Set gaji awal
           </button>
           <button type="button" className="add-btn btn btn-primary btn-w-icon" 
               aria-label="setSalaryAdjModal"
               onClick={(e) =>
-                  handleModal(e, {
-                      action: "insert",
-                  })
+                handleModal(e, {
+                  action: "insert",
+                })
               }
           >
              <i className="bx bx-plus"></i>
@@ -545,7 +563,7 @@ export default function Employees({handleSidebar, showSidebar}) {
           </button>
         </div>
         <div className="profile-card-1-container mt-5">
-          {employeeData && employeeData.map((employee, index) => {
+          {employeeData && employeeData.length > 0 ? employeeData.map((employee, index) => {
             return(
             <div key={index} className="profile-card-1 card" aria-label="viewEmployeeDetail" onClick={(e) => handleModal(e, employee)}>
               <div className="profile-card-1-card-body">
@@ -590,6 +608,35 @@ export default function Employees({handleSidebar, showSidebar}) {
               <Dropdown drop={"down"}  style={{position: 'absolute', top: 3, right: 12, padding: '1rem 1rem .5rem 1rem'}}>
                 <Dropdown.Toggle as={CustomToggle.CustomToggle2} id="dropdown-custom-components" style={{width: 24}}></Dropdown.Toggle>
                 <Dropdown.Menu align={"end"} className="static-shadow">
+                  {employee.salary_settings && employee.salary_settings[0] ? 
+                  (
+                    <Dropdown.Item eventKey="1" as="button" aria-label="setSalaryAdjModal"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        handleModal(e, {
+                          action: "insert",
+                          choosedData: employee
+                        })
+                      }}
+                    >
+                      <i className='bx bx-plus'></i> Sesuaikan gaji
+                  </Dropdown.Item>
+                  ):null}
+                  {!employee.user_id ? 
+                  (
+                  <Dropdown.Item eventKey="1" as="button" aria-label="createEmployeeAcc"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleModal(e, {
+                          id: employee.employee_id,
+                          action: "insert",
+                          rowData: {...employee},
+                        });
+                      }} 
+                    >
+                      <i className='bx bxs-user-plus'></i> buat akun karyawan
+                  </Dropdown.Item>
+                  ):null}
                   <Dropdown.Item eventKey="1" as="button" aria-label="editEmployeeModal"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -619,7 +666,9 @@ export default function Employees({handleSidebar, showSidebar}) {
               </Dropdown>
             </div>
             )
-          })}
+          }): (
+            <EmptyState title={"Empty employee"} description={'Tambah data karyawan terlebih dahulu'} />
+          )}
         </div>
       </div>
       {/* modal area */}
@@ -636,14 +685,22 @@ export default function Employees({handleSidebar, showSidebar}) {
           show={showModal === "setSalaryModal" ? true : false}
           onHide={handleCloseModal}
           data={showModal === "setSalaryModal" ? employeeObj : ""}
-          returnAct={(act) => act ? setRefetch(true) : setRefetch(false)}
+          returnAct={(act) => 
+            act == true ? setRefetch(true) 
+            : act == "empty" ? setRefetch("empty")
+            : setRefetch(false)
+          }
         />
       ): showModal === "setSalaryAdjModal" ? (
         <SalaryAdjustmentModal
           show={showModal === "setSalaryAdjModal" ? true : false}
           onHide={handleCloseModal}
           data={showModal === "setSalaryAdjModal" ? employeeObj : ""}
-          returnAct={(act) => act ? setRefetch(true) : setRefetch(false)}
+          returnAct={(act) => 
+            act == true ? setRefetch(true) 
+            : act == "empty" ? setRefetch("empty")
+            : setRefetch(false)
+          }
         />
       )
       : showModal === "viewEmployeeDetail" ? (
@@ -652,11 +709,15 @@ export default function Employees({handleSidebar, showSidebar}) {
           onHide={handleCloseModal}
           data={showModal === "viewEmployeeDetail" ? employeeObj : ""}
         />
-      ): showModal === "editCustModal" ? (
-        <CustEditModal
-          show={showModal === "editCustModal" ? true : false}
+      ): showModal === "createEmployeeAcc" ? (
+        <CreateEmployeeAcc
+          show={showModal === "createEmployeeAcc" ? true : false}
           onHide={handleCloseModal}
-          data={showModal === "editCustModal" ? employeeObj : ""}
+          data={showModal === "createEmployeeAcc" ? employeeObj : ""}
+          returnAct={(act) => 
+            act ? setRefetch(true) 
+            : setRefetch(false)
+          }
         />
       ) : showModal === "confirmModal" ? (
         <ConfirmModal

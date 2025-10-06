@@ -254,6 +254,33 @@ export default function EmployeeDetailModal({show, onHide, data}) {
                             }
                             </div>
                         </div>
+                        {/* informasi akun */}
+                        <p className="modal-section-title">informasi akun</p>
+                        <div className="cards-content" style={{paddingTop: 16}}>
+                            <div className="card card-table w-100 static-shadow">
+                            {data.user_id ? 
+                                (
+                                <div>
+                                    <div className="cards-info-group d-flex justify-content-between">
+                                        <p className="label-text">nama pengguna</p>
+                                        <p className="cards-text">{data.user.user_name}</p>
+                                    </div>
+                                    <div className="cards-info-group d-flex justify-content-between">
+                                        <p className="label-text">email</p>
+                                        <p className="cards-text" style={{textTransform: 'none'}}>{data.user.user_mail}</p>
+                                    </div>
+                                    <div className="cards-info-group d-flex justify-content-between">
+                                        <p className="label-text">role</p>
+                                        <p className="cards-text">{data.user.role}</p>
+                                    </div>
+                                </div>
+                                )
+                            :(
+                                <p className="label-text" style={{marginBottom: 0, fontSize: 14}}>Akun karyawan </p>
+                            )
+                            }
+                            </div>
+                        </div>
                     </Modal.Body>
                     ):""
                 }

@@ -255,7 +255,7 @@ export default function QtyButton(props) {
 
 
 QtyButton.propTypes = {
-    value: propTypes.number,
+    value: propTypes.oneOfType(["number","string"]),
     placeholder: propTypes.string,
     label: propTypes.string,
     onChange: propTypes.func,

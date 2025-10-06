@@ -1,0 +1,582 @@
+import React, { createRef, useCallback, useEffect, useRef, useState } from "react";
+import { Modal } from "react-bootstrap";
+import { Toast } from "primereact/toast";
+import { useForm, useController, FormProvider } from "react-hook-form";
+import useAxiosPrivate from "../../hooks/useAxiosPrivate";
+import FetchApi from "../../assets/js/fetchApi";
+import User from "../../assets/images/Avatar 1.jpg";
+import { CustomSelect } from "../CustomSelect";
+import ConvertDate from "../../assets/js/ConvertDate";
+import ConfirmModal from "./ConfirmModal";
+import InputWLabel from "../Input/InputWLabel";
+import InputGroup from "../Input/InputGroup";
+import InputWSelect from "../Input/InputWSelect";
+import DropzoneFile from "../DropzoneFile";
+import useMediaQuery from "../../hooks/useMediaQuery";
+import DGTransactionModal from "./DGTransactionModal";
+import AutoComplete from "../AutoComplete";
+
+export default function WriteDelivGroupItemsModal({
+  show,
+  onHide,
+  data,
+  returnAct,
+}) {
+  const isMobile = useMediaQuery("(max-width: 767px)");
+  const isMediumScr = useMediaQuery(
+    "(min-width: 768px) and (max-width: 1024px)"
+  );
+
+  const axiosPrivate = useAxiosPrivate();
+  let locale = "id-ID";
+  const formatedNumber = new Intl.NumberFormat(locale);
+
+  const toast = useRef(null);
+  const toastUpload = useRef(null);
+  const [ progress, setProgress ] = useState(0);
+  const [ bulkForm, setBulkForm ] = useState(1);
+  const methods = useForm({
+    defaultValues: {
+    },});
+
+  const {  
+    register,
+    handleSubmit,
+    watch,
+    control,
+    reset,
+    setValue,
+    getValues,
+    clearErrors,
+    unregister,
+    formState: { errors }, 
+  } = methods
+
+  const [showModal, setShowModal] = useState(false);
+  const [statusSwitch, setStatusSwitch] = useState(true);
+  const [targetKey, setTarget] = useState("");
+  const [showToast, setShowToast] = useState(false);
+  const [controlUiBtn, setControlUiBtn] = useState(false);
+  const [toastContent, setToastContent] = useState({
+    variant: "",
+    msg: "",
+    title: "",
+  });
+  const [custCategory, setCustCategory] = useState("");
+  const [custTypeData, setCustType] = useState(null);
+  const [custData, setCustData] = useState(null);
+  const [isLoading, setLoading] = useState(true);
+  const [sendTarget, setSendTarget] = useState(null);
+  const [selectedDob, setSelectedDob] = useState(
+    data.rowData?.dob ? new Date(data.rowData?.dob) : null
+  );
+  const [selectedHiredDate, setSelectedHiredDate] = useState(
+    data.rowData?.hired_date ? new Date(data.rowData.hired_date) : null
+  );
+  const [selectedDepartmentDate, setSelectedDepartmentDate] = useState(
+    data.rowData?.department_histories[0]?.date
+      ? new Date(data.rowData.department_histories[0].date)
+      : null
+  );
+
+  const [allProdData, setAllProd] = useState(null);
+  const [modalData, setModalData] = useState(null);
+  const [dgReportList, setDgReportList] = useState(null);
+
+  // popup needs
+  const refToThis = useRef(Array.from({ length: bulkForm }, () => createRef()));
+  const [openPopup, setOpenPopup] = useState([false]);
+  const [filterCust, setFilteredCust] = useState([]);
+  const [chooseCust, setCust] = useState(Array.from({length: bulkForm}));
+  const [guestMode, setGuestMode] = useState([false]);
+  const [currFormIndex, setCurrentFormIndex ] = useState(0);
+
+  const returnSelectVal = (selected) => {
+    setOrderTypeTmp(selected);
+  };
+
+  const handleModal = (e, data) => {
+    switch (e.currentTarget.ariaLabel) {
+      case "addDGTransaction":
+        setModalData(data);
+        setShowModal("addDGTransaction");
+      break;
+    }
+  };
+
+  // fetch all customer
+  const fetchAllCust = async () => {
+    await axiosPrivate
+      .get("/customers")
+      .then((response) => {
+        setCustData(response.data);
+      })
+      .catch((error) => {
+        toast.current.show({
+          severity: "error",
+          summary: "Failed",
+          detail: "Error when get customer data",
+          life: 3000,
+        });
+      });
+  };
+
+  // fetch all prod
+  const fetchAllProd = async () => {
+    await axiosPrivate
+      .get("/products")
+      .then((response) => {
+        let dupe = [...response.data];
+        response.data.map((e, idx) => {
+          dupe[idx].fullProdName = e.product_name + " " + e.variant;
+        });
+        setAllProd(response.data);
+      })
+      .catch((error) => {
+        toast.current.show({
+          severity: "error",
+          summary: "Failed",
+          detail: "Error when get product data",
+          life: 3000,
+        });
+      });
+  };
+
+  // popup needs
+  // const handleAutoComplete = (custName, index) => {
+  //   let openPopupDupe = [...openPopup];
+  //   if (custData && custName !== "") {
+  //     let filteredCust = custData.filter((item) =>
+  //       item.name.includes(custName.toLowerCase())
+  //     );
+  //     if (filteredCust.length === 0) {
+  //       openPopupDupe[index] = false;
+  //       // setOpenPopup(false);
+  //       setFilteredCust(filteredCust);
+  //     } else {
+  //       openPopupDupe[index] = true;
+  //       // setOpenPopup(true);
+  //       setFilteredCust(filteredCust);
+  //     }
+  //   } else if (custName || custName === "") {
+  //     openPopupDupe[index] = true;
+  //     // setOpenPopup(true);
+  //     setFilteredCust(custData);
+  //   } else {
+  //     openPopupDupe[index] = false;
+  //     // setOpenPopup(false);
+  //     setFilteredCust("error db");
+  //   }
+  
+  // };
+
+  const handleFilterCust = (index) => {
+    handleAutoComplete(getValues(`name ${index+1}`), index);
+    // setCust(null);
+  };
+
+  const handleChooseCust = (e, index) => {
+    let openPopupDupe = [...openPopup];
+    setCust(e);
+    setValue(`customer_id ${index+1}`, e.customer_id);
+    setValue(`name ${index+1}`, e.name);
+    openPopupDupe[index] = false;
+    // setOpenPopup(false);
+    setOpenPopup(openPopupDupe);
+  };
+
+  // const handleClickSelect = (ref) => {
+    // useEffect(() => {
+      // const handleClickOutside = (evt) => {
+      //   evt.stopPropagation();
+      //   if (!refToThis.current[currFormIndex].current.contains(evt.target)) {
+      //   //   let openPopupDupe = [...openPopup];
+      //   //   openPopupDupe[currFormIndex] = true;
+      //   //   setOpenPopup(openPopupDupe);
+      //   // }  else {
+      //     let openPopupDupe = [...openPopup];
+      //     setOpenPopup(Array(openPopupDupe.length).fill(false));
+          
+      //   } else {
+      //      let openPopupDupe = [...openPopup];
+      //      openPopupDupe[currFormIndex] = true;
+      //      setOpenPopup(openPopupDupe)
+      //   }
+      //   // console.log(refToThis.current[currFormIndex].current)
+      //   // console.log(evt.target)
+      //   return () => {
+      //     document.removeEventListener("mousedown", handleClickOutside);
+      //   };
+      // };
+      // document.addEventListener("mousedown", handleClickOutside, true);
+      // return () => {
+      //   document.removeEventListener("mousedown", handleClickOutside);
+      // };
+    // }, [refToThis.current[currFormIndex]]);
+  // };
+
+  // refToThis.current.map((ref, index) => {
+    // handleClickSelect(refToThis.current[currFormIndex]);
+    // console.log(openPopup[currFormIndex])
+  // })
+
+  const handleKeyDown = (e) => {
+    if (e) {
+      setCust(null);
+    }
+  };
+
+  // end of popup needs
+
+  const onError = () => {
+    setControlUiBtn(false);
+    console.log(errors);
+  };
+
+  const onSubmit = async (formData) => {
+    console.log(formData)
+  };
+
+  const handleCloseModal = () => {
+    setShowModal();
+  };
+
+
+  const FormComponent = ({index}) => {
+    return(
+      <div key={index}>
+        <div className="col-lg-6 col-sm-6 col-12" style={{padding: 16, border: '1.7px dashed #29a7fc', borderRadius: 17}}>
+        <p className="modal-section-title mb-3">Pelanggan {index + 1}</p>
+          {/* <div style={{ position: "relative" }}>
+            <InputWLabel
+              label="nama pelanggan"
+              type="text"
+              name={`name ${index+1}`}
+              placeholder={
+                guestMode[index]
+                  ? "Ketik nama pelanggan..."
+                  : "Cari dan pilih nama pelanggan..."
+              }
+              onChange={() => !guestMode[index] && handleFilterCust(index)}
+              onFocus={() =>
+                !guestMode[index] && handleAutoComplete(getValues(`name ${index+1}`), index)
+              }
+              onKeyDown={() => !guestMode[index] && handleKeyDown}
+              onClick={(e) => {
+                e.stopPropagation();
+                let openPopupDupe = [...openPopup];
+                openPopupDupe[index] = true;
+                setOpenPopup(openPopupDupe)
+              }}
+              require={true}
+              register={register}
+              errors={errors}
+              textStyle={"capitalize"}
+              autoComplete="off"
+            />
+
+            <div
+              className="popup-element"
+              aria-expanded={openPopup[index]}
+              ref={refToThis.current[index]}
+            >
+              {filterCust && filterCust.length > 0
+                ? filterCust.map((e, idx) => {
+                    return (
+                      <div
+                        key={`cust-${idx}`}
+                        className="res-item"
+                        onClick={() =>
+                          handleChooseCust({
+                            ...e,
+                          }, index)
+                        }
+                      >
+                        {e.name}
+                      </div>
+                    );
+                  })
+                : ""}
+            </div>
+          </div> */}
+          {guestMode[index] ? (
+            <InputWLabel
+              label={"nama pelanggan"}
+              type="text"
+              name={`guest_name-${index+1}`}
+              placeholder={"Ketik nama pelanggan..."}
+              // onChange={(e) => handleAutoComplete(e)}
+              // onFocus={handleAutoComplete}
+              // onKeyDown={handleKeyDown}
+              // for smooth working onBlur method in custom component must set nBlur=true 
+              // && set prop onblurcallback for onblurfunction
+              // onBlur={true}
+              // onBlurCallback={handleBlur}
+              // if onblur true, two items prop above are required
+
+              require={false}
+              register={register}
+              errors={errors}
+              textStyle={"capitalize"}
+              autoComplete="off"
+            />
+          ):(
+            <AutoComplete 
+              Data={custData} 
+              Label={"nama pelanggan"} 
+              Placeholder={"Cari dan pilih nama pelanggan..."}
+              ForceSelection={true} 
+              DataForm="array-object" 
+              InputName={`name-${index+1}`}
+              SearchKey={"name"} 
+              DataKeyInputValue={"name"} 
+              returnData={(choosedData) => {
+                console.log(choosedData)
+                choosedData.customer_id ? setValue(`customer_id-${index+1}`, choosedData.customer_id)
+                : setValue(`guest_name ${index+1}`, choosedData.name)}
+              }
+              require={false}
+            />
+
+          )}
+          <InputWLabel
+            label={"mode tamu"}
+            type={"switch"}
+            name={"guest_mode-"+(index+1)}
+            style={{ alignItems: "center", marginTop: "1rem" }}
+            defaultChecked={guestMode[index]}
+            onChange={(e) => {
+              setValue("guest_mode-"+(index+1), e.target.checked);
+              let guestModeDupe = [...guestMode];
+              guestModeDupe[index] = e.target.checked;
+              setGuestMode(guestModeDupe);
+              console.log(e)
+              // unregister("lastName")
+              setValue(`name-${index+1}`, "");
+              setValue(`customer_id-${index+1}`, "");
+              setValue(`guest_name-${index+1}`, "");
+              // setCust(null);
+            }}
+            register={register}
+            require={false}
+            errors={errors}
+          />
+          <button
+            type="button"
+            className="add-btn btn btn-primary light btn-w-icon form-support-btn mt-3"
+            aria-label="addDGTransaction"
+            onClick={(e) => {
+              
+              let dataToSend = {
+                action: "insert",
+                delivery_group_id: data.id,
+                delivery_group_date: data.delivery_group_date
+              };
+
+              guestMode[index]
+              ? dataToSend.guest_name = getValues(`guest_name-${index+1}`)
+              : dataToSend = {
+                ...dataToSend, 
+                customer_id: getValues(`customer_id-${index+1}`),
+                name: getValues(`name-${index+1}`)
+              };
+              if(guestMode[index]) {
+                console.log('jsadjasd')
+                getValues(`guest_name-${index+1}`) || getValues(`guest_name-${index+1}`) != "" ? handleModal(e, dataToSend) 
+                : toast.current.show({
+                  severity: "error",
+                  summary: "Error",
+                  detail: "Isi data pelanggan terlebih dahulu",
+                  life: 3000,
+                })
+              } else {
+                console.log('jsadjassadasd')
+                getValues(`customer_id-${index+1}`) && getValues(`name-${index+1}`) ? handleModal(e, dataToSend)
+                : toast.current.show({
+                    severity: "error",
+                    summary: "Error",
+                    detail: "Isi data pelanggan terlebih dahulu",
+                    life: 3000,
+                  })
+              }
+            }}
+          >
+            <i className="bx bx-plus"></i>
+            transaksi
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  const formToRender = Array.from({ length: bulkForm}, (_, index) => (
+    <FormComponent key={index} index={index} />
+  ))
+
+  useEffect(() => {
+    fetchAllCust();
+    fetchAllProd();
+  }, []);
+
+  useEffect(() => {
+    if(dgReportList){
+      setShowModal("");
+      let dgReportListArr = [];
+      dgReportList.items.map((item, idx) => {
+        let dgListItem = {
+          customer_id: dgReportList.customer_id,
+          guest_name : dgReportList.customer_id ? '' : dgReportList.name,
+          order_date: dgReportList.origin.delivery_group_date,
+          order_type: 'delivery',
+          order_status: dgReportList.payment.amountOrigin == 0 ? 'pending' 
+                        : dgReportList.payment.amountOrigin < dgReportList.payment.pay_amount ? 'pending'
+                        : dgReportList.payment.amountOrigin >= dgReportList.payment.pay_amount ? 'completed'
+                        : 'pending',
+          source: 'delivery_group',
+          shipped_date: dgReportList.origin.delivery_group_date,
+          payment_type: dgReportList.payment.amountOrigin == 0 ? 'bayar nanti' 
+                        : dgReportList.payment.amountOrigin < dgReportList.payment.pay_amount ? 'sebagian'
+                        : dgReportList.payment.amountOrigin >= dgReportList.payment.pay_amount ? 'lunas'
+                        : 'bayar nanti',
+          subtotal: dgReportList.cost_detail.grandtotal,
+          grandtotal: dgReportList.cost_detail.grandtotal,
+          note: dgReportList.note,
+          is_complete: dgReportList.payment.amountOrigin == 0 ? false 
+          : dgReportList.payment.amountOrigin < dgReportList.payment.pay_amount ? false
+          : dgReportList.payment.amountOrigin >= dgReportList.payment.pay_amount ? true
+          : false,
+          order_discount: 0,
+          payment_date: dgReportList.payment.payment_date,
+          amount_paid: dgReportList.payment.amountOrigin,
+          payment_method: 'cash',
+          payment_note: dgReportList.payment.note,
+        }  
+
+        dgListItem.product_id = item.product_id;
+        dgListItem.quantity = item.quantity;
+        dgListItem.sell_price = item.sell_price;
+        dgListItem.disc_prod_rec = item.discProd;
+
+        dgReportListArr.push(dgListItem);
+      })
+
+      console.log(dgReportListArr);
+    }
+  },[dgReportList]);
+
+  useEffect(() => {
+    if (custData && allProdData) {
+      setLoading(false);
+    }
+  }, [custData, allProdData]);
+
+  // useEffect(() => {
+  //   if(multiple === true){
+  //     document.querySelectorAll(".modal-backdrop").forEach((e,idx) => {
+  //       e.style.zIndex = 1055 + (idx * stack);
+  //     })
+  //     document.querySelectorAll(".modal").forEach((e,idx) => {
+  //       e.style.zIndex = 1056 + (idx * stack);
+  //     })
+  //   }
+  //   },[show])
+  
+
+  if (isLoading) {
+    return;
+  }
+    
+  return (
+    <>
+      <Modal
+        size={isMobile || isMediumScr ? "fullscreen" : "xl"}
+        show={show}
+        onHide={() => {
+          onHide();
+          handleCancel();
+        }}
+        scrollable={true}
+        centered={true}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>
+            {data.action == "insert" ? "tambah" : "ubah"} data pengantaran
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <FormProvider {...methods}>
+            <form>
+              {/* <div className="add-prod-detail-wrap" style={{flexDirection: 'column', gap: '1rem'}}> */}
+              <div className="row gy-3">
+              {formToRender}
+              
+              <div style={{paddingLeft: 12, paddingRight:12, width:'100%'}}>
+                <button
+                  style={{width:'inherit'}}
+                  type="button"
+                  className="add-btn btn btn-info btn-w-icon mt-3"
+                  aria-label="addDGTransaction"
+                  onClick={(e) => {
+                    setBulkForm(bulkForm+1);
+                    // update
+                    let updateOpenPopup = [...openPopup];
+                    let updateGuestMode = [...guestMode];
+                    updateOpenPopup.push(false);
+                    updateGuestMode.push(false);
+                    setOpenPopup(updateOpenPopup);
+                    setGuestMode(updateGuestMode);
+                  }}
+                >
+                  <i className="bx bx-plus"></i>
+                  pelanggan
+                </button>
+              </div>
+              </div>
+              {/* </div> */}
+            </form>
+          </FormProvider>
+        </Modal.Body>
+        <Modal.Footer>
+          <button
+            type="button"
+            className="btn btn-secondary light"
+            onClick={() => {
+              onHide();
+              handleCancel();
+            }}
+          >
+            batal
+          </button>
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={controlUiBtn}
+            onClick={() => {
+              setControlUiBtn(true);
+              handleSubmit(onSubmit, onError)();
+            }}
+          >
+            {controlUiBtn ? "Loading..." : "simpan"}
+          </button>
+        </Modal.Footer>
+      </Modal>
+
+      {showModal == "addDGTransaction" ? 
+      (
+        <DGTransactionModal
+          show={showModal === "addDGTransaction" ? true : false} 
+          onHide={handleCloseModal} 
+          multiple={true}
+          stack={1}
+          data={showModal == "addDGTransaction" ? modalData : ""}
+          returnValue={(dgReportList) => {setDgReportList(dgReportList);}}
+        />
+      ) : (
+        ""
+      )}
+
+      {/* toast area */}
+      <Toast ref={toast} />
+    </>
+  );
+}

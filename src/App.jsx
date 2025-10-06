@@ -18,6 +18,7 @@ import Sidebar from "./parts/Sidebar";
 import { useState } from "react";
 import Employees from "./pages/Employees";
 import Department from "./pages/Department";
+import DeliveryEmployee from "./pages/DeliveryEmployee";
 
 const roleList = {
     admin: "admin",
@@ -44,7 +45,7 @@ function App() {
         
             <Route element={<PersistLogin />}>
               {/* <Route element={<Sidebar show={isClose} />}> */}
-                <Route element={<RequireAuth allowedRoles={[roleList.admin]} />}>
+                <Route element={<RequireAuth allowedRoles={[roleList.admin, roleList.staff]} />}>
                     <Route path="/" element={<Dashboard  />} />
                 </Route>
                 <Route element={<RequireAuth allowedRoles={[roleList.admin]} />}>
@@ -76,6 +77,10 @@ function App() {
                 </Route>
                 <Route element={<RequireAuth allowedRoles={[roleList.admin]} />}>
                   <Route path="setting/app" element={<SettingApp />} />  
+                </Route>
+
+                <Route element={<RequireAuth allowedRoles={[roleList.admin, roleList.staff]} />}>
+                  <Route path="/delivery" element={<DeliveryEmployee />} />
                 </Route>
               {/* </Route> */}
             </Route>

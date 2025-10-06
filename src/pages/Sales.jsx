@@ -95,16 +95,17 @@ export default function Sales({handleSidebar, showSidebar}){
     // const [ salesPaid, setSalesPaid] = useState({payType: 0, val: 0});
     const [ salesPaid, setSalesPaid] = useState({payType: 0, val: 0});
     const [ salesDisc, setSalesDisc] = useState(null);
+    const [ paidData, setPaidData] = useState(null);
     const [ discVal, setDiscVal] = useState(0);
     const [ totalDiscProd, setTotalDiscProd] = useState(0);
     const [ currOrderCredit, setCurrOrderCredit] = useState(0);
-    const [ paidData, setPaidData] = useState(null);
     const [ salesEndNote, setSalesEndNote] = useState(null);
     const [ existInv, setExistInv] = useState(false);
     const [ currentOrder, setCurrentOrder] = useState(null);
     const [ addOrderItem, setAddOrderItem] = useState(false);
     const [ addInvID, setAddInvID] = useState(false);
     const [ resetInputWSelect, setResetInputWSelect] = useState(false);
+    const [ guestMode, setGuestMode] = useState(false);
     const [ delivSwitch, setDelivSwitch] = useState(false);
     const [ selectedSales, setSelectedSales ] = useState(null);
     const [ salesFilters, setSalesFilters ] = useState(null);
@@ -319,193 +320,6 @@ export default function Sales({handleSidebar, showSidebar}){
           })
     };
 
-    const fetchInsertPayment = async (body, completed) => {
-        let bodyData = JSON.stringify(body);
-        await axiosPrivate.post("/payment/write", bodyData)
-          .then(resp => {
-                toast.current.show({
-                    severity: "success",
-                    summary: "Success",
-                    detail: "New payment is created",
-                    life: 3000,
-                });
-                
-                if(completed){
-                    let receiptModel = {
-                        customer_id: resp.data.customer_id,
-                        invoice_id: resp.data.invoice_id,
-                        total_payment: paidData.amountOrigin,
-                        change: paidData.change,
-                        receipt_date: new Date()
-                    }
-                    fetchInsertreceipt(receiptModel);
-                } else {
-                    // setTimeout(() => {
-                    //     window.location.reload();
-                    // },1700)
-                    console.log(currentOrder)
-                    console.log(body)
-                }
-          })
-          .catch(error => {
-                toast.current.show({
-                    severity: "error",
-                    summary: "Failed",
-                    detail: "Failed to create new payment data",
-                    life: 3000,
-                });
-          })
-    };
-
-    const fetchUpdateInv = async (invoiceID, body) => {
-        let bodyData = JSON.stringify(body);
-        await axiosPrivate.put("/inv", bodyData, {
-            params: {
-                id: invoiceID
-            }
-        })
-        .then(resp => {
-            let salesBody = JSON.stringify({invoice_id: invoiceID});
-            toast.current.show({
-                severity: "success",
-                summary: "Success",
-                detail: "Successfully update invoice",
-                life: 3000,
-            });
-
-            axiosPrivate.put("/sales", salesBody, {
-                params: {
-                    id: currentOrder.order_id
-                }
-            })
-            .then(resp => {
-                toast.current.show({
-                    severity: "success",
-                    summary: "Success",
-                    detail: "Successfully update sales",
-                    life: 3000,
-                });
-
-                setTimeout(() => {
-                    window.location.reload();
-                },1700)
-            })
-            .catch(error => {
-                toast.current.show({
-                    severity: "error",
-                    summary: "Failed",
-                    detail: "Failed to update sales",
-                    life: 3000,
-                });
-            })
-      })
-      .catch(error => {
-            toast.current.show({
-                severity: "error",
-                summary: "Failed",
-                detail: "Failed to update invoice",
-                life: 3000,
-            });
-      })
-    }
-
-    const fetchUpdateSales = (salesID, body) => {
-        let bodyData = JSON.stringify(body);
-        FetchApi.fetchUpdateSales(salesID, bodyData)
-        .then(data => {
-            setToastContent({variant:"success", msg: "Successfully update sales"});
-            setShowToast(true);
-        })
-        .catch(error => {
-            setToastContent({variant:"danger", msg: "Failed to update sales!"});
-            setShowToast(true);
-      })
-    }
-
-    const fetchInsertInv = async (body) => {
-        let bodyData = JSON.stringify({invoiceData: body, paidData: paidData ? paidData : null});
-        await axiosPrivate.post("/inv/write", bodyData)
-        .then(resp => {
-            console.log(resp.data)
-            toast.current.show({
-                severity: "success",
-                summary: "Success",
-                detail: "Invoice baru telah terbit",
-                life: 1200,
-            });
-
-            // // update order table => add invoice id
-            // let invoiceID = JSON.stringify({invoice_id: resp.data.invoice_id});
-            // axiosPrivate.patch(`/sales/${currentOrder.order_id}`, invoiceID)
-            //     .then(updateResp => {
-            //         toast.current.show({
-            //             severity: "success",
-            //             summary: "Success",
-            //             detail: "Successfully update sales",
-            //             life: 3500,
-            //         });
-
-            //         // payment manage
-            //         if(resp.data.is_paid){
-            //             if(paidData){
-            //                 let paymentModel = {
-            //                     customer_id: resp.data.customer_id,
-            //                     invoice_id: resp.data.invoice_id,
-            //                     payment_date: paidData.payment_date,
-            //                     amount_paid: paidData.amountOrigin,
-            //                     payment_method: paidData.payment_method,
-            //                     payment_ref: paidData.payment_ref,
-            //                     note: paidData.note 
-            //                 };
-            //                 fetchInsertPayment(paymentModel, true);
-            //             } else {
-            //                 toast.current.show({
-            //                     severity: "error",
-            //                     summary: "Error",
-            //                     detail: "Payment error not found",
-            //                     life: 3500,
-            //                 });
-            //             }
-            //         } else {
-            //             if(resp.data.payment_type == "sebagian"){
-            //                 let paymentModel = {
-            //                     customer_id: resp.data.customer_id,
-            //                     invoice_id: resp.data.invoice_id,
-            //                     payment_date: paidData.payment_date,
-            //                     amount_paid: paidData.amountOrigin,
-            //                     payment_method: paidData.payment_method,
-            //                     payment_ref: paidData.payment_ref,
-            //                     note: paidData.note 
-            //                 };
-            //                 fetchInsertPayment(paymentModel, false);
-            //             } 
-            //             else {
-            //                 setTimeout(() => {
-            //                     window.location.reload();
-            //                 },1700)
-            //             }
-            //         }
-            //     })
-            //     .catch(error => {
-            //         console.log(error)
-            //         toast.current.show({
-            //             severity: "error",
-            //             summary: "Failed",
-            //             detail: "Failed to update sales",
-            //             life: 3500,
-            //         });
-            // })
-        })
-        .catch(error => {
-            toast.current.show({
-                severity: "error",
-                summary: "Failed",
-                detail: "Failed to add new invoice",
-                life: 3000,
-            });
-        })
-    };
-
     const fetchMergeOrderInv =  async() => {
         await axiosPrivate.patch(`/inv/status?id=${existInv.invId}`, existInv.invData)
         .then(resp1 => {
@@ -662,8 +476,6 @@ export default function Sales({handleSidebar, showSidebar}){
     };
 
     const fetchInsertSales = async (body, deliveryModel) => {
-        ///////////////////////////////////////////////////////////////////
-
         salesItems.map(e => {
             e.discount_prod_rec = e.discount;
         });
@@ -672,7 +484,8 @@ export default function Sales({handleSidebar, showSidebar}){
             sales:body, 
             order_items: salesItems, 
             delivery: deliveryModel, 
-            paidData: paidData ? paidData : null
+            paidData: paidData ? paidData : null,
+            guest_mode: guestMode
         });
         // let deliveryBody;
         await axiosPrivate.post("/sales/write", bodyData)
@@ -730,10 +543,12 @@ export default function Sales({handleSidebar, showSidebar}){
             //     }
             //     deliveryBody = JSON.stringify(delivery);
             // } 
-            if(resp.data.order_credit.length > 0) setCurrOrderCredit(resp.data.order_credit[0].return_order.refund_total);
+            if(resp.data.order_credit && resp.data.order_credit.length > 0) {
+                setCurrOrderCredit(resp.data.order_credit[0].return_order.refund_total);
+            }
 
             setCurrentOrder(resp.data.order);
-            setDiscVal(Number(resp.data.order.order_discount));
+            setDiscVal(resp.data.order.order_discount ? Number(resp.data.order.order_discount) : 0);
             // updateTotalSalesCust(resp.data);
             reset();
             setResetInputWSelect(true);
@@ -776,7 +591,7 @@ export default function Sales({handleSidebar, showSidebar}){
             } else {
                 fetchAllSales();
                 fetchAllRO();
-                fetchDetailedCust(resp.data.customer_id);
+                !guestMode && fetchDetailedCust(resp.data.customer_id);
             }
 
             if(resp.data.delivery){
@@ -796,6 +611,7 @@ export default function Sales({handleSidebar, showSidebar}){
 
         // })
         .catch(error => {
+            console.log(error)
             toast.current.show({
                 severity: "error",
                 summary: "Failed",
@@ -1032,7 +848,8 @@ export default function Sales({handleSidebar, showSidebar}){
                 break;
             case 'createPayment':
                 let data = {
-                    action: 'insert'
+                    action: 'insert',
+                    guest_mode: guestMode
                 }
                 setSalesList(data);
                 setShowModal("createPayment");
@@ -1218,6 +1035,12 @@ export default function Sales({handleSidebar, showSidebar}){
         setProd(null);
     }
 
+    const keyDownSearchProd = (e) => {
+        if(e){
+            setProd(null);
+        }
+    }
+
     const handleKeyDown = (e) => {
         if(e){
             setCust(null);
@@ -1226,12 +1049,6 @@ export default function Sales({handleSidebar, showSidebar}){
     const handleKeyDownCourier = (e) => {
         if(e){
             setCourier(null);
-        }
-    }
-    
-    const keyDownSearchProd = (e) => {
-        if(e){
-            setProd(null);
         }
     }
 
@@ -1363,7 +1180,6 @@ export default function Sales({handleSidebar, showSidebar}){
                 });
                 
                 let forming = {
-                    customer_id: formData.customer_id,
                     order_date: formData.order_date,
                     order_type: formData.order_type,
                     note: formData.note,
@@ -1373,14 +1189,19 @@ export default function Sales({handleSidebar, showSidebar}){
                     order_discount: discVal,
                 }
 
-                let deliveryModel = {
-                    courier_id: formData.courier_id,
-                    courier_name: formData.courier_name,
-                    ship_date: formData.ship_date,
-                    delivery_address: formData.delivery_address,
+                !guestMode ? forming.customer_id = formData.customer_id : forming.guest_name = formData.name;
+
+                let deliveryModel = null;
+                if(delivSwitch){
+                    deliveryModel = {
+                        courier_id: formData.courier_id,
+                        courier_name: formData.courier_name,
+                        ship_date: formData.ship_date,
+                        delivery_address: formData.delivery_address,
+                    }
                 }
 
-                if(e.order_type == "walk-in"){
+                if(formData.order_type == "walk-in"){
                     forming.shipped_date = formData.order_date;
                 }
 
@@ -1440,8 +1261,8 @@ export default function Sales({handleSidebar, showSidebar}){
     },[confirmVal])
 
     const onError = (errors, e) => {
-        if(getValues('name') != "" && errors.customer_id){
-            setError("name", { type: 'required', message: 'Choose customer name correctly!' });
+        if(!guestMode && getValues('name') != "" && errors.customer_id){
+            setError("name", { type: 'required', message: 'Pilih pelanggan yang benar!' });
         }
         toast.current.show({
             severity: "error",
@@ -1811,6 +1632,14 @@ export default function Sales({handleSidebar, showSidebar}){
 
     const formatedOrderDate = (rowData) => {
         return <span>{ConvertDate.convertToFullDate(rowData.order_date, "/")}</span>;
+    };
+    
+    const customerOrGuestName = (rowData) => {
+        return <span>{rowData.customer ? rowData.customer.name : rowData.guest_name}</span>;
+    };
+    
+    const customerOrGuest = (rowData) => {
+        return <span>{rowData.customer_id ? rowData.customer_id : "-"}</span>;
     };
     
     const formatedReturnDate = (rowData) => {
@@ -2852,6 +2681,17 @@ export default function Sales({handleSidebar, showSidebar}){
                                                 <Column
                                                     field="customer.name"
                                                     header="pelanggan"
+                                                    body={customerOrGuestName}
+                                                    filter 
+                                                    headerStyle={primeTableHeaderStyle}
+                                                    filterPlaceholder="Search by customer name"
+                                                    style={{ textTransform: "capitalize" }}
+                                                    bodyStyle={{ textTransform: "capitalize", fontSize:14 }}
+                                                ></Column>
+                                                 <Column
+                                                    field='customer_id'
+                                                    header="ID pelanggan"
+                                                    body={customerOrGuest}
                                                     filter 
                                                     headerStyle={primeTableHeaderStyle}
                                                     filterPlaceholder="Search by customer name"
@@ -3223,7 +3063,7 @@ export default function Sales({handleSidebar, showSidebar}){
                                                                     <InputWLabel 
                                                                         type="text"
                                                                         name="customer_id"
-                                                                        require={true}
+                                                                        require={false}
                                                                         register={register}
                                                                         errors={errors} 
                                                                         display={false}
@@ -3235,10 +3075,10 @@ export default function Sales({handleSidebar, showSidebar}){
                                                                             label="nama pelanggan" 
                                                                             type="text"
                                                                             name="name"
-                                                                            placeholder="Search customer name..." 
-                                                                            onChange={handleFilterCust}
-                                                                            onFocus={() => handleAutoComplete(getValues('name'))}
-                                                                            onKeyDown={handleKeyDown}
+                                                                            placeholder={guestMode ? "Ketik nama pelanggan..." : "Cari dan pilih nama pelanggan..."} 
+                                                                            onChange={() => !guestMode && handleFilterCust()}
+                                                                            onFocus={() => !guestMode && handleAutoComplete(getValues('name'))}
+                                                                            onKeyDown={() => !guestMode && handleKeyDown}
                                                                             require={true}
                                                                             register={register}
                                                                             errors={errors} 
@@ -3259,6 +3099,23 @@ export default function Sales({handleSidebar, showSidebar}){
                                                                             }
                                                                         </div>   
                                                                     </div>
+                                                                    <InputWLabel 
+                                                                        label={"mode tamu"}
+                                                                        type={'switch'}
+                                                                        name={'guest_mode'}
+                                                                        style={{alignItems:'center', marginTop: '1rem'}}
+                                                                        defaultChecked={false}
+                                                                        onChange={(e) => {
+                                                                            setValue('guest_mode', e.target.checked);
+                                                                            setGuestMode(e.target.checked);
+                                                                            setValue("name", "");
+                                                                            setCust(null);
+                                                                            setPaidData(null);
+                                                                        }}
+                                                                        register={register}
+                                                                        require={false}
+                                                                        errors={errors}
+                                                                    />
                                                                 </Col>
                                                                 <Col lg={3} md={6} sm={12}>
                                                                     <InputWLabel 

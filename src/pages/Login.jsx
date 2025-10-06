@@ -16,7 +16,7 @@ export default function Login() {
 
     const navigate = useNavigate();
     const location = useLocation();
-    const from = location.state?.from?.pathname || "/";
+    const from =  "/";
 
     const {
         register,
@@ -58,11 +58,13 @@ export default function Login() {
                     },
                 }
             )
-            console.log(response.data.roles)
             const access_token = response?.data?.access_token;
             const roles = response?.data?.roles;
             const name = response?.data?.name;
-            setAuth({ user_mail, name, user_pass, roles, access_token });
+            const staff_id = response?.data.staff_id;
+
+            setAuth({ staff_id, user_mail, name, roles, access_token });
+
             toast.current.show({
                 severity: "success",
                 summary: "Sukses",
@@ -71,7 +73,6 @@ export default function Login() {
             }); 
             reset();
             navigate(from, { replace: true });
-            console.log({ roles, access_token})
         } catch(err) {
             if(!err?.response){
                 console.error('No server response');

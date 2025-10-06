@@ -3888,6 +3888,7 @@ tr.grand-total>* {
 }
 
 .popup-element {
+  visibility: visible;
   display: none;
   position: absolute;
   width: 100%;
@@ -5420,6 +5421,14 @@ tr.hover-row:hover > * {
     height: 60px;
   }
 
+  .form-support-btn {
+    font-size: 12px;
+  }
+  
+  .form-support-btn i {
+    font-size: 14px;
+  }
+
 }
 
 @media (min-width: 481px) and (max-width: 767px) {
@@ -6125,6 +6134,14 @@ tr.hover-row:hover > * {
   .profile-card-1-card-body .profile-img-wrap{
     width: 60px;
     height: 60px;
+  }
+
+  .form-support-btn {
+    font-size: 12px;
+  }
+  
+  .form-support-btn i {
+    font-size: 14px;
   }
 
 }

@@ -232,7 +232,11 @@ export default function Customers({handleSidebar, showSidebar}) {
   };
 
   const fetchInsertCust = (custData) => {
-    let body = JSON.stringify(custData);
+    let transformText = custData.name.toLowerCase();
+    let body = JSON.stringify({
+      ...custData,
+      name: transformText
+    });
     axiosPrivate
       .post("customer/write", body)
       .then((data) => {

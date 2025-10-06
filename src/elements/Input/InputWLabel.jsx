@@ -29,6 +29,7 @@ const InputWLabel =  forwardRef((props, ref) => {
         rules,
         onFocus,
         onBlur,
+        onBlurCallback,
         inputRef,
         onKeyDown,
         style,
@@ -37,7 +38,8 @@ const InputWLabel =  forwardRef((props, ref) => {
         autoComplete,
         inputWidth,
         display,
-        minDate
+        minDate,
+        onClick
     } = props;
 
     const [ switched, setSwitch ] = useState(false);
@@ -48,6 +50,18 @@ const InputWLabel =  forwardRef((props, ref) => {
             setDateValue(defaultValue);
         }
     },[defaultValue])
+
+    // useEffect(()=> {
+    //     if(onBlur && onBlurCallback){
+    //         return onBlurCallback();
+    //     }
+    // },[onBlur])
+
+    const handleCallbackBlur = () => {
+        if(onBlur && onBlurCallback){
+            return onBlurCallback();
+        }
+    }
      
     // const elRef = useRef(null);
     // if(inputRef){
@@ -75,6 +89,7 @@ const InputWLabel =  forwardRef((props, ref) => {
             textTransform: "capitalize"
         }
     }
+
 
     return (
         <div className={`input-label d-flex flex-wrap 
@@ -145,7 +160,7 @@ const InputWLabel =  forwardRef((props, ref) => {
                 </>
             )
             : (<>
-            {display !=null ? 
+            {display != null || display != undefined ? 
                 (
                 <div style={{ display: display ? 'block' : 'none'}}>
                     <Form.Label className="mb-1">{label}<span className="required-label" style={{ display: require ? 'inline' : 'none' }}>*</span></Form.Label>
@@ -163,16 +178,24 @@ const InputWLabel =  forwardRef((props, ref) => {
                         maxLength={maxLength}
                         defaultValue={defaultValue ?? defaultValue}
                         autoComplete={autoComplete}
-                        ref={ref}
+                        onClick={onClick}
+                        onBlur={handleCallbackBlur}
+                        // ref={ref}
                         {...register ? 
                             {...register(name, { 
                                 required: require, 
                                 onBlur: onBlur, 
                                 ref: inputRef, 
                                 onChange:onChange,
+                                onBlur:handleCallbackBlur
                             })} 
                         : ""}
-                    />
+                        />
+                        
+                        {register && errors 
+                        ? errors[name] && <span className="field-msg-invalid">{errors[name].message}</span>
+                        : ""}
+                       
                 </div>
                 )
                 : (
@@ -183,6 +206,7 @@ const InputWLabel =  forwardRef((props, ref) => {
                         type={type} 
                         className={className}
                         name={name} 
+                        onChange={onChange}
                         placeholder={placeholder} 
                         disabled={disabled} 
                         style={style || styleInput} 
@@ -192,17 +216,18 @@ const InputWLabel =  forwardRef((props, ref) => {
                         maxLength={maxLength}
                         defaultValue={defaultValue ?? defaultValue}
                         autoComplete={autoComplete}
-                        ref={ref}
+                        onBlur={handleCallbackBlur}
                         {...register ? 
                             {...register(name, { 
                                 required: require ? "This field is required" :'',  
                                 onBlur: onBlur, 
-                                ref: inputRef, 
+                                ref: inputRef,
                                 onChange:onChange,
+                                onBlur: handleCallbackBlur
                             })} 
                         : ""}
                     />
-                    {errors
+                    {register && errors 
                         ? errors[name] && <span className="field-msg-invalid">{errors[name].message}</span>
                         : ""}
                     </>
@@ -231,7 +256,7 @@ InputWLabel.propTypes = {
     onChange: propTypes.func,
     onKeyDown: propTypes.func,
     onFocus: propTypes.func,
-    onBlur: propTypes.func,
+    onBlur: propTypes.bool,
     value: propTypes.any,
     defaultValue:  propTypes.any,
     pattern: propTypes.oneOf(["currency", "number"]),

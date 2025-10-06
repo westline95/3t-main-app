@@ -405,6 +405,14 @@ export default function Payment() {
     );
   };
 
+  const customerOrGuestName = (rowData) => {
+    return <span>{rowData.customer ? rowData.customer.name : rowData.guest_name}</span>;
+  };
+  
+  const customerOrGuest = (rowData) => {
+    return <span>{rowData.customer_id ? rowData.customer_id : "-"}</span>;
+  };
+
   const formatedPaymentDate = (rowData) => {
     return <span>{ConvertDate.convertToFullDate(rowData.payment_date, "/")}</span>;
   };
@@ -864,6 +872,7 @@ export default function Payment() {
                         <Column
                             field="customer.name"
                             header="pelanggan"
+                            body={customerOrGuestName}
                             filter 
                             filterPlaceholder="Search by customer name"
                             style={{ textTransform: "uppercase" }}
@@ -873,6 +882,7 @@ export default function Payment() {
                         <Column
                             field="customer_id"
                             header="ID pelanggan"
+                            body={customerOrGuest}
                             sortable
                             bodyStyle={primeTableBodyStyle}
                             headerStyle={primeTableHeaderStyle}

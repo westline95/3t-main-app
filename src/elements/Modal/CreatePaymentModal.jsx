@@ -39,14 +39,14 @@ export default function CreatePayment({show, onHide, totalCart, multiple, stack,
         formState: { errors },
     } = useForm({
         defaultValues: {
-            payment_date: data.action == "insert" ? new Date() : new Date(data.items.payment_date) ,
+            payment_date: data?.action == "insert" ? new Date() : new Date(data.items.payment_date) ,
             payment_method: '',
             paid_amount: '0',
             partial_amount: '0',
             amountOrigin: 0,
-            payment_ref: data.action == "update" ? data.items.ref : '' ,
-            note: data.action == "update" ? data.items.note : '' ,
-            pay_amount: data.action == "update" ? Number(data.items.amount_paid) : totalCart,
+            payment_ref: data?.action == "update" ? data.items.ref : '' ,
+            note: data?.action == "update" ? data.items.note : '' ,
+            pay_amount: data?.action == "update" ? Number(data.items.amount_paid) : totalCart,
         }
     });
 
@@ -120,8 +120,6 @@ export default function CreatePayment({show, onHide, totalCart, multiple, stack,
             setShowToast(true);
         })
     };
-
-    
 
     const onError = (errors) => {
         // if(Number(getValues('amount')) == 0){
@@ -218,7 +216,7 @@ export default function CreatePayment({show, onHide, totalCart, multiple, stack,
                 data.action == "insert" ? 'Tambah' 
                 : data.action == "update" ? 'Ubah'
                 : 'Tambah'  : 'Tambah'
-            } pembayaran</Modal.Title>
+            } {source == "delivery_group" ? 'informasi': ''} pembayaran</Modal.Title>
             </Modal.Header>
             <Modal.Body style={{maxHeight: '600px', overflowY: getValues('payment_method') ? 'auto' : 'unset'}}>
                 {data.action != "update" ?
@@ -326,7 +324,7 @@ export default function CreatePayment({show, onHide, totalCart, multiple, stack,
                                 label={'tipe pembayaran'}
                                 name={"payment_type"}
                                 selectLabel={"Pilih tipe pembayaran"}
-                                options={DataStatic.orderPayMethod}
+                                options={data.guest_mode ? DataStatic.orderPayGuestMethod : DataStatic.orderPayMethod}
                                 optionKeys={["id", "type"]}
                                 value={(selected) => {
                                     setPaymentType(selected);
@@ -488,6 +486,66 @@ export default function CreatePayment({show, onHide, totalCart, multiple, stack,
                             </>
                         ):''
                     }
+
+                     {
+                        source == 'delivery_group'  ? 
+                        ( 
+                            <>
+                            <Controller
+                                control={control}
+                                name="paid_amount"
+                                render={({
+                                    field: {ref, name, onChange, value}, fieldState
+                                }) => (
+                                    <div>
+                                        <InputGroup
+                                            inputRef={ref}
+                                            label="jumlah bayar"
+                                            groupLabel="Rp"
+                                            type="text"
+                                            // min={'0'}
+                                            // onChange={onChange}
+                                            position="left"
+                                            name={name}
+                                            inputMode="numeric" 
+                                            mask="currency"
+                                            value={value}
+                                            defaultValue={getValues('paid_amount')}
+                                            require={true}
+                                            // register={register}
+                                            // errors={errors}
+                                            placeholder={"0"}
+                                            returnValue={(value) => {
+                                                // console.log("value => ",value)
+                                                setChange(value.origin >= totalCart ? (value.origin - totalCart) : 0);
+                                                setValue("change", value.origin >= totalCart ? (value.origin - totalCart) : 0);
+                                                setValue("paid_amount", value.formatted);
+                                                setValue("amountOrigin", value.origin);
+                                            }}
+                                            disabled={getValues("payment_method") == "transfer" ? true : false}
+                                            
+                                        />
+                                        {fieldState.error && <span className="field-msg-invalid">{fieldState.error.message}</span>}
+                                    </div>
+                                )}
+                            />
+                            <div>
+                                <label style={{marginRight: ".3rem"}}>
+                                    kembali
+                                </label>
+                                <label>
+                                    <NumberFormat intlConfig={{
+                                        value: getValues("amountOrigin") == 0 ? 0 : changeMoneyUI , 
+                                        locale: "id-ID",
+                                        style: "currency", 
+                                        currency: "IDR",
+                                        }} 
+                                    />
+                                </label>
+                            </div>
+                            </>
+                        ):''
+                    }
                    
                     { source == 'invoice' || source == 'payment' ?
                         paymentType && getValues('payment_method') ?
@@ -582,5 +640,5 @@ export default function CreatePayment({show, onHide, totalCart, multiple, stack,
 }
 
 CreatePayment.propTypes = {
-    source: propTypes.oneOf(['invoice','order'])
+    source: propTypes.oneOf(['invoice','order', 'delivery_group'])
 }
