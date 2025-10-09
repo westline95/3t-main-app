@@ -345,6 +345,7 @@ export default function DelivGroupsModal({ show, onHide, data, returnAct }) {
             } else {
                 tmpArr.push(prodObjDupe);
             }
+            console.log(tmpArr)
             setSalesItems(tmpArr);
         }
         // setPaidData(null);
@@ -650,10 +651,10 @@ export default function DelivGroupsModal({ show, onHide, data, returnAct }) {
         status: 0
       },
       delivery_group_items: salesItems,
-      delivery_group_item_id: null
     }
     
     if(data.action == "insert"){
+      // delivery_groups.delivery_group_items = salesItems;
       delivery_groups.delivery_group.total_item = salesEndNote.totalQty;
       delivery_groups.delivery_group.total_value = salesEndNote.subtotal;
 
@@ -671,9 +672,14 @@ export default function DelivGroupsModal({ show, onHide, data, returnAct }) {
         delivery_groups.delivery_group.total_item = salesEndNote.totalQty;
         delivery_groups.delivery_group.total_value = salesEndNote.subtotal;
 
-        const itemID = salesItems.map(item => item.deliv_group_item_id);
-        delivery_groups.delivery_group_item_id = itemID;
+        salesItems.map(item => {
+          item.delivery_group_id = data.id;
+          if(item.deliv_group_item_id){
+            delete item.deliv_group_item_id;
+          }
+        });
 
+        setControlUiBtn(false)
         fetchUpdateDG(delivery_groups);
       }
     }
@@ -922,7 +928,7 @@ export default function DelivGroupsModal({ show, onHide, data, returnAct }) {
                                       }} 
                                   />
                                   : <NumberFormat intlConfig={{
-                                      value: (Number(item.quantity)*Number(item.sell_price))-(Number(item.quantity)*Number(item.disc_prod_rec)),
+                                      value: (Number(item.quantity)*Number(item.sell_price))-(Number(item.quantity)*(item.disc_prod_rec ? Number(item.disc_prod_rec) : Number(item.discount))),
                                       locale: "id-ID",
                                       style: "currency", 
                                       currency: "IDR",

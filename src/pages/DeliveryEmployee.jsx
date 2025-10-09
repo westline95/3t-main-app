@@ -38,12 +38,20 @@ import DelivGroupsModal from '../elements/Modal/DelivGroupsModal.jsx';
 import useAuth from '../hooks/useAuth.js';
 import DeliveryGroupListReportModal from '../elements/Modal/DeliveryGroupListReporModal.jsx';
 import WriteDelivGroupItemsModal from '../elements/Modal/WriteDelivGroupItemsModal.jsx';
+import useMediaQuery from '../hooks/useMediaQuery.js';
+import { DataView } from 'primereact/dataview';
 
 export default function DeliveryEmployee({handleSidebar, showSidebar}){
+    const isMobile = useMediaQuery('(max-width: 768px)');
+    const isMediumScr = useMediaQuery('(min-width: 768px) and (max-width: 1024px)');
     const { auth } = useAuth();
 
     const toast = useRef(null);
     const toastUpload = useRef(null);
+    const mobileSearchInput = useRef(null);
+
+    const [mobileSearchMode, setMobileSearchMode] = useState(false);
+    const [mobileFilterValue, setMobileFilterValue] = useState("");
     const [progress, setProgress] = useState(0);
     const [ isLoading, setLoading ] = useState(true);
     const [ isClicked, setClicked ] = useState(false);
@@ -415,6 +423,7 @@ export default function DeliveryEmployee({handleSidebar, showSidebar}){
     const fetchAllDG = async() =>{
         await axiosPrivate.get("/delivery-group/by/emp", {params: {emp_id: auth.staff_id}})
         .then(resp => {
+            console.log(resp.data)
             setDG(resp.data);
         })
         .catch(err => {
@@ -1073,6 +1082,7 @@ export default function DeliveryEmployee({handleSidebar, showSidebar}){
             rowData.status == 1 ?
             handleModalWData(e, {
               id: rowData.delivery_group_id,
+              employee_id: rowData.employee_id,
               delivery_group_date: rowData.delivery_group_date,
               action: "insert",
             })
@@ -1108,14 +1118,17 @@ export default function DeliveryEmployee({handleSidebar, showSidebar}){
     const statusDGCell = (rowData) => {
         return(
             <span className={`badge badge-${
-                rowData.delivery_group_report ? "success" 
-                : rowData.delivery_group_report?.report_status == 0 ? "warning"
-                : "danger"
+                rowData.delivery_group_report ? 
+                rowData.delivery_group_report?.report_status == 0 ? "warning"
+                : rowData.delivery_group_report?.report_status == 1 ? "success"
+                : "danger" : "secondary"
             } light`}
             >
                 {
-                    rowData.delivery_group_report ? "laporan telah disetujui" 
-                    : rowData.delivery_group_report?.report_status == 0 ? "laporan sedang ditinjau"
+                    rowData.delivery_group_report ? 
+                        rowData.delivery_group_report?.report_status == 0 ? "laporan sedang ditinjau"
+                        : rowData.delivery_group_report?.report_status == 1 ? "laporan telah disetujui"
+                        : "laporan ditolak" 
                     : "laporan belum dibuat"
                 }                                                                                
             </span>
@@ -1124,15 +1137,18 @@ export default function DeliveryEmployee({handleSidebar, showSidebar}){
     const statusDeliveryCell = (rowData) => {
         return(
             <span className={`badge badge-${
-                rowData.delivery_group_report ? "success" 
-                : rowData.delivery_group_report?.report_status == 0 ? "warning"
-                : "danger"
+                rowData.delivery_group_report ? 
+                rowData.delivery_group_report?.report_status == 0 ? "warning"
+                : rowData.delivery_group_report?.report_status == 1 ? "success"
+                : "danger" : "secondary"
             } light`}
             >
                 {
-                    rowData.delivery_group_report ? "selesai" 
-                    : rowData.delivery_group_report?.report_status == 0 ? "menunggu konfirmasi"
-                    : "dalam proses"
+                    rowData.delivery_group_report ? 
+                        rowData.delivery_group_report?.report_status == 0 ? "menunggu konfirmasi"
+                        : rowData.delivery_group_report?.report_status == 1 ? "selesai"
+                        : "dibatalkan" 
+                    : "ditunda"
                 }                                                                                
             </span>
         )
@@ -1208,6 +1224,230 @@ export default function DeliveryEmployee({handleSidebar, showSidebar}){
         </div>
         )
     }
+
+    const mobileFilterFunc = (e) => {
+        setMobileFilterValue(e.target.value);
+        e.target.value == "" ? setMobileSearchMode(false):setMobileSearchMode(true)
+    }
+
+    const itemTemplate = (rowData, index) => {
+        return (
+        <div className="col-12" key={index} style={{position:'relative'}} 
+            aria-label="viewDGList"
+            onClick={(e) => handleModalWData(e, rowData)}
+        >
+            <div className='flex flex-column xl:align-items-start gap-2 static-shadow'
+                style={{
+                    backgroundColor: '#F8F9FD',
+                    padding: '1rem',
+                    boxShadow: '1px 1px 7px #9a9acc1a',
+                    borderRadius: '9px',
+                    position:'relative'
+                }}
+                // aria-label="salesEditModal" 
+                // onClick={(e) => handleModalWData(e, {endpoint: "sales", id: rowData.order_id, action: 'update', ...rowData})}
+            >
+            
+            <div className="flex align-items-center gap-3" 
+                style={{
+                    textTransform: 'capitalize', 
+                    paddingBottom: '.75rem',
+                    borderBottom: '1px solid rgba(146, 146, 146, .2509803922)'
+                }}
+            >
+                <span className="user-img" style={{marginRight: 0}}>
+                <img
+                    src={
+                    rowData.employee?.img ? rowData.employee?.img
+                        : `https://res.cloudinary.com/du3qbxrmb/image/upload/v1751378806/no-img_u5jpuh.jpg`
+                    }
+                    alt=""
+                />
+                </span>
+                <div style={{width: '80%'}}>
+                    <p style={{marginBottom: 0, fontSize: 15, fontWeight: 600}}>{rowData.delivery_group_id}</p>
+                    <p style={{marginBottom: 0, fontSize: 13, color: '#7d8086'}}>{ConvertDate.LocaleStringDate(rowData.delivery_group_date)}</p>
+                    <div className='flex flex-row gap-2' style={{fontSize: 13, marginTop: '.5rem'}}>
+                        <span className={`badge badge-${
+                            rowData.delivery_group_report ? 
+                            rowData.delivery_group_report?.report_status == 0 ? "warning"
+                            : rowData.delivery_group_report?.report_status == 1 ? "success"
+                            : "danger" : "secondary"
+                        } light`}
+                        >
+                            {
+                                rowData.delivery_group_report ? 
+                                    rowData.delivery_group_report?.report_status == 0 ? "laporan sedang ditinjau"
+                                    : rowData.delivery_group_report?.report_status == 1 ? "laporan telah disetujui"
+                                    : "laporan ditolak" 
+                                : "laporan belum dibuat"
+                            }                                                                                
+                        </span>
+                        <span className={`badge badge-${
+                            rowData.delivery_group_report ? 
+                            rowData.delivery_group_report?.report_status == 0 ? "warning"
+                            : rowData.delivery_group_report?.report_status == 1 ? "success"
+                            : "danger" : "secondary"
+                        } light`}
+                        >
+                            {
+                                rowData.delivery_group_report ? 
+                                    rowData.delivery_group_report?.report_status == 0 ? "menunggu konfirmasi"
+                                    : rowData.delivery_group_report?.report_status == 1 ? "selesai"
+                                    : "dibatalkan" 
+                                : "ditunda"
+                            }                                                                                
+                        </span>
+                        {/* <span className={`badge badge-${
+                            rowData.delivery_group_report ? "success" 
+                            : rowData.delivery_group_report?.report_status == 0 ? "warning"
+                            : "danger"
+                        } light`}
+                        >
+                            {
+                                rowData.delivery_group_report ? "selesai" 
+                                : rowData.delivery_group_report?.report_status == 0 ? "menunggu konfirmasi"
+                                : "dalam proses"
+                            }                                                                                
+                        </span> */}
+                        {/* {rowData.invoice ?
+                            (
+                            <span className="verified-inv">
+                                <i className='bx bx-check-shield'></i>
+                            </span>
+                            ):(
+                            <span className="unverified-inv">
+                                <i className='bx bx-shield-x'></i>
+                            </span>
+                            )
+                        } */}
+                        
+                    </div>
+                </div>
+            </div>
+            <div className="flex flex-column gap-1" 
+                style={{
+                    textTransform: 'capitalize', 
+                }}
+            >
+                <div className="flex flex-row justify-content-between">
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Karyawan:</p>
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>{rowData.employee?.name}</p>
+                </div>
+                <div className="flex flex-row justify-content-between">
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Total item:</p>
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right'}}>
+                        {Number(rowData.total_item)}
+                    </p>
+                </div>
+                <div className="flex flex-row justify-content-between">
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Total nilai:</p>
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right'}}>
+                        <NumberFormat intlConfig={{
+                            value: rowData.total_value, 
+                            locale: "id-ID",
+                            style: "currency", 
+                            currency: "IDR",
+                        }} 
+                        />
+                    </p>
+                </div>
+                {/* <div className="flex flex-row justify-content-between">
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Tipe pembayaran:</p>
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right'}}>
+                        <span className={`badge badge-${
+                            rowData.payment_type == "bayar nanti" ? 'danger'
+                            : rowData.payment_type == "lunas"? "primary"
+                            : rowData.payment_type == "sebagian"? "warning"
+                            : ""} light`}
+                        >
+                            {rowData.payment_type }                                                                                
+                        </span>
+                    </p>
+                </div> */}
+            </div>
+            </div>
+            <Dropdown drop={dg.length == 1 ? "down" : index == dg.length - 1 ? "up" : "down"}  style={{position: 'absolute', top: 10, right: 9, padding: '1rem 1rem .5rem 1rem'}}>
+                <Dropdown.Toggle as={CustomToggle.CustomToggle1} id="dropdown-custom-components" ></Dropdown.Toggle>
+                <Dropdown.Menu align={"end"}>
+                    <Dropdown.Item eventKey="1" as="button" 
+                        // aria-label="salesEditModal" 
+                        // onClick={(e) => handleModalWData(e, {endpoint: "sales", id: rowData.order_id, action: 'update', ...rowData})}
+                    >
+                        <i className='bx bx-show'></i> Lihat data
+                    </Dropdown.Item>
+                    <Dropdown.Item eventKey="1" as="button" 
+                        aria-label="writeDelivGroupsReport"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            rowData.status == 1 ?
+                            handleModalWData(e, {
+                            id: rowData.delivery_group_id,
+                            employee_id: rowData.employee_id,
+                            delivery_group_date: rowData.delivery_group_date,
+                            action: "insert",
+                            })
+                            : toast.current.show({
+                                    severity: "error",
+                                    summary: "Forbidden",
+                                    detail: rowData.status == 0 ? "Tidak dapat mengubah data pengantaran jika sudah dikonfirmasi" : "Tidak dapat mengubah data pengantaran yang sudah dibatalkan",
+                                    life: 3000,
+                                });
+                        }}
+                    >
+                       <i className='bx bxs-edit'></i> Tulis laporan
+                    </Dropdown.Item>
+                </Dropdown.Menu>
+            </Dropdown>
+        </div>
+        );
+    };
+    
+    const listTemplate = (items) => {
+        if (!items || items.length === 0) return null;
+
+        let list = items.map((sales, index) => {
+            return itemTemplate(sales, index);
+        });
+
+        return (
+        <>
+        <div className="flex flex-column gap-2" style={{ width: "100%" }}>
+            <div className="flex gap-3 align-items-center mb-4" style={{ width: "100%" }}>
+                <div className="input-group-right" style={{ width: "100%" }}>
+                    {mobileSearchMode ?
+                    (
+                    <span className="input-group-icon input-icon-right" 
+                        onClick={() => {
+                            setMobileFilterValue('');
+                            setMobileSearchMode(false);
+                            mobileSearchInput.current.focus();
+                        }}
+                    >
+                        <i className='bx bx-x'></i>
+                    </span>
+                    ):(
+                    <span className="input-group-icon input-icon-right">
+                        <i className="zwicon-search"></i>
+                    </span>
+                    )
+                    }
+                    <input
+                        ref={mobileSearchInput}
+                        type="text"
+                        className="form-control input-w-icon-right"
+                        value={mobileFilterValue}
+                        onChange={mobileFilterFunc}
+                        placeholder="Keyword Search"
+                        // onKeyDown={() => setMobileSearchMode(true)}
+                    />
+                </div>
+            </div>
+        </div>
+        <div className="grid gap-1">{list}</div>
+        </>
+        );
+    };
 
     useEffect(() => {
         if(refetch){
@@ -1740,7 +1980,9 @@ export default function DeliveryEmployee({handleSidebar, showSidebar}){
                                                 value={(selected) => setCustTypeFilter(selected)}
                                             />
                                         </div> */}
-                                         <div className="mt-4">
+                                        {!isMobile && !isMediumScr ? 
+                                        (
+                                        <div className="mt-4">
                                             <div className="flex justify-content-between" style={{ width: "100%", paddingTop: 16, paddingBottom: 32 }}>
                                                 <div className="flex gap-3 align-items-center" style={{ width: "60%" }}>
                                                     <div className="input-group-right" style={{ width: "40%" }}>
@@ -1893,7 +2135,50 @@ export default function DeliveryEmployee({handleSidebar, showSidebar}){
                                                 headerStyle={primeTableHeaderStyle}
                                             ></Column>
                                             </DataTable>
+                                            
                                         </div>
+                                        ):(
+                                        <>
+                                        <div
+                                            className="wrapping-table-btn flex gap-3 justify-content-end"
+                                            style={{ width: "100%", height: "inherit" }}
+                                        >
+                                            <Dropdown drop={"down"}>
+                                                <Dropdown.Toggle variant="primary" style={{ height: "100%" }}>
+                                                    <i className="bx bx-download"></i> export
+                                                </Dropdown.Toggle>
+                                                <Dropdown.Menu align={"end"}>
+                                                <Dropdown.Item
+                                                    eventKey="1"
+                                                    as="button"
+                                                    // aria-label="viewInvModal"
+                                                    // onClick={(e) =>
+                                                    //     handleModal(e, { id: inv.invoice_id, items: { ...inv } })
+                                                    // }
+                                                >
+                                                    <i className="bx bx-show"></i> PDF (.pdf)
+                                                </Dropdown.Item>
+                                                <Dropdown.Item
+                                                    eventKey="1"
+                                                    as="button"
+                                                    // aria-label="editInvModal"
+                                                    // onClick={(e) => handleModal(e, inv.invoice_id)}
+                                                >
+                                                    <i className="bx bxs-edit"></i> Microsoft Excel (.xlsx)
+                                                </Dropdown.Item>
+                                                </Dropdown.Menu>
+                                            </Dropdown>
+                                            <button
+                                                type="button"
+                                                className=" btn btn-primary btn-w-icon"
+                                                style={{ height: "100%" }}
+                                            >
+                                                <i className="bx bxs-file-plus"></i> import
+                                            </button>
+                                        </div>
+                                        <DataView value={dg} listTemplate={listTemplate} style={{marginTop: '.5rem'}} />
+                                        </>
+                                        )}
                                         {/* <div className="table-responsive mt-4">
                                             <table className="table" id="advancedTablesWFixedHeader" data-table-search="true"
                                                 data-table-sort="true" data-table-checkbox="true">

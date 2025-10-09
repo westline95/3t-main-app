@@ -39,7 +39,8 @@ const InputWLabel =  forwardRef((props, ref) => {
         inputWidth,
         display,
         minDate,
-        onClick
+        onClick,
+        fontSize
     } = props;
 
     const [ switched, setSwitch ] = useState(false);
@@ -133,7 +134,7 @@ const InputWLabel =  forwardRef((props, ref) => {
                         className="form-check-input switch-primary" 
                         name={name} 
                         type="checkbox" 
-                        style={{marginTop:0, width: '3rem'}}
+                        style={{marginTop:0, width: '3rem', fontSize: fontSize }}
                         defaultChecked={defaultChecked}
                         {...register != null ? {...register(name, { required: require, onChange:onChange })} : ""}
                     />

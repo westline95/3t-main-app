@@ -51,6 +51,7 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
   const [openPopupProd, setOpenPopupProd] = useState(false);
   const [allStatus, setStatusList] = useState(dataStatic.orderStatusList);
   const [qtyVal, setQtyVal] = useState(0);
+  const [childQtyVal, setChildQtyVal] = useState(0);
   const [addedValue, setAddedValue] = useState(null);
   const [showModal, setShowModal] = useState(null);
   const [openPopup, setOpenPopup] = useState(false);
@@ -97,7 +98,6 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
       // order_type: data.order_type
     },
   });
-  console.log(data)
 
   const handleModal = (e) => {
     let dataToSend;
@@ -310,9 +310,11 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
     } else {
       let tmpArr = [];
       let prodObjDupe = {...chooseProd};
+      console.log(qtyVal)
       prodObjDupe.quantity = qtyVal;
 
       if (salesItems.length === 0) {
+        // setChildQtyVal(qtyVal);
         tmpArr.push(prodObjDupe);
         setSalesItems(tmpArr);
       } else {
@@ -321,9 +323,11 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
           (e) => e.product_id == prodObjDupe.product_id
         );
         if (findDuplicateIdx >= 0) {
-            tmpArr[findDuplicateIdx].quantity =
-            tmpArr[findDuplicateIdx].quantity + prodObjDupe.quantity;
+          tmpArr[findDuplicateIdx].quantity =
+          tmpArr[findDuplicateIdx].quantity + prodObjDupe.quantity;
+          setChildQtyVal(tmpArr[findDuplicateIdx].quantity);
         } else {
+          // setChildQtyVal(qtyVal);
           tmpArr.push(prodObjDupe);
         }
         setSalesItems(tmpArr);
@@ -409,7 +413,8 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
       //   };
       //   return obj;
       // });
-      const dgReportListStorage = localStorage.getItem(`${data.delivery_group_id}`);
+      const dgReportListStorage = localStorage.getItem(`form-${data.delivery_group_id}`);
+     
       let parsed = JSON.parse(dgReportListStorage);
 
       let dgReportList = {
@@ -421,70 +426,78 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
       };
 
       let dgReportListArr = [];
+      let dgListItem;
       salesItems.map((item, idx) => {
-        let dgListItem = {
-          customer_id: formData.customer_id,
+        dgListItem = {
+          customer_id: formData.customer_id ? Number(formData.customer_id) : null,
           guest_name : formData.customer_id ? '' : formData.name,
           order_date: data.delivery_group_date,
           order_type: 'delivery',
-          order_status: paymentData.amountOrigin == 0 ? 'pending' 
-                        : paymentData.amountOrigin < paymentData.pay_amount ? 'pending'
-                        : paymentData.amountOrigin >= paymentData.pay_amount ? 'completed'
+          order_status: Number(paymentData.amountOrigin) == 0 ? 'pending' 
+                        : Number(paymentData.amountOrigin) < Number(paymentData.pay_amount) ? 'pending'
+                        : Number(paymentData.amountOrigin) >= Number(paymentData.pay_amount) ? 'completed'
                         : 'pending',
           source: 'delivery_group',
           shipped_date: data.delivery_group_date,
-          payment_type: paymentData.amountOrigin == 0 ? 'bayar nanti' 
-                        : paymentData.amountOrigin < paymentData.pay_amount ? 'sebagian'
-                        : paymentData.amountOrigin >= paymentData.pay_amount ? 'lunas'
+          payment_type: Number(paymentData.amountOrigin) == 0 ? 'bayar nanti' 
+                        : Number(paymentData.amountOrigin) < Number(paymentData.pay_amount) ? 'sebagian'
+                        : Number(paymentData.amountOrigin) >= Number(paymentData.pay_amount) ? 'lunas'
                         : 'bayar nanti',
-          subtotal: salesEndNote.grandtotal,
-          grandtotal: salesEndNote.grandtotal,
+          subtotal: (Number(item.quantity)*Number(item.sell_price))-(Number(item.quantity)*Number(item.discProd)),
+          grandtotal: (Number(item.quantity)*Number(item.sell_price))-(Number(item.quantity)*Number(item.discProd)),
           note: formData.note,
           is_complete: paymentData.amountOrigin == 0 ? false 
-          : paymentData.amountOrigin < paymentData.pay_amount ? false
-          : paymentData.amountOrigin >= paymentData.pay_amount ? true
+          : Number(paymentData.amountOrigin) < Number(paymentData.pay_amount) ? false
+          : Number(paymentData.amountOrigin) >= Number(paymentData.pay_amount) ? true
           : false,
           order_discount: 0,
           payment_date: paymentData.payment_date,
-          amount_paid: paymentData.amountOrigin,
+          amount_paid: Number(paymentData.amountOrigin),
           payment_method: 'cash',
           payment_note: paymentData.note,
         }  
 
-        dgListItem.product_id = item.product_id;
-        dgListItem.quantity = item.quantity;
-        dgListItem.sell_price = item.sell_price;
-        dgListItem.disc_prod_rec = item.discProd;
+        dgListItem.product_id = Number(item.product_id);
+        dgListItem.quantity = Number(item.quantity);
+        dgListItem.sell_price = Number(item.sell_price);
+        dgListItem.disc_prod_rec = Number(item.discProd);
 
         dgReportListArr.push(dgListItem);
       });
+      // console.log(dgReportListArr)
+      // const sendStringify = JSON.stringify(dgReportListArr);
+      if(dgListItem){
+        if(!dgReportListStorage) {
+          let tmpArr = [];
+          tmpArr[data.index] = dgReportListArr;
+          localStorage.setItem(`form-${data.delivery_group_id}`, JSON.stringify(tmpArr));
+        } else {
+          let tmpArr = [...parsed];
+          tmpArr[data.index] = dgReportListArr;
+          localStorage.setItem(`form-${data.delivery_group_id}`, JSON.stringify(tmpArr));
 
-      const sendStringify = JSON.stringify(dgReportListArr);
-      
-      if(!dgReportListStorage) {
-        localStorage.setItem(`${data.delivery_group_id}`, sendStringify);
-      } else {
-        let findDuplicateIdx = [];
-
-        dgReportListArr.map((item, idx) => {
-          parsed.map((parseitem, index) => {
-            if(item.customer_id){
-              if(item.customer_id === parseitem.customer_id){
-                if(item.product_id === parseitem.product_id){
-                  findDuplicateIdx.push(index);
-                }
-              }
-            } else {
-              if(item.customer_id === parseitem.customer_id){
-                if(item.product_id === parseitem.product_id){
-                  findDuplicateIdx.push(index);
-                }
-              }
-            }
-          })
-        })
-        console.log(findDuplicateIdx)
       }
+        // dgReportListArr.map((item, idx) => {
+        //   parsed.map((parseitem, index) => {
+        //     if(item.customer_id){
+        //       if(item.customer_id === parseitem.customer_id){
+        //         if(item.product_id === parseitem.product_id){
+        //           findDuplicateIdx.push(index);
+        //         }
+        //       }
+        //     } else {
+        //       if(item.customer_id === parseitem.customer_id){
+        //         if(item.product_id === parseitem.product_id){
+        //           findDuplicateIdx.push(index);
+        //         }
+        //       }
+        //     }
+        //   })
+        // })
+        // console.log(findDuplicateIdx)
+      }
+
+      
 
       if(returnValue){
         return returnValue(dgReportList);
@@ -662,7 +675,7 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
                       min={1}
                       max={Number(rowData.max_qty)}
                       name={`qty-product`}
-                      value={Number(rowData.max_qty)}
+                      value={rowData.quantity}
                       returnValue={(e) => {
                         handleEdit(e, index);
                         handleUpdateEndNote();
@@ -920,19 +933,13 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
     }
   }, []);
 
-  useEffect(() => {
-    if (allProdData && filterProd) {
-      setLoading(false);
+ 
 
-      //    setValue('name', orderData.customer.name);
-    }
-  }, [allProdData, filterProd]);
-
-  useEffect(() => {
-    if(chooseProd){
-      qtyVal > 0 && setQtyVal(Number(chooseProd.max_qty))
-    }
-  },[chooseProd]);
+  // useEffect(() => {
+  //   if(chooseProd){
+  //     qtyVal > 0 && setQtyVal(Number(chooseProd.max_qty))
+  //   }
+  // },[chooseProd]);
 
   useEffect(() => {
     if (cantCanceled) {
@@ -948,21 +955,28 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
     }
   }, [cantCanceled]);
 
-  useEffect(() => {
-    if(show && multiple === true){
-        document.querySelectorAll(".modal-backdrop").forEach((e,idx) => {
-          console.log(e)
-            e.style.zIndex = 1055 + ((idx+1) * stack);
-        })
-        document.querySelectorAll(".modal").forEach((e,idx) => {
-            e.style.zIndex = 1056 + ((idx+1) * stack);
-        })
-    }
-  },[show])
+  
 
-  if (isLoading) {
-    return;
-  }
+  useEffect(() => {
+    if(multiple === true){
+      document.querySelectorAll(".modal-backdrop").forEach((e,idx) => {
+        e.style.zIndex = 1055 + (idx * stack);
+      })
+      document.querySelectorAll(".modal").forEach((e,idx) => {
+        e.style.zIndex = 1056 + (idx * stack);
+      })
+    }
+  },[show]);
+
+  //  useEffect(() => {
+  //   if (allProdData) {
+  //     setLoading(false);
+  //   }
+  // }, [allProdData]);
+
+  // if (isLoading) {
+  //   return;
+  // }
   
   return (
     <>
@@ -1092,8 +1106,8 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
                 max={chooseProd ? Number(chooseProd.max_qty) : 999}
                 name={`qty-add-product`}
                 width={"180px"}
-                returnValue={(e) => setQtyVal(e)}
                 value={qtyVal}
+                returnValue={(e) => {setQtyVal(e)}}
                 // disabled={editMode ? false : true}
                 label={"qty"}
               />

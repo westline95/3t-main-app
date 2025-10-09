@@ -616,9 +616,9 @@ export default function DeliveryGroupListModal({show, onHide, data, returnAct}) 
                 </div>
             </div>
         </div> */}
-        <Modal dialogClassName={auth.roles == "admin" ? isMobile || isMediumScr ? 'modal-fullscreen' : 'modal-75w': "modal-lg"} show={show} onHide={onHide} scrollable={true} centered={true}  id="" >
+        <Modal dialogClassName={auth.roles == "admin" ? isMobile || isMediumScr ? 'modal-fullscreen' : 'modal-75w': "modal-xl"} show={show} onHide={onHide} scrollable={true} centered={true}  id="" >
             <Modal.Header closeButton>
-                <Modal.Title style={{marginRight: '1rem'}}>invoice ID: {dGList !== "" ? `${dGList.delivery_group_id}` : ""}</Modal.Title>
+                <Modal.Title style={{marginRight: '1rem'}}>ID pengantaran: {dGList !== "" ? `${dGList.delivery_group_id}` : ""}</Modal.Title>
                 <span>
                     {/* <InputWSelect
                                 // label={'status'}

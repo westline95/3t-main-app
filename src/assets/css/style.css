@@ -4656,6 +4656,27 @@ tr.hover-row:hover > * {
   margin-bottom: 1rem;
 }
 
+.form-delivery-wrapper {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  row-gap: 1.5rem;
+}
+
+.form-delivery-component {
+  width: 49%;
+}
+
+.deliveryGroupFormModal > .modal-content { 
+  height: 100%;
+}
+
+.deliveryGroupFormModal form .cta-btn { 
+    align-items: center;
+  }
+
 /* media queries for responsiveness */
 /* for mobile */
 
@@ -5426,7 +5447,16 @@ tr.hover-row:hover > * {
   }
   
   .form-support-btn i {
-    font-size: 14px;
+    font-size: 16px;
+  }
+
+  .form-delivery-wrapper {
+    flex-direction: column;
+    row-gap: 1rem;
+  }
+
+  .form-delivery-component {
+    width: 100%;
   }
 
 }
@@ -6142,6 +6172,15 @@ tr.hover-row:hover > * {
   
   .form-support-btn i {
     font-size: 14px;
+  }
+
+  .form-delivery-wrapper {
+    flex-direction: column;
+    row-gap: 1rem;
+  }
+
+  .form-delivery-component {
+    width: 100%;
   }
 
 }
@@ -7175,7 +7214,7 @@ tr.hover-row:hover > * {
 
   .btn,
   .modal-footer button {
-      font-size: 12px;
+      font-size: 13px;
   }
 
   .form-switch .form-check-input {
@@ -7209,8 +7248,12 @@ tr.hover-row:hover > * {
   }
 
   .modal i {
-      font-size: 20px;
-      vertical-align: text-top;
+    font-size: 20px;
+    vertical-align: text-top;
+  }
+
+  .modal button i {
+    font-size: 16px;
   }
 
   /* .invoice-header,
@@ -7353,6 +7396,14 @@ tr.hover-row:hover > * {
     text-align: center;
   }
 
+  .deliveryGroupFormModal form .floating-btn { 
+    position: fixed;
+    bottom: 7rem;
+    left: 13rem;
+    right: 13rem;
+    width: auto;
+    z-index: 9999999
+  }
 }
 
 

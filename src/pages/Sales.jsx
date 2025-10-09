@@ -1858,147 +1858,6 @@ export default function Sales({handleSidebar, showSidebar}){
     };
 
     // list setting
-    const itemTemplate = (rowData, index) => {
-        return (
-        <div className="col-12" key={index} style={{position:'relative'}}>
-            <div className='flex flex-column xl:align-items-start gap-2 static-shadow'
-                style={{
-                    backgroundColor: '#F8F9FD',
-                    padding: '1rem',
-                    boxShadow: '1px 1px 7px #9a9acc1a',
-                    borderRadius: '9px',
-                    position:'relative'
-                }}
-                aria-label="salesEditModal" 
-                onClick={(e) => handleModalWData(e, {endpoint: "sales", id: rowData.order_id, action: 'update', ...rowData})}
-            >
-            
-            <div className="flex align-items-center gap-3" 
-                style={{
-                    textTransform: 'capitalize', 
-                    paddingBottom: '.75rem',
-                    borderBottom: '1px solid rgba(146, 146, 146, .2509803922)'
-                }}
-            >
-                <span className="user-img" style={{marginRight: 0}}>
-                <img
-                    src={
-                    rowData.img ? rowData.img
-                        : `https://res.cloudinary.com/du3qbxrmb/image/upload/v1751378806/no-img_u5jpuh.jpg`
-                    }
-                    alt=""
-                />
-                </span>
-                <div style={{width: '80%'}}>
-                    <p style={{marginBottom: 0, fontSize: 15, fontWeight: 600}}>{rowData.order_id}</p>
-                    <p style={{marginBottom: 0, fontSize: 13, color: '#7d8086'}}>{ConvertDate.LocaleStringDate(rowData.order_date)}</p>
-                    <div className='flex flex-row gap-2' style={{fontSize: 13, marginTop: '.5rem'}}>
-                        <span className={`badge badge-${
-                            rowData.order_type == "walk-in" ? 'primary'
-                            : rowData.order_type == "delivery" ? "warning" 
-                            : ""} light`}
-                        >
-                            {
-                                rowData.order_type
-                            }                                                                               
-                        </span>
-                        <span className={`badge badge-${
-                            rowData.order_status == "completed" ? 'success'
-                            : rowData.order_status == "pending" ? "secondary" 
-                            : rowData.order_status == "in-delivery" ? "warning" 
-                            : rowData.order_status == "canceled" ? "danger" 
-                            : rowData.order_status == "confirmed" ? "primary" 
-                            : ""} light`}
-                        >
-                            {
-                                rowData.order_status == "completed" ? 'selesai'
-                                : rowData.order_status == "pending" ? 'pending'
-                                : rowData.order_status == "in-delivery" ? 'in-delivery'
-                                : rowData.order_status == "canceled" ? 'batal'
-                                : rowData.order_status == "confirmed" ? 'dikonfirmasi'
-                                : ""
-                            }                                                                                
-                        </span>
-                        {rowData.invoice ?
-                            (
-                            <span className="verified-inv">
-                                <i className='bx bx-check-shield'></i>
-                            </span>
-                            ):(
-                            <span className="unverified-inv">
-                                <i className='bx bx-shield-x'></i>
-                            </span>
-                            )
-                        }
-                        
-                    </div>
-                </div>
-            </div>
-            <div className="flex flex-column gap-1" 
-                style={{
-                    textTransform: 'capitalize', 
-                }}
-            >
-                <div className="flex flex-row justify-content-between">
-                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Pelanggan:</p>
-                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>{rowData.customer_id ? `${rowData.customer?.name}` : `guest.name (non-member)`}</p>
-                </div>
-                <div className="flex flex-row justify-content-between">
-                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Total order:</p>
-                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right'}}>
-                        <NumberFormat intlConfig={{
-                            value: rowData.grandtotal, 
-                            locale: "id-ID",
-                            style: "currency", 
-                            currency: "IDR",
-                        }} 
-                        />
-                    </p>
-                </div>
-                <div className="flex flex-row justify-content-between">
-                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Tipe pembayaran:</p>
-                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right'}}>
-                        <span className={`badge badge-${
-                            rowData.payment_type == "bayar nanti" ? 'danger'
-                            : rowData.payment_type == "lunas"? "primary"
-                            : rowData.payment_type == "sebagian"? "warning"
-                            : ""} light`}
-                        >
-                            {rowData.payment_type }                                                                                
-                        </span>
-                    </p>
-                </div>
-            </div>
-            </div>
-            <Dropdown drop={index == custData.length - 1 ? "up" : "down"}  style={{position: 'absolute', top: 10, right: 9, padding: '1rem 1rem .5rem 1rem'}}>
-                <Dropdown.Toggle as={CustomToggle.CustomToggle1} id="dropdown-custom-components" ></Dropdown.Toggle>
-                <Dropdown.Menu align={"end"}>
-                    <Dropdown.Item eventKey="1" as="button" 
-                        aria-label="salesEditModal" 
-                        onClick={(e) => handleModalWData(e, {endpoint: "sales", id: rowData.order_id, action: 'update', ...rowData})}
-                    >
-                        <i className='bx bxs-edit'></i> Ubah order
-                    </Dropdown.Item>
-                    <Dropdown.Item eventKey="1" as="button" 
-                        aria-label="cancelSalesModal" 
-                        onClick={(e) => handleModalWData(
-                            e, 
-                            {
-                                endpoint: "sales", 
-                                id: rowData.order_id, 
-                                action: 'canceled',
-                                items: {...rowData}
-                            }
-                        )}
-                    >
-                        <i className='bx bx-trash'></i> Batalkan order
-                    </Dropdown.Item>
-                </Dropdown.Menu>
-            </Dropdown>
-        </div>
-        );
-    };
-    
     const roItemTemplate = (rowData, index) => {
         return (
         <div className="col-12" key={index} style={{position:'relative'}}>
@@ -2259,6 +2118,147 @@ export default function Sales({handleSidebar, showSidebar}){
         setMobileFilterValue(e.target.value);
         e.target.value == "" ? setMobileSearchMode(false):setMobileSearchMode(true)
     }
+
+    const itemTemplate = (rowData, index) => {
+        return (
+        <div className="col-12" key={index} style={{position:'relative'}}>
+            <div className='flex flex-column xl:align-items-start gap-2 static-shadow'
+                style={{
+                    backgroundColor: '#F8F9FD',
+                    padding: '1rem',
+                    boxShadow: '1px 1px 7px #9a9acc1a',
+                    borderRadius: '9px',
+                    position:'relative'
+                }}
+                aria-label="salesEditModal" 
+                onClick={(e) => handleModalWData(e, {endpoint: "sales", id: rowData.order_id, action: 'update', ...rowData})}
+            >
+            
+            <div className="flex align-items-center gap-3" 
+                style={{
+                    textTransform: 'capitalize', 
+                    paddingBottom: '.75rem',
+                    borderBottom: '1px solid rgba(146, 146, 146, .2509803922)'
+                }}
+            >
+                <span className="user-img" style={{marginRight: 0}}>
+                <img
+                    src={
+                    rowData.img ? rowData.img
+                        : `https://res.cloudinary.com/du3qbxrmb/image/upload/v1751378806/no-img_u5jpuh.jpg`
+                    }
+                    alt=""
+                />
+                </span>
+                <div style={{width: '80%'}}>
+                    <p style={{marginBottom: 0, fontSize: 15, fontWeight: 600}}>{rowData.order_id}</p>
+                    <p style={{marginBottom: 0, fontSize: 13, color: '#7d8086'}}>{ConvertDate.LocaleStringDate(rowData.order_date)}</p>
+                    <div className='flex flex-row gap-2' style={{fontSize: 13, marginTop: '.5rem'}}>
+                        <span className={`badge badge-${
+                            rowData.order_type == "walk-in" ? 'primary'
+                            : rowData.order_type == "delivery" ? "warning" 
+                            : ""} light`}
+                        >
+                            {
+                                rowData.order_type
+                            }                                                                               
+                        </span>
+                        <span className={`badge badge-${
+                            rowData.order_status == "completed" ? 'success'
+                            : rowData.order_status == "pending" ? "secondary" 
+                            : rowData.order_status == "in-delivery" ? "warning" 
+                            : rowData.order_status == "canceled" ? "danger" 
+                            : rowData.order_status == "confirmed" ? "primary" 
+                            : ""} light`}
+                        >
+                            {
+                                rowData.order_status == "completed" ? 'selesai'
+                                : rowData.order_status == "pending" ? 'pending'
+                                : rowData.order_status == "in-delivery" ? 'in-delivery'
+                                : rowData.order_status == "canceled" ? 'batal'
+                                : rowData.order_status == "confirmed" ? 'dikonfirmasi'
+                                : ""
+                            }                                                                                
+                        </span>
+                        {rowData.invoice ?
+                            (
+                            <span className="verified-inv">
+                                <i className='bx bx-check-shield'></i>
+                            </span>
+                            ):(
+                            <span className="unverified-inv">
+                                <i className='bx bx-shield-x'></i>
+                            </span>
+                            )
+                        }
+                        
+                    </div>
+                </div>
+            </div>
+            <div className="flex flex-column gap-1" 
+                style={{
+                    textTransform: 'capitalize', 
+                }}
+            >
+                <div className="flex flex-row justify-content-between">
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Pelanggan:</p>
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>{rowData.customer_id ? `${rowData.customer?.name}` : `guest.name (non-member)`}</p>
+                </div>
+                <div className="flex flex-row justify-content-between">
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Total order:</p>
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right'}}>
+                        <NumberFormat intlConfig={{
+                            value: rowData.grandtotal, 
+                            locale: "id-ID",
+                            style: "currency", 
+                            currency: "IDR",
+                        }} 
+                        />
+                    </p>
+                </div>
+                <div className="flex flex-row justify-content-between">
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Tipe pembayaran:</p>
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right'}}>
+                        <span className={`badge badge-${
+                            rowData.payment_type == "bayar nanti" ? 'danger'
+                            : rowData.payment_type == "lunas"? "primary"
+                            : rowData.payment_type == "sebagian"? "warning"
+                            : ""} light`}
+                        >
+                            {rowData.payment_type }                                                                                
+                        </span>
+                    </p>
+                </div>
+            </div>
+            </div>
+            <Dropdown drop={index == custData.length - 1 ? "up" : "down"}  style={{position: 'absolute', top: 10, right: 9, padding: '1rem 1rem .5rem 1rem'}}>
+                <Dropdown.Toggle as={CustomToggle.CustomToggle1} id="dropdown-custom-components" ></Dropdown.Toggle>
+                <Dropdown.Menu align={"end"}>
+                    <Dropdown.Item eventKey="1" as="button" 
+                        aria-label="salesEditModal" 
+                        onClick={(e) => handleModalWData(e, {endpoint: "sales", id: rowData.order_id, action: 'update', ...rowData})}
+                    >
+                        <i className='bx bxs-edit'></i> Ubah order
+                    </Dropdown.Item>
+                    <Dropdown.Item eventKey="1" as="button" 
+                        aria-label="cancelSalesModal" 
+                        onClick={(e) => handleModalWData(
+                            e, 
+                            {
+                                endpoint: "sales", 
+                                id: rowData.order_id, 
+                                action: 'canceled',
+                                items: {...rowData}
+                            }
+                        )}
+                    >
+                        <i className='bx bx-trash'></i> Batalkan order
+                    </Dropdown.Item>
+                </Dropdown.Menu>
+            </Dropdown>
+        </div>
+        );
+    };
 
     const listTemplate = (items) => {
         if (!items || items.length === 0) return null;

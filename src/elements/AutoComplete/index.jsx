@@ -3,54 +3,137 @@ import InputWLabel from '../Input/InputWLabel';
 import propTypes from 'prop-types';
 import { useForm, useFormContext } from 'react-hook-form';
 
-export default function AutoComplete({Label, InputName, Placeholder, Data, ForceSelection, DataForm, SearchKey, DataKeyInputValue, returnData, require}){
+export default function AutoComplete({
+    Label, InputName, Placeholder, DataOrigin , DataFiltered, ForceSelection, 
+    DataForm, SearchKey, DataKeyInputValue, OnSelect, OnChange, require, 
+    FilterData, FilteredData,  index, LocalStorage, OpenPopup, OnFocus, SetFilteredData
+}){
     const popupRef = useRef();
-    const { register, formState: {errors}, setError, setValue, getValues } = useFormContext();
-    const [ filteredRes, setFilteredRes ] = useState(Data ? Data : []);
+    const { register, formState: {errors}, setError, setValue, getValues, setFocus, watch } = useFormContext();
+    const [ dataOrigin, setDataOrigin ] = useState(DataOrigin ? DataOrigin : []);
+    // const [ data, setData ] = useState(Data ? Data : []);
+    const [ FilteredOrigin, setFilteredOrigin ] = useState( FilteredData ? FilteredData : []);
+    const [ flag, setFlag] = useState(false);
+    const [ filteredData, setFilteredData ] = useState(DataFiltered ? DataFiltered : []);
     const [ choosedItem, setChoosedItem ] = useState(null);
-    const [ openPopup, setOpenPopup ] = useState(false);
+    const [ openPopup, setOpenPopup ] = useState(OpenPopup);
     const [ popupClicked, setPopupClicked ] = useState(false);
-    const [ blurred, setBlurred ] = useState(false);
+    const [ blurred, setBlurred ] = useState(true);
+    const [ currentActiveCust, setCurrentActiveCust ] = useState(null);
+    const customerListTakenStorage = localStorage.getItem(LocalStorage);    
 
     const handleAutoComplete = (e) => {
-        setBlurred(false)
         const inputVal = getValues(InputName);
         if(inputVal && inputVal !== ""){
             // if arrray object type
-            const filterData = Data.filter(item => item[SearchKey].includes(inputVal.toLowerCase()));
-            setFilteredRes(filterData);
+            let dupeFiltered;
+            if(customerListTakenStorage && e.type =="change") {
+                dupeFiltered = JSON.parse(customerListTakenStorage);
+                dupeFiltered[index] = null;
+                localStorage.setItem(LocalStorage, JSON.stringify(dupeFiltered));
+            }
             
-            (filterData.length == 0) ? setOpenPopup(false) : setOpenPopup(true);
+            if(dupeFiltered){
+                const filter1 = dataOrigin.filter(item => !dupeFiltered.includes(item.customer_id));
+                const filter2 = filter1.filter(item => item[SearchKey].includes(inputVal.toLowerCase()));
+                setFilteredData(filter2);            
+                (filter2.length == 0) ? setOpenPopup(false) : setOpenPopup(true);
+            } else {
+                // const filter1 = dataOrigin.filter(item => !dupeFiltered.includes(item.customer_id));
+                const filter1 = dataOrigin.filter(item => item[SearchKey].includes(inputVal.toLowerCase()));
+                console.log(filter1)
+                setFilteredData(filter1);            
+                (filter1.length == 0) ? setOpenPopup(false) : setOpenPopup(true);
+            }
+            
+
         } else if(inputVal == "") {
-            setFilteredRes(Data);
+            if(customerListTakenStorage) {
+                let dupeFiltered = JSON.parse(customerListTakenStorage);
+                const filter1 = dataOrigin.filter(item => !dupeFiltered.includes(item.customer_id));
+                setFilteredData(filter1);
+            } else {
+                setFilteredData(dataOrigin);
+
+            }
             setOpenPopup(true);
         } else {
             setOpenPopup(false);
         }
+        // console.log(e.type)
+        // if(e.type == "change" && OnChange){
+        //     return OnChange();
+        // }
     }
     
     const handleKeyDown = (e) => {
-        if(e.key) {
+        if (e.key) {
             setChoosedItem(null);
+            setBlurred(false);
         }
+    }
+
+    const handleFilteringAutoComplete = (custID) => {
+        // for fitering customer
+        let arr;
+        let parsed = JSON.parse(customerListTakenStorage);
+        arr = [...parsed];
+        if(custID && custID != ""){
+            if(arr.length == 0) {
+                arr[index] = custID;
+                console.log("data baru")
+                // localStorage.setItem(LocalStorage, JSON.stringify(arr));
+                // setFilteredData(arr);
+            } else {
+
+                let findDupe = arr.find((customerID) => customerID === custID);
+                if(!findDupe) {
+                // arr.push(custID);
+                arr[index] = custID;
+                // setFilteredData(arr);
+                // localStorage.setItem(`customer_id`, JSON.stringify(arr));
+                } else {
+                console.log("udah ada");
+                }
+            }
+
+            // let custDataDupe = [...Data];
+            // let result = data.filter(({customer_id}) => !arr.includes(customer_id));
+            // setFilteredData(result);
+            localStorage.setItem(LocalStorage, JSON.stringify(arr));
+        } 
+        // else {
+            // const customerListTakenStorage = localStorage.getItem(`customer_id`);
+            // let parsed = JSON.parse(customerListTakenStorage);
+            // let custDataDupe = [...Data];
+            let result = data.filter(({customer_id}) => !arr.includes(customer_id));
+            setFilteredData(result);
+            console.log(result);
+        // }
     }
 
     const handleChooseItem = (e, itemData) => {
         // for array object datatype  
-        // console.log()
         let setInputValue = itemData[DataKeyInputValue];
-        console.log(setInputValue)
-        setChoosedItem(setInputValue);
+
+        setChoosedItem(itemData);
         setValue(`${InputName}`, setInputValue);
         setOpenPopup(false);
-        setBlurred(false)
-        if(returnData){
-            return returnData(itemData);
-        }
+        setBlurred(false);
+
+        setTimeout(() => {
+            if(OnSelect){
+                return OnSelect(itemData);
+            }
+            
+        }, 250);
+
+        // FilterData && itemData.customer_id && handleFilteringAutoComplete(itemData.customer_id);
     }
 
     const handleBlur = () => {
-        if(!choosedItem){
+        console.log(choosedItem)
+        if(!choosedItem && !blurred){
             setValue(`${InputName}`, '');
         }
     }
@@ -58,12 +141,12 @@ export default function AutoComplete({Label, InputName, Placeholder, Data, Force
     const handleClickSelect = (ref) => {
         useEffect(() => {
             const handleClickOutside = (evt) => {
-                console.log(evt.target)
                 if(!ref.current.contains(evt.target) 
                     && evt.target.className !== "res-item" 
                     && evt.target.className !== "popup-element"
                 ) {
                     setOpenPopup(false);
+                    // handleBlur();
                 }  
 
             }
@@ -76,6 +159,13 @@ export default function AutoComplete({Label, InputName, Placeholder, Data, Force
     };
     handleClickSelect(popupRef);
 
+    // useEffect(() => {
+    //     if(choosedItem){
+    //        if(OnSelect) return OnSelect(choosedItem);
+    //     }
+    // },[choosedItem]);
+ 
+
     return(
         <div style={{ position: "relative" }}>
             <InputWLabel
@@ -83,13 +173,15 @@ export default function AutoComplete({Label, InputName, Placeholder, Data, Force
                 type="text"
                 name={InputName}
                 placeholder={Placeholder}
-                onChange={(e) => handleAutoComplete(e)}
-                onFocus={handleAutoComplete}
+                onChange={(e) => {
+                    handleAutoComplete(e);
+                }}
+                onFocus={(e) => handleAutoComplete(e)}
                 onKeyDown={handleKeyDown}
                 // for smooth working onBlur method in custom component must set nBlur=true 
                 // && set prop onblurcallback for onblurfunction
                 onBlur={true}
-                onBlurCallback={handleBlur}
+                onBlurCallback={() => ForceSelection && handleBlur()}
                 // if onblur true, two items prop above are required
 
                 require={require}
@@ -105,8 +197,8 @@ export default function AutoComplete({Label, InputName, Placeholder, Data, Force
                 aria-expanded={openPopup}
                 ref={popupRef}
             >
-                {filteredRes && filteredRes.length > 0
-                ? filteredRes.map((item, idx) => {
+                {filteredData && filteredData.length > 0
+                ? filteredData.map((item, idx) => {
                     return (
                         <div
                         key={idx}
@@ -114,7 +206,7 @@ export default function AutoComplete({Label, InputName, Placeholder, Data, Force
                         onClick={(e) => {
                             e.stopPropagation();
                             setPopupClicked(true);
-                            handleChooseItem(e, item)
+                            handleChooseItem(e, item);
                         }
                             
                         }
@@ -133,9 +225,12 @@ AutoComplete.propTypes = {
     Label: propTypes.string,
     InputName: propTypes.string,
     Placeholder: propTypes.string,
-    Data: propTypes.array.isRequired,
+    DataOrigin: propTypes.array.isRequired,
+    DataFiltered: propTypes.array.isRequired,
     ForceSelection: propTypes.bool,
-    returnData: propTypes.func,
+    FilterData: propTypes.bool,
+    OnSelect: propTypes.func,
+    OnChange: propTypes.func,
     DataForm: propTypes.oneOf(['array', 'array-object']).isRequired,
     SearchKey: (props, propName, componentName) => {
         if(props.DataForm == "array-object" && typeof props[propName] != "string"){
