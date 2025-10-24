@@ -1242,74 +1242,6 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
                       </tr>
                       <tr className="endnote-row">
                         <td colSpan="5" className="endnote-row-title">
-                          subtotal
-                        </td>
-                        <td colSpan="2" style={{ fontWeight: 500 }}>
-                          <NumberFormat
-                            intlConfig={{
-                              value: salesEndNote.subtotal,
-                              locale: "id-ID",
-                              style: "currency",
-                              currency: "IDR",
-                            }}
-                          />
-                        </td>
-                      </tr>
-                      <tr className="endnote-row">
-                        <td colSpan="5" className="endnote-row-title">
-                          add more discount
-                        </td>
-                        <td colSpan="2" style={{ fontWeight: 500 }}>
-                          {salesDisc ? (
-                            salesDisc.discType == "percent" ? (
-                              <>
-                                <NumberFormat
-                                  intlConfig={{
-                                    value: salesDisc
-                                      ? (salesDisc.value *
-                                          Number(salesEndNote.subtotal)) /
-                                        100
-                                      : 0,
-                                    locale: "id-ID",
-                                    style: "currency",
-                                    currency: "IDR",
-                                  }}
-                                />
-                                <span>{`(${salesDisc.value}%)`}</span>
-                              </>
-                            ) : (
-                              <NumberFormat
-                                intlConfig={{
-                                  value: salesDisc.value,
-                                  locale: "id-ID",
-                                  style: "currency",
-                                  currency: "IDR",
-                                }}
-                              />
-                            )
-                          ) : (
-                            <NumberFormat
-                              intlConfig={{
-                                value: 0,
-                                locale: "id-ID",
-                                style: "currency",
-                                currency: "IDR",
-                              }}
-                            />
-                          )}
-                          <span className="endnote-row-action">
-                            <span
-                              className="table-btn edit-table-data"
-                              aria-label="addDiscount"
-                              onClick={(e) => handleModal(e)}
-                            >
-                              <i className="bx bx-cog"></i>
-                            </span>
-                          </span>
-                        </td>
-                      </tr>
-                      <tr className="endnote-row">
-                        <td colSpan="5" className="endnote-row-title">
                           total
                         </td>
                         <td colSpan="2">
@@ -1325,42 +1257,53 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
                       </tr>
                       <tr className="endnote-row">
                         <td colSpan="5" className="endnote-row-title">
-                          paid & payment type
+                          informasi pembayaran
                         </td>
                         <td colSpan="2">
                           <NumberFormat
                             intlConfig={{
-                              value: paidData ? paidData.amountOrigin : 0,
+                              value: paymentData ? paymentData.amountOrigin : 0,
                               locale: "id-ID",
                               style: "currency",
                               currency: "IDR",
                             }}
                           />
-                          <span
+                          {/* <span
                             style={{
                               textTransform: "capitalize",
                               fontWeight: 500,
                             }}
-                          >{`${paidData ? "~ " + paidData.payment_type : ""}`}</span>
+                          >{`${paymentData ? "edit pembayaran" : ""}`}</span> */}
                           <span className="endnote-row-action">
                             <span
                               className="table-btn edit-table-data"
                               aria-label="createPayment"
                               onClick={handleModal}
                             >
-                              <i className="bx bx-cog"></i>
+                              <i className="bx bx-plus"></i>
+                              {/* {`${paymentData ? "Edit pembayaran" : ""}`} */}
                             </span>
                           </span>
                         </td>
                       </tr>
                       <tr className="endnote-row">
                         <td colSpan="5" className="endnote-row-title">
-                          remaining payment
+                          {
+                            paymentData ? 
+                              paymentData.amountOrigin-salesEndNote.grandtotal < 0 ?  
+                                'sisa pembayaran' 
+                                : 'kembali'
+                            : 'sisa pembayaran'
+                          }
                         </td>
                         <td colSpan="2">
                           <NumberFormat
                             intlConfig={{
-                              value: salesEndNote.remaining_payment,
+                              value: paymentData ? 
+                                      paymentData.amountOrigin-salesEndNote.grandtotal < 0 ?  
+                                        Math.abs(paymentData.amountOrigin-salesEndNote.grandtotal) 
+                                        : Math.abs(salesEndNote.grandtotal-paymentData.amountOrigin)
+                                    : 0,
                               locale: "id-ID",
                               style: "currency",
                               currency: "IDR",

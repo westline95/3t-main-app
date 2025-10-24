@@ -1259,7 +1259,7 @@ export default function Invoice({handleSidebar, showSidebar}){
                 <span className="user-img" style={{marginRight: 0}}>
                 <img
                     src={
-                    rowData.customer.img ? rowData.customer.img
+                    rowData.customer ? rowData.customer.img
                         : `https://res.cloudinary.com/du3qbxrmb/image/upload/v1751378806/no-img_u5jpuh.jpg`
                     }
                     alt=""
@@ -1286,7 +1286,7 @@ export default function Invoice({handleSidebar, showSidebar}){
                 </div> */}
                 <div className="flex flex-row justify-content-between">
                     <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Pelanggan:</p>
-                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right'}}>{rowData.customer.name}</p>
+                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right'}}>{rowData.customer ? rowData.customer?.name : rowData.guest_name}</p>
                 </div>
                 <div className="flex flex-row justify-content-between">
                     <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Total bayar:</p>

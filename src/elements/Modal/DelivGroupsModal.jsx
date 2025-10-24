@@ -114,6 +114,7 @@ export default function DelivGroupsModal({ show, onHide, data, returnAct }) {
   const fetchAllEmployee = async () => {
     await axiosPrivate.get("/employee/all")
     .then((response) => {
+      console.log(response.data)
       setEmployeeData(response.data);
       // setTotalRecords(response.data.length);
       // setDupeCustData(response.data);
@@ -647,17 +648,17 @@ export default function DelivGroupsModal({ show, onHide, data, returnAct }) {
     let delivery_groups = {
       delivery_group: {
         employee_id: formData.employee_id,
-        delivery_group_date: formData.delivery_group_date,
+        delivery_group_date: new Date(),
         status: 0
       },
       delivery_group_items: salesItems,
     }
-    
+
     if(data.action == "insert"){
       // delivery_groups.delivery_group_items = salesItems;
       delivery_groups.delivery_group.total_item = salesEndNote.totalQty;
       delivery_groups.delivery_group.total_value = salesEndNote.subtotal;
-
+      // setControlUiBtn(false)
       fetchSetDG(delivery_groups);
     } else {
       if(salesItems.length == 0){
@@ -747,7 +748,7 @@ export default function DelivGroupsModal({ show, onHide, data, returnAct }) {
                       display={false}
                     />
                   {/* end: helper for validate */}
-                  <div className="col-lg-6 col-sm-6 col-12">
+                  <div className="col-lg-12 col-sm-12 col-12">
                     <InputWLabel 
                       label="nama karyawan" 
                       type="text"
@@ -778,7 +779,7 @@ export default function DelivGroupsModal({ show, onHide, data, returnAct }) {
                       }
                     </div>
                   </div>
-                  <div className="col-lg-6 col-sm-6 col-12">
+                  {/* <div className="col-lg-6 col-sm-6 col-12">
                     <InputWLabel
                       label="tanggal pengantaran"
                       type="date"
@@ -791,7 +792,7 @@ export default function DelivGroupsModal({ show, onHide, data, returnAct }) {
                       require={false}
                       errors={errors}
                     />
-                  </div>
+                  </div> */}
                 </div>
                 <div className="row gy-2">
                   {/* <p className="modal-section-title">produk</p> */}

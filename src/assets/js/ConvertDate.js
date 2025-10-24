@@ -5,6 +5,10 @@ const convertToFullDate = (dateInput, separator) => {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
+      hours: 23,
+      minutes: 2,
+      seconds: 2
+
     };
   
     return date.toLocaleString('id-ID', options).replaceAll("/",separator);

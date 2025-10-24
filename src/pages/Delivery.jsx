@@ -639,6 +639,11 @@ export default function Delivery({handleSidebar, showSidebar}){
         setProd(null);
     }
 
+    const dgDateBody = (rowData) => {
+        // return <span>{ConvertDate.convertToFullDate(rowData.delivery_group_date, "/")}</span>;
+        return <span>{new Date(rowData.delivery_group_date).toLocaleString('id-ID').replaceAll(".", ":")}</span>;
+    };
+
     useEffect(() => {
         if(!chooseCust){
             setValue('customer_id', '');
@@ -1879,6 +1884,15 @@ export default function Delivery({handleSidebar, showSidebar}){
                                                 field="delivery_group_id"
                                                 header="ID Pengantaran"
                                                 sortable
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
+                                                style={{ textTransform: "uppercase" }}
+                                            ></Column>
+                                            <Column
+                                                field="delivery_group_date"
+                                                header="tanggal & waktu"
+                                                sortable
+                                                body={dgDateBody}
                                                 bodyStyle={primeTableBodyStyle}
                                                 headerStyle={primeTableHeaderStyle}
                                                 style={{ textTransform: "uppercase" }}

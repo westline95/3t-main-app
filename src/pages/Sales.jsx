@@ -2651,7 +2651,7 @@ export default function Sales({handleSidebar, showSidebar}){
                                                 header={tableHeader}
                                                 paginator
                                                 totalRecords={totalRecords}
-                                                rows={50}
+                                                rows={10}
                                                 stripedRows
                                             >
                                                 <Column
@@ -3923,7 +3923,7 @@ export default function Sales({handleSidebar, showSidebar}){
                                                 header={returnOrderHeader}
                                                 paginator
                                                 totalRecords={totalRecords}
-                                                rows={50}
+                                                rows={15}
                                             >
                                             <Column
                                                 selectionMode="multiple"

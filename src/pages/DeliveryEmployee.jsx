@@ -131,6 +131,7 @@ export default function DeliveryEmployee({handleSidebar, showSidebar}){
     const fetchAllDelivery = async () => {
         await axiosPrivate.get("/delivery/all")
             .then(response => {
+                console.log(response.data)
                 setSalesData(response.data);
                 setDupeDelivData(response.data);
                 setTotalRecords(response.data.length);

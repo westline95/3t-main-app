@@ -97,7 +97,7 @@ const returnReasonList = [
     }, 
     {
         id: 3, 
-        type:"produk salah warna/ukuran/model"
+        type:"produk salah varian/ukuran/model"
     },
     {
         id: 4, 
@@ -105,15 +105,11 @@ const returnReasonList = [
     },
     {
         id: 5, 
-        type:"tidak jadi beli"
+        type:"keterlambatan pengiriman dan pelanggan menolak menerima"
     },
     {
         id: 6, 
-        type:"salah beli tipe/fitur"
-    }, 
-    {
-        id: 7, 
-        type:"keterlambatan pengiriman dan pelanggan menolak menerima"
+        type: "barang gagal produksi"
     },
     // {
     //     id: 8, 

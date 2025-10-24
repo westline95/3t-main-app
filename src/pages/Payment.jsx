@@ -553,10 +553,10 @@ export default function Payment() {
                 <p style={{marginBottom: 0, fontSize: 13, color: '#7d8086'}}>{ConvertDate.LocaleStringDate(rowData.payment_date)}</p>
                 <div className='flex flex-row flex-wrap gap-2' style={{fontSize: 13, marginTop: '.5rem'}}>
                     <span className={`badge badge-primary light`} style={{textTransform: 'uppercase'}}>
-                        {rowData.invoice.invoice_number}
+                        {rowData.invoice?.invoice_number}
                     </span>
                     {
-                      rowData.invoice.receipt ?
+                      rowData.invoice?.receipt ?
                       (
                         <span className={`badge badge-success light`}
                         >{rowData.invoice.receipt.receipt_id}</span>
@@ -576,7 +576,7 @@ export default function Payment() {
             </div> */}
             <div className="flex flex-row justify-content-between">
                 <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Pelanggan:</p>
-                <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right'}}>{rowData.customer.name}</p>
+                <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right'}}>{rowData.customer ? rowData.customer.name : rowData.guest_name}</p>
             </div>
             <div className="flex flex-row justify-content-between">
                 <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Bayar:</p>
@@ -828,7 +828,7 @@ export default function Payment() {
                             header={tableHeader}
                             paginator
                             totalRecords={totalRecords}
-                            rows={50}
+                            rows={10}
                         >
                         <Column
                           selectionMode="multiple"

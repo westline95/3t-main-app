@@ -231,7 +231,7 @@ export default function WriteDelivGroupItemsModal({
 
   const fetchDGReport = async(dataToSend) => {
     let body = JSON.stringify(dataToSend);
-    await axiosPrivate.post("http://localhost:5056/add/delivery-group-report", body)
+    await axiosPrivate.post("/add/delivery-group-report", body)
     .then(resp => {
       toast.current.show({
         severity: "success",
@@ -261,6 +261,7 @@ export default function WriteDelivGroupItemsModal({
 
   const onSubmit = async (formData) => {
     const storage = localStorage.getItem(`form-${data.id}`);
+    console.log("hehe")
     if(!storage){
       toast.current.show({
         severity: "error",
@@ -298,8 +299,8 @@ export default function WriteDelivGroupItemsModal({
       })
       
       let delivery_group_report = {
-        delivery_group_id: data.id,
-        employee_id: data.employee_id,
+        delivery_group_id: Number(data.id),
+        employee_id: Number(data.employee_id),
         report_status: 0,
         notes: "",
         total_item,
@@ -563,46 +564,46 @@ export default function WriteDelivGroupItemsModal({
   useEffect(() => {
     if(dgReportList){
       setShowModal("");
-      let dgReportListArr = [];
-      dgReportList.items.map((item, idx) => {
-        let dgListItem = {
-          customer_id: dgReportList.customer_id,
-          guest_name : dgReportList.customer_id ? '' : dgReportList.name,
-          order_date: dgReportList.origin.delivery_group_date,
-          order_type: 'delivery',
-          order_status: dgReportList.payment.amountOrigin == 0 ? 'pending' 
-                        : dgReportList.payment.amountOrigin < dgReportList.payment.pay_amount ? 'pending'
-                        : dgReportList.payment.amountOrigin >= dgReportList.payment.pay_amount ? 'completed'
-                        : 'pending',
-          source: 'delivery_group',
-          shipped_date: dgReportList.origin.delivery_group_date,
-          payment_type: dgReportList.payment.amountOrigin == 0 ? 'bayar nanti' 
-                        : dgReportList.payment.amountOrigin < dgReportList.payment.pay_amount ? 'sebagian'
-                        : dgReportList.payment.amountOrigin >= dgReportList.payment.pay_amount ? 'lunas'
-                        : 'bayar nanti',
-          subtotal: dgReportList.cost_detail.grandtotal,
-          grandtotal: dgReportList.cost_detail.grandtotal,
-          note: dgReportList.note,
-          is_complete: dgReportList.payment.amountOrigin == 0 ? false 
-          : dgReportList.payment.amountOrigin < dgReportList.payment.pay_amount ? false
-          : dgReportList.payment.amountOrigin >= dgReportList.payment.pay_amount ? true
-          : false,
-          order_discount: 0,
-          payment_date: dgReportList.payment.payment_date,
-          amount_paid: dgReportList.payment.amountOrigin,
-          payment_method: 'cash',
-          payment_note: dgReportList.payment.note,
-        }  
+      // let dgReportListArr = [];
+      // dgReportList.items.map((item, idx) => {
+      //   let dgListItem = {
+      //     customer_id: dgReportList.customer_id,
+      //     guest_name : dgReportList.customer_id ? '' : dgReportList.name,
+      //     order_date: dgReportList.origin.delivery_group_date,
+      //     order_type: 'delivery',
+      //     order_status: dgReportList.payment.amountOrigin == 0 ? 'pending' 
+      //                   : dgReportList.payment.amountOrigin < dgReportList.payment.pay_amount ? 'pending'
+      //                   : dgReportList.payment.amountOrigin >= dgReportList.payment.pay_amount ? 'completed'
+      //                   : 'pending',
+      //     source: 'delivery_group',
+      //     shipped_date: dgReportList.origin.delivery_group_date,
+      //     payment_type: dgReportList.payment.amountOrigin == 0 ? 'bayar nanti' 
+      //                   : dgReportList.payment.amountOrigin < dgReportList.payment.pay_amount ? 'sebagian'
+      //                   : dgReportList.payment.amountOrigin >= dgReportList.payment.pay_amount ? 'lunas'
+      //                   : 'bayar nanti',
+      //     subtotal: dgReportList.cost_detail.grandtotal,
+      //     grandtotal: dgReportList.cost_detail.grandtotal,
+      //     note: dgReportList.note,
+      //     is_complete: dgReportList.payment.amountOrigin == 0 ? false 
+      //     : dgReportList.payment.amountOrigin < dgReportList.payment.pay_amount ? false
+      //     : dgReportList.payment.amountOrigin >= dgReportList.payment.pay_amount ? true
+      //     : false,
+      //     order_discount: 0,
+      //     payment_date: dgReportList.payment.payment_date,
+      //     amount_paid: dgReportList.payment.amountOrigin,
+      //     payment_method: 'cash',
+      //     payment_note: dgReportList.payment.note,
+      //   }  
 
-        dgListItem.product_id = item.product_id;
-        dgListItem.quantity = item.quantity;
-        dgListItem.sell_price = item.sell_price;
-        dgListItem.disc_prod_rec = item.discProd;
+      //   dgListItem.product_id = item.product_id;
+      //   dgListItem.quantity = item.quantity;
+      //   dgListItem.sell_price = item.sell_price;
+      //   dgListItem.disc_prod_rec = item.discProd;
 
-        dgReportListArr.push(dgListItem);
-      })
+      //   dgReportListArr.push(dgListItem);
+      // })
 
-      console.log(dgReportListArr);
+      console.log(dgReportList);
     }
   },[dgReportList]);
 
