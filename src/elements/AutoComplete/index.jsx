@@ -6,7 +6,7 @@ import { useForm, useFormContext } from 'react-hook-form';
 export default function AutoComplete({
     Label, InputName, Placeholder, DataOrigin , DataFiltered, ForceSelection, 
     DataForm, SearchKey, DataKeyInputValue, OnSelect, OnChange, require, 
-    FilterData, FilteredData,  index, LocalStorage, OpenPopup, OnFocus, SetFilteredData
+    FilterData, FilteredData,  index, LocalStorage, OpenPopup, OnFocus, onKeyDownChange
 }){
     const popupRef = useRef();
     const { register, formState: {errors}, setError, setValue, getValues, setFocus, watch } = useFormContext();
@@ -24,9 +24,10 @@ export default function AutoComplete({
 
     const handleAutoComplete = (e) => {
         const inputVal = getValues(InputName);
+
         if(inputVal && inputVal !== ""){
             // if arrray object type
-            let dupeFiltered;
+            // let dupeFiltered;
             if(customerListTakenStorage && e.type =="change") {
                 dupeFiltered = JSON.parse(customerListTakenStorage);
                 dupeFiltered[index] = null;
@@ -36,17 +37,17 @@ export default function AutoComplete({
             if(dupeFiltered){
                 const filter1 = dataOrigin.filter(item => !dupeFiltered.includes(item.customer_id));
                 const filter2 = filter1.filter(item => item[SearchKey].includes(inputVal.toLowerCase()));
+                // const filter2 = dataOrigin.filter(item => item[SearchKey].includes(inputVal.toLowerCase()));
                 setFilteredData(filter2);            
-                (filter2.length == 0) ? setOpenPopup(false) : setOpenPopup(true);
+                // (filter2.length == 0) ? setOpenPopup(false) : setOpenPopup(true);
+                setOpenPopup(true);
             } else {
-                // const filter1 = dataOrigin.filter(item => !dupeFiltered.includes(item.customer_id));
-                const filter1 = dataOrigin.filter(item => item[SearchKey].includes(inputVal.toLowerCase()));
-                console.log(filter1)
-                setFilteredData(filter1);            
-                (filter1.length == 0) ? setOpenPopup(false) : setOpenPopup(true);
+                const filter1 = dataOrigin.filter(item => !dupeFiltered.includes(item.customer_id));
+            // const filter1 = filteredData ? filteredData.filter(item => item[SearchKey].includes(inputVal.toLowerCase())) : dataOrigin.filter(item => item[SearchKey].includes(inputVal.toLowerCase()));
+            setFilteredData(filter1);            
+            setOpenPopup(true);
+            // (filter1.length == 0) ? setOpenPopup(false) : setOpenPopup(true);
             }
-            
-
         } else if(inputVal == "") {
             if(customerListTakenStorage) {
                 let dupeFiltered = JSON.parse(customerListTakenStorage);
@@ -56,13 +57,18 @@ export default function AutoComplete({
                 setFilteredData(dataOrigin);
 
             }
-            setOpenPopup(true);
-        } else {
-            setOpenPopup(false);
+            // if(filteredData){
+            //     setFilteredData(DataFiltered);
+            //     setOpenPopup(true);
+            // } else {
+            //     setFilteredData(dataOrigin);
+            //     setOpenPopup(false);
+                setOpenPopup(true);
+            // }
         }
-        // console.log(e.type)
-        // if(e.type == "change" && OnChange){
-        //     return OnChange();
+
+        // if(onKeyDownChange){
+        //     return onKeyDownChange(choosedItem, index);
         // }
     }
     
@@ -132,7 +138,6 @@ export default function AutoComplete({
     }
 
     const handleBlur = () => {
-        console.log(choosedItem)
         if(!choosedItem && !blurred){
             setValue(`${InputName}`, '');
         }
@@ -164,7 +169,7 @@ export default function AutoComplete({
     //        if(OnSelect) return OnSelect(choosedItem);
     //     }
     // },[choosedItem]);
- 
+    console.log(openPopup)
 
     return(
         <div style={{ position: "relative" }}>

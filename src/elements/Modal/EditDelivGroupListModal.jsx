@@ -17,10 +17,9 @@ import { DataView } from "primereact/dataview";
 import useMediaQuery from "../../hooks/useMediaQuery";
 import NumberFormat from "../Masking/NumberFormat";
 import { Swiper, SwiperSlide } from "swiper/react";
-import EditDelivGroupListModal from "./EditDelivGroupListModal";
 import dataStatic from "../../assets/js/dataStatic";
 
-export default function DelivGroupsModal({ show, onHide, data, returnAct }) {
+export default function EditDelivGroupListModal({ show, onHide, data, returnAct }) {
   const isMobile = useMediaQuery('(max-width: 768px)');
   const isMediumScr = useMediaQuery('(min-width: 768px) and (max-width: 1024px)');
 
@@ -30,7 +29,7 @@ export default function DelivGroupsModal({ show, onHide, data, returnAct }) {
 
   const toast = useRef(null);
   const toastUpload = useRef(null);
-  const refToThis = useRef(null);
+  const refToItemStatus = useRef(null);
   const refToProd = useRef(null);
   const [progress, setProgress] = useState(0);
   const [ dg, setDG ] = useState(null);
@@ -46,10 +45,9 @@ export default function DelivGroupsModal({ show, onHide, data, returnAct }) {
   const [ salesEndNote, setSalesEndNote] = useState(null);
   const [ salesDisc, setSalesDisc] = useState(null);
   const [ discVal, setDiscVal] = useState(0);
-  const [ salesItems, setSalesItems] = useState([]);
+  const [ salesItems, setSalesItems] = useState(data.salesItems ? data.salesItems : []);
   const [ choosedSession, setChoosedSession] = useState(null);
   const [ openMiniCard, setOpenMiniCard] = useState(false);
-  const [ refetch, setRefetch] = useState(false);
   
   const {
     register,
@@ -74,7 +72,7 @@ export default function DelivGroupsModal({ show, onHide, data, returnAct }) {
     title: "",
   });
 
-  const [isLoading, setLoading] = useState(true);
+  const [isLoading, setLoading] = useState(false);
   const [sendTarget, setSendTarget] = useState(null);
 
   const femaleAvatar = `https://res.cloudinary.com/du3qbxrmb/image/upload/v1749183325/Avatar_1_hhww7p.jpg`;
@@ -156,7 +154,7 @@ export default function DelivGroupsModal({ show, onHide, data, returnAct }) {
   const handleClickSelect = (ref) => {
     useEffect(() => {
       const handleClickOutside = (evt) => {
-        if(refToThis.current 
+        if(refToItemStatus.current 
           // && !ref.current.contains(evt.target) 
           && evt.target.className !== "res-item" 
           && evt.target.className !== "popup-element") {
@@ -171,7 +169,7 @@ export default function DelivGroupsModal({ show, onHide, data, returnAct }) {
     },[ref])
           
   };
-  handleClickSelect(refToThis);
+  handleClickSelect(refToItemStatus);
   handleClickSelect(refToProd);
 
   const handleChooseProd = (e) => {
@@ -313,7 +311,6 @@ export default function DelivGroupsModal({ show, onHide, data, returnAct }) {
       });
     }
   }
-  console.log(salesEndNote)
 
   const delSalesItems = (idx) => {
     salesItems.splice(idx, 1);
@@ -357,7 +354,6 @@ export default function DelivGroupsModal({ show, onHide, data, returnAct }) {
             } else {
                 tmpArr.push(prodObjDupe);
             }
-            console.log(tmpArr)
             setSalesItems(tmpArr);
         }
         // setPaidData(null);
@@ -619,12 +615,12 @@ export default function DelivGroupsModal({ show, onHide, data, returnAct }) {
 
     })
   }
-  const fetchUpdateDG = async(delivery_groups) => {
-    const body = JSON.stringify(delivery_groups);
+  const fetchUpdateDG = async(dgList) => {
+    const body = JSON.stringify(dgList);
 
-    await axiosPrivate.put("/edit/delivery-group", body, {
+    await axiosPrivate.put("/edit/delivery-group-list", body, {
       params: {
-        id: data.id
+        id: data.delivery_group_id
       }
     })
     .then(resp => {
@@ -653,59 +649,23 @@ export default function DelivGroupsModal({ show, onHide, data, returnAct }) {
   
   const onError = () => {
     setControlUiBtn(false);
-    console.error(errors);
   };
 
   const onSubmit = async(formData) => {
-    let delivery_groups = {
-      delivery_group: {
-        employee_id: formData.employee_id,
-        delivery_group_date: new Date(),
-        status: 1
-      },
+    if(salesItems.length > 0){
+      salesItems.map(e => {
+        if(!e.status) e.status = Number(formData.status);
+        if(!e.delivery_group_id) e.delivery_group_id = data.delivery_group_id;
+        if(!e.session) e.session = Number(data.session);
+      });
+    }
+
+    let edit_delivery_groups = {
+      session: Number(data.session),
       delivery_group_items: salesItems,
     }
 
-    if(data.action == "insert"){
-      if(!salesItems || salesItems.length < 1) {
-        setControlUiBtn(false);
-        toast.current.show({
-          severity: "error",
-          summary: "Error",
-          detail: "Tambahkan produk terlebih dahulu",
-          life: 3500,
-        });
-      } else {
-        // delivery_groups.delivery_group_items = salesItems;
-        delivery_groups.delivery_group.total_item = salesEndNote.totalQty;
-        delivery_groups.delivery_group.total_value = salesEndNote.subtotal;
-        // setControlUiBtn(false)
-        fetchSetDG(delivery_groups);
-      }
-    } else {
-      if(salesItems.length == 0){
-        setControlUiBtn(false)
-        toast.current.show({
-          severity: "error",
-          summary: "Error",
-          detail: "Minimal 1 produk ditambahkan",
-          life: 3000,
-        });
-      } else {
-        delivery_groups.delivery_group.total_item = salesEndNote.totalQty;
-        delivery_groups.delivery_group.total_value = salesEndNote.subtotal;
-
-        salesItems.map(item => {
-          item.delivery_group_id = data.id;
-          if(item.deliv_group_item_id){
-            delete item.deliv_group_item_id;
-          }
-        });
-
-        setControlUiBtn(false);
-        fetchUpdateDG(delivery_groups);
-      }
-    }
+    fetchUpdateDG(edit_delivery_groups);
   }
 
   const handleCancel = () => {
@@ -718,17 +678,6 @@ export default function DelivGroupsModal({ show, onHide, data, returnAct }) {
     setShowModal(false);
   };
 
-  const handleModal = (e) => {
-    switch (e.currentTarget.ariaLabel) {
-      case "editDGList":
-        setShowModal("editDGList");
-        break;
-    
-      default:
-        break;
-    }
-  }
-
   useEffect(() => {
     fetchAllProd();
     fetchAllEmployee();
@@ -740,21 +689,6 @@ export default function DelivGroupsModal({ show, onHide, data, returnAct }) {
     }
   },[data]);
 
-  useEffect(() => {
-    if(data && data.action == "update" && dg){
-      setLoading(false);
-    } else if(allProdData && employeeData && data.action == "insert"){
-      setLoading(false);
-    }
-  },[data, dg, allProdData, employeeData]);
-
-  useEffect(() => {
-    if(refetch){
-      fetchDG();
-      setShowModal("");
-      setRefetch(false);
-    }
-  }, [refetch]);
 
   const handleMiniCardCollapse = (currMiniCard) => {
     if(choosedSession){
@@ -790,321 +724,254 @@ export default function DelivGroupsModal({ show, onHide, data, returnAct }) {
         centered={true}
         backdrop="static"
       >
-        <Modal.Header closeButton>
-          <Modal.Title>{data.action == "insert" ? "tambah" : "ubah"} pengantaran grup</Modal.Title>
+        <Modal.Header>
+          <Modal.Title onClick={() => onHide()} style={{cursor: "pointer"}}><i className='bx bx-arrow-back' style={{marginRight: 7, fontWeight: 700}}></i> kembali</Modal.Title>
         </Modal.Header>
-          <Modal.Body>
-            <form style={{height: '100%'}}>
-              <div className="add-prod-detail-wrap" style={{flexDirection: 'column', gap: '1rem'}}>
-                <div className="row gy-2">
-                  {/* start: this is helper */}
-                    <InputWLabel 
-                      type="text"
-                      name="employee_id"
-                      require={true}
-                      register={register}
-                      errors={errors} 
-                      display={false}
-                    />
-                  {/* end: helper for validate */}
-                  <div className={data.action == "insert" ? 'col-lg-6 col-sm-6 col-6' : 'col-lg-12 col-sm-12 col-12'} style={{marginTop: '-.5rem'}}>
-                    <InputWLabel 
-                      label="nama karyawan" 
-                      type="text"
-                      name="employeeName" 
-                      placeholder="Search employee name..." 
-                      onChange={handleFilterName}
-                      onFocus={handleFilterName}
-                      onKeyDown={handleKeyDown}
-                      require={true}
-                      register={register}
-                      errors={errors} 
-                      textStyle={'capitalize'}
-                      autoComplete={"off"}
-                    />
-                    {/* popup autocomplete */}
-                    <div className="popup-element" aria-expanded={openPopupEmployee} ref={refToThis}>
-                      {filterName && filterName.length > 0 ? 
-                        filterName.map((e,idx) => {
-                          return (
-                            <div key={`employee-${idx}`} className="res-item" onClick={() => 
-                              handleChooseEmployee({ 
-                                ...e
-                            })}>{e.name}</div>
-                            )
-                        }) : (
-                          <div className="res-item">Tidak ada data</div>
-                        )
+          <Modal.Body style={{minHeight: 450}}>
+            <form>
+              <div className="row gy-2">
+                <div className="col-lg-6 col-sm-12 col-12" style={{marginTop: '-.5rem'}}>
+                  <InputWSelect
+                    label={"status sesi pengantaran"}
+                    name="status_items_pengantaran"
+                    selectLabel="Pilih status"
+                    options={dataStatic.deliveryGroupItemsStatus}
+                    optionKeys={["id", "type"]}
+                    value={(selected) => {setValue("status", selected.id);setValue("status_items_pengantaran", selected.value);getValues("status_items_pengantaran") !== "" && clearErrors('status_items_pengantaran')}}
+                    defaultValue={salesItems[0] ? salesItems[0]?.status  : ""}
+                    defaultValueKey={"id"}
+                    register={register}
+                    require={true}
+                    errors={errors}
+                  />
+                </div>
+              </div>
+              <div className="add-prod-detail-wrap mt-2" style={{flexDirection: 'column', gap: '1rem'}}>
+                {/* <div className="modal-table-wrap mt-2">
+                  <div className="table-responsive" style={{height: '150px'}}>
+                    <div className='mini-card-container'>
+                      {dg.DeliveryGroupItemsGrouped.map((dgItem, idx) => {
+                          return(
+                            <div className={`mini-card ${choosedSession && choosedSession == dgItem ? 'active' : ""}`} key={idx} 
+                                onClick={() => {
+                                  handleMiniCardCollapse(dgItem);
+                                  // setChoosedSession(dgItem);
+                                  setSalesItems([...dgItem.items]);
+                                }}>
+                              <div className={`header-highlight bg-${choosedSession && choosedSession == dgItem ? 'info' : 'success'}`}>
+                                <NumberFormat intlConfig={{
+                                    value: dg.total_value, 
+                                    locale: "id-ID",
+                                    style: "currency", 
+                                    currency: "IDR",
+                                  }} 
+                                />
+                              </div>
+                              <p className='mini-card-title' style={{marginTop: '2rem', textTransform: 'capitalize'}}>{'sesi: ' + dgItem.session}</p>
+                              <p className='mini-card-title' >{new Date(dgItem.items[0].createdAt).toLocaleString('id-ID').replaceAll(".", ":")}</p>
+                          
+                              <span style={{display: "inline-flex", gap: 4}}>
+                                  <p className='mini-card-subtitle'>Total item: </p>
+                                  <p className='mini-card-text'>{Number(dg.total_item)}</p>
+                              </span>
+                            </div>
+                          )
+                        
+                        }) 
+                      //   : null
+                      // :null
                       }
                     </div>
                   </div>
-                  {data.action == "insert" && (
-                    <div className="col-lg-6 col-sm-6 col-6" style={{marginTop: '-.5rem'}}>
-                      <InputWSelect
-                        label={"status sesi pengantaran"}
-                        name="status_items_pengantaran"
-                        selectLabel="Pilih status"
-                        options={dataStatic.deliveryGroupItemsStatus}
-                        optionKeys={["id", "type"]}
-                        value={(selected) => {setValue("status", selected.id);setValue("status_items_pengantaran", selected.value);getValues("status_items_pengantaran") !== "" && clearErrors('status_items_pengantaran')}}
-                        // defaultValue={dGList.status ?? ""}
-                        // defaultValueKey={"id"}
+                </div> */}
+                <div className="row gy-2">
+                  {/* <p className="modal-section-title">produk</p> */}
+                  <div className="add-product-control mb-4" style={{ alignItems: 'flex-start'}} >
+                    <div style={{width: '49%'}}>
+                      <InputWLabel 
+                        label="tambah produk"
+                        type="text"
+                        name="delivProduct" 
+                        placeholder="cari nama produk..." 
+                        onChange={handleSearchProd}
+                        onFocus={handleSearchProd}
+                        onKeyDown={keyDownSearchProd}
+                        style={{width: 'inherit', textTransform:'capitalize'}}
                         register={register}
-                        require={true}
+                        require={false}
                         errors={errors}
+                        autoComplete={"off"}
+                        // disabled={editMode ? false : true}  
                       />
-                    </div>
-                  )}
-                  {/* <div className="col-lg-6 col-sm-6 col-12">
-                    <InputWLabel
-                      label="tanggal pengantaran"
-                      type="date"
-                      name="delivery_group_date"
-                      defaultValue={getValues("delivery_group_date")}
-                      onChange={(e) => {
-                        setValue("delivery_group_date", e.value);
-                      }}
-                      register={register}
-                      require={false}
-                      errors={errors}
-                    />
-                  </div> */}
-                </div>
-                {/* <Collapse in={showInvList == true}> */}
-                               
-              </div>
-              {data.action == "update" ? 
-                  (
-                    <>
-                    <div className="modal-table-wrap mt-2" style={{height: isMobile || isMediumScr ? '100%' : 'auto'}}>
-                      <div className="table-responsive" style={{height: isMediumScr || isMobile ? '100%' : '200px'}}>
-                        <div className='mini-card-container'>
-                          {
-                            dg.DeliveryGroupItemsGrouped.map((dgItem, idx) => {
-                              return(
-                                <div className={`mini-card ${choosedSession && choosedSession == dgItem ? 'active' : ""}`} key={idx} 
-                                  aria-label="editDGList"  
-                                  onClick={(e) => {
-                                      // handleMiniCardCollapse(dgItem);
-                                      // setChoosedSession(dgItem);
-                                      setSalesItems({delivery_group_id: dg.delivery_group_id, session: dgItem.session, salesItems: [...dgItem.items]});
-                                      handleModal(e);
-                                    }}>
-                                  <div className={`header-highlight bg-info`}>
-                                    <NumberFormat intlConfig={{
-                                        value: dgItem.total_value, 
-                                        locale: "id-ID",
-                                        style: "currency", 
-                                        currency: "IDR",
-                                      }} 
-                                    />
-                                  </div>
-                                  <p className='mini-card-title' style={{marginTop: '2rem', textTransform: 'capitalize'}}>{'sesi: ' + dgItem.session}</p>
-                                  <p className='mini-card-title' >{new Date(dgItem.items[0].createdAt).toLocaleString('id-ID').replaceAll(".", ":")}</p>
-                              
-                                  <span style={{display: "inline-flex", gap: 4}}>
-                                      <p className='mini-card-subtitle'>Total item: </p>
-                                      <p className='mini-card-text'>{Number(dgItem.total_item)}</p>
-                                  </span>
-                                </div>
-                              )
-                            }) 
+                      {/* popup autocomplete */}
+                      <div className="popup-element" aria-expanded={openPopupProduct} ref={refToProd}>
+                        {filterProd && filterProd.length > 0 ? 
+                          filterProd.map((e,idx) => {
+                            return (
+                              <div key={`product-${e.product_id}`} className="res-item" onClick={() =>   
+                                handleChooseProd({ 
+                                  product_id: e.product_id, 
+                                  product_name: e.product_name, 
+                                  variant: e.variant, 
+                                  img:e.img, 
+                                  product_cost: e.product_cost , 
+                                  sell_price: e.sell_price,
+                                  discount: e.discount
+                                })}
+                                >{e. variant !== "" ? e.product_name + " " + e.variant : e.product_name}</div>
+                            )
+                            }) : ""
                           }
-                        </div>
-                      </div>
+                      </div> 
                     </div>
-                    </>
-                  )
-                : (
-                  <>
-                  <div className="row gy-2 mt-2">
-                    {/* <p className="modal-section-title">produk</p> */}
-                    <div className="add-product-control mb-4" style={{alignItems: 'flex-start'}} >
-                      <div style={{width: '49%'}}>
-                        <InputWLabel 
-                            label="tambah produk"
-                            type="text"
-                            name="delivProduct" 
-                            placeholder="cari nama produk..." 
-                            onChange={handleSearchProd}
-                            onFocus={handleSearchProd}
-                            onKeyDown={keyDownSearchProd}
-                            style={{width: 'inherit', textTransform:'capitalize'}}
-                            register={register}
-                            require={false}
-                            errors={errors}
-                            autoComplete={"off"}
-                            // disabled={editMode ? false : true}  
-                        />
-                        {/* popup autocomplete */}
-                        <div className="popup-element" aria-expanded={openPopupProduct} ref={refToProd}>
-                          {filterProd && filterProd.length > 0 ? 
-                            filterProd.map((e,idx) => {
-                              return (
-                                <div key={`product-${e.product_id}`} className="res-item" onClick={() =>   
-                                  handleChooseProd({ 
-                                    product_id: e.product_id, 
-                                    product_name: e.product_name, 
-                                    variant: e.variant, 
-                                    img:e.img, 
-                                    product_cost: e.product_cost , 
-                                    sell_price: e.sell_price,
-                                    discount: e.discount
-                                  })}
-                                  >{e. variant !== "" ? e.product_name + " " + e.variant : e.product_name}</div>
-                              )
-                              }) : ""
-                            }
-                        </div> 
-                      </div>
-                      <div className='qty-add-btn-group'>
-                        <QtyButton 
-                          min={0} 
-                          max={999} 
-                          name={`qty-add-product`} 
-                          width={"180px"} 
-                          returnValue={(e) => setQtyVal(e)}
-                          value={qtyVal} 
-                          // disabled={editMode ? false : true}  
-                          label={"qty"}
-                        />
-                        
-                        <button className={`btn btn-primary qty-add-btn`} onClick={(e) => {e.preventDefault();addToSalesData()}}><i className="bx bx-plus"></i></button>
-                      </div>
+                    <div className='qty-add-btn-group'>
+                      <QtyButton 
+                        min={0} 
+                        max={999} 
+                        name={`qty-add-product`} 
+                        width={"180px"} 
+                        returnValue={(e) => setQtyVal(e)}
+                        value={qtyVal} 
+                        // disabled={editMode ? false : true}  
+                        label={"qty"}
+                      />
+                      
+                      <button className={`btn btn-primary qty-add-btn`} onClick={(e) => {e.preventDefault();addToSalesData()}}><i className="bx bx-plus"></i></button>
                     </div>
                   </div>
-                  {!isMobile && !isMediumScr?
-                    (
-                    <div className="table-responsive">
-                      <table className="table">
-                        <thead>
-                          <tr>
-                              <th scope="col" aria-label="product desc">
-                                  produk
-                              </th> 
-                              <th scope="col" aria-label="product variant">
-                                  varian
-                              </th>
-                              <th scope="col" aria-label="qty">
-                                  qty
-                              </th>
-                              <th scope="col" aria-label="product price">
-                                  harga
-                              </th>
-                              <th scope="col" aria-label="product price">
-                                  diskon
-                              </th>
-                              <th scope="col" aria-label="total">
-                                  total
-                              </th>
-                              <th scope="col" aria-label="action">
-                                  aksi
-                              </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {salesItems && salesItems.length > 0 ? 
-                            salesItems.map((item, idx) => {
-                            return(
-                            <tr key={idx}>
-                              <td className="data-img" style={{textTransform: 'capitalize'}}>
-                                  <span className="user-img">
-                                      <img src={item.img ? item.img : item.product?.img} alt="prod-img"/>
-                                  </span>{item.product_name ? item.product_name : item.product?.product_name}
-                              </td>
-                              <td>{item.variant ? item.variant : item.product?.variant}</td>
-                              <td>
-                                  <QtyButton 
-                                      min={1} 
-                                      max={999} 
-                                      name={`qty-product`} 
-                                      id="qtyItem" 
-                                      value={item.quantity} 
-                                      returnValue={(e) => {handleEdit(e,idx);handleUpdateEndNote()}} 
-                                      width={'150px'} 
-                                  />
-                              </td>
-                              <td>
-                                  <NumberFormat intlConfig={{
-                                      value: item.sell_price, 
-                                      locale: "id-ID",
-                                      style: "currency", 
-                                      currency: "IDR",
-                                      }} 
-                                  />
-                              </td>
-                              <td>
-                                  <NumberFormat intlConfig={{
-                                      value: item.discount ? item.discount : item.disc_prod_rec, 
-                                      locale: "id-ID",
-                                      style: "currency", 
-                                      currency: "IDR",
-                                      }}                                                                                                                                     v
-                                  />
-                              </td>
-                              <td>
-                                {data.action == "insert" ?
-                                  <NumberFormat intlConfig={{
-                                      value: (Number(item.quantity)*Number(item.sell_price))-(Number(item.quantity)*Number(item.discount)), 
-                                      locale: "id-ID",
-                                      style: "currency", 
-                                      currency: "IDR",
-                                      }} 
-                                  />
-                                  : <NumberFormat intlConfig={{
-                                      value: (Number(item.quantity)*Number(item.sell_price))-(Number(item.quantity)*(item.disc_prod_rec ? Number(item.disc_prod_rec) : Number(item.discount))),
-                                      locale: "id-ID",
-                                      style: "currency", 
-                                      currency: "IDR",
-                                      }} 
-                                  />
-                                }
-                              </td>
-                              <td>
-                                  <span className="table-btn del-table-data" onClick={() => {delSalesItems(idx)}}>
-                                      <i className='bx bx-trash'></i>
-                                  </span>
-                              </td>
-                            </tr>
-                            )
-                            })
-                          :""}
-                          {salesItems && salesItems.length > 0 && salesEndNote ?
-                          <>
-                          <tr className="endnote-row">
-                            <td colSpan="2" className="endnote-row-title">items</td>
-                            <td colSpan="4">{salesEndNote.totalQty}</td>
-                          </tr>
-                          <tr className="endnote-row">
-                            <td colSpan="5" className="endnote-row-title">total</td>
-                            <td colSpan="2" >
-                              <NumberFormat intlConfig={{
-                                value: salesEndNote.grandtotal, 
-                                locale: "id-ID",
-                                style: "currency", 
-                                currency: "IDR",
-                                }} 
-                              />
+                </div>
+                {!isMobile && !isMediumScr?
+                  (
+                  <div className="table-responsive">
+                    <table className="table">
+                      <thead>
+                        <tr>
+                            <th scope="col" aria-label="product desc">
+                                produk
+                            </th> 
+                            <th scope="col" aria-label="product variant">
+                                varian
+                            </th>
+                            <th scope="col" aria-label="qty">
+                                qty
+                            </th>
+                            <th scope="col" aria-label="product price">
+                                harga
+                            </th>
+                            <th scope="col" aria-label="product price">
+                                diskon
+                            </th>
+                            <th scope="col" aria-label="total">
+                                total
+                            </th>
+                            <th scope="col" aria-label="action">
+                                aksi
+                            </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {salesItems && salesItems.length > 0 ? 
+                          salesItems.map((item, idx) => {
+                          return(
+                          <tr key={idx}>
+                            <td className="data-img" style={{textTransform: 'capitalize'}}>
+                                <span className="user-img">
+                                    <img src={item.img ? item.img : item.product?.img} alt="prod-img"/>
+                                </span>{item.product_name ? item.product_name : item.product?.product_name}
+                            </td>
+                            <td>{item.variant ? item.variant : item.product?.variant}</td>
+                            <td>
+                                <QtyButton 
+                                    min={1} 
+                                    max={999} 
+                                    name={`qty-product`} 
+                                    id="qtyItem" 
+                                    value={item.quantity} 
+                                    returnValue={(e) => {handleEdit(e,idx);handleUpdateEndNote()}} 
+                                    width={'150px'} 
+                                />
+                            </td>
+                            <td>
+                                <NumberFormat intlConfig={{
+                                    value: item.sell_price, 
+                                    locale: "id-ID",
+                                    style: "currency", 
+                                    currency: "IDR",
+                                    }} 
+                                />
+                            </td>
+                            <td>
+                                <NumberFormat intlConfig={{
+                                    value: item.discount ? item.discount : item.disc_prod_rec, 
+                                    locale: "id-ID",
+                                    style: "currency", 
+                                    currency: "IDR",
+                                    }}                                                                                                                                     v
+                                />
+                            </td>
+                            <td>
+                              {data.action == "insert" ?
+                                <NumberFormat intlConfig={{
+                                    value: (Number(item.quantity)*Number(item.sell_price))-(Number(item.quantity)*Number(item.discount)), 
+                                    locale: "id-ID",
+                                    style: "currency", 
+                                    currency: "IDR",
+                                    }} 
+                                />
+                                : <NumberFormat intlConfig={{
+                                    value: (Number(item.quantity)*Number(item.sell_price))-(Number(item.quantity)*(item.disc_prod_rec ? Number(item.disc_prod_rec) : Number(item.discount))),
+                                    locale: "id-ID",
+                                    style: "currency", 
+                                    currency: "IDR",
+                                    }} 
+                                />
+                              }
+                            </td>
+                            <td>
+                                <span className="table-btn del-table-data" onClick={() => {delSalesItems(idx)}}>
+                                    <i className='bx bx-trash'></i>
+                                </span>
                             </td>
                           </tr>
-                          </>
-                          :""}
-                        </tbody>
-                      </table>
-                    </div> 
-                    ): 
-                    (
-                    <DataView value={salesItems} listTemplate={orderListTemplate} emptyMessage=' '></DataView>
-                    )
-                  }
-                  </>
-                )}
+                          )
+                          })
+                        :""}
+                        {salesItems && salesItems.length > 0 && salesEndNote ?
+                        <>
+                        <tr className="endnote-row">
+                          <td colSpan="2" className="endnote-row-title">items</td>
+                          <td colSpan="5">{salesEndNote.totalQty}</td>
+                        </tr>
+                        <tr className="endnote-row">
+                          <td colSpan="5" className="endnote-row-title">total</td>
+                          <td colSpan="2" >
+                            <NumberFormat intlConfig={{
+                              value: salesEndNote.grandtotal, 
+                              locale: "id-ID",
+                              style: "currency", 
+                              currency: "IDR",
+                              }} 
+                            />
+                          </td>
+                        </tr>
+                        </>
+                        :""}
+                      </tbody>
+                    </table>
+                  </div> 
+                  ): 
+                  (
+                  <DataView value={salesItems} listTemplate={orderListTemplate} emptyMessage=' '></DataView>
+                  )
+                }
+              </div>
             </form>
           </Modal.Body>
         <Modal.Footer>
           <button
             type="button"
             className="btn btn-secondary light"
+            disabled={controlUiBtn}
             onClick={() => {
               onHide();
               handleCancel();
@@ -1112,8 +979,6 @@ export default function DelivGroupsModal({ show, onHide, data, returnAct }) {
           >
             batal
           </button>
-          {data.action !== "update" &&
-          (
           <button
             type="button"
             className="btn btn-primary"
@@ -1125,12 +990,10 @@ export default function DelivGroupsModal({ show, onHide, data, returnAct }) {
           >
             {controlUiBtn ? "Loading..." : "submit"}
           </button>
-          )
-          }
         </Modal.Footer>
       </Modal>
 
-      {showModal == true ? (
+      {showModal ? (
         <ConfirmModal
           show={showModal}
           onHide={handleClose}
@@ -1141,20 +1004,9 @@ export default function DelivGroupsModal({ show, onHide, data, returnAct }) {
           msg={"Are you sure to make changes for this data?"}
           returnValue={(value) => setTarget(value)}
         />
-      ) : showModal == "editDGList" ? (
-        <EditDelivGroupListModal 
-          show={showModal === "editDGList" ? true : false}
-          onHide={handleClose}
-          multiple={true}
-          stack={2}
-          data={showModal === "editDGList" ? salesItems : ""}
-          returnAct={(act) => 
-            act ? setRefetch(true) 
-            : setRefetch(false)
-          }
-        />
-      ) : 
-        ""}
+      ) : (
+        ""
+      )}
 
       {/* toast area */}
       <Toast ref={toast} />

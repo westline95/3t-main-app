@@ -740,18 +740,16 @@ export default function DeliveryGroupListModal({show, onHide, data, returnAct}) 
                                     </div>
                                 </div>
                                 <div className="invoice-info-group">
-                                    <p className="label-text">status</p>
+                                    <p className="label-text mb-1">status</p>
                                     <span className={`badge badge-${
-                                        dGList.status == 0  ? 'warning' 
-                                        : dGList.status == 1 ? 'primary'
-                                        : dGList.status == 2 ? 'danger'
+                                        dGList.status == 1  ? 'secondary' 
+                                        : dGList.status == 2 ? 'primary'
+                                        : dGList.status == 3 ? 'danger'
+                                        : dGList.status == 4 ? 'success'
                                         : 'secondary'} light`}
                                     >
                                         {
-                                            dGList.status == 0 ? 'menunggu konfirmasi' 
-                                            : dGList.status == 1 ? 'dikonfirmasi'
-                                            : dGList.status == 2 ? 'dibatalkan'
-                                            : '???'
+                                            dGList.status ? dataStatic.deliveryGroupStatus[dGList.status-1].type : "???"
                                         }
                                     </span>
                                 </div>
@@ -773,7 +771,7 @@ export default function DeliveryGroupListModal({show, onHide, data, returnAct}) 
                                 </div>
                                 <div className="card-amount">
                                     <div className="invoice-info-group">
-                                        <p className="label-text">Nilai pengantaran awal</p>
+                                        <p className="label-text">Total Nilai pengantaran</p>
                                         <p className="invoice-text">
                                             <NumberFormat intlConfig={{
                                                 value: dGList.total_value, 
@@ -787,7 +785,7 @@ export default function DeliveryGroupListModal({show, onHide, data, returnAct}) 
                                 </div>
                                 <div className="card-amount">
                                     <div className="invoice-info-group">
-                                        <p className="label-text">Nilai pengantaran akhir</p>
+                                        <p className="label-text">Total Nilai pengantaran akhir</p>
                                         <p className="invoice-text">
                                             <NumberFormat intlConfig={{
                                                 value: 0, 
@@ -803,63 +801,91 @@ export default function DeliveryGroupListModal({show, onHide, data, returnAct}) 
                             <div className="invoice-transaction mt-4">
                                 <p className="inv-table-title">detail pengantaran awal</p>
                                 <div className='table-responsive'>
-                                    {dGList ? 
-                                        (
-                                        <>
+                                    {dGList.DeliveryGroupItemsGrouped && dGList.DeliveryGroupItemsGrouped.map((group_items, index) => {  
+                                        return(
                                         <table className="table">
                                             <thead>
                                                 <tr>
-                                                    <th>#</th>
+                                                    <th>sesi</th>
+                                                    <th>waktu</th>
                                                     <th>item</th>
                                                     <th>qty</th>
                                                     <th>satuan</th>
                                                     <th>diskon/item</th>
                                                     <th>jumlah</th>
+                                                    <th>status</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {dGList.delivery_group_items.length > 0 && dGList.delivery_group_items.map((group_items, index) => {
-                                                    return( 
-                                                        <tr key={index} style={{textTransform:'capitalize'}}>
-                                                            <td>{index+1}</td>
-                                                            <td>{`${group_items.product.product_name}  ${group_items.product.variant}`}</td>
-                                                            <td>{Number(group_items.quantity)}</td>
-                                                            <td>
-                                                                <NumberFormat intlConfig={{
-                                                                    value: group_items.sell_price, 
+                                            {group_items.items.map((item, idx) => {
+                                                return( 
+                                                    <tr key={idx} style={{textTransform:'capitalize'}}>
+                                                    {idx == 0 ? 
+                                                    (
+                                                        <>
+                                                        <td rowSpan={`${group_items.items.length}`} style={{fontWeight: 700}}>{group_items.session}</td>
+                                                        <td rowSpan={`${group_items.items.length}`} style={{fontWeight: 700}}>{new Date(group_items.items[0].createdAt).toLocaleString('id-ID').replaceAll(".", ":")}</td>
+                                                        
+                                                        </>
+                                                    ):''}
+                                                        <td>{`${item.product.product_name}  ${item.product.variant}`}</td>
+                                                        <td>{Number(item.quantity)}</td>
+                                                        <td>
+                                                            <NumberFormat intlConfig={{
+                                                                value: item.sell_price, 
+                                                                locale: "id-ID",
+                                                                style: "currency", 
+                                                                currency: "IDR",
+                                                                }} 
+                                                            />
+                                                        </td>
+                                                        <td>
+                                                            <NumberFormat intlConfig={{
+                                                                    value: Number(item.disc_prod_rec), 
                                                                     locale: "id-ID",
                                                                     style: "currency", 
                                                                     currency: "IDR",
-                                                                    }} 
-                                                                />
+                                                                }} 
+                                                            />
+                                                        </td>
+                                                        <td>
+                                                            <NumberFormat intlConfig={{
+                                                                    value: (Number(item.quantity) * Number(item.sell_price))-(Number(item.quantity)*Number(item.disc_prod_rec)), 
+                                                                    locale: "id-ID",
+                                                                    style: "currency", 
+                                                                    currency: "IDR",
+                                                                }} 
+                                                            />
+                                                        </td>
+                                                        {idx == 0 && 
+                                                        (
+
+                                                            <td rowSpan={`${group_items.items.length}`} style={{fontWeight: 700}}>
+                                                                <span className={`badge badge-${
+                                                                    item.status == 1  ? 'secondary' 
+                                                                    : item.status == 2 ? 'primary'
+                                                                    : item.status == 3 ? 'danger'
+                                                                    : 'secondary'} light`}
+                                                                >
+                                                                    {
+                                                                        item.status ? dataStatic.deliveryGroupItemsStatus[item.status-1].type : "???"
+                                                                    }
+                                                                </span>
                                                             </td>
-                                                            <td>
-                                                                <NumberFormat intlConfig={{
-                                                                        value: Number(group_items.disc_prod_rec), 
-                                                                        locale: "id-ID",
-                                                                        style: "currency", 
-                                                                        currency: "IDR",
-                                                                    }} 
-                                                                />
-                                                            </td>
-                                                            <td>
-                                                                <NumberFormat intlConfig={{
-                                                                        value: (Number(group_items.quantity) * Number(group_items.sell_price))-(Number(group_items.quantity)*Number(group_items.disc_prod_rec)), 
-                                                                        locale: "id-ID",
-                                                                        style: "currency", 
-                                                                        currency: "IDR",
-                                                                    }} 
-                                                                />
-                                                            </td>
-                                                        </tr>
+                                                        )
+                                                        }
+                                                    </tr>
                                                     )
-                                                })}
+                                                })
+                                            }
                                                 <tr>
-                                                    <td colSpan="4"></td>
+                                                    <td colSpan={2}></td>
+                                                    <td className="endnote-row-title" style={{fontWeight:700}}>Items</td>
+                                                    <td colSpan={2} style={{fontWeight:700}}>{Number(group_items.total_item)}</td>
                                                     <td className="each-total-title" style={{textAlign:'right'}}>total</td>
-                                                    <td className="each-total-text">
+                                                    <td colSpan={2} className="each-total-text">
                                                         <NumberFormat intlConfig={{
-                                                            value: Number(dGList.total_value),
+                                                            value: Number(group_items.total_value),
                                                             locale: "id-ID",
                                                             style: "currency", 
                                                             currency: "IDR",
@@ -886,12 +912,8 @@ export default function DeliveryGroupListModal({show, onHide, data, returnAct}) 
                                                 :""} */}
                                             </tbody>
                                         </table>
-
-                                    
-                                        
-                                        </>
                                         )
-                                    :""}
+                                    })}
                                 </div>
                             </div>
                             

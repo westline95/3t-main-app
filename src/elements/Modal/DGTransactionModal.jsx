@@ -44,7 +44,7 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
   });
   const [salesById, setSalesById] = useState(null);
   const [custData, setCustData] = useState(null);
-  const [salesItems, setSalesItems] = useState([]);
+  const [salesItems, setSalesItems] = useState(data && data.orders ? [...data.orders] : []);
   const [filterCust, setFilteredCust] = useState([]);
   const [filterProd, setFilteredProd] = useState(null);
   const [allProdData, setAllProd] = useState(null);
@@ -69,7 +69,8 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
   });
   const [sendTarget, setSendTarget] = useState(null);
   const [cantCanceled, setCantCanceled] = useState(false);
-  const [paymentData, setPaymentData] = useState(null);
+  console.log(data)
+  const [paymentData, setPaymentData] = useState(data && data.payment ? data.payment : null);
   const [orderStatus, setOrderStatus] = useState(null);
 
   const axiosPrivate = useAxiosPrivate();
@@ -94,6 +95,7 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
     defaultValues: {
       customer_id: data.customer_id ? data.customer_id : '',
       name: data.name ? data.name : data.guest_name,
+      note: data && data.note ? data.note : ""
       // order_date: data.order_date ? new Date(data.order_date) : null,
       // order_type: data.order_type
     },
@@ -154,8 +156,8 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
         },
       })
       .then((resp) => {
-        setAllProd(resp.data.delivery_group_items);
-        let getDeliveryGroupItems = resp.data.delivery_group_items;
+        setAllProd([...resp.data.DeliveryGroupItemsProduct]);
+        let getDeliveryGroupItems = [...resp.data.DeliveryGroupItemsProduct];
         getDeliveryGroupItems.map((e, idx) => {
           e.fullProdName = e.product?.product_name + " " + e.product?.variant;
         });
@@ -268,7 +270,7 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
     setProd(e);
     setValue(
       "salesProduct",
-      e.variant !== "" ? e.product_name + " " + e.variant : e.product_name
+      e.product?.variant !== "" ? e.product?.product_name + " " + e.product?.variant : e.product?.product_name
     );
     setOpenPopupProd(false);
   };
@@ -310,10 +312,9 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
     } else {
       let tmpArr = [];
       let prodObjDupe = {...chooseProd};
-      console.log(qtyVal)
       prodObjDupe.quantity = qtyVal;
 
-      if (salesItems.length === 0) {
+      if(salesItems.length === 0) {
         // setChildQtyVal(qtyVal);
         tmpArr.push(prodObjDupe);
         setSalesItems(tmpArr);
@@ -332,6 +333,7 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
         }
         setSalesItems(tmpArr);
       }
+      
       // setPaidData(null);
       setProd(null);
       setQtyVal(0);
@@ -366,6 +368,7 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
     setSalesItems(duplicate);
   };
 
+
   const onSubmit = () => {
     // validate id FOCUS ON ID!!!!!
     if (!salesItems || salesItems.length < 1) {
@@ -384,37 +387,7 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
       });
     } else {
       const formData = getValues();
-      // let grandQty = 0;
-      // let subtotal = 0;
-      // let objStr =
-      //   salesItems.length > 0
-      //     ? JSON.stringify([...salesItems])
-      //     : JSON.stringify([]);
-
-      // let order = {
-      //   ...formData,
-      //   subtotal: Number(salesEndNote.subtotal),
-      //   grandtotal: Number(salesEndNote.grandtotal),
-      //   updatedAt: new Date(),
-      // };
-      // delete order.salesProduct;
-      // delete order.name;
-
-      // let orderItems = salesItems.map((e) => {
-      //   let obj = {
-      //     customer_id: formData.customer_id,
-      //     guest_name: formData.guest_name,
-      //     order_date: data.delivery_group_date,
-
-      //     product_id: e.product_id,
-      //     quantity: Number(e.quantity),
-      //     sell_price: Number(e.sell_price),
-      //     disc_prod_rec: Number(e.discount),
-      //   };
-      //   return obj;
-      // });
       const dgReportListStorage = localStorage.getItem(`form-${data.delivery_group_id}`);
-     
       let parsed = JSON.parse(dgReportListStorage);
 
       let dgReportList = {
@@ -427,53 +400,64 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
 
       let dgReportListArr = [];
       let dgListItem;
-      salesItems.map((item, idx) => {
-        dgListItem = {
-          customer_id: formData.customer_id ? Number(formData.customer_id) : null,
-          guest_name : formData.customer_id ? '' : formData.name,
-          order_date: data.delivery_group_date,
-          order_type: 'delivery',
-          order_status: Number(paymentData.amountOrigin) == 0 ? 'pending' 
-                        : Number(paymentData.amountOrigin) < Number(paymentData.pay_amount) ? 'pending'
-                        : Number(paymentData.amountOrigin) >= Number(paymentData.pay_amount) ? 'completed'
-                        : 'pending',
-          source: 'delivery_group',
-          shipped_date: data.delivery_group_date,
-          payment_type: Number(paymentData.amountOrigin) == 0 ? 'bayar nanti' 
-                        : Number(paymentData.amountOrigin) < Number(paymentData.pay_amount) ? 'sebagian'
-                        : Number(paymentData.amountOrigin) >= Number(paymentData.pay_amount) ? 'lunas'
-                        : 'bayar nanti',
-          subtotal: (Number(item.quantity)*Number(item.sell_price))-(Number(item.quantity)*Number(item.discProd)),
-          grandtotal: (Number(item.quantity)*Number(item.sell_price))-(Number(item.quantity)*Number(item.discProd)),
-          note: formData.note,
-          is_complete: paymentData.amountOrigin == 0 ? false 
-          : Number(paymentData.amountOrigin) < Number(paymentData.pay_amount) ? false
-          : Number(paymentData.amountOrigin) >= Number(paymentData.pay_amount) ? true
-          : false,
-          order_discount: 0,
-          payment_date: paymentData.payment_date,
-          amount_paid: Number(paymentData.amountOrigin),
-          payment_method: 'cash',
-          payment_note: paymentData.note,
-        }  
+      dgListItem = {
+        customer_id: formData.customer_id ? formData.customer_id : null,
+        customer_name: formData.name ? formData.name : null,
+        guest_name : formData.customer_id ? '' : formData.name,
+        order_date: data.delivery_group_date,
+        order_type: 'delivery',
+        order_status: Number(paymentData.amountOrigin) == 0 ? 'pending' 
+                      : Number(paymentData.amountOrigin) < Number(paymentData.pay_amount) ? 'pending'
+                      : Number(paymentData.amountOrigin) >= Number(paymentData.pay_amount) ? 'completed'
+                      : 'pending',
+        source: 'delivery_group',
+        shipped_date: data.delivery_group_date,
+        payment_type: Number(paymentData.amountOrigin) == 0 ? 'bayar nanti' 
+                      : Number(paymentData.amountOrigin) < Number(paymentData.pay_amount) ? 'sebagian'
+                      : Number(paymentData.amountOrigin) >= Number(paymentData.pay_amount) ? 'lunas'
+                      : 'bayar nanti',
+        note: formData.note,
+        is_complete: paymentData.amountOrigin == 0 ? false 
+        : Number(paymentData.amountOrigin) < Number(paymentData.pay_amount) ? false
+        : Number(paymentData.amountOrigin) >= Number(paymentData.pay_amount) ? true
+        : false,
+        order_discount: 0,
+        payment_date: paymentData.payment_date,
+        amount_paid: Number(paymentData.amountOrigin),
+        remaining_payment: Number(salesEndNote.remaining_payment),
+        payment_method: 'cash',
+        payment_note: paymentData.note,
+        orders: [...salesItems],
+        payment:  paymentData,
+        subtotal: 0,
+        grandtotal: 0,
+        totalQty: 0
+      }
 
-        dgListItem.product_id = Number(item.product_id);
-        dgListItem.quantity = Number(item.quantity);
-        dgListItem.sell_price = Number(item.sell_price);
-        dgListItem.disc_prod_rec = Number(item.discProd);
+      if(salesItems.length > 1){
+        salesItems.reduce((prev, curr) => {  
+          console.log(prev.quantity)
+          dgListItem.subtotal = (Number(prev.quantity)*Number(prev.product?.sell_price)) + (Number(curr.quantity)*Number(curr.product?.sell_price));
+          // grandtotal: (Number(item.quantity)*Number(item.sell_price))-(Number(item.quantity)*Number(item.discProd)),
+          dgListItem.grandtotal = (Number(prev.quantity)*Number(prev.product?.sell_price)) + (Number(curr.quantity)*Number(curr.product?.sell_price));   
+          dgListItem.totalQty = (Number(prev.quantity) + Number(curr.quantity));   
+        });
+      } else if(salesItems.length == 1) {
+        dgListItem.subtotal = Number(salesItems[0].quantity) * Number(salesItems[0].product?.sell_price);
+        dgListItem.grandtotal = Number(salesItems[0].quantity) * Number(salesItems[0].product?.sell_price);
+        dgListItem.totalQty = Number(salesItems[0].quantity);
+      }
 
-        dgReportListArr.push(dgListItem);
-      });
       // console.log(dgReportListArr)
       // const sendStringify = JSON.stringify(dgReportListArr);
       if(dgListItem){
         if(!dgReportListStorage) {
           let tmpArr = [];
-          tmpArr[data.index] = dgReportListArr;
+          tmpArr[data.index] = dgListItem;
           localStorage.setItem(`form-${data.delivery_group_id}`, JSON.stringify(tmpArr));
         } else {
           let tmpArr = [...parsed];
-          tmpArr[data.index] = dgReportListArr;
+          tmpArr[data.index] = dgListItem;
           localStorage.setItem(`form-${data.delivery_group_id}`, JSON.stringify(tmpArr));
 
       }
@@ -534,38 +518,30 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
     if (salesItems && salesItems.length > 0) {
       let totalQty = 0;
       let subtotal = 0;
-      let allDiscProd = 0;
+      // let allDiscProd = 0;
 
       salesItems.forEach((e) => {
         totalQty += e.quantity;
-        subtotal += (e.quantity * Number(e.sell_price)) - (e.quantity * Number(e.discProd));
-        allDiscProd += e.quantity * Number(e.discProd);
+        subtotal += (e.quantity * Number(e.product?.sell_price));
+        // allDiscProd += e.quantity * Number(e.discProd);
       });
 
-      if (paidData && paidData.payment_type == "lunas") {
-        if (paidData.amountOrigin < subtotal) {
-          setPaidData(null);
-        }
-      } else if (paidData && paidData.payment_type == "sebagian") {
-        if (paidData.amountOrigin >= subtotal) {
-          setPaidData(null);
-        }
-      }
-
+      // if (paidData && paidData.payment_type == "lunas") {
+      //   if (paidData.amountOrigin < subtotal) {
+      //     setPaidData(null);
+      //   }
+      // } else if (paidData && paidData.payment_type == "sebagian") {
+      //   if (paidData.amountOrigin >= subtotal) {
+      //     setPaidData(null);
+      //   }
+      // }
+      console.log(paymentData)
       let endNote = {
         ...salesEndNote,
         totalQty: totalQty,
         grandtotal: subtotal,
-        discProd: allDiscProd,
-        remaining_payment: paidData
-          ? paidData.payment_type == "lunas"
-            ? 0
-            : paidData.payment_type == "bayar nanti"
-              ? subtotal
-              : paidData.payment_type == "sebagian"
-                ? subtotal - paidData.amountOrigin
-                : subtotal
-          : subtotal,
+        // discProd: allDiscProd,
+        remaining_payment: paymentData ? subtotal - paymentData.amountOrigin : subtotal
       };
 
       setSalesEndNote(endNote);
@@ -598,7 +574,7 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
                 borderRadius: "9px",
                 position: "relative",
                 width: "100%",
-                minHeight: "125px",
+                minHeight: "115px",
               }}
               aria-label="custDetailModal"
               onClick={(e) => handleModal(e, rowData)}
@@ -612,8 +588,8 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
                 <span className="user-img" style={{ marginRight: 0 }}>
                   <img
                     src={
-                      rowData.img
-                        ? rowData.img
+                      rowData.product?.img
+                        ? rowData.product?.img
                         : `https://res.cloudinary.com/du3qbxrmb/image/upload/v1751378806/no-img_u5jpuh.jpg`
                     }
                     alt=""
@@ -628,7 +604,7 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
                         fontWeight: 600,
                         maxWidth: "130px",
                       }}
-                    >{`${rowData.product_name} ${rowData.variant}`}</p>
+                    >{`${rowData.product?.product_name} ${rowData.product?.variant}`}</p>
                     <p
                       style={{
                         marginBottom: 0,
@@ -639,14 +615,14 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
                     >
                       <NumberFormat
                         intlConfig={{
-                          value: rowData.sell_price,
+                          value: rowData.product?.sell_price,
                           locale: "id-ID",
                           style: "currency",
                           currency: "IDR",
                         }}
                       />
                     </p>
-                    {rowData.discProd != 0 ? (
+                    {/* {rowData.discProd != 0 ? (
                       <p
                         style={{
                           marginBottom: 0,
@@ -667,14 +643,14 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
                       </p>
                     ) : (
                       ""
-                    )}
+                    )} */}
                     {/* <p style={{marginBottom: 0, fontSize: 13, color: '#7d8086'}}>{`Disc: ${rowData.discProd}`}</p> */}
                   </div>
                   <div className="order-qty-btn">
                     <QtyButton
                       min={1}
                       max={Number(rowData.max_qty)}
-                      name={`qty-product`}
+                      name={`qty-product-form`}
                       value={rowData.quantity}
                       returnValue={(e) => {
                         handleEdit(e, index);
@@ -696,9 +672,7 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
                 >
                   <NumberFormat
                     intlConfig={{
-                      value:
-                        (rowData.sell_price * rowData.quantity) -
-                        rowData.discProd,
+                      value: (Number(rowData.product?.sell_price) * Number(rowData.quantity)),
                       locale: "id-ID",
                       style: "currency",
                       currency: "IDR",
@@ -722,6 +696,8 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
       </div>
     );
   };
+
+  console.log(filterProd)
 
   const orderListTemplate = (items) => {
     if (!items || items.length === 0) return null;
@@ -955,28 +931,28 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
     }
   }, [cantCanceled]);
 
-  
+  useEffect(() => {
+    if(filterProd) {
+      setLoading(false);
+    }
+  }, [filterProd]);
 
   useEffect(() => {
-    if(multiple === true){
-      document.querySelectorAll(".modal-backdrop").forEach((e,idx) => {
-        e.style.zIndex = 1055 + (idx * stack);
-      })
-      document.querySelectorAll(".modal").forEach((e,idx) => {
-        e.style.zIndex = 1056 + (idx * stack);
-      })
+    if(!isLoading){
+      if(multiple === true){
+        document.querySelectorAll(".modal-backdrop").forEach((e,idx) => {
+          e.style.zIndex = 1055 + (idx * stack);
+        })
+        document.querySelectorAll(".modal").forEach((e,idx) => {
+          e.style.zIndex = 1056 + (idx * stack);
+        })
+      }
     }
-  },[show]);
+  },[isLoading, show]);
 
-  //  useEffect(() => {
-  //   if (allProdData) {
-  //     setLoading(false);
-  //   }
-  // }, [allProdData]);
-
-  // if (isLoading) {
-  //   return;
-  // }
+  if (isLoading) {
+    return;
+  }
   
   return (
     <>
@@ -988,6 +964,7 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
         onHide={onHide}
         scrollable={true}
         centered={true}
+        backdrop="static"
       >
         <Modal.Header closeButton>
           <Modal.Title>tambah transaksi</Modal.Title>
@@ -1075,18 +1052,15 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
                   ? filterProd.map((e, idx) => {
                       return (
                         <div
-                          key={`product-${e.product_id}`}
+                          key={idx}
                           className="res-item"
                           onClick={() =>
                             handleChooseProd({
-                              product_id: e.product?.product_id,
-                              product_name: e.product?.product_name,
-                              variant: e.product?.variant,
-                              max_qty: e.quantity,
-                              img: e.product?.img,
-                              product_cost: e.product?.product_cost,
-                              sell_price: Number(e.product?.sell_price),
-                              discProd: Number(e.disc_prod_rec),
+                              product_id: e.product_id,
+                              product: e.product,
+                              max_qty: e.total_item,
+                              max_value: e.total_value,
+                              items: e.items
                             })
                           }
                         >
@@ -1143,9 +1117,6 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
                     <th scope="col" aria-label="product price">
                       harga
                     </th>
-                    <th scope="col" aria-label="product price">
-                      diskon
-                    </th>
                     <th scope="col" aria-label="total">
                       total
                     </th>
@@ -1164,17 +1135,17 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
                               style={{ textTransform: "capitalize" }}
                             >
                               <span className="user-img">
-                                <img src={item.img} alt="prod-img" />
+                                <img src={item.product?.img} alt="prod-img" />
                               </span>
-                              {item.product_name}
+                              {item.product?.product_name}
                             </td>
-                            <td>{item.variant}</td>
+                            <td>{item.product?.variant}</td>
                             <td>
                               <QtyButton
                                 min={1}
-                                max={salesItems.quantity}
+                                max={item.max_qty}
                                 name={`qty-product`}
-                                id="qtyItem"
+                                // id="qtyItem"
                                 value={item.quantity}
                                 returnValue={(e) => {
                                   handleEdit(e, idx);
@@ -1186,22 +1157,11 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
                             <td>
                               <NumberFormat
                                 intlConfig={{
-                                  value: item.sell_price,
+                                  value: item.product?.sell_price,
                                   locale: "id-ID",
                                   style: "currency",
                                   currency: "IDR",
                                 }}
-                              />
-                            </td>
-                            <td>
-                              <NumberFormat
-                                intlConfig={{
-                                  value: item.discProd,
-                                  locale: "id-ID",
-                                  style: "currency",
-                                  currency: "IDR",
-                                }}
-                                v
                               />
                             </td>
                             <td>
@@ -1209,9 +1169,7 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
                                 intlConfig={{
                                   value:
                                     (Number(item.quantity) *
-                                      Number(item.sell_price)) -
-                                    (Number(item.quantity) *
-                                      Number(item.discProd)),
+                                      Number(item.product?.sell_price)),
                                   locale: "id-ID",
                                   style: "currency",
                                   currency: "IDR",
@@ -1241,7 +1199,7 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
                         <td colSpan="4">{salesEndNote.totalQty}</td>
                       </tr>
                       <tr className="endnote-row">
-                        <td colSpan="5" className="endnote-row-title">
+                        <td colSpan="4" className="endnote-row-title">
                           total
                         </td>
                         <td colSpan="2">
@@ -1256,18 +1214,31 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
                         </td>
                       </tr>
                       <tr className="endnote-row">
-                        <td colSpan="5" className="endnote-row-title">
+                        <td colSpan="4" className="endnote-row-title">
                           informasi pembayaran
                         </td>
                         <td colSpan="2">
-                          <NumberFormat
+                          {paymentData &&
+                          (
+                            <NumberFormat
+                              intlConfig={{
+                                value: paymentData ? paymentData.amountOrigin : 0,
+                                locale: "id-ID",
+                                style: "currency",
+                                currency: "IDR",
+                              }}
+                              style={{marginRight: '2rem'}}
+                            />
+                          )
+                          }
+                          {/* <NumberFormat
                             intlConfig={{
                               value: paymentData ? paymentData.amountOrigin : 0,
                               locale: "id-ID",
                               style: "currency",
                               currency: "IDR",
                             }}
-                          />
+                          /> */}
                           {/* <span
                             style={{
                               textTransform: "capitalize",
@@ -1287,7 +1258,7 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
                         </td>
                       </tr>
                       <tr className="endnote-row">
-                        <td colSpan="5" className="endnote-row-title">
+                        <td colSpan="4" className="endnote-row-title">
                           {
                             paymentData ? 
                               paymentData.amountOrigin-salesEndNote.grandtotal < 0 ?  

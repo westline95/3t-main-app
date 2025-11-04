@@ -218,15 +218,34 @@ const salaryType = [
 
 const deliveryGroupStatus = [
     {
-        id: 0, 
-        type: "menunggu konfirmasi"
-    },
-    {
         id: 1, 
-        type: "dikonfirmasi"
+        type: "tunda"
     },
     {
         id: 2, 
+        type: "dikonfirmasi"
+    },
+    {
+        id: 3, 
+        type: "dibatalkan"
+    },
+    {
+        id: 4, 
+        type: "selesai"
+    },
+];
+
+const deliveryGroupItemsStatus = [
+    {
+        id: 1, 
+        type: "tunda"
+    },
+    {
+        id: 2, 
+        type: "dikonfirmasi"
+    },
+    {
+        id: 3, 
         type: "dibatalkan"
     },
 ];
@@ -253,5 +272,6 @@ export default {
     roStatus,
     invStatus,
     salaryType,
-    deliveryGroupStatus
+    deliveryGroupStatus,
+    deliveryGroupItemsStatus
 };

@@ -8,7 +8,7 @@ import InputWLabel from "../Input/InputWLabel";
 
 export default function QtyButton(props) {
     const { data, value, placeholder, name, min, max, returnValue, width, disabled, label, size } = props;
-    const [ inputValue, setInputValue ] = useState(value ? value : 0 );
+    const [ inputValue, setInputValue ] = useState(value ? Number(value) : 0 );
     const [ joinVal, setJoinVal ] = useState(inputValue ? inputValue.toString() : '');
     const [ delBtn, setDelBtn ] = useState(false);
     // const dispatch = useDispatch();
@@ -40,83 +40,27 @@ export default function QtyButton(props) {
         if(Number(inputValue)+1 < max) {
             const newValue = Number(inputValue) + 1;
             setInputValue(newValue);
-            
-            // onChangeInput({ 
-            //     target: {
-            //         name: name,
-            //         value: newValue,
-            //     }
-            // })
-            // returnValue(Number(newValue));
         } else {
             const newValue = Number(max);
-            // onChangeInput({ 
-            //     target: {
-            //         name: name,
-            //         value: newValue,
-            //     }
-            // })
             setInputValue(newValue);
-            // returnValue(Number(newValue));
         }
     };
 
     const onChangeInput = (e) => {
-        let val = e.target.value;
-        // console.log(val)
-        // console.log(inputValue)
-        // // const patternNumeric = /^\d*\.?\d*$/;
-        // // const patternNumeric = new RegExp ("[0-9]*$");
-        // // const isNumeric = patternNumeric.test(val);
-        // let newVal;
-
-        // // const patternNumeric = /^\d*\.?\d*$/;
-        // // const isNumeric = patternNumeric.test(joinVal + val);
-        if(val == ""){
+        let val1 = e.target.value.toString();
+        let val2 = val1.replace(/,(\d+)$/,'.$1');
+        let valFormatted = parseFloat(val2);
+        
+        if(valFormatted == ""){
             setInputValue(min);
         } else {
-            setInputValue(Number(val));
+            setInputValue(Number(valFormatted));
         }
-        // // if(isNumeric){
-        // //     setJoinVal(joinVal + keyjoinVal + val);
-        //     // setInputValue(val);
-        // // }
-        
-        // // if(+val >= min && +val <= max) {
-        // //     setInputValue((parseFloat(+val)));
-        // //     newVal = parseFloat(+val);
-        // //     console.log(newVal)
-        // // } else if (+val < min) {
-        // //     newVal = min;
-        // //     setInputValue(min);
-        // // } else {
-        // //     newVal = inputValue;
-            
-        // // }
-
-        // // if(parseFloat(inputValue) <= max && parseFloat(inputValue) >= min) {
-        // //     // e.target.name = name;
-        // //     // e.target.value = +val;
-        // //     setInputValue(inputValue);
-        // //     newVal = Number(inputValue);
-        // // } else if (inputValue < min) {
-        // //     newVal = min;
-        // //     setInputValue(min);
-        // // } else {
-        // //     newVal = inputValue;
-        // //     // setInputValue(min);
-        // // }
-                
-                    
-        // returnValue(Number(val));
-        // returnValue(newVal);
-
     };
 
     const onKeyDown= (e) => {
         const key = e.key;
         const value = e.target.value;
-        console.log(value + key)
         
         // Allow digits (0-9)
         if (key >= '0' && key <= '9') {
@@ -149,6 +93,7 @@ export default function QtyButton(props) {
             if (value.includes('.')) {
                 e.preventDefault(); // Prevent adding another dot if one already exists
             } 
+            // let convert = value.replace(/,(\d+)$/,'.$1')
             setInputValue(Number(value));
             return true;
         }
@@ -214,7 +159,8 @@ export default function QtyButton(props) {
                 <NumericFormat 
                     // thousandSeparator="." 
                     // decimalSeparator="," 
-                    fixedDecimalScale 
+                    // allowedDecimalSeparators=","
+                    // fixedDecimalScale 
                     className="form-control" 
                     onChange={onChangeInput} 
                     onKeyDown={onKeyDown}

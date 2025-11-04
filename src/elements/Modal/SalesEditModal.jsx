@@ -1080,23 +1080,27 @@ export default function SalesEditModal({show, onHide, data}) {
                                         {salesDisc && salesDisc.discType == "percent" ?
                                             (
                                                 <>
-                                                <NumberFormat intlConfig={{
-                                                    value: salesDisc ? (salesDisc.value*Number(salesEndNote.subtotal)/100) : "0", 
-                                                    locale: "id-ID",
-                                                    style: "currency", 
-                                                    currency: "IDR",
-                                                }}
+                                                <NumberFormat 
+                                                    intlConfig={{
+                                                        value: salesDisc ? (salesDisc.value*Number(salesEndNote.subtotal)/100) : "0", 
+                                                        locale: "id-ID",
+                                                        style: "currency", 
+                                                        currency: "IDR",
+                                                    }}
+                                                    style={{marginRight: '2rem'}}
                                                 />
                                                 <span>{`(${salesDisc.value}%)`}</span>
                                                 </>
                                             ) : 
                                             (
-                                                <NumberFormat intlConfig={{
-                                                    value: salesDisc.value, 
-                                                    locale: "id-ID",
-                                                    style: "currency", 
-                                                    currency: "IDR",
-                                                }} 
+                                                <NumberFormat 
+                                                    intlConfig={{
+                                                        value: salesDisc.value, 
+                                                        locale: "id-ID",
+                                                        style: "currency", 
+                                                        currency: "IDR",
+                                                    }} 
+                                                    style={{marginRight: '2rem'}}
                                                 />
                                             )
                                         }

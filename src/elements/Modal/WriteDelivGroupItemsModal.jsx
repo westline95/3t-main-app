@@ -15,6 +15,8 @@ import DropzoneFile from "../DropzoneFile";
 import useMediaQuery from "../../hooks/useMediaQuery";
 import DGTransactionModal from "./DGTransactionModal";
 import AutoComplete from "../AutoComplete";
+import { parse } from "dotenv";
+import NumberFormat from "../Masking/NumberFormat";
 
 export default function WriteDelivGroupItemsModal({
   show,
@@ -33,8 +35,14 @@ export default function WriteDelivGroupItemsModal({
 
   const toast = useRef(null);
   const toastUpload = useRef(null);
+
+  const storage = localStorage.getItem(`form-${data.id}`);
+  const checkingStorage = storage ? JSON.parse(localStorage.getItem(`form-${data.id}`)) : [];
+  const checkFilteredCustStorage = localStorage.getItem(data.id);
+  const filteredCustParsed = checkFilteredCustStorage ? JSON.parse(localStorage.getItem(data.id)) : [];
+
   const [ progress, setProgress ] = useState(0);
-  const [ bulkForm, setBulkForm ] = useState(1);
+  const [ bulkForm, setBulkForm ] = useState(filteredCustParsed && filteredCustParsed.length > 1 ? filteredCustParsed.length : 1);
   const methods = useForm({
     defaultValues: {
     },});
@@ -84,6 +92,10 @@ export default function WriteDelivGroupItemsModal({
   const [modalData, setModalData] = useState(null);
   const [dgReportList, setDgReportList] = useState(null);
 
+  const [toDelete, setToDelete] = useState(null);
+  const [updatedForm, setUpdatedForm] = useState(null);
+  const [updatedCust, setUpdatedCust] = useState(null);
+
   // popup needs
   const refToThis = useRef(Array.from({ length: bulkForm }, () => createRef()));
   const [openPopup, setOpenPopup] = useState([false]);
@@ -109,10 +121,28 @@ export default function WriteDelivGroupItemsModal({
   // fetch all customer
   const fetchAllCust = async () => {
     await axiosPrivate
-      .get("/customers")
+      .get("/pure-customers")
       .then((response) => {
-        setCustData(response.data);
-        setCustDataDupe(response.data);
+        let tempOrigin = [...response.data];
+
+        if(checkFilteredCustStorage){
+          const parsedFilterCustData = JSON.parse(checkFilteredCustStorage); 
+          let arr = [...parsedFilterCustData];
+          let filteredCust = null;
+
+          if(arr.length > 0) {
+            arr.map(e => {
+              filteredCust = tempOrigin.filter(item => Number(item.customer_id) != Number(e))
+            });
+          }
+          console.log(filteredCust)
+          setCustData(response.data);
+          setCustDataDupe(filteredCust ? filteredCust : []);
+          setFilteredCust(arr);
+        } else {
+          setCustData(response.data);
+          setCustDataDupe(response.data);
+        }
       })
       .catch((error) => {
         toast.current.show({
@@ -125,21 +155,52 @@ export default function WriteDelivGroupItemsModal({
   };
 
   // fetch all prod
+  // const fetchAllProd = async () => {
+  //   await axiosPrivate
+  //     .get("/products")
+  //     .then((response) => {
+  //       let dupe = [...response.data];
+  //       response.data.map((e, idx) => {
+  //         dupe[idx].fullProdName = e.product_name + " " + e.variant;
+  //       });
+  //       setAllProd(response.data);
+  //     })
+  //     .catch((error) => {
+  //       toast.current.show({
+  //         severity: "error",
+  //         summary: "Failed",
+  //         detail: "Error when get product data",
+  //         life: 3000,
+  //       });
+  //     });
+  // };
+
   const fetchAllProd = async () => {
     await axiosPrivate
-      .get("/products")
-      .then((response) => {
-        let dupe = [...response.data];
-        response.data.map((e, idx) => {
-          dupe[idx].fullProdName = e.product_name + " " + e.variant;
+      .get("/delivery-group/by", {
+        params: {
+          id: data.id,
+        },
+      })
+      .then((resp) => {
+        const storage = localStorage.getItem(`origin-dgitem-${data.id}`);
+
+        let getDeliveryGroupItems = [...resp.data.DeliveryGroupItemsProduct];
+        getDeliveryGroupItems.map((e, idx) => {
+          e.fullProdName = e.product?.product_name + " " + e.product?.variant;
         });
-        setAllProd(response.data);
+
+        if(!storage) localStorage.setItem(`origin-dgitem-${data.id}`, JSON.stringify(getDeliveryGroupItems));
+        setAllProd(getDeliveryGroupItems);
       })
       .catch((error) => {
+        // setToastContent({variant:"danger", msg: "Error when get products data!"});
+        // setShowToast(true);
+
         toast.current.show({
           severity: "error",
-          summary: "Failed",
-          detail: "Error when get product data",
+          summary: "Error",
+          detail: "Error when get products data",
           life: 3000,
         });
       });
@@ -173,10 +234,10 @@ export default function WriteDelivGroupItemsModal({
   
   // };
 
-  const handleFilterCust = (index) => {
-    handleAutoComplete(getValues(`name ${index+1}`), index);
-    // setCust(null);
-  };
+  // const handleFilterCust = (index) => {
+  //   handleAutoComplete(getValues(`name ${index+1}`), index);
+  //   // setCust(null);
+  // };
 
   const handleChooseCust = (e, index) => {
     let openPopupDupe = [...openPopup];
@@ -255,6 +316,25 @@ export default function WriteDelivGroupItemsModal({
 
   // end of popup needs
 
+  const delForm = (formStorageIndex) => {
+    if(storage){
+      let dupeOrigin = [...checkingStorage];
+      let dupeOriginCust = [...filteredCustParsed];
+
+      dupeOrigin.splice(formStorageIndex, 1);
+      dupeOriginCust.splice(formStorageIndex, 1);
+
+      localStorage.setItem(`form-${data.id}`, JSON.stringify(dupeOrigin));
+      localStorage.setItem(data.id, JSON.stringify(dupeOriginCust));
+
+      
+      setToDelete(formStorageIndex);
+      setUpdatedForm(dupeOrigin);
+      setUpdatedCust(dupeOriginCust);
+      formToRender.splice(toDelete, 1);
+    }
+  }
+
   const onError = () => {
     setControlUiBtn(false);
   };
@@ -320,197 +400,182 @@ export default function WriteDelivGroupItemsModal({
     setShowModal();
   };
 
-  const handleSelectedList = (selected, index) => {
-    if(!filterCust){
-      let arr = [];
-      arr[index] = selected.customer_id;
-      setFilteredCust(arr);
-    } else {
-      let arr = [...filterCust];
-      let findDupeSelected = arr.find(item => item == selected.customer_id);
+  const handleUpdateFormLocalStorage = (item, index) => {
+    if(storage && checkFilteredCustStorage){
+      let formStorage = JSON.parse(storage);
+      let custStorage = JSON.parse(checkFilteredCustStorage);
 
-      if(!findDupeSelected){
-        arr[index] = selected.customer_id;
-      } 
-
-      setFilteredCust(arr);
-      // setOpenPopup(false);
-      const storage = localStorage.setItem(data.id, JSON.stringify(arr));
-    }
-  }
-
-  const handleAutoComplete = (e, index) => {
-    const inputVal = e.target.value;
-    // setIsFocus(e.target.name);
-    if(inputVal && inputVal !== ""){
-        // if arrray object type
+      if(!item && custStorage) {
+        custStorage[index] = null;
         
-        // let arr = [...filterCust];
-        // arr[index] = null;
-        // let reFilterAll = custData.filter(({customer_id}) => !arr.includes(customer_id));
-        // setCustDataDupe(reFilterAll);
-        // console.log(reFilterAll)
-        // console.log(custData.filter(item => item['name'].includes(inputVal.toLowerCase())))
-        const filterData = custData.filter(item => item['name'].includes(inputVal.toLowerCase()));
-        (filterData.length == 0) ? setOpenPopup(false) : setOpenPopup(true);
-        console.log(filterData)
-        // setOpenPopup(true);
-        // setFilteredData(filterData);            
-        setCustDataDupe(filterData);
-    } else if(inputVal == "") {
-        setOpenPopup(true);
-        console.log(filterCust)
-        if(filterCust && filterCust.length > 0) {
-          let arr = [...filterCust];
-          let reFilterAll = custData.filter(({customer_id}) => !arr.includes(customer_id));
-          setCustDataDupe(reFilterAll);
-        } else {
-          setCustDataDupe(custData);
+        localStorage.setItem(data.id, JSON.stringify(custStorage));
+      }
+
+      if(formStorage[index]){
+        if(!item) {
+          formStorage.splice(index, 1);
+
+          localStorage.setItem(`form-${data.id}`, JSON.stringify(formStorage));
+        } else{
+          formStorage[index].customer_id = item.customer_id;
+          formStorage[index].customer_name = item.name;
+          formStorage[index].guest_name = "";
         }
-        // setBlurred(false);
-        // const customerListTakenStorage = localStorage.getItem(`customer_id`);
-        // const checkstorage = JSON.parse(customerListTakenStorage);
-        // if(checkstorage.length < 1){
-            // setFilteredData(data);
-        // } 
-        // else {
-            // handleFilteringAutoComplete(null);
 
-        // }
-        // setOpenPopup(true);
-    } else {
-        // setOpenPopup(false);
+        localStorage.setItem(`form-${data.id}`, JSON.stringify(formStorage));
+      }
+
     }
-    // console.log(e.type)
-    // if(e.type == "change" && OnChange){
-    //     return OnChange();
-    // }
   }
+
+  const handleSelectedList = (selected, index) => {
+    let arr = [];
+
+    if(filterCust && filterCust.length == 0){
+      !selected ? arr[index] = selected :  arr[index] = selected.customer_id;
+      // arr[index] = selected.customer_id;
+      // arr[index] = selected;
+      // setFilteredCust(arr);
+    } else {
+      arr = [...filterCust];
+      if(!selected){
+        arr[index] = selected;
+      } else {
+        let findDupeSelected = arr.find(item => item == selected.customer_id);
   
-  // const handleAutoComplete = (index) => {
-  //   console.log(index)
-  //   // if(!filterCust){
-  //   //   let arr = [];
-  //   //   arr[index] = selected.customer_id;
-  //   //   setFilteredCust(arr);
-  //   // } else {
-  //     let arr = [...filterCust];
-  //     arr[index] = null;
-  //     setFilteredCust(arr);
+        if(!findDupeSelected){
+          arr[index] = selected.customer_id;
+          // arr[index] = selected;
+        } 
 
-  //     // if(!findDupeSelected){
-  //     //   arr[index] = selected.customer_id;
-  //     // } 
-
-  //   // }
-  // }
+      }
+    }
+    
+    setFilteredCust(arr);
+    localStorage.setItem(data.id, JSON.stringify(arr));
+    handleUpdateFormLocalStorage(selected, index);
+  }
 
   useEffect(() => {
     if(custData){
       let reFilterAll = custData.filter(({customer_id}) => !filterCust.includes(customer_id));
       setCustDataDupe(reFilterAll);
-      
     }
-  },[filterCust])
+  },[filterCust]);
 
 
   const FormComponent = ({index}) => {
-    const storage = localStorage.getItem(`form-${data.id}`);
     let parsed;
     if(storage){
       parsed = JSON.parse(storage);
     }
 
     return(
-        <div key={index} className="form-delivery-component" style={{ border: '1.7px dashed #29a7fc', borderRadius: 17, marginTop: 0}}>
-          <div style={{padding: 16}}>
-            <p className="modal-section-title mb-3">Pelanggan {index + 1}</p>
-              {guestMode[index] ? (
-                <InputWLabel
-                  label={"nama pelanggan"}
-                  type="text"
-                  name={`guest_name-${index+1}`}
-                  placeholder={"Ketik nama pelanggan..."}
-                  // onChange={(e) => handleAutoComplete(e)}
-                  // onFocus={handleAutoComplete}
-                  // onKeyDown={handleKeyDown}
-                  // for smooth working onBlur method in custom component must set nBlur=true 
-                  // && set prop onblurcallback for onblurfunction
-                  // onBlur={true}
-                  // onBlurCallback={handleBlur}
-                  // if onblur true, two items prop above are required
-
-                  require={false}
-                  register={register}
-                  errors={errors}
-                  textStyle={"capitalize"}
-                  autoComplete="off"
-                />
-              ):(
-                <AutoComplete 
-                  index={index}
-                  LocalStorage={data.id}
-                  FilterData={true}
-                  DataOrigin={custData} 
-                  DataFiltered={custDataDupe} 
-                  // OpenPopup={openPopup}
-                  FilteredData={filterCust}
-                  SetFilteredData={(value) => setFilteredCust(value)}
-                  Label={"nama pelanggan"} 
-                  Placeholder={"Cari dan pilih nama pelanggan..."}
-                  ForceSelection={true} 
-                  DataForm="array-object" 
-                  InputName={`name-${index+1}`}
-                  SearchKey={"name"} 
-                  DataKeyInputValue={"name"} 
-                  OnSelect={(choosedData) => {
-                    choosedData.customer_id ? setValue(`customer_id-${index+1}`, choosedData.customer_id)
-                    : setValue(`guest_name ${index+1}`, choosedData.name);
-                    handleSelectedList(choosedData, index);
-                   
-                    
-                    // (choosedData.customer_id) && handleFilteringAutoComplete(choosedData.customer_id);
-                  }}
-                  // OnChange={(e) => handleAutoComplete(e, index)}
-                  // OnFocus={(e) => handleAutoComplete(e, index)}
-                  require={false}
-                />
-
-              )}
+      <div key={index} className={`form-delivery-component ${parsed && parsed[index] ? 'filled' : ''}`} style={{ border: '1.7px dashed #29a7fc', borderRadius: 17, marginTop: 0}}>
+        <div style={{padding: 16, position: 'relative'}}>
+          {
+            parsed && parsed[index] ? (
+              <button className="btn-card btn btn-danger light" onClick={(e) => {e.preventDefault();delForm(index)}}>
+                <i className='bx bxs-trash'></i>
+              </button>
+            ):""
+          }
+          <p className="modal-section-title mb-3">Pelanggan {index + 1}</p>
+            {guestMode[index] && guestMode[index] == true ? (
               <InputWLabel
-                label={"Pelanggan tidak ditemukan?"}
-                type={"switch"}
-                fontSize={"11px"}
-                name={"guest_mode-"+(index+1)}
-                style={{ alignItems: "center", marginTop: "1rem" }}
-                defaultChecked={guestMode[index]}
-                onChange={(e) => {
-                  setValue("guest_mode-"+(index+1), e.target.checked);
-                  let guestModeDupe = [...guestMode];
-                  guestModeDupe[index] = e.target.checked;
-                  setGuestMode(guestModeDupe);
-                  console.log(e)
-                  // unregister("lastName")
-                  setValue(`name-${index+1}`, "");
-                  setValue(`customer_id-${index+1}`, "");
-                  setValue(`guest_name-${index+1}`, "");
-                  // setCust(null);
-                }}
-                register={register}
+                label={"nama pelanggan"}
+                type="text"
+                name={`guest_name-${index+1}`}
+                placeholder={"Ketik nama pelanggan..."}
+                // onChange={(e) => handleAutoComplete(e)}
+                // onFocus={handleAutoComplete}
+                // onKeyDown={handleKeyDown}
+                // for smooth working onBlur method in custom component must set nBlur=true 
+                // && set prop onblurcallback for onblurfunction
+                // onBlur={true}
+                // onBlurCallback={handleBlur}
+                // if onblur true, two items prop above are required
+
                 require={false}
+                register={register}
                 errors={errors}
+                textStyle={"capitalize"}
+                autoComplete="off"
               />
+            ):(
+              <AutoComplete 
+                index={index}
+                LocalStorage={data.id}
+                FilterData={true}
+                DataOrigin={custData} 
+                DataFiltered={custDataDupe} 
+                // OpenPopup={openPopup}
+                FilteredData={filterCust}
+                Label={"nama pelanggan"} 
+                Placeholder={"Cari dan pilih nama pelanggan..."}
+                ForceSelection={true} 
+                DataForm="array-object" 
+                InputName={`name-${index+1}`}
+                SearchKey={"name"} 
+                DataKeyInputValue={"name"} 
+                OnSelect={(choosedData) => {
+                  choosedData.customer_id ? setValue(`customer_id-${index+1}`, choosedData.customer_id)
+                  : setValue(`guest_name-${index+1}`, choosedData.name);
+                  handleSelectedList(choosedData, index);
+                  // (choosedData.customer_id) && handleFilteringAutoComplete(choosedData.customer_id);
+                }}
+                onKeyDownChange={(item, index) => {
+                  handleSelectedList(item, index);
+                }}
+                // OnChange={(e) => handleAutoComplete(e, index)}
+                // OnFocus={(e) => handleAutoComplete(e, index)}
+                require={false}
+              />
+
+            )}
+            <InputWLabel
+              label={"Pelanggan tidak ditemukan?"}
+              type={"switch"}
+              fontSize={"11px"}
+              name={"guest_mode-"+(index+1)}
+              style={{ alignItems: "center", marginTop: "1rem" }}
+              defaultChecked={guestMode[index]}
+              onChange={(e) => {
+                setValue("guest_mode-"+(index+1), e.target.checked);
+                let guestModeDupe = [...guestMode];
+                guestModeDupe[index] = e.target.checked;
+
+                setGuestMode(guestModeDupe);
+                setValue(`name-${index+1}`, "");
+                setValue(`customer_id-${index+1}`, "");
+                setValue(`guest_name-${index+1}`, "");
+                // handleLocalstorage for filtering customer
+                if(e.target.checked){
+                  handleUpdateFormLocalStorage(null, index);
+                  // if(checkFilteredCustStorage){
+                  //   let setNull = JSON.parse(checkFilteredCustStorage);
+                    
+                  // }
+                }
+              }}
+              register={register}
+              require={false}
+              errors={errors}
+            />
+            <div className="mt-3" style={{display: 'flex', flexDirection: 'row', alignItems:'end', justifyContent: 'space-between'}}>
               <button
                 type="button"
-                className={`add-btn btn btn-${parsed ? parsed[index] ? 'success' : 'primary' : 'primary'} light btn-w-icon form-support-btn mt-3`}
+                className={`add-btn btn btn-${parsed && parsed[index] ? 'warning' : 'primary'}  btn-w-icon form-support-btn mr-3`}
                 aria-label="addDGTransaction"
                 onClick={(e) => {
-                  
                   let dataToSend = {
                     action: "insert",
                     index: index,
                     delivery_group_id: data.id,
-                    delivery_group_date: data.delivery_group_date
+                    delivery_group_date: data.delivery_group_date,
+                    note: parsed && parsed[index] ? parsed[index].note : "",
+                    orders: parsed && parsed[index] ? [...parsed[index].orders] : [],
+                    payment: parsed && parsed[index] ? parsed[index].payment : null
                   };
 
                   guestMode[index]
@@ -530,7 +595,6 @@ export default function WriteDelivGroupItemsModal({
                       life: 3000,
                     })
                   } else {
-                    console.log('jsadjassadasd')
                     getValues(`customer_id-${index+1}`) && getValues(`name-${index+1}`) ? handleModal(e, dataToSend)
                     : toast.current.show({
                         severity: "error",
@@ -542,19 +606,180 @@ export default function WriteDelivGroupItemsModal({
                 }}
               >
                 {parsed ? parsed[index] ? <i className='bx bxs-edit' ></i> :  <i className="bx bx-plus"></i> :  <i className="bx bx-plus"></i>}
-               
+              
                 
                 
-                {parsed ? parsed[index] ? 'edit transaksi' : 'transaksi' : 'transaksi'}
+                {parsed && parsed[index] ? 'edit transaksi' : 'transaksi'}
               </button>
-          </div>
+              {parsed && parsed[index] ? 
+              ( 
+                <div style={{display: 'flex', flexDirection: 'column', gap:5}}>
+                  <span className={`badge badge-info ${parsed[index] ? '' : 'light'}`}
+                  > Transaksi: 
+                    <NumberFormat 
+                      intlConfig={{
+                        value: parsed[index].grandtotal, 
+                        locale: "id-ID",
+                        style: "currency", 
+                        currency: "IDR",
+                      }} 
+                      style={{marginLeft: 7}}
+                    />                                                                         
+                  </span>
+                  <span className={`badge badge-success ${parsed[index] ? '' : 'light'}`}
+                  > Setoran: 
+                    <NumberFormat 
+                      intlConfig={{
+                        value: parsed[index].amount_paid, 
+                        locale: "id-ID",
+                        style: "currency", 
+                        currency: "IDR",
+                      }} 
+                      style={{marginLeft: 7}}
+                    />                                                                         
+                  </span>
+                </div>
+              ):""
+              }
+
+            </div>
         </div>
+      </div>
     )
   }
 
   const formToRender = Array.from({ length: bulkForm}, (_, index) => (
     <FormComponent key={index} index={index} />
   ))
+
+  useEffect(() => {
+    if(custData){
+      let customerIDTempArr = [];
+      if(storage && checkFilteredCustStorage) {
+        let parsed;
+        parsed = JSON.parse(storage);
+        
+        let getCustIDOnly = null
+        
+        // retrievehandle item transaction
+        if(parsed.length > 0) {
+          getCustIDOnly = parsed.map(e => {
+            return e.customer_id;
+          });
+          
+          let custTmp = [...filteredCustParsed];
+          const sync = getCustIDOnly.map((e,idx) => custTmp[idx] = e);
+          console.log(sync)
+          localStorage.setItem(data.id, JSON.stringify(sync));
+
+          parsed.map((e,idx) => {
+            if(e.customer_id) {
+              setValue(`customer_id-${idx+1}`, e.customer_id);
+              setValue(`name-${idx+1}`, e.customer_name);
+              // customerIDTempArr.push(e.customer_id);
+            } else {
+              let guestModeDupe = [...guestMode];
+              guestModeDupe[idx] = true;
+              
+              // customerIDTempArr.push(null);
+              setValue(`guest_mode-${idx+1}`, true);
+              setGuestMode(guestModeDupe);
+              setValue(`guest_name-${idx+1}`, e.guest_name);
+            }
+          })
+        // })
+        }
+        else if(parsed.length !== filteredCustParsed.length){
+          const filterUnmatched = filteredCustParsed.filter(e => !getCustIDOnly.includes(e));
+          const findInCustData = custData.find(e => e.customer_id == filterUnmatched[0]);
+          const getIndex = filteredCustParsed.findIndex(e => e == filterUnmatched[0]);
+          
+
+          if(findInCustData){
+            setValue(`customer_id-${getIndex+1}`, findInCustData.customer_id);
+            setValue(`name-${getIndex+1}`, findInCustData.name);
+          }
+  
+        }  
+        // console.log(customerIDTempArr)
+        // localStorage.setItem(data.id, JSON.stringify(customerIDTempArr));
+      }
+
+    }
+
+    // if(checkFilteredCustStorage){
+    //   let parsed;
+    //   parsed = JSON.parse(checkFilteredCustStorage);
+    //   if(parsed.length > 0) {
+    //     parsed.map((e,idx) => {
+    //       if(e.customer_id) {
+    //         setValue(`customer_id-${idx+1}`, e.customer_id);
+    //         setValue(`name-${idx+1}`, e.customer_name);
+    //         customerIDTempArr.push(e.customer_id);
+    //       } else {
+    //         let guestModeDupe = [...guestMode];
+    //         guestModeDupe[idx] = true;
+            
+    //         customerIDTempArr.push(null);
+    //         setValue(`guest_mode-${idx+1}`, true);
+    //         setGuestMode(guestModeDupe);
+    //         setValue(`guest_name-${idx+1}`, e.guest_name);
+    //       }
+    //     })
+    //   }
+    // }
+  },[custData])
+
+  useEffect(() => {
+    if(updatedCust && updatedForm && custData) {
+
+      // re retrieve
+      const storage = localStorage.getItem(`form-${data.id}`);
+      const storageCust = localStorage.getItem(data.id);
+
+      if(storage) {
+        let parsed = JSON.parse(storage);
+        let filteredCustParsed = JSON.parse(storageCust);
+
+        // reset form first
+        reset();
+
+        if(parsed.length !== filteredCustParsed.length){
+          let getCustIDOnly = parsed.map(e => {
+            return e.customer_id;
+          })
+          
+          const filterUnmatched = filteredCustParsed.filter(e => !getCustIDOnly.includes(e));
+          const findInCustData = custData.find(e => e.customer_id == filterUnmatched[0]);
+          const getIndex = filteredCustParsed.findIndex(e=> e == filterUnmatched[0]);
+          
+          if(findInCustData){
+            setValue(`customer_id-${getIndex+1}`, findInCustData.customer_id);
+            setValue(`name-${getIndex+1}`, findInCustData.name);
+          }
+        }
+
+        if(parsed.length > 0) {
+          parsed.map((e,idx) => {
+            if(e.customer_id) {
+              setValue(`customer_id-${idx+1}`, e.customer_id);
+              setValue(`name-${idx+1}`, e.customer_name);
+            } else {
+              let guestModeDupe = [...guestMode];
+              guestModeDupe[idx] = true;
+              
+              setValue(`guest_mode-${idx+1}`, true);
+              setGuestMode(guestModeDupe);
+              setValue(`guest_name-${idx+1}`, e.guest_name);
+            }
+          })
+        }
+      }
+      setUpdatedCust(null);
+      setUpdatedForm(null);
+    }
+  },[updatedCust, updatedForm])
+
 
   useEffect(() => {
     fetchAllCust();
@@ -564,67 +789,14 @@ export default function WriteDelivGroupItemsModal({
   useEffect(() => {
     if(dgReportList){
       setShowModal("");
-      // let dgReportListArr = [];
-      // dgReportList.items.map((item, idx) => {
-      //   let dgListItem = {
-      //     customer_id: dgReportList.customer_id,
-      //     guest_name : dgReportList.customer_id ? '' : dgReportList.name,
-      //     order_date: dgReportList.origin.delivery_group_date,
-      //     order_type: 'delivery',
-      //     order_status: dgReportList.payment.amountOrigin == 0 ? 'pending' 
-      //                   : dgReportList.payment.amountOrigin < dgReportList.payment.pay_amount ? 'pending'
-      //                   : dgReportList.payment.amountOrigin >= dgReportList.payment.pay_amount ? 'completed'
-      //                   : 'pending',
-      //     source: 'delivery_group',
-      //     shipped_date: dgReportList.origin.delivery_group_date,
-      //     payment_type: dgReportList.payment.amountOrigin == 0 ? 'bayar nanti' 
-      //                   : dgReportList.payment.amountOrigin < dgReportList.payment.pay_amount ? 'sebagian'
-      //                   : dgReportList.payment.amountOrigin >= dgReportList.payment.pay_amount ? 'lunas'
-      //                   : 'bayar nanti',
-      //     subtotal: dgReportList.cost_detail.grandtotal,
-      //     grandtotal: dgReportList.cost_detail.grandtotal,
-      //     note: dgReportList.note,
-      //     is_complete: dgReportList.payment.amountOrigin == 0 ? false 
-      //     : dgReportList.payment.amountOrigin < dgReportList.payment.pay_amount ? false
-      //     : dgReportList.payment.amountOrigin >= dgReportList.payment.pay_amount ? true
-      //     : false,
-      //     order_discount: 0,
-      //     payment_date: dgReportList.payment.payment_date,
-      //     amount_paid: dgReportList.payment.amountOrigin,
-      //     payment_method: 'cash',
-      //     payment_note: dgReportList.payment.note,
-      //   }  
-
-      //   dgListItem.product_id = item.product_id;
-      //   dgListItem.quantity = item.quantity;
-      //   dgListItem.sell_price = item.sell_price;
-      //   dgListItem.disc_prod_rec = item.discProd;
-
-      //   dgReportListArr.push(dgListItem);
-      // })
-
-      console.log(dgReportList);
     }
   },[dgReportList]);
 
   useEffect(() => {
-    if (custData && allProdData) {
+    if(custData && allProdData) {
       setLoading(false);
     }
   }, [custData, allProdData]);
-
-  useEffect(() =>{
-    const checkStorage = localStorage.getItem(data.id);
-    if(!checkStorage){
-      let arr = new Array(bulkForm);
-      localStorage.setItem(data.id, JSON.stringify(arr));
-    } else {
-      let parsed = JSON.parse(checkStorage);
-      parsed.length < bulkForm && parsed.push(null);
-      localStorage.setItem(data.id, JSON.stringify(parsed));
-
-    }
-  },[bulkForm]);
 
   if (isLoading) {
     return;
@@ -642,6 +814,7 @@ export default function WriteDelivGroupItemsModal({
         scrollable={true}
         centered={true}
         dialogClassName="deliveryGroupFormModal"
+        backdrop="static"
       >
         <Modal.Header closeButton>
           <Modal.Title>
@@ -652,7 +825,7 @@ export default function WriteDelivGroupItemsModal({
           <FormProvider {...methods}>
             <form>
               {/* <div className="add-prod-detail-wrap" style={{flexDirection: 'column', gap: '1rem'}}> */}
-              <div className="form-delivery-wrapper">
+              <div className="form-delivery-wrapper" style={{paddingBottom: 24}}>
               {formToRender}
               
               <div  className="form-delivery-component" style={{ 
@@ -669,7 +842,13 @@ export default function WriteDelivGroupItemsModal({
                     className="add-btn btn btn-info btn-w-icon cta-btn"
                     aria-label="addDGTransaction"
                     onClick={(e) => {
-                      setBulkForm(bulkForm+1);
+                      checkingStorage[bulkForm-1] ? setBulkForm(bulkForm+1) : toast.current.show({
+                        severity: "error",
+                        summary: "Error",
+                        detail: "Lengkapi transaksi pelanggan sebelumnya terlebih dahulu!",
+                        life: 3000,
+                      });
+                      // setBulkForm(bulkForm+1);
                       // update
                       let updateOpenPopup = [...openPopup];
                       let updateGuestMode = [...guestMode];
@@ -699,16 +878,6 @@ export default function WriteDelivGroupItemsModal({
           >
             batal
           </button> 
-          <button
-            type="button"
-            className="btn btn-warning"
-            onClick={() => {
-              onHide();
-              handleCancel();
-            }}
-          >
-            simpan draf
-          </button>
           <button
             type="button"
             className="btn btn-primary"

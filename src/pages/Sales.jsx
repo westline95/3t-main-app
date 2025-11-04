@@ -975,7 +975,6 @@ export default function Sales({handleSidebar, showSidebar}){
     }
 
     const addToSalesData = () => {
-        
         if(qtyVal === 0 && !chooseProd){
             toast.current.show({
                 severity: "error",
@@ -1019,6 +1018,7 @@ export default function Sales({handleSidebar, showSidebar}){
             setValue('salesProduct', "");
             handleUpdateEndNote();
         } 
+        setQtyVal(0);
     }
 
     const handleFilterCust = () => {
@@ -3506,7 +3506,7 @@ export default function Sales({handleSidebar, showSidebar}){
                                                                         <>
                                                                         <tr className="endnote-row">
                                                                             <td colSpan="2" className="endnote-row-title">items</td>
-                                                                            <td colSpan="4">{salesEndNote.totalQty}</td>
+                                                                            <td colSpan="5">{salesEndNote.totalQty}</td>
                                                                         </tr>
                                                                         <tr className="endnote-row">
                                                                             <td colSpan="5" className="endnote-row-title">subtotal</td>
@@ -3527,32 +3527,38 @@ export default function Sales({handleSidebar, showSidebar}){
                                                                                     salesDisc.discType == "percent" ?
                                                                                 (
                                                                                     <>
-                                                                                    <NumberFormat intlConfig={{
-                                                                                        value: salesDisc ? (salesDisc.value*Number(salesEndNote.subtotal)/100) : 0, 
-                                                                                        locale: "id-ID",
-                                                                                        style: "currency", 
-                                                                                        currency: "IDR",
-                                                                                    }}
+                                                                                    <NumberFormat 
+                                                                                        intlConfig={{
+                                                                                            value: salesDisc ? (salesDisc.value*Number(salesEndNote.subtotal)/100) : 0, 
+                                                                                            locale: "id-ID",
+                                                                                            style: "currency", 
+                                                                                            currency: "IDR",
+                                                                                        }}
+                                                                                        style={{marginRight: '2rem'}}
                                                                                     />
                                                                                     <span>{`(${salesDisc.value}%)`}</span>
                                                                                     </>
                                                                                 ) : 
                                                                                 (
-                                                                                    <NumberFormat intlConfig={{
-                                                                                        value: salesDisc.value, 
-                                                                                        locale: "id-ID",
-                                                                                        style: "currency", 
-                                                                                        currency: "IDR",
-                                                                                    }} 
+                                                                                    <NumberFormat 
+                                                                                        intlConfig={{
+                                                                                            value: salesDisc.value, 
+                                                                                            locale: "id-ID",
+                                                                                            style: "currency", 
+                                                                                            currency: "IDR",
+                                                                                        }} 
+                                                                                        style={{marginRight: '2rem'}}
                                                                                     />
                                                                                 )
                                                                                 :  (
-                                                                                    <NumberFormat intlConfig={{
-                                                                                        value: 0, 
-                                                                                        locale: "id-ID",
-                                                                                        style: "currency", 
-                                                                                        currency: "IDR",
-                                                                                    }} 
+                                                                                    <NumberFormat 
+                                                                                        intlConfig={{
+                                                                                            value: 0, 
+                                                                                            locale: "id-ID",
+                                                                                            style: "currency", 
+                                                                                            currency: "IDR",
+                                                                                        }} 
+                                                                                        style={{marginRight: '2rem'}}
                                                                                     />
                                                                                 )
                                                                                 }
@@ -3578,12 +3584,14 @@ export default function Sales({handleSidebar, showSidebar}){
                                                                             <tr className="endnote-row">
                                                                             <td colSpan="5" className="endnote-row-title">paid & payment type</td>
                                                                             <td colSpan="2">
-                                                                                <NumberFormat intlConfig={{
-                                                                                    value: paidData ? paidData.amountOrigin : 0, 
-                                                                                    locale: "id-ID",
-                                                                                    style: "currency", 
-                                                                                    currency: "IDR",
+                                                                                <NumberFormat 
+                                                                                    intlConfig={{
+                                                                                        value: paidData ? paidData.amountOrigin : 0, 
+                                                                                        locale: "id-ID",
+                                                                                        style: "currency", 
+                                                                                        currency: "IDR",
                                                                                     }} 
+                                                                                     style={{marginRight: '2rem'}}
                                                                                 />
                                                                                 <span style={{textTransform: 'capitalize', fontWeight: 500}}>{`${paidData ? '~ ' + paidData.payment_type : ""}`}</span>
                                                                                 <span className="endnote-row-action">

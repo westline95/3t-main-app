@@ -131,7 +131,6 @@ export default function DeliveryEmployee({handleSidebar, showSidebar}){
     const fetchAllDelivery = async () => {
         await axiosPrivate.get("/delivery/all")
             .then(response => {
-                console.log(response.data)
                 setSalesData(response.data);
                 setDupeDelivData(response.data);
                 setTotalRecords(response.data.length);
@@ -1080,7 +1079,7 @@ export default function DeliveryEmployee({handleSidebar, showSidebar}){
           className="table-btn edit-table-data"
           aria-label="writeDelivGroupsReport"
           onClick={(e) => {
-            rowData.status == 1 ?
+            rowData.status == 2 ?
             handleModalWData(e, {
               id: rowData.delivery_group_id,
               employee_id: rowData.employee_id,
@@ -1090,7 +1089,7 @@ export default function DeliveryEmployee({handleSidebar, showSidebar}){
             : toast.current.show({
                     severity: "error",
                     summary: "Forbidden",
-                    detail: rowData.status == 0 ? "Tidak dapat mengubah data pengantaran jika sudah dikonfirmasi" : "Tidak dapat mengubah data pengantaran yang sudah dibatalkan",
+                    detail: rowData.status == 3 &&  "Tidak dapat mengubah data pengantaran yang sudah dibatalkan",
                     life: 3000,
                 });
           }}
@@ -1138,18 +1137,12 @@ export default function DeliveryEmployee({handleSidebar, showSidebar}){
     const statusDeliveryCell = (rowData) => {
         return(
             <span className={`badge badge-${
-                rowData.delivery_group_report ? 
-                rowData.delivery_group_report?.report_status == 0 ? "warning"
-                : rowData.delivery_group_report?.report_status == 1 ? "success"
-                : "danger" : "secondary"
-            } light`}
+                rowData.delivery_group?.status != 4 ? "warning"
+                : "success"
+            }`}
             >
                 {
-                    rowData.delivery_group_report ? 
-                        rowData.delivery_group_report?.report_status == 0 ? "menunggu konfirmasi"
-                        : rowData.delivery_group_report?.report_status == 1 ? "selesai"
-                        : "dibatalkan" 
-                    : "ditunda"
+                    rowData.delivery_group?.status != 4 ? "dalam progress" : "selesai"
                 }                                                                                
             </span>
         )
@@ -1381,19 +1374,19 @@ export default function DeliveryEmployee({handleSidebar, showSidebar}){
                         aria-label="writeDelivGroupsReport"
                         onClick={(e) => {
                             e.stopPropagation();
-                            rowData.status == 1 ?
-                            handleModalWData(e, {
-                            id: rowData.delivery_group_id,
-                            employee_id: rowData.employee_id,
-                            delivery_group_date: rowData.delivery_group_date,
-                            action: "insert",
-                            })
+                            rowData.status == 2 ?
+                                handleModalWData(e, {
+                                    id: rowData.delivery_group_id,
+                                    employee_id: rowData.employee_id,
+                                    delivery_group_date: rowData.delivery_group_date,
+                                    action: "insert",
+                                })
                             : toast.current.show({
-                                    severity: "error",
-                                    summary: "Forbidden",
-                                    detail: rowData.status == 0 ? "Tidak dapat mengubah data pengantaran jika sudah dikonfirmasi" : "Tidak dapat mengubah data pengantaran yang sudah dibatalkan",
-                                    life: 3000,
-                                });
+                                severity: "error",
+                                summary: "Forbidden",
+                                detail: rowData.status == 3 &&  "Tidak dapat mengubah data pengantaran yang sudah dibatalkan",
+                                life: 3000,
+                            });
                         }}
                     >
                        <i className='bx bxs-edit'></i> Tulis laporan
@@ -2105,8 +2098,8 @@ export default function DeliveryEmployee({handleSidebar, showSidebar}){
                                             ></Column>
                                             <Column
                                                 field="status"
-                                                header="status laporan"
-                                                body={statusDGCell}
+                                                header="status pengantaran"
+                                                body={statusDeliveryCell}
                                                 bodyStyle={primeTableBodyStyle}
                                                 headerStyle={primeTableHeaderStyle}
                                                 filter
@@ -2117,8 +2110,8 @@ export default function DeliveryEmployee({handleSidebar, showSidebar}){
                                             ></Column>
                                             <Column
                                                 field="status"
-                                                header="status pengantaran"
-                                                body={statusDeliveryCell}
+                                                header="status laporan"
+                                                body={statusDGCell}
                                                 bodyStyle={primeTableBodyStyle}
                                                 headerStyle={primeTableHeaderStyle}
                                                 filter

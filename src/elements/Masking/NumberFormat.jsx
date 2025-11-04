@@ -9,11 +9,12 @@ export default function NumberFormat(props) {
         minimumFractionDigits: 0,
     })
     return (
-        <span className="currency">{formatedNumber.format(props.intlConfig.value)} {props.suffix ? props.suffix : ""}</span>
+        <span className="currency" style={{...props.style}}>{formatedNumber.format(props.intlConfig.value)} {props.suffix ? props.suffix : ""}</span>
     )
 }
 
 NumberFormat.propTypes = {
     intlConfig: propTypes.object,
-    suffix: propTypes.string
+    suffix: propTypes.string,
+    style: propTypes.object
 }

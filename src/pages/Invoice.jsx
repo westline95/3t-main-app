@@ -836,7 +836,7 @@ export default function Invoice({handleSidebar, showSidebar}){
     const isPaidCell = (rowData, options) => {
         return(
             <span key={options.rowIndex} className={`badge badge-${
-                rowData.is_paid ? "primary" : "danger"} light`}
+                rowData.is_paid ? "primary" : "danger"}`}
             >{rowData.is_paid ? "lunas" : "belum lunas"}</span>
         )
     };

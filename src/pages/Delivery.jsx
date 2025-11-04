@@ -412,6 +412,7 @@ export default function Delivery({handleSidebar, showSidebar}){
     const fetchAllDG = async() =>{
         await axiosPrivate.get("/all/delivery-group")
         .then(resp => {
+            console.log(resp.data)
             setDG(resp.data);
         })
         .catch(err => {
@@ -1083,7 +1084,7 @@ export default function Delivery({handleSidebar, showSidebar}){
           className="table-btn edit-table-data"
           aria-label="editDelivGroups"
           onClick={(e) => {
-            rowData.status == 0 ?
+            rowData.status == 1 ?
             handleModalWData(e, {
               id: rowData.delivery_group_id,
               action: "update",
@@ -1091,7 +1092,8 @@ export default function Delivery({handleSidebar, showSidebar}){
             : toast.current.show({
                     severity: "error",
                     summary: "Forbidden",
-                    detail: rowData.status == 0 ? "Tidak dapat mengubah data pengantaran jika sudah dikonfirmasi" : "Tidak dapat mengubah data pengantaran yang sudah dibatalkan",
+                    detail: rowData.status == 3 ? "Tidak dapat mengubah data pengantaran jika sudah dikonfirmasi" 
+                            : rowData.status == 2 && "Tidak dapat mengubah data pengantaran yang sudah dibatalkan" ,
                     life: 3000,
                 });
           }}
@@ -1132,18 +1134,22 @@ export default function Delivery({handleSidebar, showSidebar}){
     };
     
     const statusDGCell = (rowData) => {
+        const status = rowData.status;
         return(
             <span className={`badge badge-${
-                rowData.status == 0 ? 'warning'
-                : rowData.status == 1 ? "primary" 
-                : rowData.status == 2 ? "danger" 
+                rowData.status == 1 ? 'secondary'
+                : rowData.status == 2 ? "primary" 
+                : rowData.status == 3 ? "danger" 
+                : rowData.status == 4 ? "success"
                 : "secondary"} light`}
             >
                 {
-                    rowData.status == 0 ? 'menunggu konfirmasi'
-                    : rowData.status == 1 ? "dikonfirmasi" 
-                    : rowData.status == 2 ? "dibatalkan" 
-                    : "??"
+                    // rowData.status == 1 ? dataStatic.deliveryGroupStatus[0]
+                    // : rowData.status == 2 ? "dikonfirmasi" 
+                    // : rowData.status == 3 ? "dibatalkan" 
+                    // : rowData.status == 4 ? "dibatalkan" 
+                    // : "??"
+                    dataStatic.deliveryGroupStatus[status-1] ? dataStatic.deliveryGroupStatus[status-1].type : "???"
                 }                                                                                
             </span>
         )
