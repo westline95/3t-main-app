@@ -435,13 +435,20 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
       }
 
       if(salesItems.length > 1){
-        salesItems.reduce((prev, curr) => {  
-          console.log(prev.quantity)
-          dgListItem.subtotal = (Number(prev.quantity)*Number(prev.product?.sell_price)) + (Number(curr.quantity)*Number(curr.product?.sell_price));
-          // grandtotal: (Number(item.quantity)*Number(item.sell_price))-(Number(item.quantity)*Number(item.discProd)),
-          dgListItem.grandtotal = (Number(prev.quantity)*Number(prev.product?.sell_price)) + (Number(curr.quantity)*Number(curr.product?.sell_price));   
-          dgListItem.totalQty = (Number(prev.quantity) + Number(curr.quantity));   
-        });
+        salesItems.reduce((acc, item) => {  
+          const qty = Number(item.quantity);
+          const subtotal = Number(item.quantity)*Number(item.product?.sell_price);
+          const grandtotal = Number(item.quantity)*Number(item.product?.sell_price);
+
+          dgListItem.totalQty += qty;
+          dgListItem.subtotal += subtotal;
+          dgListItem.grandtotal += grandtotal;
+          // dgListItem.subtotal += (Number(prev.quantity)*Number(prev.product?.sell_price));
+          // // grandtotal: (Number(item.quantity)*Number(item.sell_price))-(Number(item.quantity)*Number(item.discProd)),
+          // dgListItem.grandtotal = (Number(prev.quantity)*Number(prev.product?.sell_price)) + (Number(curr.quantity)*Number(curr.product?.sell_price));   
+          // dgListItem.totalQty = (Number(prev.quantity) + Number(curr.quantity));   
+        },{});
+        console.log(dgListItem)
       } else if(salesItems.length == 1) {
         dgListItem.subtotal = Number(salesItems[0].quantity) * Number(salesItems[0].product?.sell_price);
         dgListItem.grandtotal = Number(salesItems[0].quantity) * Number(salesItems[0].product?.sell_price);

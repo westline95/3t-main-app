@@ -784,7 +784,7 @@ export default function SalesEditModal({show, onHide, data}) {
                 </div>
             </Modal.Header>
             <Modal.Body>
-                 <div className="modal-btn-wrap-mobile flex flex-row md:row-gap-3">
+                <div className="modal-btn-wrap-mobile flex flex-row md:row-gap-3">
                     <button type="button" className="btn btn-warning btn-w-icon" onClick={checkEditPermit}><i className='bx bx-pencil'></i>Edit order</button>
                     <button type="button" className={`btn btn-danger btn-w-icon ${editMode ? 'disabled' : ''}`} aria-label='cancelSales' onClick={handleModal}><i className='bx bx-trash'></i>cancel order</button>
                 </div>

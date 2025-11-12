@@ -169,7 +169,7 @@ export default function AutoComplete({
     //        if(OnSelect) return OnSelect(choosedItem);
     //     }
     // },[choosedItem]);
-    console.log(openPopup)
+    console.log(openPopup);
 
     return(
         <div style={{ position: "relative" }}>

@@ -3098,13 +3098,19 @@ tr.grand-total>* {
 
 .modal-btn-mobile {
     right: 3.5rem;
+    border: .5px solid var(--sa-border-color);
+    border-radius: 5px;
 }
 
 .modal-btn-wrap .modal-btn {
-    right: 4.7rem;
-    padding: 6px 9px;
-    border: .5px solid var(--sa-border-color);
-    border-radius: 5px;
+  right: 4.7rem;
+  padding: 6px 9px;
+  border: .5px solid var(--sa-border-color);
+  border-radius: 5px;
+}
+
+.modal-btn-wrap .modal-btn>* {
+  vertical-align: middle !important;
 }
 
 .modal-btn i {
@@ -3124,7 +3130,14 @@ tr.grand-total>* {
 .modal-btn-mobile .modal-btn {
     background-color: var(--sa-bg-color-light-light);
     color: var(--sa-color-black);
+    text-transform: capitalize;
   }
+
+.modal-btn-wrap .modal-btn.bg-danger,
+.modal-btn-mobile .modal-btn.bg-danger {
+  background-color: var(--sa-color-danger);
+  color: var(--sa-color-white) !important;
+}
   
 .modal-btn-wrap>*{
   margin-left: .5rem !important;
@@ -4705,17 +4718,36 @@ tr.hover-row:hover > * {
 
 .btn-card.btn {
   position: absolute;
-  right: 16px;
-  padding: 5px 9px;
-  
+  right: 24px;
+  padding: 5px 7px;
   cursor: pointer;
+  top: 16px;
 }
 
 .btn-card.btn i {
-  font-size: 18px;
+  font-size: 26px;
   vertical-align: text-top;
 }
 
+.form-delivery-component .add-btn {
+  position: relative;
+  top: calc(50% - 28px);
+}
+
+.form-component-inline-info {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.form-component-inline-info>button {
+  width: calc(50% - 4px);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: default;
+}
 
 /* media queries for responsiveness */
 /* for mobile */
@@ -5086,7 +5118,7 @@ tr.hover-row:hover > * {
     }
     
     .modal-btn-wrap-mobile>button {
-      width: 50%;
+      width: 100%;
       padding: 7px 13px;
       font-size: 14px !important;
     }
@@ -5499,6 +5531,18 @@ tr.hover-row:hover > * {
     width: 100%;
   }
 
+  .form-component-inline-info {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .form-component-inline-info>button {
+    width: 100%;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: default;
+  }
+
 }
 
 @media (min-width: 481px) and (max-width: 767px) {
@@ -5856,12 +5900,13 @@ tr.hover-row:hover > * {
   }
   
   .modal-btn-wrap-mobile {
-      display: block;
+      display: inline-flex !important;
       width: 100%;
+      gap: 1.2rem;
   }
 
   .modal-btn-wrap-mobile>button {
-    width: 50%;
+    width: 100%;
   }
 
   .inv-table-title {
@@ -6223,6 +6268,10 @@ tr.hover-row:hover > * {
     width: 100%;
   }
 
+  .form-component-inline-info>button {
+    font-size: 12px;
+  }
+
 }
 
 /* for tablets or ipad */
@@ -6562,13 +6611,14 @@ tr.hover-row:hover > * {
   .modal-btn-wrap-mobile {
       display: inline-flex !important ;
       width: 100%;
-      gap: .5rem;
+      gap: 1.2rem;
     }
     
   .modal-btn-wrap-mobile>button {
-    width: 50%;
+    width: 100%;
     padding: 7px 13px;
     font-size: 14px !important;
+    
   }
   
   .modal-btn-wrap-mobile>i {
@@ -6579,14 +6629,14 @@ tr.hover-row:hover > * {
       display: none !important;
   }
   
-  .modal-btn-wrap-mobile {
+  /* .modal-btn-wrap-mobile {
       display: block;
       width: 100%;
-  }
+  } */
 
-  .modal-btn-wrap-mobile>button {
+  /* .modal-btn-wrap-mobile>button {
     width: 50%;
-  }
+  } */
 
   .inv-table-title {
       margin-bottom: 1rem;
@@ -6877,6 +6927,16 @@ tr.hover-row:hover > * {
   .profile-card-1-card-body .profile-img-wrap{
     width: 60px;
     height: 60px;
+  }
+
+  .form-component-inline-info {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .form-component-inline-info>button {
+    width: 100%;
+    font-size: 13px;
   }
 }
 

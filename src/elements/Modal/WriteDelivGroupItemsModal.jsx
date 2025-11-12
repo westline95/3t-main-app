@@ -1,4 +1,10 @@
-import React, { createRef, useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  createRef,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { Modal } from "react-bootstrap";
 import { Toast } from "primereact/toast";
 import { useForm, useController, FormProvider } from "react-hook-form";
@@ -37,17 +43,25 @@ export default function WriteDelivGroupItemsModal({
   const toastUpload = useRef(null);
 
   const storage = localStorage.getItem(`form-${data.id}`);
-  const checkingStorage = storage ? JSON.parse(localStorage.getItem(`form-${data.id}`)) : [];
+  const checkingStorage = storage
+    ? JSON.parse(localStorage.getItem(`form-${data.id}`))
+    : [];
   const checkFilteredCustStorage = localStorage.getItem(data.id);
-  const filteredCustParsed = checkFilteredCustStorage ? JSON.parse(localStorage.getItem(data.id)) : [];
+  const filteredCustParsed = checkFilteredCustStorage
+    ? JSON.parse(localStorage.getItem(data.id))
+    : [];
 
-  const [ progress, setProgress ] = useState(0);
-  const [ bulkForm, setBulkForm ] = useState(filteredCustParsed && filteredCustParsed.length > 1 ? filteredCustParsed.length : 1);
+  const [progress, setProgress] = useState(0);
+  const [bulkForm, setBulkForm] = useState(
+    filteredCustParsed && filteredCustParsed.length > 1
+      ? filteredCustParsed.length
+      : 1
+  );
   const methods = useForm({
-    defaultValues: {
-    },});
+    defaultValues: {},
+  });
 
-  const {  
+  const {
     register,
     handleSubmit,
     watch,
@@ -57,8 +71,8 @@ export default function WriteDelivGroupItemsModal({
     getValues,
     clearErrors,
     unregister,
-    formState: { errors }, 
-  } = methods
+    formState: { errors },
+  } = methods;
 
   const [showModal, setShowModal] = useState(false);
   const [statusSwitch, setStatusSwitch] = useState(true);
@@ -100,10 +114,10 @@ export default function WriteDelivGroupItemsModal({
   const refToThis = useRef(Array.from({ length: bulkForm }, () => createRef()));
   const [openPopup, setOpenPopup] = useState([false]);
   const [filterCust, setFilteredCust] = useState([]);
-  const [chooseCust, setCust] = useState(Array.from({length: bulkForm}));
+  const [chooseCust, setCust] = useState(Array.from({ length: bulkForm }));
   const [guestMode, setGuestMode] = useState([false]);
-  const [currFormIndex, setCurrentFormIndex ] = useState(0);
-  const [isFocus, setIsFocus ] = useState(null);
+  const [currFormIndex, setCurrentFormIndex] = useState(0);
+  const [isFocus, setIsFocus] = useState(null);
 
   const returnSelectVal = (selected) => {
     setOrderTypeTmp(selected);
@@ -114,7 +128,7 @@ export default function WriteDelivGroupItemsModal({
       case "addDGTransaction":
         setModalData(data);
         setShowModal("addDGTransaction");
-      break;
+        break;
     }
   };
 
@@ -125,17 +139,18 @@ export default function WriteDelivGroupItemsModal({
       .then((response) => {
         let tempOrigin = [...response.data];
 
-        if(checkFilteredCustStorage){
-          const parsedFilterCustData = JSON.parse(checkFilteredCustStorage); 
+        if (checkFilteredCustStorage) {
+          const parsedFilterCustData = JSON.parse(checkFilteredCustStorage);
           let arr = [...parsedFilterCustData];
           let filteredCust = null;
 
-          if(arr.length > 0) {
-            arr.map(e => {
-              filteredCust = tempOrigin.filter(item => Number(item.customer_id) != Number(e))
+          if (arr.length > 0) {
+            arr.map((e) => {
+              filteredCust = tempOrigin.filter(
+                (item) => Number(item.customer_id) != Number(e)
+              );
             });
           }
-          console.log(filteredCust)
           setCustData(response.data);
           setCustDataDupe(filteredCust ? filteredCust : []);
           setFilteredCust(arr);
@@ -190,7 +205,11 @@ export default function WriteDelivGroupItemsModal({
           e.fullProdName = e.product?.product_name + " " + e.product?.variant;
         });
 
-        if(!storage) localStorage.setItem(`origin-dgitem-${data.id}`, JSON.stringify(getDeliveryGroupItems));
+        if (!storage)
+          localStorage.setItem(
+            `origin-dgitem-${data.id}`,
+            JSON.stringify(getDeliveryGroupItems)
+          );
         setAllProd(getDeliveryGroupItems);
       })
       .catch((error) => {
@@ -231,7 +250,7 @@ export default function WriteDelivGroupItemsModal({
   //     // setOpenPopup(false);
   //     setFilteredCust("error db");
   //   }
-  
+
   // };
 
   // const handleFilterCust = (index) => {
@@ -242,46 +261,46 @@ export default function WriteDelivGroupItemsModal({
   const handleChooseCust = (e, index) => {
     let openPopupDupe = [...openPopup];
     setCust(e);
-    setValue(`customer_id ${index+1}`, e.customer_id);
-    setValue(`name ${index+1}`, e.name);
+    setValue(`customer_id ${index + 1}`, e.customer_id);
+    setValue(`name ${index + 1}`, e.name);
     openPopupDupe[index] = false;
     // setOpenPopup(false);
     setOpenPopup(openPopupDupe);
   };
 
   // const handleClickSelect = (ref) => {
-    // useEffect(() => {
-      // const handleClickOutside = (evt) => {
-      //   evt.stopPropagation();
-      //   if (!refToThis.current[currFormIndex].current.contains(evt.target)) {
-      //   //   let openPopupDupe = [...openPopup];
-      //   //   openPopupDupe[currFormIndex] = true;
-      //   //   setOpenPopup(openPopupDupe);
-      //   // }  else {
-      //     let openPopupDupe = [...openPopup];
-      //     setOpenPopup(Array(openPopupDupe.length).fill(false));
-          
-      //   } else {
-      //      let openPopupDupe = [...openPopup];
-      //      openPopupDupe[currFormIndex] = true;
-      //      setOpenPopup(openPopupDupe)
-      //   }
-      //   // console.log(refToThis.current[currFormIndex].current)
-      //   // console.log(evt.target)
-      //   return () => {
-      //     document.removeEventListener("mousedown", handleClickOutside);
-      //   };
-      // };
-      // document.addEventListener("mousedown", handleClickOutside, true);
-      // return () => {
-      //   document.removeEventListener("mousedown", handleClickOutside);
-      // };
-    // }, [refToThis.current[currFormIndex]]);
+  // useEffect(() => {
+  // const handleClickOutside = (evt) => {
+  //   evt.stopPropagation();
+  //   if (!refToThis.current[currFormIndex].current.contains(evt.target)) {
+  //   //   let openPopupDupe = [...openPopup];
+  //   //   openPopupDupe[currFormIndex] = true;
+  //   //   setOpenPopup(openPopupDupe);
+  //   // }  else {
+  //     let openPopupDupe = [...openPopup];
+  //     setOpenPopup(Array(openPopupDupe.length).fill(false));
+
+  //   } else {
+  //      let openPopupDupe = [...openPopup];
+  //      openPopupDupe[currFormIndex] = true;
+  //      setOpenPopup(openPopupDupe)
+  //   }
+  //   // console.log(refToThis.current[currFormIndex].current)
+  //   // console.log(evt.target)
+  //   return () => {
+  //     document.removeEventListener("mousedown", handleClickOutside);
+  //   };
+  // };
+  // document.addEventListener("mousedown", handleClickOutside, true);
+  // return () => {
+  //   document.removeEventListener("mousedown", handleClickOutside);
+  // };
+  // }, [refToThis.current[currFormIndex]]);
   // };
 
   // refToThis.current.map((ref, index) => {
-    // handleClickSelect(refToThis.current[currFormIndex]);
-    // console.log(openPopup[currFormIndex])
+  // handleClickSelect(refToThis.current[currFormIndex]);
+  // console.log(openPopup[currFormIndex])
   // })
 
   const handleKeyDown = (e) => {
@@ -290,34 +309,35 @@ export default function WriteDelivGroupItemsModal({
     }
   };
 
-  const fetchDGReport = async(dataToSend) => {
+  const fetchDGReport = async (dataToSend) => {
     let body = JSON.stringify(dataToSend);
-    await axiosPrivate.post("/add/delivery-group-report", body)
-    .then(resp => {
-      toast.current.show({
-        severity: "success",
-        summary: "Sukses",
-        detail: "Berhasil membuat laporan harian pengantaran",
-        life: 3000,
+    await axiosPrivate
+      .post("/add/delivery-group-report", body)
+      .then((resp) => {
+        toast.current.show({
+          severity: "success",
+          summary: "Sukses",
+          detail: "Berhasil membuat laporan harian pengantaran",
+          life: 3000,
+        });
+        localStorage.removeItem(`form-${data.id}`);
+      })
+      .catch((err) => {
+        setControlUiBtn(false);
+
+        toast.current.show({
+          severity: "error",
+          summary: "Failed",
+          detail: "Gagal membuat laporan",
+          life: 3000,
+        });
       });
-      localStorage.removeItem(`form-${data.id}`);
-    })
-    .catch(err => {
-      setControlUiBtn(false);
-      
-      toast.current.show({
-        severity: "error",
-        summary: "Failed",
-        detail: "Gagal membuat laporan",
-        life: 3000,
-      });
-    })
-  }
+  };
 
   // end of popup needs
 
   const delForm = (formStorageIndex) => {
-    if(storage){
+    if (storage) {
       let dupeOrigin = [...checkingStorage];
       let dupeOriginCust = [...filteredCustParsed];
 
@@ -327,13 +347,12 @@ export default function WriteDelivGroupItemsModal({
       localStorage.setItem(`form-${data.id}`, JSON.stringify(dupeOrigin));
       localStorage.setItem(data.id, JSON.stringify(dupeOriginCust));
 
-      
       setToDelete(formStorageIndex);
       setUpdatedForm(dupeOrigin);
       setUpdatedCust(dupeOriginCust);
       formToRender.splice(toDelete, 1);
     }
-  }
+  };
 
   const onError = () => {
     setControlUiBtn(false);
@@ -341,8 +360,8 @@ export default function WriteDelivGroupItemsModal({
 
   const onSubmit = async (formData) => {
     const storage = localStorage.getItem(`form-${data.id}`);
-    console.log("hehe")
-    if(!storage){
+    console.log("hehe");
+    if (!storage) {
       toast.current.show({
         severity: "error",
         summary: "Failed",
@@ -351,8 +370,8 @@ export default function WriteDelivGroupItemsModal({
       });
     } else {
       let parsed = JSON.parse(storage);
-      let delivery_group_report_list = parsed.filter(item => item);
-      console.log(delivery_group_report_list)
+      let delivery_group_report_list = parsed.filter((item) => item);
+      console.log(delivery_group_report_list);
 
       let total_item = 0;
       let total_value = 0;
@@ -361,12 +380,12 @@ export default function WriteDelivGroupItemsModal({
       //   item.map(item2 => {
       //     total_item += item2.quantity;
       //     total_value += item2.grandtotal;
-      //   }) 
+      //   })
       // })
       // change into 1 array
       let lists = [];
-      delivery_group_report_list.map(item1 => {
-        item1.map(item2 => {
+      delivery_group_report_list.map((item1) => {
+        item1.map((item2) => {
           total_item += item2.quantity;
           total_value += item2.grandtotal;
           item2.invoice_id = null;
@@ -374,25 +393,24 @@ export default function WriteDelivGroupItemsModal({
           item2.receipt_id = null;
           item2.customer_id ? Number(item2.customer_id) : null;
           item2.product_id = Number(item2.product_id);
-          lists.push(item2)
+          lists.push(item2);
         });
-      })
-      
+      });
+
       let delivery_group_report = {
         delivery_group_id: Number(data.id),
         employee_id: Number(data.employee_id),
         report_status: 0,
         notes: "",
         total_item,
-        total_value
-      }
+        total_value,
+      };
 
       let dataToSend = {
         delivery_group_report,
-        delivery_group_report_list: lists
-      }
+        delivery_group_report_list: lists,
+      };
       fetchDGReport(dataToSend);
-
     }
   };
 
@@ -401,22 +419,22 @@ export default function WriteDelivGroupItemsModal({
   };
 
   const handleUpdateFormLocalStorage = (item, index) => {
-    if(storage && checkFilteredCustStorage){
+    if (storage && checkFilteredCustStorage) {
       let formStorage = JSON.parse(storage);
       let custStorage = JSON.parse(checkFilteredCustStorage);
 
-      if(!item && custStorage) {
+      if (!item && custStorage) {
         custStorage[index] = null;
-        
+
         localStorage.setItem(data.id, JSON.stringify(custStorage));
       }
 
-      if(formStorage[index]){
-        if(!item) {
+      if (formStorage[index]) {
+        if (!item) {
           formStorage.splice(index, 1);
 
           localStorage.setItem(`form-${data.id}`, JSON.stringify(formStorage));
-        } else{
+        } else {
           formStorage[index].customer_id = item.customer_id;
           formStorage[index].customer_name = item.name;
           formStorage[index].guest_name = "";
@@ -424,289 +442,396 @@ export default function WriteDelivGroupItemsModal({
 
         localStorage.setItem(`form-${data.id}`, JSON.stringify(formStorage));
       }
-
     }
-  }
+  };
 
   const handleSelectedList = (selected, index) => {
     let arr = [];
 
-    if(filterCust && filterCust.length == 0){
-      !selected ? arr[index] = selected :  arr[index] = selected.customer_id;
+    if (filterCust && filterCust.length == 0) {
+      !selected ? (arr[index] = selected) : (arr[index] = selected.customer_id);
       // arr[index] = selected.customer_id;
       // arr[index] = selected;
       // setFilteredCust(arr);
     } else {
       arr = [...filterCust];
-      if(!selected){
+      if (!selected) {
         arr[index] = selected;
       } else {
-        let findDupeSelected = arr.find(item => item == selected.customer_id);
-  
-        if(!findDupeSelected){
+        let findDupeSelected = arr.find((item) => item == selected.customer_id);
+
+        if (!findDupeSelected) {
           arr[index] = selected.customer_id;
           // arr[index] = selected;
-        } 
-
+        }
       }
     }
-    
+
     setFilteredCust(arr);
     localStorage.setItem(data.id, JSON.stringify(arr));
     handleUpdateFormLocalStorage(selected, index);
-  }
+  };
 
   useEffect(() => {
-    if(custData){
-      let reFilterAll = custData.filter(({customer_id}) => !filterCust.includes(customer_id));
+    if (custData) {
+      let reFilterAll = custData.filter(
+        ({ customer_id }) => !filterCust.includes(customer_id)
+      );
       setCustDataDupe(reFilterAll);
     }
-  },[filterCust]);
+  }, [filterCust]);
 
-
-  const FormComponent = ({index}) => {
+  const FormComponent = ({ index }) => {
     let parsed;
-    if(storage){
+    if (storage) {
       parsed = JSON.parse(storage);
     }
 
-    return(
-      <div key={index} className={`form-delivery-component ${parsed && parsed[index] ? 'filled' : ''}`} style={{ border: '1.7px dashed #29a7fc', borderRadius: 17, marginTop: 0}}>
-        <div style={{padding: 16, position: 'relative'}}>
-          {
-            parsed && parsed[index] ? (
-              <button className="btn-card btn btn-danger light" onClick={(e) => {e.preventDefault();delForm(index)}}>
-                <i className='bx bxs-trash'></i>
-              </button>
-            ):""
-          }
-          <p className="modal-section-title mb-3">Pelanggan {index + 1}</p>
-            {guestMode[index] && guestMode[index] == true ? (
-              <InputWLabel
-                label={"nama pelanggan"}
-                type="text"
-                name={`guest_name-${index+1}`}
-                placeholder={"Ketik nama pelanggan..."}
-                // onChange={(e) => handleAutoComplete(e)}
-                // onFocus={handleAutoComplete}
-                // onKeyDown={handleKeyDown}
-                // for smooth working onBlur method in custom component must set nBlur=true 
-                // && set prop onblurcallback for onblurfunction
-                // onBlur={true}
-                // onBlurCallback={handleBlur}
-                // if onblur true, two items prop above are required
-
-                require={false}
-                register={register}
-                errors={errors}
-                textStyle={"capitalize"}
-                autoComplete="off"
-              />
-            ):(
-              <AutoComplete 
-                index={index}
-                LocalStorage={data.id}
-                FilterData={true}
-                DataOrigin={custData} 
-                DataFiltered={custDataDupe} 
-                // OpenPopup={openPopup}
-                FilteredData={filterCust}
-                Label={"nama pelanggan"} 
-                Placeholder={"Cari dan pilih nama pelanggan..."}
-                ForceSelection={true} 
-                DataForm="array-object" 
-                InputName={`name-${index+1}`}
-                SearchKey={"name"} 
-                DataKeyInputValue={"name"} 
-                OnSelect={(choosedData) => {
-                  choosedData.customer_id ? setValue(`customer_id-${index+1}`, choosedData.customer_id)
-                  : setValue(`guest_name-${index+1}`, choosedData.name);
-                  handleSelectedList(choosedData, index);
-                  // (choosedData.customer_id) && handleFilteringAutoComplete(choosedData.customer_id);
-                }}
-                onKeyDownChange={(item, index) => {
-                  handleSelectedList(item, index);
-                }}
-                // OnChange={(e) => handleAutoComplete(e, index)}
-                // OnFocus={(e) => handleAutoComplete(e, index)}
-                require={false}
-              />
-
-            )}
-            <InputWLabel
-              label={"Pelanggan tidak ditemukan?"}
-              type={"switch"}
-              fontSize={"11px"}
-              name={"guest_mode-"+(index+1)}
-              style={{ alignItems: "center", marginTop: "1rem" }}
-              defaultChecked={guestMode[index]}
-              onChange={(e) => {
-                setValue("guest_mode-"+(index+1), e.target.checked);
-                let guestModeDupe = [...guestMode];
-                guestModeDupe[index] = e.target.checked;
-
-                setGuestMode(guestModeDupe);
-                setValue(`name-${index+1}`, "");
-                setValue(`customer_id-${index+1}`, "");
-                setValue(`guest_name-${index+1}`, "");
-                // handleLocalstorage for filtering customer
-                if(e.target.checked){
-                  handleUpdateFormLocalStorage(null, index);
-                  // if(checkFilteredCustStorage){
-                  //   let setNull = JSON.parse(checkFilteredCustStorage);
-                    
-                  // }
-                }
+    return (
+      <div
+        key={index}
+        className={`form-delivery-component ${parsed && parsed[index] ? "filled" : ""}`}
+        style={{
+          border: "1.7px dashed #29a7fc",
+          borderRadius: 17,
+          marginTop: 0,
+        }}
+      >
+        <div style={{ padding: 24, position: "relative" }}>
+          {parsed && parsed[index] ? (
+            <button
+              className="btn-card btn btn-danger light"
+              onClick={(e) => {
+                e.preventDefault();
+                delForm(index);
               }}
-              register={register}
-              require={false}
-              errors={errors}
-            />
-            <div className="mt-3" style={{display: 'flex', flexDirection: 'row', alignItems:'end', justifyContent: 'space-between'}}>
-              <button
-                type="button"
-                className={`add-btn btn btn-${parsed && parsed[index] ? 'warning' : 'primary'}  btn-w-icon form-support-btn mr-3`}
-                aria-label="addDGTransaction"
-                onClick={(e) => {
-                  let dataToSend = {
-                    action: "insert",
-                    index: index,
-                    delivery_group_id: data.id,
-                    delivery_group_date: data.delivery_group_date,
-                    note: parsed && parsed[index] ? parsed[index].note : "",
-                    orders: parsed && parsed[index] ? [...parsed[index].orders] : [],
-                    payment: parsed && parsed[index] ? parsed[index].payment : null
-                  };
+              style={{borderRadius: 27}}
+            >
+              <i className="bx bx-x" ></i>
+            </button>
+          ) : (
+            ""
+          )}
+          <p className="modal-section-title mb-3">Pelanggan {index + 1}</p>
+          {guestMode[index] && guestMode[index] == true ? (
+            <InputWLabel
+              label={"nama pelanggan"}
+              type="text"
+              name={`guest_name-${index + 1}`}
+              placeholder={"Ketik nama pelanggan..."}
+              // onChange={(e) => handleAutoComplete(e)}
+              // onFocus={handleAutoComplete}
+              // onKeyDown={handleKeyDown}
+              // for smooth working onBlur method in custom component must set nBlur=true
+              // && set prop onblurcallback for onblurfunction
+              // onBlur={true}
+              // onBlurCallback={handleBlur}
+              // if onblur true, two items prop above are required
 
-                  guestMode[index]
-                  ? dataToSend.guest_name = getValues(`guest_name-${index+1}`)
-                  : dataToSend = {
-                    ...dataToSend, 
-                    customer_id: getValues(`customer_id-${index+1}`),
-                    name: getValues(`name-${index+1}`)
-                  };
-                  if(guestMode[index]) {
-                    console.log('jsadjasd')
-                    getValues(`guest_name-${index+1}`) || getValues(`guest_name-${index+1}`) != "" ? handleModal(e, dataToSend) 
-                    : toast.current.show({
-                      severity: "error",
-                      summary: "Error",
-                      detail: "Isi data pelanggan terlebih dahulu",
-                      life: 3000,
-                    })
-                  } else {
-                    getValues(`customer_id-${index+1}`) && getValues(`name-${index+1}`) ? handleModal(e, dataToSend)
+              require={false}
+              register={register}
+              errors={errors}
+              textStyle={"capitalize"}
+              autoComplete="off"
+            />
+          ) : (
+            <AutoComplete
+              index={index}
+              LocalStorage={data.id}
+              FilterData={true}
+              DataOrigin={custData}
+              DataFiltered={custDataDupe}
+              // OpenPopup={openPopup}
+              FilteredData={filterCust}
+              Label={"nama pelanggan"}
+              Placeholder={"Cari dan pilih nama pelanggan..."}
+              ForceSelection={true}
+              DataForm="array-object"
+              InputName={`name-${index + 1}`}
+              SearchKey={"name"}
+              DataKeyInputValue={"name"}
+              OnSelect={(choosedData) => {
+                choosedData.customer_id
+                  ? setValue(
+                      `customer_id-${index + 1}`,
+                      choosedData.customer_id
+                    )
+                  : setValue(`guest_name-${index + 1}`, choosedData.name);
+                handleSelectedList(choosedData, index);
+                // (choosedData.customer_id) && handleFilteringAutoComplete(choosedData.customer_id);
+              }}
+              onKeyDownChange={(item, index) => {
+                handleSelectedList(item, index);
+              }}
+              // OnChange={(e) => handleAutoComplete(e, index)}
+              // OnFocus={(e) => handleAutoComplete(e, index)}
+              require={false}
+            />
+          )}
+          <InputWLabel
+            label={"Pelanggan tidak ditemukan?"}
+            type={"switch"}
+            fontSize={"11px"}
+            name={"guest_mode-" + (index + 1)}
+            style={{ alignItems: "center", marginTop: "1rem" }}
+            defaultChecked={guestMode[index]}
+            onChange={(e) => {
+              e.preventDefault();
+              setValue("guest_mode-" + (index + 1), e.target.checked);
+              let guestModeDupe = [...guestMode];
+              guestModeDupe[index] = e.target.checked;
+
+              setGuestMode(guestModeDupe);
+              setValue(`name-${index + 1}`, "");
+              setValue(`customer_id-${index + 1}`, "");
+              setValue(`guest_name-${index + 1}`, "");
+              // handleLocalstorage for filtering customer
+              if (e.target.checked) {
+                handleUpdateFormLocalStorage(null, index);
+                // if(checkFilteredCustStorage){
+                //   let setNull = JSON.parse(checkFilteredCustStorage);
+
+                // }
+              }
+            }}
+            register={register}
+            require={false}
+            errors={errors}
+          />
+          <div
+            className="mt-4"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              width: '100%',
+              gap: 16
+              // justifyContent: "space-between",
+            }}
+          >
+            {parsed && parsed[index] ? (
+              <div className="form-component-inline-info">
+                <button
+                  className={`btn btn-info ${parsed[index] ? "light" : ""}`}
+                  onClick={(e) => e.preventDefault()}
+                >
+                  {" "}
+                  Transaksi:
+                  <NumberFormat
+                    intlConfig={{
+                      value: parsed[index].grandtotal,
+                      locale: "id-ID",
+                      style: "currency",
+                      currency: "IDR",
+                    }}
+                    style={{ marginLeft: 7 }}
+                  />
+                </button>
+                <button
+                  className={`btn btn-info ${parsed[index] ? "light" : ""}`}
+                  onClick={(e) => e.preventDefault()}
+                >
+                  {" "}
+                  Bayar:
+                  <NumberFormat
+                    intlConfig={{
+                      value: parsed[index].amount_paid,
+                      locale: "id-ID",
+                      style: "currency",
+                      currency: "IDR",
+                    }}
+                    style={{ marginLeft: 7 }}
+                  />
+                </button>
+              </div>
+            ) : (
+              ""
+            )}
+            {/* <div > */}
+              <button
+              type="button"
+              className={`btn btn-${parsed && parsed[index] ? "warning" : "primary"}  btn-w-icon form-support-btn`}
+              aria-label="addDGTransaction"
+              style={{width: '100%'}}
+              onClick={(e) => {
+                let dataToSend = {
+                  action: "insert",
+                  index: index,
+                  delivery_group_id: data.id,
+                  delivery_group_date: data.delivery_group_date,
+                  note: parsed && parsed[index] ? parsed[index].note : "",
+                  orders:
+                    parsed && parsed[index] ? [...parsed[index].orders] : [],
+                  payment:
+                    parsed && parsed[index] ? parsed[index].payment : null,
+                };
+
+                guestMode[index]
+                  ? (dataToSend.guest_name = getValues(
+                      `guest_name-${index + 1}`
+                    ))
+                  : (dataToSend = {
+                      ...dataToSend,
+                      customer_id: getValues(`customer_id-${index + 1}`),
+                      name: getValues(`name-${index + 1}`),
+                    });
+                if (guestMode[index]) {
+                  console.log("jsadjasd");
+                  getValues(`guest_name-${index + 1}`) ||
+                  getValues(`guest_name-${index + 1}`) != ""
+                    ? handleModal(e, dataToSend)
                     : toast.current.show({
                         severity: "error",
                         summary: "Error",
                         detail: "Isi data pelanggan terlebih dahulu",
                         life: 3000,
-                      })
-                  }
-                }}
-              >
-                {parsed ? parsed[index] ? <i className='bx bxs-edit' ></i> :  <i className="bx bx-plus"></i> :  <i className="bx bx-plus"></i>}
-              
-                
-                
-                {parsed && parsed[index] ? 'edit transaksi' : 'transaksi'}
-              </button>
-              {parsed && parsed[index] ? 
-              ( 
-                <div style={{display: 'flex', flexDirection: 'column', gap:5}}>
-                  <span className={`badge badge-info ${parsed[index] ? '' : 'light'}`}
-                  > Transaksi: 
-                    <NumberFormat 
-                      intlConfig={{
-                        value: parsed[index].grandtotal, 
-                        locale: "id-ID",
-                        style: "currency", 
-                        currency: "IDR",
-                      }} 
-                      style={{marginLeft: 7}}
-                    />                                                                         
-                  </span>
-                  <span className={`badge badge-success ${parsed[index] ? '' : 'light'}`}
-                  > Setoran: 
-                    <NumberFormat 
-                      intlConfig={{
-                        value: parsed[index].amount_paid, 
-                        locale: "id-ID",
-                        style: "currency", 
-                        currency: "IDR",
-                      }} 
-                      style={{marginLeft: 7}}
-                    />                                                                         
-                  </span>
-                </div>
-              ):""
-              }
+                      });
+                } else {
+                  getValues(`customer_id-${index + 1}`) &&
+                  getValues(`name-${index + 1}`)
+                    ? handleModal(e, dataToSend)
+                    : toast.current.show({
+                        severity: "error",
+                        summary: "Error",
+                        detail: "Isi data pelanggan terlebih dahulu",
+                        life: 3000,
+                      });
+                }
+              }}
+            >
+              {parsed ? (
+                parsed[index] ? (
+                  <i className='bx bxs-edit-alt' ></i>
+                ) : (
+                  <i className="bx bx-plus"></i>
+                )
+              ) : (
+                <i className="bx bx-plus"></i>
+              )}
 
-            </div>
+              {parsed && parsed[index] ? "edit transaksi" : "transaksi"}
+              </button>
+            {/* </div> */}
+          </div>
         </div>
       </div>
-    )
+    );
+  };
+
+  const formToRender = Array.from({ length: bulkForm }, (_, index) => (
+    <FormComponent key={index} index={index} />
+  ));
+
+  const resetForms = () => {
+    localStorage.setItem(`form-${data.id}`, JSON.stringify([]));
+    localStorage.setItem(data.id, JSON.stringify([]));
+    reset();
+    setBulkForm(1);
+    setUpdatedCust([]);
+    setUpdatedForm([]);
   }
 
-  const formToRender = Array.from({ length: bulkForm}, (_, index) => (
-    <FormComponent key={index} index={index} />
-  ))
+  useEffect(() => {
+    fetchAllCust();
+    fetchAllProd();
+  }, []);
 
   useEffect(() => {
-    if(custData){
+    if (storage && checkFilteredCustStorage) {
+      let parsed = JSON.parse(storage);
+      let filteredCustParsed = JSON.parse(checkFilteredCustStorage);
+
+      // retrieve handle item transaction
+      if (parsed.length > 0 ) {
+        let getCustIDOnly = parsed.map((e, idx) => {
+          return filteredCustParsed[idx] = e.customer_id;
+        });
+
+        localStorage.setItem(data.id, JSON.stringify(getCustIDOnly));
+      }
+    }
+  },[])
+
+  useEffect(() => {
+    if (custData) {
       let customerIDTempArr = [];
-      if(storage && checkFilteredCustStorage) {
-        let parsed;
-        parsed = JSON.parse(storage);
-        
-        let getCustIDOnly = null
-        
+      if (storage && checkFilteredCustStorage) {
+        let parsed = JSON.parse(storage);
+        let filteredCustParsed = JSON.parse(checkFilteredCustStorage);
+
         // retrievehandle item transaction
-        if(parsed.length > 0) {
-          getCustIDOnly = parsed.map(e => {
+        if (parsed.length > 0 ) {
+
+          let getCustIDOnly = parsed.map((e) => {
             return e.customer_id;
           });
-          
+
           let custTmp = [...filteredCustParsed];
-          const sync = getCustIDOnly.map((e,idx) => custTmp[idx] = e);
-          console.log(sync)
+          const sync = getCustIDOnly.map((e, idx) => (custTmp[idx] = e));
           localStorage.setItem(data.id, JSON.stringify(sync));
 
-          parsed.map((e,idx) => {
-            if(e.customer_id) {
-              setValue(`customer_id-${idx+1}`, e.customer_id);
-              setValue(`name-${idx+1}`, e.customer_name);
-              // customerIDTempArr.push(e.customer_id);
-            } else {
-              let guestModeDupe = [...guestMode];
-              guestModeDupe[idx] = true;
-              
-              // customerIDTempArr.push(null);
-              setValue(`guest_mode-${idx+1}`, true);
-              setGuestMode(guestModeDupe);
-              setValue(`guest_name-${idx+1}`, e.guest_name);
-            }
-          })
-        // })
-        }
-        else if(parsed.length !== filteredCustParsed.length){
-          const filterUnmatched = filteredCustParsed.filter(e => !getCustIDOnly.includes(e));
-          const findInCustData = custData.find(e => e.customer_id == filterUnmatched[0]);
-          const getIndex = filteredCustParsed.findIndex(e => e == filterUnmatched[0]);
+          // parsed.map((e, idx) => {
+          //   if (e.customer_id) {
+          //     setValue(`customer_id-${idx + 1}`, e.customer_id);
+          //     setValue(`name-${idx + 1}`, e.customer_name);
+          //   } else {
+          //     let guestModeDupe = [...guestMode];
+          //     guestModeDupe[idx] = true;
+
+          //     setValue(`guest_mode-${idx + 1}`, true);
+          //     setGuestMode(guestModeDupe);
+          //     setValue(`guest_name-${idx + 1}`, e.guest_name);
+          //   }
+          // });
           
-
-          if(findInCustData){
-            setValue(`customer_id-${getIndex+1}`, findInCustData.customer_id);
-            setValue(`name-${getIndex+1}`, findInCustData.name);
-          }
+          if(parsed.length !== filteredCustParsed.length){
+            let getCustIDOnly = parsed.map((e) => {
+              return e.customer_id;
+            });
   
-        }  
-        // console.log(customerIDTempArr)
-        // localStorage.setItem(data.id, JSON.stringify(customerIDTempArr));
-      }
+            const filterUnmatched = filteredCustParsed.filter(
+              (e) => !getCustIDOnly.includes(e)
+            );
+  
+            if(filterUnmatched.length > 0){
+              const findInCustData = custData.find(
+                (e) => e.customer_id == filterUnmatched[0]
+              );
+              const getIndex = filteredCustParsed.findIndex(
+                (e) => e == filterUnmatched[0]
+              );
 
+              if (findInCustData) {
+                setValue(`customer_id-${getIndex + 1}`, findInCustData.customer_id);
+                setValue(`name-${getIndex + 1}`, findInCustData.name);
+              }
+  
+            } 
+          }
+
+          let guestModeDupe = [...guestMode];
+          parsed.map((e, idx) => {
+            if (e.customer_id) {
+              guestModeDupe[idx] = false;
+
+              setValue(`customer_id-${idx + 1}`, e.customer_id);
+              setValue(`name-${idx + 1}`, e.customer_name);
+            } else {
+              guestModeDupe[idx] = true;
+
+              setValue(`guest_mode-${idx + 1}`, true);
+              setValue(`guest_name-${idx + 1}`, e.guest_name);
+            }
+            setGuestMode(guestModeDupe);
+          })
+        } else {
+          if(filteredCustParsed.length > 0) localStorage.setItem(data.id, JSON.stringify([]));
+        }
+      }
     }
 
+    console.log(getValues())
+    console.log(guestMode)
     // if(checkFilteredCustStorage){
     //   let parsed;
     //   parsed = JSON.parse(checkFilteredCustStorage);
@@ -719,7 +844,7 @@ export default function WriteDelivGroupItemsModal({
     //       } else {
     //         let guestModeDupe = [...guestMode];
     //         guestModeDupe[idx] = true;
-            
+
     //         customerIDTempArr.push(null);
     //         setValue(`guest_mode-${idx+1}`, true);
     //         setGuestMode(guestModeDupe);
@@ -728,72 +853,74 @@ export default function WriteDelivGroupItemsModal({
     //     })
     //   }
     // }
-  },[custData])
+  }, [custData]);
 
   useEffect(() => {
-    if(updatedCust && updatedForm && custData) {
-
+    if (updatedCust && updatedForm && custData) {
       // re retrieve
       const storage = localStorage.getItem(`form-${data.id}`);
       const storageCust = localStorage.getItem(data.id);
 
-      if(storage) {
+      if (storage) {
         let parsed = JSON.parse(storage);
         let filteredCustParsed = JSON.parse(storageCust);
 
         // reset form first
         reset();
 
-        if(parsed.length !== filteredCustParsed.length){
-          let getCustIDOnly = parsed.map(e => {
+        if (parsed.length > 0 && parsed.length !== filteredCustParsed.length) {
+          let getCustIDOnly = parsed.map((e) => {
             return e.customer_id;
-          })
-          
-          const filterUnmatched = filteredCustParsed.filter(e => !getCustIDOnly.includes(e));
-          const findInCustData = custData.find(e => e.customer_id == filterUnmatched[0]);
-          const getIndex = filteredCustParsed.findIndex(e=> e == filterUnmatched[0]);
-          
-          if(findInCustData){
-            setValue(`customer_id-${getIndex+1}`, findInCustData.customer_id);
-            setValue(`name-${getIndex+1}`, findInCustData.name);
+          });
+
+          const filterUnmatched = filteredCustParsed.filter(
+            (e) => !getCustIDOnly.includes(e)
+          );
+          const findInCustData = custData.find(
+            (e) => e.customer_id == filterUnmatched[0]
+          );
+          const getIndex = filteredCustParsed.findIndex(
+            (e) => e == filterUnmatched[0]
+          );
+
+          if (findInCustData) {
+            setValue(`customer_id-${getIndex + 1}`, findInCustData.customer_id);
+            setValue(`name-${getIndex + 1}`, findInCustData.name);
           }
+        } else if (parsed.length > 0) {
+          let guestModeDupe = [...guestMode];
+          parsed.map((e, idx) => {
+            if (e.customer_id) {
+              guestModeDupe[idx] = false;
+              setValue(`customer_id-${idx + 1}`, e.customer_id);
+              setValue(`name-${idx + 1}`, e.customer_name);
+            } else {
+              guestModeDupe[idx] = true;
+
+              setValue(`guest_mode-${idx + 1}`, true);
+              setValue(`guest_name-${idx + 1}`, e.guest_name);
+            }
+            setGuestMode(guestModeDupe);
+          });
+        } else {
+          if(filteredCustParsed.length > 0) localStorage.setItem(data.id, JSON.stringify([]));
         }
 
-        if(parsed.length > 0) {
-          parsed.map((e,idx) => {
-            if(e.customer_id) {
-              setValue(`customer_id-${idx+1}`, e.customer_id);
-              setValue(`name-${idx+1}`, e.customer_name);
-            } else {
-              let guestModeDupe = [...guestMode];
-              guestModeDupe[idx] = true;
-              
-              setValue(`guest_mode-${idx+1}`, true);
-              setGuestMode(guestModeDupe);
-              setValue(`guest_name-${idx+1}`, e.guest_name);
-            }
-          })
-        }
       }
       setUpdatedCust(null);
       setUpdatedForm(null);
     }
-  },[updatedCust, updatedForm])
+  }, [updatedCust, updatedForm]);
 
 
   useEffect(() => {
-    fetchAllCust();
-    fetchAllProd();
-  }, []);
-
-  useEffect(() => {
-    if(dgReportList){
+    if (dgReportList) {
       setShowModal("");
     }
-  },[dgReportList]);
+  }, [dgReportList]);
 
   useEffect(() => {
-    if(custData && allProdData) {
+    if (custData && allProdData) {
       setLoading(false);
     }
   }, [custData, allProdData]);
@@ -801,7 +928,7 @@ export default function WriteDelivGroupItemsModal({
   if (isLoading) {
     return;
   }
-    
+
   return (
     <>
       <Modal
@@ -820,34 +947,48 @@ export default function WriteDelivGroupItemsModal({
           <Modal.Title>
             {data.action == "insert" ? "tambah" : "ubah"} data pengantaran
           </Modal.Title>
+          <div className="modal-btn-wrap d-flex gap-2">
+            <button type="button" className="btn btn-danger btn-w-icon" onClick={()=> resetForms()}><i className='bx bx-reset'></i>Reset</button>
+          </div>
         </Modal.Header>
         <Modal.Body>
+          <div className="modal-btn-wrap-mobile flex flex-row md:row-gap-3">
+            <button type="button" className={`btn btn-danger btn-w-icon`} onClick={()=> resetForms()}><i className='bx bx-reset'></i>Reset</button>
+          </div>
           <FormProvider {...methods}>
             <form>
               {/* <div className="add-prod-detail-wrap" style={{flexDirection: 'column', gap: '1rem'}}> */}
-              <div className="form-delivery-wrapper" style={{paddingBottom: 24}}>
-              {formToRender}
-              
-              <div  className="form-delivery-component" style={{ 
-                border: '1.7px dashed #29a7fc',
-                borderRadius: 17, 
-                marginTop: 0,
-                padding: "90px 16px",
-                textAlign:"center"
-                
-                }}>
+              <div
+                className="form-delivery-wrapper"
+                style={{ paddingBottom: 24 }}
+              >
+                {formToRender}
+
+                <div
+                  className="form-delivery-component"
+                  style={{
+                    border: "1.7px dashed #29a7fc",
+                    borderRadius: 17,
+                    marginTop: 0,
+                    padding: "90px 16px",
+                    textAlign: "center",
+                  }}
+                >
                   <button
-                    style={{height: 'fit-content'}}
+                    style={{ height: "fit-content" }}
                     type="button"
                     className="add-btn btn btn-info btn-w-icon cta-btn"
                     aria-label="addDGTransaction"
                     onClick={(e) => {
-                      checkingStorage[bulkForm-1] ? setBulkForm(bulkForm+1) : toast.current.show({
-                        severity: "error",
-                        summary: "Error",
-                        detail: "Lengkapi transaksi pelanggan sebelumnya terlebih dahulu!",
-                        life: 3000,
-                      });
+                      checkingStorage[bulkForm - 1]
+                        ? setBulkForm(bulkForm + 1)
+                        : toast.current.show({
+                            severity: "error",
+                            summary: "Error",
+                            detail:
+                              "Lengkapi transaksi pelanggan sebelumnya terlebih dahulu!",
+                            life: 3000,
+                          });
                       // setBulkForm(bulkForm+1);
                       // update
                       let updateOpenPopup = [...openPopup];
@@ -861,7 +1002,7 @@ export default function WriteDelivGroupItemsModal({
                     <i className="bx bx-plus"></i>
                     pelanggan
                   </button>
-              </div>
+                </div>
               </div>
               {/* </div> */}
             </form>
@@ -877,7 +1018,7 @@ export default function WriteDelivGroupItemsModal({
             }}
           >
             batal
-          </button> 
+          </button>
           <button
             type="button"
             className="btn btn-primary"
@@ -892,15 +1033,16 @@ export default function WriteDelivGroupItemsModal({
         </Modal.Footer>
       </Modal>
 
-      {showModal === "addDGTransaction" ? 
-      (
+      {showModal === "addDGTransaction" ? (
         <DGTransactionModal
-          show={showModal === "addDGTransaction" ? true : false} 
-          onHide={handleCloseModal} 
+          show={showModal === "addDGTransaction" ? true : false}
+          onHide={handleCloseModal}
           multiple={true}
           stack={1}
           data={showModal == "addDGTransaction" ? modalData : ""}
-          returnValue={(dgReportList) => {setDgReportList(dgReportList);}}
+          returnValue={(dgReportList) => {
+            setDgReportList(dgReportList);
+          }}
         />
       ) : (
         ""
