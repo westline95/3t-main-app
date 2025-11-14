@@ -69,7 +69,6 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
   });
   const [sendTarget, setSendTarget] = useState(null);
   const [cantCanceled, setCantCanceled] = useState(false);
-  console.log(data)
   const [paymentData, setPaymentData] = useState(data && data.payment ? data.payment : null);
   const [orderStatus, setOrderStatus] = useState(null);
 
@@ -150,30 +149,40 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
 
   const fetchAllProdByDG = async () => {
     await axiosPrivate
-      .get("/delivery-group/by", {
-        params: {
-          id: data.delivery_group_id,
-        },
-      })
-      .then((resp) => {
-        setAllProd([...resp.data.DeliveryGroupItemsProduct]);
+    .get("/delivery-group/by", {
+      params: {
+        id: data.delivery_group_id,
+      },
+    })
+    .then((resp) => {
+      
+      const storage = localStorage.getItem(`origin-dgitem-${data.delivery_group_id}`);
+      if(storage){
+        let deliveryGroupItems = JSON.parse(storage);
+        setAllProd(deliveryGroupItems);
+        setFilteredProd(deliveryGroupItems);
+      } else {
         let getDeliveryGroupItems = [...resp.data.DeliveryGroupItemsProduct];
         getDeliveryGroupItems.map((e, idx) => {
           e.fullProdName = e.product?.product_name + " " + e.product?.variant;
         });
+        setAllProd(getDeliveryGroupItems);
         setFilteredProd(getDeliveryGroupItems);
-      })
-      .catch((error) => {
-        // setToastContent({variant:"danger", msg: "Error when get products data!"});
-        // setShowToast(true);
+      }
+    })
+    .catch((error) => {
+      // setToastContent({variant:"danger", msg: "Error when get products data!"});
+      // setShowToast(true);
 
-        toast.current.show({
-          severity: "error",
-          summary: "Error",
-          detail: "Error when get products data",
-          life: 3000,
-        });
+      toast.current.show({
+        severity: "error",
+        summary: "Error",
+        detail: "Error when get products data",
+        life: 3000,
       });
+    });
+      
+
   };
 
   const fetchAllCust = async () => {
@@ -217,7 +226,7 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
         life: 3000,
       });
     }
-  };
+  }; 
 
   const handleAutoCompleteProd = (product) => {
     if (filterProd && product !== "") {
@@ -313,26 +322,100 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
       let tmpArr = [];
       let prodObjDupe = {...chooseProd};
       prodObjDupe.quantity = qtyVal;
+      let findDuplicateIdx;
 
       if(salesItems.length === 0) {
         // setChildQtyVal(qtyVal);
         tmpArr.push(prodObjDupe);
-        setSalesItems(tmpArr);
+        
+        
       } else {
+        
         tmpArr = [...salesItems];
-        let findDuplicateIdx = salesItems.findIndex(
+        findDuplicateIdx = salesItems.findIndex(
           (e) => e.product_id == prodObjDupe.product_id
         );
         if (findDuplicateIdx >= 0) {
           tmpArr[findDuplicateIdx].quantity =
           tmpArr[findDuplicateIdx].quantity + prodObjDupe.quantity;
           setChildQtyVal(tmpArr[findDuplicateIdx].quantity);
+
+         
         } else {
           // setChildQtyVal(qtyVal);
           tmpArr.push(prodObjDupe);
         }
-        setSalesItems(tmpArr);
       }
+
+
+      // update delivery remaining stock
+      // const dgProductListStorage = localStorage.getItem(`origin-dgitem-${data.delivery_group_id}`);
+      // let dgProductListParsed = JSON.parse(dgProductListStorage);
+      // if(filterProd){
+        let newFilterProd = [...filterProd];
+        let indexFilterProd = null;
+        let indexTmpArr = null;
+        let currentMax = 0;
+        console.log(findDuplicateIdx)
+
+        if(findDuplicateIdx >= 0) {
+          newFilterProd.map((obj1, idx1) => {
+            if(obj1.product_id == tmpArr[findDuplicateIdx].product_id) {
+              // console.log(idx1)
+              currentMax = Number(obj1.total_item);
+              // indexFilterProd=idx1;
+              // indexTmpArr=idx2;
+              console.log(tmpArr[findDuplicateIdx].quantity)
+              // let current = (currentMax - Number(tmpArr[findDuplicateIdx].quantity)) <= 0 ? 0 : (currentMax - Number(tmpArr[findDuplicateIdx].quantity));
+              let current = (currentMax - Number(qtyVal)) <= 0 ? 0 : (currentMax - Number(qtyVal));
+              obj1.total_item = current;
+            }
+          })
+        } else {
+          const recentPush = tmpArr.length - 1;
+          newFilterProd.map((obj1, idx1) => {
+            if(obj1.product_id == tmpArr[recentPush].product_id) {
+              // console.log(idx1)
+              currentMax = Number(obj1.total_item);
+              // indexFilterProd=idx1;
+              // indexTmpArr=idx2;
+              // let current = (currentMax - Number(tmpArr[recentPush].quantity)) <= 0 ? 0 : (currentMax - Number(tmpArr[recentPush].quantity));
+              let current = (currentMax - Number(qtyVal)) <= 0 ? 0 : (currentMax - Number(qtyVal));
+              obj1.total_item = current;
+            }
+          })
+          //  newFilterProd.map((obj1, idx1) => {
+          //   tmpArr.map((obj2, idx2) => {
+          //     if(obj1.product_id == obj2.product_id) {
+          //       console.log(idx1)
+          //       currentMax = Number(obj1.total_item);
+          //       // indexFilterProd=idx1;
+          //       // indexTmpArr=idx2;
+          //       let current = (currentMax - Number(obj2.quantity)) <= 0 ? 0 : (currentMax - Number(obj2.quantity));
+          //       // // let currentVal = Number(prodObjDupe.max_qty);
+          //       // obj2.max_qty =  currentMax - Number(obj2.quantity);
+          //       obj1.total_item = current;
+          //     }
+          //   })
+          // })
+        }
+
+
+          // if(indexFilterProd && indexTmpArr){
+          //   console.log("hhhhhh")
+          //   // update max_qty in tmparr
+          //   tmpArr[indexTmpArr].max_qty = currentMax - Number(tmpArr[indexTmpArr].quantity);
+          //   // update max_qty in newFilterProd
+          //   newFilterProd[indexFilterProd].total_item = (currentMax - Number(tmpArr[indexTmpArr].quantity)) <= 0 ? 0 : (currentMax - Number(tmpArr[indexTmpArr].quantity));
+          // }
+          // console.log(tmpArr)
+          // console.log(newFilterProd)
+          setFilteredProd(newFilterProd);
+        // localStorage.setItem(`origin-dgitem-${data.delivery_group_id}`, JSON.stringify(dgProductListParsed));
+      // }
+
+          console.log(newFilterProd)
+      setSalesItems(tmpArr);
       
       // setPaidData(null);
       setProd(null);
@@ -341,6 +424,8 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
       handleUpdateEndNote();
     }
   };
+  
+  console.log(filterProd)
 
   const handleClickSelect = (ref) => {
     useEffect(() => {
@@ -448,7 +533,7 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
           // dgListItem.grandtotal = (Number(prev.quantity)*Number(prev.product?.sell_price)) + (Number(curr.quantity)*Number(curr.product?.sell_price));   
           // dgListItem.totalQty = (Number(prev.quantity) + Number(curr.quantity));   
         },{});
-        console.log(dgListItem)
+        
       } else if(salesItems.length == 1) {
         dgListItem.subtotal = Number(salesItems[0].quantity) * Number(salesItems[0].product?.sell_price);
         dgListItem.grandtotal = Number(salesItems[0].quantity) * Number(salesItems[0].product?.sell_price);
@@ -467,7 +552,7 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
           tmpArr[data.index] = dgListItem;
           localStorage.setItem(`form-${data.delivery_group_id}`, JSON.stringify(tmpArr));
 
-      }
+        }
         // dgReportListArr.map((item, idx) => {
         //   parsed.map((parseitem, index) => {
         //     if(item.customer_id){
@@ -488,6 +573,8 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
         // console.log(findDuplicateIdx)
       }
 
+      // updatelocalstorage for stock management
+      localStorage.setItem(`origin-dgitem-${data.delivery_group_id}`, JSON.stringify(filterProd));
       
 
       if(returnValue){
@@ -542,7 +629,6 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
       //     setPaidData(null);
       //   }
       // }
-      console.log(paymentData)
       let endNote = {
         ...salesEndNote,
         totalQty: totalQty,
@@ -704,7 +790,6 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
     );
   };
 
-  console.log(filterProd)
 
   const orderListTemplate = (items) => {
     if (!items || items.length === 0) return null;
@@ -939,13 +1024,13 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
   }, [cantCanceled]);
 
   useEffect(() => {
-    if(filterProd) {
+    if( filterProd) {
       setLoading(false);
     }
   }, [filterProd]);
 
   useEffect(() => {
-    if(!isLoading){
+    if(show && !isLoading){
       if(multiple === true){
         document.querySelectorAll(".modal-backdrop").forEach((e,idx) => {
           e.style.zIndex = 1055 + (idx * stack);
@@ -1061,14 +1146,15 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
                         <div
                           key={idx}
                           className="res-item"
-                          onClick={() =>
+                          onClick={() =>{
+                            console.log(e)
                             handleChooseProd({
                               product_id: e.product_id,
                               product: e.product,
                               max_qty: e.total_item,
                               max_value: e.total_value,
                               items: e.items
-                            })
+                            })}
                           }
                         >
                           {e.fullProdName}
@@ -1088,7 +1174,18 @@ export default function DGTransactionModal({ show, onHide, data, returnValue, st
                 name={`qty-add-product`}
                 width={"180px"}
                 value={qtyVal}
-                returnValue={(e) => {setQtyVal(e)}}
+                returnValue={(e) => {
+                  if(chooseProd && e == 0 && Number(chooseProd.max_qty) == 0){
+                    toast.current.show({
+                      severity: "error",
+                      summary: "Error",
+                      detail: "Sudah mencapai maksimum stok!",
+                      life: 3000,
+                    });
+                  } else {
+                    setQtyVal(e)
+                  }
+                }}
                 // disabled={editMode ? false : true}
                 label={"qty"}
               />

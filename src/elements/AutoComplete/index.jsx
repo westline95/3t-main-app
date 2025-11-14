@@ -1,12 +1,13 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import InputWLabel from '../Input/InputWLabel';
 import propTypes from 'prop-types';
 import { useForm, useFormContext } from 'react-hook-form';
+import  debounce  from 'debounce';
 
 export default function AutoComplete({
     Label, InputName, Placeholder, DataOrigin , DataFiltered, ForceSelection, 
     DataForm, SearchKey, DataKeyInputValue, OnSelect, OnChange, require, 
-    FilterData, FilteredData,  index, LocalStorage, OpenPopup, OnFocus, onKeyDownChange
+    FilterData, FilteredData,  index, LocalStorage, OpenPopup, OnFocus, onKeyDownChange,storageResync
 }){
     const popupRef = useRef();
     const { register, formState: {errors}, setError, setValue, getValues, setFocus, watch } = useFormContext();
@@ -16,121 +17,130 @@ export default function AutoComplete({
     const [ flag, setFlag] = useState(false);
     const [ filteredData, setFilteredData ] = useState(DataFiltered ? DataFiltered : []);
     const [ choosedItem, setChoosedItem ] = useState(null);
-    const [ openPopup, setOpenPopup ] = useState(OpenPopup);
+    const [ inputValue, setInputValue ] = useState("");
+    const [ debouncedValue, setDebouncedValue ] = useState(null);
+    const [ nullishTrigger, setNullishTrigger ] = useState(false);
+    const [ processNullish, setProcessNullish] = useState(false);
+    const [ openPopup, setOpenPopup ] = useState(false);
     const [ popupClicked, setPopupClicked ] = useState(false);
     const [ blurred, setBlurred ] = useState(true);
+    const [ cleared, setCleared ] = useState(false);
     const [ currentActiveCust, setCurrentActiveCust ] = useState(null);
     const customerListTakenStorage = localStorage.getItem(LocalStorage);    
+    const currentInput = useRef(null);
 
     const handleAutoComplete = (e) => {
-        const inputVal = getValues(InputName);
+        let inputVal = e.target.value;
+        setInputValue(inputVal);
+        
+        // if(onKeyDownChange){
+        //     onKeyDownChange(nputName, inputVal, index);
+        // }
+            
+        const refilterCust = localStorage.getItem(LocalStorage);
+        
 
         if(inputVal && inputVal !== ""){
-            // if arrray object type
-            // let dupeFiltered;
-            if(customerListTakenStorage && e.type =="change") {
-                dupeFiltered = JSON.parse(customerListTakenStorage);
-                dupeFiltered[index] = null;
-                localStorage.setItem(LocalStorage, JSON.stringify(dupeFiltered));
-            }
+        //     console.log("tidak kosong")
             
-            if(dupeFiltered){
-                const filter1 = dataOrigin.filter(item => !dupeFiltered.includes(item.customer_id));
-                const filter2 = filter1.filter(item => item[SearchKey].includes(inputVal.toLowerCase()));
-                // const filter2 = dataOrigin.filter(item => item[SearchKey].includes(inputVal.toLowerCase()));
-                setFilteredData(filter2);            
-                // (filter2.length == 0) ? setOpenPopup(false) : setOpenPopup(true);
-                setOpenPopup(true);
+        // //     // if arrray object type
+        // //     // let dupeFiltered;
+        // //     // if(customerListTakenStorage && e.type =="change") {
+        // //     //     dupeFiltered = JSON.parse(customerListTakenStorage);
+        // //     //     dupeFiltered[index] = null;
+        // //     //     localStorage.setItem(LocalStorage, JSON.stringify(dupeFiltered));
+        // //     // }
+            
+        // //     // if(dupeFiltered){
+        // //     //     const filter1 = dataOrigin.filter(item => !dupeFiltered.includes(item.customer_id));
+        // //     //     const filter2 = filter1.filter(item => item[SearchKey].includes(inputVal.toLowerCase()));
+        // //     //     // const filter2 = dataOrigin.filter(item => item[SearchKey].includes(inputVal.toLowerCase()));
+        // //     //     setFilteredData(filter2);            
+        // //     //     // (filter2.length == 0) ? setOpenPopup(false) : setOpenPopup(true);
+        // //     //     setOpenPopup(true);
+        // //     // } else {
+        // //     //     const filter1 = dataOrigin.filter(item => !dupeFiltered.includes(item.customer_id));
+        // //     // // const filter1 = filteredData ? filteredData.filter(item => item[SearchKey].includes(inputVal.toLowerCase())) : dataOrigin.filter(item => item[SearchKey].includes(inputVal.toLowerCase()));
+        // //     // setFilteredData(filter1);            
+        // //     // setOpenPopup(true);
+        // //     // }
+        // refilter
+           
+            // console.log(refilterCustRes);
+            // setFilteredData(refilterCustRes);
+            // console.log(filteredData)
+            if(refilterCust){
+                const refilterCustParse = JSON.parse(refilterCust);
+                const refilterCustRes = dataOrigin.filter((item)  => !refilterCustParse.includes(item.customer_id));
+                const filter2 = refilterCustRes.filter(item => item[SearchKey].includes(inputVal.toLowerCase()));
+                setFilteredData(filter2);
             } else {
-                const filter1 = dataOrigin.filter(item => !dupeFiltered.includes(item.customer_id));
-            // const filter1 = filteredData ? filteredData.filter(item => item[SearchKey].includes(inputVal.toLowerCase())) : dataOrigin.filter(item => item[SearchKey].includes(inputVal.toLowerCase()));
-            setFilteredData(filter1);            
+                const filter2 = dataOrigin.filter(item => item[SearchKey].includes(inputVal.toLowerCase()));
+                setFilteredData(filter2);
+            }
             setOpenPopup(true);
-            // (filter1.length == 0) ? setOpenPopup(false) : setOpenPopup(true);
-            }
+
+          
+            
+
         } else if(inputVal == "") {
-            if(customerListTakenStorage) {
-                let dupeFiltered = JSON.parse(customerListTakenStorage);
-                const filter1 = dataOrigin.filter(item => !dupeFiltered.includes(item.customer_id));
-                setFilteredData(filter1);
-            } else {
-                setFilteredData(dataOrigin);
 
-            }
-            // if(filteredData){
-            //     setFilteredData(DataFiltered);
-            //     setOpenPopup(true);
-            // } else {
-            //     setFilteredData(dataOrigin);
-            //     setOpenPopup(false);
-                setOpenPopup(true);
-            // }
+        // //     // if(customerListTakenStorage) {
+        // //     //     let dupeFiltered = JSON.parse(customerListTakenStorage);
+        // //     //     const filter1 = dataOrigin.filter(item => !dupeFiltered.includes(item.customer_id));
+        // //     //     setFilteredData(filter1);
+        // //     // } else {
+        // //     //     setFilteredData(dataOrigin);
+
+        // //     // }
+        // //     setFilteredData(DataFiltered);
+        // //     // if(filteredData){
+        if(refilterCust){
+            const refilterCustParse = JSON.parse(refilterCust);
+            const refilterCustRes = dataOrigin.filter((item)  => !refilterCustParse.includes(item.customer_id));
+            setFilteredData(refilterCustRes);
+        } else {
+            // const filter2 = dataOrigin.filter(item => item[SearchKey].includes(inputVal.toLowerCase()));
+            setFilteredData(dataOrigin);
         }
-
-        // if(onKeyDownChange){
-        //     return onKeyDownChange(choosedItem, index);
-        // }
+        // const refilterCustParse = JSON.parse(refilterCust);
+        // const refilterCustRes = dataOrigin.filter((item)  => !refilterCustParse.includes(item.customer_id));
+        //         setFilteredData(refilterCustRes);
+        // //     //     setOpenPopup(true);
+        // //     // } else {
+        //     //     setFilteredData(dataOrigin);
+        // //     //     setOpenPopup(false);
+                setOpenPopup(true);
+        // //     // }
+        }      
+        // setNullishTrigger(true);
     }
-    
+
     const handleKeyDown = (e) => {
         if (e.key) {
-            setChoosedItem(null);
             setBlurred(false);
-        }
-    }
-
-    const handleFilteringAutoComplete = (custID) => {
-        // for fitering customer
-        let arr;
-        let parsed = JSON.parse(customerListTakenStorage);
-        arr = [...parsed];
-        if(custID && custID != ""){
-            if(arr.length == 0) {
-                arr[index] = custID;
-                console.log("data baru")
-                // localStorage.setItem(LocalStorage, JSON.stringify(arr));
-                // setFilteredData(arr);
-            } else {
-
-                let findDupe = arr.find((customerID) => customerID === custID);
-                if(!findDupe) {
-                // arr.push(custID);
-                arr[index] = custID;
-                // setFilteredData(arr);
-                // localStorage.setItem(`customer_id`, JSON.stringify(arr));
-                } else {
-                console.log("udah ada");
-                }
+            if(e.key === "Backspace"){
+                setCleared(true);
             }
-
-            // let custDataDupe = [...Data];
-            // let result = data.filter(({customer_id}) => !arr.includes(customer_id));
-            // setFilteredData(result);
-            localStorage.setItem(LocalStorage, JSON.stringify(arr));
-        } 
-        // else {
-            // const customerListTakenStorage = localStorage.getItem(`customer_id`);
-            // let parsed = JSON.parse(customerListTakenStorage);
-            // let custDataDupe = [...Data];
-            let result = data.filter(({customer_id}) => !arr.includes(customer_id));
-            setFilteredData(result);
-            console.log(result);
-        // }
+        }
     }
 
     const handleChooseItem = (e, itemData) => {
         // for array object datatype  
         let setInputValue = itemData[DataKeyInputValue];
-
         setChoosedItem(itemData);
         setValue(`${InputName}`, setInputValue);
-        setOpenPopup(false);
+        // setOpenPopup(false);
         setBlurred(false);
 
         setTimeout(() => {
             if(OnSelect){
                 return OnSelect(itemData);
-            }
+            }// console.log(memoChoosed)
+            
+            // if(onKeyDownChange) {
+            //    onKeyDownChange(index);
+            // } 
             
         }, 250);
 
@@ -140,6 +150,9 @@ export default function AutoComplete({
     const handleBlur = () => {
         if(!choosedItem && !blurred){
             setValue(`${InputName}`, '');
+            if(onKeyDownChange){
+                onKeyDownChange(index)
+            }
         }
     }
 
@@ -164,22 +177,31 @@ export default function AutoComplete({
     };
     handleClickSelect(popupRef);
 
-    // useEffect(() => {
-    //     if(choosedItem){
-    //        if(OnSelect) return OnSelect(choosedItem);
-    //     }
-    // },[choosedItem]);
-    console.log(openPopup);
+    useEffect(() => {
+        if(cleared){
+            const customerListTakenStorage = localStorage.getItem(LocalStorage);    
+             if(customerListTakenStorage) {
+                let dupeFiltered = JSON.parse(customerListTakenStorage);
+                dupeFiltered[index] = null;
+                localStorage.setItem(LocalStorage, JSON.stringify(dupeFiltered));
+                
+                
+                
+            }
+        }
+    },[cleared])
 
     return(
         <div style={{ position: "relative" }}>
             <InputWLabel
+                ref={currentInput}
                 label={Label}
                 type="text"
                 name={InputName}
                 placeholder={Placeholder}
                 onChange={(e) => {
                     handleAutoComplete(e);
+                    console.log(e)
                 }}
                 onFocus={(e) => handleAutoComplete(e)}
                 onKeyDown={handleKeyDown}
@@ -188,7 +210,7 @@ export default function AutoComplete({
                 onBlur={true}
                 onBlurCallback={() => ForceSelection && handleBlur()}
                 // if onblur true, two items prop above are required
-
+                // value={inputValue}
                 require={require}
                 register={register}
                 errors={errors}

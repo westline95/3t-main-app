@@ -109,6 +109,7 @@ export default function WriteDelivGroupItemsModal({
   const [toDelete, setToDelete] = useState(null);
   const [updatedForm, setUpdatedForm] = useState(null);
   const [updatedCust, setUpdatedCust] = useState(null);
+  const [storageResync, setStorageResync] = useState(false);
 
   // popup needs
   const refToThis = useRef(Array.from({ length: bulkForm }, () => createRef()));
@@ -337,6 +338,17 @@ export default function WriteDelivGroupItemsModal({
   // end of popup needs
 
   const delForm = (formStorageIndex) => {
+    unregister([
+      `name-${formStorageIndex+1}`, 
+      `guest_name-${formStorageIndex+1}`, 
+      `guest_mode-${formStorageIndex+1}`, 
+      `customer_id-${formStorageIndex+1}`
+    ]);
+
+    let updateGuestMode = [...guestMode];
+    updateGuestMode[formStorageIndex] = false;
+    setGuestMode(updateGuestMode);
+
     if (storage) {
       let dupeOrigin = [...checkingStorage];
       let dupeOriginCust = [...filteredCustParsed];
@@ -352,7 +364,11 @@ export default function WriteDelivGroupItemsModal({
       setUpdatedCust(dupeOriginCust);
       formToRender.splice(toDelete, 1);
     }
+
+    setBulkForm(bulkForm > 1 ? bulkForm-1 : 1);
+    
   };
+  console.log(getValues())
 
   const onError = () => {
     setControlUiBtn(false);
@@ -447,12 +463,8 @@ export default function WriteDelivGroupItemsModal({
 
   const handleSelectedList = (selected, index) => {
     let arr = [];
-
     if (filterCust && filterCust.length == 0) {
       !selected ? (arr[index] = selected) : (arr[index] = selected.customer_id);
-      // arr[index] = selected.customer_id;
-      // arr[index] = selected;
-      // setFilteredCust(arr);
     } else {
       arr = [...filterCust];
       if (!selected) {
@@ -466,10 +478,21 @@ export default function WriteDelivGroupItemsModal({
         }
       }
     }
-
+    
     setFilteredCust(arr);
     localStorage.setItem(data.id, JSON.stringify(arr));
     handleUpdateFormLocalStorage(selected, index);
+  };
+
+  const handleOnChangeMember = (index) => {
+
+    setValue(`customer_id-${index+1}`, null);
+
+    let arr = [...filterCust];
+    arr.splice(index, 1);
+    setFilteredCust(arr);
+
+    handleUpdateFormLocalStorage(null, index);
   };
 
   useEffect(() => {
@@ -536,12 +559,13 @@ export default function WriteDelivGroupItemsModal({
             />
           ) : (
             <AutoComplete
+              key={index}
               index={index}
               LocalStorage={data.id}
               FilterData={true}
               DataOrigin={custData}
               DataFiltered={custDataDupe}
-              // OpenPopup={openPopup}
+              // OpenPopup={openPopup[index]}
               FilteredData={filterCust}
               Label={"nama pelanggan"}
               Placeholder={"Cari dan pilih nama pelanggan..."}
@@ -558,11 +582,15 @@ export default function WriteDelivGroupItemsModal({
                     )
                   : setValue(`guest_name-${index + 1}`, choosedData.name);
                 handleSelectedList(choosedData, index);
+                let updatedOpenPopup = [...openPopup];
+                updatedOpenPopup[index] = false;
+                setOpenPopup(updatedOpenPopup);
                 // (choosedData.customer_id) && handleFilteringAutoComplete(choosedData.customer_id);
               }}
-              onKeyDownChange={(item, index) => {
-                handleSelectedList(item, index);
-              }}
+             
+              // onKeyDownChange={(inputValue, index) => {
+              //   handleOnChangeMember(inputValue,index);
+              // }}
               // OnChange={(e) => handleAutoComplete(e, index)}
               // OnFocus={(e) => handleAutoComplete(e, index)}
               require={false}
@@ -726,6 +754,8 @@ export default function WriteDelivGroupItemsModal({
     localStorage.setItem(`form-${data.id}`, JSON.stringify([]));
     localStorage.setItem(data.id, JSON.stringify([]));
     reset();
+    setCustDataDupe(custData);
+    setGuestMode([false]);
     setBulkForm(1);
     setUpdatedCust([]);
     setUpdatedForm([]);
@@ -746,7 +776,6 @@ export default function WriteDelivGroupItemsModal({
         let getCustIDOnly = parsed.map((e, idx) => {
           return filteredCustParsed[idx] = e.customer_id;
         });
-
         localStorage.setItem(data.id, JSON.stringify(getCustIDOnly));
       }
     }
@@ -762,13 +791,13 @@ export default function WriteDelivGroupItemsModal({
         // retrievehandle item transaction
         if (parsed.length > 0 ) {
 
-          let getCustIDOnly = parsed.map((e) => {
-            return e.customer_id;
-          });
+          // let getCustIDOnly = parsed.map((e) => {
+          //   return e.customer_id;
+          // });
 
-          let custTmp = [...filteredCustParsed];
-          const sync = getCustIDOnly.map((e, idx) => (custTmp[idx] = e));
-          localStorage.setItem(data.id, JSON.stringify(sync));
+          // let custTmp = [...filteredCustParsed];
+          // const sync = getCustIDOnly.map((e, idx) => (custTmp[idx] = e));
+          // localStorage.setItem(data.id, JSON.stringify(sync));
 
           // parsed.map((e, idx) => {
           //   if (e.customer_id) {
@@ -924,6 +953,12 @@ export default function WriteDelivGroupItemsModal({
       setLoading(false);
     }
   }, [custData, allProdData]);
+
+  useEffect(() => {
+     const filterStorage = localStorage.getItem(`${data.id}`);
+     if(!filterStorage) localStorage.setItem(`${data.id}`, JSON.stringify([]));
+  },[])
+
 
   if (isLoading) {
     return;

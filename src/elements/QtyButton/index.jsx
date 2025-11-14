@@ -33,7 +33,7 @@ export default function QtyButton(props) {
             // }
         } else if (data && inputValue === min){
             handleDeleteOrder(data.id);
-        }
+        } 
     };
 
     const plus = () => {
@@ -43,6 +43,12 @@ export default function QtyButton(props) {
         } else {
             const newValue = Number(max);
             setInputValue(newValue);
+            
+            if(inputValue == Number(max)){
+                if(returnValue){
+                    returnValue(Number(inputValue));
+                }
+            }
         }
     };
 
@@ -54,7 +60,14 @@ export default function QtyButton(props) {
         if(valFormatted == ""){
             setInputValue(min);
         } else {
-            setInputValue(Number(valFormatted));
+            if(valFormatted <= max) {
+                // const newValue = Number(inputValue) + 1;
+                setInputValue(Number(valFormatted));
+            } else {
+                const newValue = Number(max);
+                setInputValue(newValue);
+            }
+            // setInputValue(Number(valFormatted));
         }
     };
 
