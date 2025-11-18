@@ -43,7 +43,10 @@ export default function DeliveryGroupListModal({show, onHide, data, returnAct}) 
     const [ invStatus, setInvStatus ] = useState(null);
     const [ paymentData, setPaymentData] = useState(null);
     const [ totalPaid, setTotalPaid] = useState(0);
-    const [ dGList, setDGList ] = useState(data ? {...data} : null); 
+    const [ totalQtyConfirmed, setTotalQty] = useState(0);
+    const [ totalValueConfirmed, setTotalValue] = useState(0);
+    const [ dGList, setDGList ] = useState(null); 
+    const [ dgReportList, setDGReportList ] = useState(null); 
 
     const axiosPrivate = useAxiosPrivate();
 
@@ -67,7 +70,8 @@ export default function DeliveryGroupListModal({show, onHide, data, returnAct}) 
         },
       });
 
-
+      
+    
     const handlePrint = useReactToPrint({
         contentRef: componentRef,
         documentTitle: `My_HeaderText_Print`,
@@ -81,12 +85,29 @@ export default function DeliveryGroupListModal({show, onHide, data, returnAct}) 
         getTargetElement.style.overflowX = "auto";
     }
 
-    const fetchSalesByID = async (request) => {
-        await axiosPrivate.get(`/sales/order-items?id=${request}`)
+    const fetchDGByID = async () => {
+        await axiosPrivate.get(`/delivery-group/by/dgid-emp?id=${data.delivery_group_id}`)
         .then(resp => {
-            console.log(resp.data)
-            if(resp.data){
-                setSalesList(resp.data);
+            setDGList(resp.data);
+            // calculate total qty for order confirmed only(different visibility for admin)
+            let totalQty = 0;
+            let totalValue = 0;
+            resp.data.DeliveryGroupItemsGrouped.reduce((acc, item) => { 
+                totalQty += item.total_item;
+                totalValue += item.total_value;
+             },{});
+            setTotalQty(totalQty);
+            setTotalValue(totalValue);
+
+            if(resp.data.delivery_group_report?.delivery_group_report_lists){
+                let dgReportList = [...resp.data.delivery_group_report.delivery_group_report_lists];
+                // parsing all order_items
+                let parsedDGReportList = dgReportList.map(e => {
+                    let dgReport = {...e};
+                    dgReport.order_items = JSON.parse(e.order_items);
+                    return dgReport;
+                })
+                setDGReportList(parsedDGReportList);
             }
         })
         .catch(error => {
@@ -330,6 +351,10 @@ export default function DeliveryGroupListModal({show, onHide, data, returnAct}) 
     //         //    console.log(paidData)
     //        }
     //    },[paidData])
+
+    useEffect(() => {
+        fetchDGByID();
+    },[])
     
     useEffect(() => {
         if(dGList){
@@ -766,7 +791,7 @@ export default function DeliveryGroupListModal({show, onHide, data, returnAct}) 
                                 <div className="card-amount">
                                     <div className="invoice-info-group">
                                         <p className="label-text">Total qty item</p>
-                                        <p className="invoice-text">{Number(dGList.total_item)}</p>
+                                        <p className="invoice-text">{Number(totalQtyConfirmed)}</p>
                                     </div>
                                 </div>
                                 <div className="card-amount">
@@ -774,7 +799,7 @@ export default function DeliveryGroupListModal({show, onHide, data, returnAct}) 
                                         <p className="label-text">Total Nilai pengantaran</p>
                                         <p className="invoice-text">
                                             <NumberFormat intlConfig={{
-                                                value: dGList.total_value, 
+                                                value: totalValueConfirmed, 
                                                 locale: "id-ID",
                                                 style: "currency", 
                                                 currency: "IDR",
@@ -803,7 +828,7 @@ export default function DeliveryGroupListModal({show, onHide, data, returnAct}) 
                                 <div className='table-responsive'>
                                     {dGList.DeliveryGroupItemsGrouped && dGList.DeliveryGroupItemsGrouped.map((group_items, index) => {  
                                         return(
-                                        <table className="table">
+                                        <table className="table" key={`dgitems-${index}`}>
                                             <thead>
                                                 <tr>
                                                     <th>sesi</th>
@@ -914,6 +939,110 @@ export default function DeliveryGroupListModal({show, onHide, data, returnAct}) 
                                         </table>
                                         )
                                     })}
+
+                                    {dgReportList ? (dgReportList.map((sales, idx) => {
+                                        return(
+                                        <>
+                                        <table className="table" key={`transaction-table-${idx}`} id='tes'>
+                                            <thead>
+                                                <tr className='order-number-tab'>
+                                                    <th className='inv-tab-info'>Order ID:</th>
+                                                    <th className='inv-tab-info'>{sales.order_id}</th>
+                                                </tr>
+                                                <tr>
+                                                    <th>tanggal</th>
+                                                    <th>item</th>
+                                                    <th>qty</th>
+                                                    <th>satuan</th>
+                                                    <th>diskon/item</th>
+                                                    <th>jumlah</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {dgReportList.order_items.length > 0 && dgReportList.order_items.map((orderItem, index) => {
+                                                    return( 
+                                                        <tr key={index} style={{textTransform:'capitalize'}}>
+                                                            {index == 0 ? 
+                                                                (
+                                                                    <td rowSpan={`${dgReportList.order_items.length}`}>{dgReportList.customer ? dgReportList.customer.name : dgReportList.guest_name}</td>
+                                                                ):''
+                                                            }
+                                                            <td>{`${orderItem.product.product_name}  ${orderItem.product.variant}`}</td>
+                                                            <td>{orderItem.return_order_item ? 
+                                                                `${Number(orderItem.quantity)} (-${Number(orderItem.return_order_item.quantity)})`
+                                                                : `${Number(orderItem.quantity)}`
+                                                            }
+                                                            </td>
+                                                            <td>
+                                                                <NumberFormat intlConfig={{
+                                                                        value: orderItem.sell_price, 
+                                                                        locale: "id-ID",
+                                                                        style: "currency", 
+                                                                        currency: "IDR",
+                                                                    }} 
+                                                                />
+                                                            </td>
+                                                            <td>
+                                                                <NumberFormat intlConfig={{
+                                                                    value: orderItem.discount_prod_rec, 
+                                                                    locale: "id-ID",
+                                                                    style: "currency", 
+                                                                    currency: "IDR",
+                                                                    }} 
+                                                                />
+                                                            </td>
+                                                            <td>
+                                                                <NumberFormat intlConfig={{
+                                                                    value: orderItem.return_order_item ? 
+                                                                    (((Number(orderItem.quantity) - Number(orderItem.return_order_item.quantity)) * Number(orderItem.sell_price)) - ((Number(orderItem.quantity) - Number(orderItem.return_order_item.quantity))*orderItem.discount_prod_rec)) 
+                                                                    : ((Number(orderItem.quantity) * Number(orderItem.sell_price)) - (Number(orderItem.quantity)*orderItem.discount_prod_rec)), 
+                                                                    locale: "id-ID",
+                                                                    style: "currency", 
+                                                                    currency: "IDR",
+                                                                    }} 
+                                                                />
+                                                            </td>
+                                                        </tr>
+                                                    )
+                                                })}
+                                                <tr>
+                                                    <td colSpan="4"></td>
+                                                    <td className="each-total-title" style={{textAlign:'right'}}>total</td>
+                                                    <td className="each-total-text">
+                                                        <NumberFormat intlConfig={{
+                                                            value: Number(sales.grandtotal) - (sales.orders_credit ? (Number(sales.orders_credit.return_order.refund_total)):0) - (sales.return_order ? (Number(sales.return_order.refund_total)):0),
+                                                            locale: "id-ID",
+                                                            style: "currency", 
+                                                            currency: "IDR",
+                                                            }} 
+                                                        />
+                                                    </td>
+                                                </tr>
+                                                {idx == salesList.length-1 ? 
+                                                    (
+                                                    <tr className="grand-total">
+                                                        <td colSpan="4"></td>
+                                                        <td className="each-total-title" style={{textAlign:'right'}}>Total seluruh transaksi</td>
+                                                        <td className="each-total-text">
+                                                            <NumberFormat intlConfig={{
+                                                                value: data.items.amount_due, 
+                                                                locale: "id-ID",
+                                                                style: "currency", 
+                                                                currency: "IDR",
+                                                                }} 
+                                                            />
+                                                        </td>
+                                                    </tr>
+                                                    )
+                                                :""}
+                                            </tbody>
+                                        </table>
+
+                                    
+                                        
+                                        </>
+                                        )
+                                    })):""}
                                 </div>
                             </div>
                             

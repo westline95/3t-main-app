@@ -165,7 +165,7 @@ export default function Products({handleSidebar, showSidebar}){
             if(response.data.length > 0){
                 response.data.map(e => {
                     let category = {
-                        id: Number(e.category_id),
+                        id: e.category_id,
                         category_name: e.category_name,
                     };
                     categories.push(category);

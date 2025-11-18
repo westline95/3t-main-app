@@ -1075,27 +1075,39 @@ export default function DeliveryEmployee({handleSidebar, showSidebar}){
         >
           <i className="bx bx-show"></i>
         </span>
-        <span
-          className="table-btn edit-table-data"
-          aria-label="writeDelivGroupsReport"
-          onClick={(e) => {
-            rowData.status == 2 ?
-            handleModalWData(e, {
-              id: rowData.delivery_group_id,
-              employee_id: rowData.employee_id,
-              delivery_group_date: rowData.delivery_group_date,
-              action: "insert",
-            })
-            : toast.current.show({
-                    severity: "error",
-                    summary: "Forbidden",
-                    detail: rowData.status == 3 &&  "Tidak dapat mengubah data pengantaran yang sudah dibatalkan",
-                    life: 3000,
-                });
-          }}
-        >
-          <i className="bx bxs-edit"></i>
-        </span>
+        {rowData.delivery_group_report?.report_status != 2 &&
+            (
+                <span
+                className="table-btn edit-table-data"
+                aria-label="writeDelivGroupsReport"
+                onClick={(e) => {
+                    rowData.status == 2 ? 
+                        rowData.delivery_group_report?.report_status == 1 ?
+                            toast.current.show({
+                                severity: "warn",
+                                summary: "Peringatan",
+                                detail: "Laporan sedang ditinjau",
+                                life: 3000,
+                            })
+                        : handleModalWData(e, {
+                            id: rowData.delivery_group_id,
+                            employee_id: rowData.employee_id,
+                            delivery_group_date: rowData.delivery_group_date,
+                            action: "insert",
+                        })
+                    : toast.current.show({
+                            severity: "error",
+                            summary: "Forbidden",
+                            detail: rowData.status == 3 ?  "Tidak dapat mengubah data pengantaran yang sudah dibatalkan" : "Tidak dapat membuat laporan",
+                            life: 3000,
+                        });
+                }}
+                >
+                <i className="bx bxs-edit"></i>
+                </span>
+
+            )
+        }
       </div>
     );
   };
@@ -1117,18 +1129,30 @@ export default function DeliveryEmployee({handleSidebar, showSidebar}){
     
     const statusDGCell = (rowData) => {
         return(
-            <span className={`badge badge-${
+            // <span className={`badge badge-${
+            //     rowData.delivery_group_report ? 
+            //     rowData.delivery_group_report?.report_status == 0 ? "warning"
+            //     : rowData.delivery_group_report?.report_status == 1 ? "success"
+            //     : "danger" : "secondary"
+            // } light`}
+            // >
+            //     {
+            //         rowData.delivery_group_report ? 
+            //             rowData.delivery_group_report?.report_status == 0 ? "laporan sedang ditinjau"
+            //             : rowData.delivery_group_report?.report_status == 1 ? "laporan telah disetujui"
+            //             : "laporan ditolak" 
+            //         : "laporan belum dibuat"
+            //     }                                                                                
+            // </span>
+             <span className={`badge badge-${
                 rowData.delivery_group_report ? 
-                rowData.delivery_group_report?.report_status == 0 ? "warning"
-                : rowData.delivery_group_report?.report_status == 1 ? "success"
-                : "danger" : "secondary"
+                dataStatic.deliveryGroupReportStatus[rowData.delivery_group_report.report_status-1].theme
+                : "secondary"
             } light`}
             >
                 {
                     rowData.delivery_group_report ? 
-                        rowData.delivery_group_report?.report_status == 0 ? "laporan sedang ditinjau"
-                        : rowData.delivery_group_report?.report_status == 1 ? "laporan telah disetujui"
-                        : "laporan ditolak" 
+                        dataStatic.deliveryGroupReportStatus[rowData.delivery_group_report.report_status-1].type
                     : "laporan belum dibuat"
                 }                                                                                
             </span>

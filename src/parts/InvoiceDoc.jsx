@@ -5,6 +5,7 @@ import ConvertDate from '../assets/js/ConvertDate.js';
 import Logo from "../assets/images/Logo_WA-removebg-preview.png";
 import NumberFormat from '../elements/Masking/NumberFormat.jsx';
 
+const colorAccent = "#081f5c";
 
 const invoiceStyle = StyleSheet.create({
     page: {
@@ -66,7 +67,8 @@ const invoiceStyle = StyleSheet.create({
         marginTop:-32,
         right:-32,
         // backgroundColor: '#29a7fc',
-        backgroundColor: '#022B3A',
+        // backgroundColor: '#022B3A',
+        backgroundColor: colorAccent,
         width:'890px',
         height: '350px',
         paddingVertical: 16,
@@ -134,7 +136,8 @@ const invoiceStyle = StyleSheet.create({
         width: '33%',
         height: '300px',
         // backgroundColor: '#29a7fc',
-        backgroundColor: '#022B3A',
+        // backgroundColor: '#022B3A',
+        backgroundColor: colorAccent,
         textAlign: 'center',
         paddingVertical: '100px',
         paddingHorizontal: '40px',
@@ -228,7 +231,8 @@ const invoiceStyle = StyleSheet.create({
     },
     orderNumberTab:{
         // backgroundColor: '#29a7fc',
-        backgroundColor: '#022B3A',
+        // backgroundColor: '#022B3A',
+        backgroundColor: colorAccent,
         borderTopLeftRadius: 12,
         borderTopRightRadius: 12,
         width: '38%',
@@ -376,7 +380,8 @@ const invoiceStyle = StyleSheet.create({
         paddingVertical: '28px',
         paddingHorizontal: '75px',
         // backgroundColor: '#29a7fc',
-        backgroundColor: '#022B3A',
+        // backgroundColor: '#022B3A',
+        backgroundColor: colorAccent,
         color: '#ffffff',
         fontSize: '38px',
         fontWeight: 600,

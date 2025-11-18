@@ -657,11 +657,13 @@ export default function DelivGroupsModal({ show, onHide, data, returnAct }) {
   };
 
   const onSubmit = async(formData) => {
+    salesItems.map(item => item.status = formData.status);
+
     let delivery_groups = {
       delivery_group: {
         employee_id: formData.employee_id,
         delivery_group_date: new Date(),
-        status: 1
+        status: formData.status
       },
       delivery_group_items: salesItems,
     }

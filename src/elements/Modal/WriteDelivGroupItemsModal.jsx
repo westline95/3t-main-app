@@ -148,7 +148,7 @@ export default function WriteDelivGroupItemsModal({
           if (arr.length > 0) {
             arr.map((e) => {
               filteredCust = tempOrigin.filter(
-                (item) => Number(item.customer_id) != Number(e)
+                (item) =>item.customer_id != e
               );
             });
           }
@@ -315,23 +315,42 @@ export default function WriteDelivGroupItemsModal({
     await axiosPrivate
       .post("/add/delivery-group-report", body)
       .then((resp) => {
+        localStorage.removeItem(`form-${data.id}`);
+        localStorage.removeItem(data.id);
+        localStorage.removeItem(`dgitem-origin-${data.id}`);
+
         toast.current.show({
           severity: "success",
           summary: "Sukses",
           detail: "Berhasil membuat laporan harian pengantaran",
-          life: 3000,
+          life: 1500,
         });
-        localStorage.removeItem(`form-${data.id}`);
+
+        if(returnAct){
+          setTimeout(() => {
+            setControlUiBtn(false);
+            return returnAct(true);
+          }, 1500);
+        }
       })
       .catch((err) => {
         setControlUiBtn(false);
+        if(err.status == 403){
+          toast.current.show({
+            severity: "error",
+            summary: "Error",
+            detail: `Laporan sudah ada`,
+            life: 1700,
+          });
+        } else {
+          toast.current.show({
+            severity: "error",
+            summary: "Failed",
+            detail: `Gagal membuat laporan`,
+            life: 1700,
+          });
 
-        toast.current.show({
-          severity: "error",
-          summary: "Failed",
-          detail: "Gagal membuat laporan",
-          life: 3000,
-        });
+        }
       });
   };
 
@@ -386,37 +405,63 @@ export default function WriteDelivGroupItemsModal({
       });
     } else {
       let parsed = JSON.parse(storage);
-      let delivery_group_report_list = parsed.filter((item) => item);
-      console.log(delivery_group_report_list);
+      let dg_report_list_dupe = [...parsed];
+
+      let dgReportOrdersFormatted = parsed.map((item1, idx1) => {
+        let dgReportOrders = {...item1}
+        let delivery_group_report_lists = [];
+        item1.orders.map((order, idx2) => {
+          let obj = {
+            product_id: order.product_id,
+            quantity: Number(order.quantity),
+            sell_price: Number(order.product?.sell_price),
+          };
+          delivery_group_report_lists.push(obj);
+        })
+
+        dgReportOrders.delivery_group_report_lists = delivery_group_report_lists;
+        dgReportOrders.payment = {
+          customer_id: item1.customer_id,
+          guest_name: item1.guest_name,
+          payment_date: item1.payment_date,
+          amount_paid: item1.amount_paid,
+          payment_method: item1.payment_method,
+          note: item1.payment_note,
+        }
+        delete dgReportOrders.orders;
+        // dgReportOrders.order_items =  JSON.stringify(order_items);
+        return dgReportOrders;
+      })
+      console.log(dgReportOrdersFormatted)
 
       let total_item = 0;
       let total_value = 0;
 
-      // delivery_group_report_list.map(item => {
-      //   item.map(item2 => {
+      dgReportOrdersFormatted.map(item => {
+        // item.map(item2 => {
+          total_item += item.totalQty;
+          total_value += item.grandtotal;
+        // })
+      })
+      // change into 1 array
+      // let lists = [];
+      // delivery_group_report_list.map((item1) => {
+      //   item1.map((item2) => {
       //     total_item += item2.quantity;
       //     total_value += item2.grandtotal;
-      //   })
-      // })
-      // change into 1 array
-      let lists = [];
-      delivery_group_report_list.map((item1) => {
-        item1.map((item2) => {
-          total_item += item2.quantity;
-          total_value += item2.grandtotal;
-          item2.invoice_id = null;
-          item2.return_order_id = null;
-          item2.receipt_id = null;
-          item2.customer_id ? Number(item2.customer_id) : null;
-          item2.product_id = Number(item2.product_id);
-          lists.push(item2);
-        });
-      });
+      //     item2.invoice_id = null;
+      //     item2.return_order_id = null;
+      //     item2.receipt_id = null;
+      //     item2.customer_id ? Number(item2.customer_id) : null;
+      //     item2.product_id = Number(item2.product_id);
+      //     lists.push(item2);
+      //   });
+      // });
 
       let delivery_group_report = {
-        delivery_group_id: Number(data.id),
-        employee_id: Number(data.employee_id),
-        report_status: 0,
+        delivery_group_id: data.id,
+        employee_id: data.employee_id,
+        report_status: 2,
         notes: "",
         total_item,
         total_value,
@@ -424,8 +469,10 @@ export default function WriteDelivGroupItemsModal({
 
       let dataToSend = {
         delivery_group_report,
-        delivery_group_report_list: lists,
+        delivery_group_report_orders: dgReportOrdersFormatted,
       };
+      // let tes = {}
+      console.log(dataToSend)
       fetchDGReport(dataToSend);
     }
   };
@@ -971,7 +1018,6 @@ export default function WriteDelivGroupItemsModal({
         show={show}
         onHide={() => {
           onHide();
-          handleCancel();
         }}
         scrollable={true}
         centered={true}
@@ -1049,7 +1095,6 @@ export default function WriteDelivGroupItemsModal({
             className="btn btn-secondary light"
             onClick={() => {
               onHide();
-              handleCancel();
             }}
           >
             batal

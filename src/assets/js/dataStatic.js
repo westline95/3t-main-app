@@ -250,6 +250,24 @@ const deliveryGroupItemsStatus = [
     },
 ];
 
+const deliveryGroupReportStatus = [
+    {
+        id: 1, 
+        type: "laporan sedang ditinjau",
+        theme: "warning"
+    },
+    {
+        id: 2, 
+        type: "laporan dikonfirmasi",
+        theme: "info"
+    },
+    {
+        id: 3, 
+        type: "laporan ditolak",
+        theme: "info"
+    },
+];
+
 const invStatus = [
     {id: 1, type: "paid"},{id: 2, type: "in-progress"},{id: 3, type: "due"}
 ];
@@ -273,5 +291,6 @@ export default {
     invStatus,
     salaryType,
     deliveryGroupStatus,
-    deliveryGroupItemsStatus
+    deliveryGroupItemsStatus,
+    deliveryGroupReportStatus
 };

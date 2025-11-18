@@ -110,6 +110,8 @@ export default function Sales({handleSidebar, showSidebar}){
     const [ selectedSales, setSelectedSales ] = useState(null);
     const [ salesFilters, setSalesFilters ] = useState(null);
     const [ globalFilterValue, setGlobalFilterValue ] = useState("");
+    const [ refetch, setRefetch] = useState(false);
+
     const axiosPrivate = useAxiosPrivate();
     const [orderStatus] = useState(dataStatic.orderStatus);
 
@@ -579,6 +581,10 @@ export default function Sales({handleSidebar, showSidebar}){
                         setSalesList({endpoint: 'inv', action: 'warning', items: {...resp2.data[0]}});
                         setShowModal("existInvOrderModal");
                     } 
+                   
+                    fetchAllSales();
+                    fetchAllRO();
+                    resp.data.customer_id && fetchDetailedCust(resp.data.customer_id);
                 })  
                 .catch(err => {
                     toast.current.show({
@@ -1292,7 +1298,19 @@ export default function Sales({handleSidebar, showSidebar}){
         fetchAllRO();
     },[])
 
-    
+     useEffect(() => {
+        if(refetch){
+            fetchAllSales();
+            fetchAllCourier();
+            // fetchCustType();
+            // fetchStatus();
+            fetchAllCust();
+            fetchAllProd();
+            fetchAllRO();
+            setShowModal("");
+            setRefetch(false);
+        }
+      }, [refetch]);
 
     const tableHeader = (e) => {
         return (
@@ -4372,6 +4390,10 @@ export default function Sales({handleSidebar, showSidebar}){
                         data={showModal === "cancelSalesModal" ? salesListObj : ""} 
                         msg={"Yakin untuk membatalkan order ini?"}
                         returnValue={(value) => {setCantCanceled(value);console.log(value)}}
+                        returnAct={(act) => {
+                            act ? setRefetch(true) 
+                            : setRefetch(false);
+                        }}
                     />
                 )
             : showModal === "roCancelModal" ?

@@ -14,7 +14,7 @@ import SuccessImg from "../../assets/images/success.png";
 import FetchApi from "../../assets/js/fetchApi.js";
 import useAxiosPrivate from '../../hooks/useAxiosPrivate.js';
 
-export default function ConfirmModal({show, onHide, multiple, data, stack, msg, returnValue, resetControl}) {
+export default function ConfirmModal({show, onHide, multiple, data, stack, msg, returnValue, resetControl, returnAct}) {
     const [ showToast, setShowToast ] = useState(false);
     const [ continueCancel, setContinueCancel ] = useState(false);
     const [ toastContent, setToastContent ] = useState({variant: "", msg: "", title: ""});
@@ -329,6 +329,7 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
     
     const handleROAndOrderCredit = async () => {
         // checking order credit
+        console.log(data)
         if(data.items.return_order_id && data.items.orders_credit){
             console.log("return order & order credit")
             await axiosPrivate.delete(`/order-credit/ro?ro_id=${data.items.return_order_id}`)
@@ -425,37 +426,14 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
                     console.error("gagal menghapus kan order kredit!")
                     setContinueCancel(false);
                 })
-                // await axiosPrivate.delete(`/order-credit/ro?ro_id=${data.items.return_order_id}`)
-                // .then(() => {
-                //     // delete RO
-                //     axiosPrivate.delete(`/ro?id=${data.items.return_order_id}`)
-                //     .then(() => {
-                //         // delete ROITEM
-                //         axiosPrivate.delete(`/ro-item/ro?ro_id=${data.items.return_order_id}`)
-                //         .then(() => {
-                //             cancelSales2();
-                //         })  
-                //         .catch(err3 => {
-                //             console.error("gagal menghapus return order items!")
-                //         })
-                        
-                //     })  
-                //     .catch(err2 => {
-                //         console.error("gagal menghapus return order!")
-                //     })
-
-                // })  
-                // .catch(err1 => {
-                //     console.error("gagal menghapus kan order kredit!")
-                // })
-            } else {
                 console.log("none")
+                setContinueCancel(true);
+            } else {
                 setContinueCancel(true);
             }
 
         }
     };
-    console.log(data)
 
     const cancelSales = async () => {
         handleROAndOrderCredit();
@@ -519,6 +497,12 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
                             // setTimeout(() => {
                             //     window.location.reload();
                             // },1500);
+                        }
+
+                        if(returnAct){
+                            setTimeout(() => {
+                                return returnAct(true);
+                            }, 1500);
                         }
     
                         // if(data.items.payment_type == "unpaid"  && !data.items.is_complete){
@@ -585,7 +569,6 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
                                             });
                                         })
                                     }   
-                                    
                                 } 
             
                                 let getIndex = parsedOrderIds.indexOf(data.id);
@@ -1151,7 +1134,6 @@ export default function ConfirmModal({show, onHide, multiple, data, stack, msg, 
     }
 
     const handleAction = () => {
-        console.log(data)
         if(data !== "" || data !== null){
             switch(data.endpoint){
                 case "customer":

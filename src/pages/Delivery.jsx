@@ -1089,13 +1089,26 @@ export default function Delivery({handleSidebar, showSidebar}){
               id: rowData.delivery_group_id,
               action: "update",
             })
+            : rowData.status == 2 ?
+                toast.current.show({
+                    severity: "error",
+                    summary: "Forbidden",
+                    detail: "Tidak dapat mengubah data pengantaran jika sudah dikonfirmasi" ,
+                    life: 3000,
+                })
+            : rowData.status == 3 ?
+                toast.current.show({
+                    severity: "error",
+                    summary: "Forbidden",
+                    detail: "Tidak dapat mengubah data pengantaran yang sudah dibatalkan" ,
+                    life: 3000,
+                })
             : toast.current.show({
                     severity: "error",
                     summary: "Forbidden",
-                    detail: rowData.status == 3 ? "Tidak dapat mengubah data pengantaran jika sudah dikonfirmasi" 
-                            : rowData.status == 2 && "Tidak dapat mengubah data pengantaran yang sudah dibatalkan" ,
+                    detail: "terjadi kesalahan" ,
                     life: 3000,
-                });
+                })
           }}
         >
           <i className="bx bxs-edit"></i>
@@ -1150,6 +1163,28 @@ export default function Delivery({handleSidebar, showSidebar}){
                     // : rowData.status == 4 ? "dibatalkan" 
                     // : "??"
                     dataStatic.deliveryGroupStatus[status-1] ? dataStatic.deliveryGroupStatus[status-1].type : "???"
+                }                                                                                
+            </span>
+        )
+    };
+    
+    const statusDGReportCell = (rowData) => {
+        const status = rowData.delivery_group_report?.report_status;
+        return(
+            <span className={`badge badge-${
+                 dataStatic.deliveryGroupReportStatus[status-1] ? dataStatic.deliveryGroupReportStatus[status-1].theme 
+                : "secondary"} light`}
+            >
+                {
+                    // rowData.status == 1 ? dataStatic.deliveryGroupStatus[0]
+                    // : rowData.status == 2 ? "dikonfirmasi" 
+                    // : rowData.status == 3 ? "dibatalkan" 
+                    // : rowData.status == 4 ? "dibatalkan" 
+                    // : "??"
+                    status == 1 ? "Perlu ditinjau" 
+                    : dataStatic.deliveryGroupReportStatus[status-1] ? 
+                    dataStatic.deliveryGroupReportStatus[status-1].type : 
+                    "Laporan belum ada"
                 }                                                                                
             </span>
         )
@@ -1943,6 +1978,17 @@ export default function Delivery({handleSidebar, showSidebar}){
                                                 field="status"
                                                 header="status"
                                                 body={statusDGCell}
+                                                bodyStyle={primeTableBodyStyle}
+                                                headerStyle={primeTableHeaderStyle}
+                                                filter
+                                                showFilterMenu={false} 
+                                                filterMenuStyle={{ width: '100%' }}
+                                                filterElement={statusRowFilter}
+                                                style={{ textTransform: "uppercase" }}
+                                            ></Column>
+                                            <Column
+                                                header="laporan"
+                                                body={statusDGReportCell}
                                                 bodyStyle={primeTableBodyStyle}
                                                 headerStyle={primeTableHeaderStyle}
                                                 filter
