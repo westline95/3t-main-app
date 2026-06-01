@@ -1333,15 +1333,15 @@ export default function Sales({ handleSidebar, showSidebar }) {
         }
     }, [custTypeFilter])
 
-    // useEffect(() => {
-    //     // fetchAllSales();
-    //     // fetchAllCourier();
-    //     // fetchCustType();
-    //     // fetchStatus();
-    //     // fetchAllCust();
-    //     // fetchAllProd();
-    //     // fetchAllRO();
-    // }, [])
+    useEffect(() => {
+        //     // fetchAllSales();
+        //     // fetchAllCourier();
+        //     // fetchCustType();
+        //     // fetchStatus();
+        fetchAllCust();
+        fetchAllProd();
+        //     // fetchAllRO();
+    }, [])
 
     // useEffect(() => {
     //     if (refetch) {
@@ -2604,7 +2604,7 @@ export default function Sales({ handleSidebar, showSidebar }) {
 
     useEffect(() => {
         if (loading) {
-            console.log("dipanggil")
+            // console.log("dipanggil")
             setTimeout(() => {
                 const start = first;
                 const end = first + rows;
@@ -2623,21 +2623,21 @@ export default function Sales({ handleSidebar, showSidebar }) {
 
     useEffect(() => {
         // if (salesData && allProdData && custData && courierList && roData) {
-        if (salesData) {
+        if (allProdData && custData) {
             setLoading(false);
         }
     }, [
-        salesData,
-        // allProdData, 
-        // custData, 
+        // salesData,
+        allProdData,
+        custData,
         // courierList, 
         // roData
     ]
     );
 
-    // if (isLoading) {
-    //     return;
-    // }
+    if (isLoading) {
+        return;
+    }
 
     return (
         <>
