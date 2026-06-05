@@ -2724,8 +2724,8 @@ export default function Sales({ handleSidebar, showSidebar }) {
                                             />
                                         </div> */}
 
-                                    {/*{!isMobile && !isMediumScr ?
-                                        (*/}
+                                    {!isMobile && !isMediumScr ?
+                                        (
                                             <DataTable
                                                 className="p-datatable"
                                                 value={results}
@@ -2877,7 +2877,7 @@ export default function Sales({ handleSidebar, showSidebar }) {
                                                     style={{ textTransform: "capitalize" }}
                                                 ></Column>
                                             </DataTable>
-                                    {/* ) :
+                                    ) :
                                         (
                                             <>
                                                 <div
@@ -2920,7 +2920,7 @@ export default function Sales({ handleSidebar, showSidebar }) {
                                                 <DataView value={salesMain} dataKey='order_id' paginator paginatorPosition='bottom' rows={10} listTemplate={listTemplate} style={{ marginTop: '.5rem' }} />
                                             </>
                                         )
-                                    }*/}
+                                    }
 
                                     {/* <div className="table-responsive mt-4">
                                             <table className="table" id="advancedTablesWFixedHeader" data-table-search="true"
