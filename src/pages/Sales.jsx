@@ -2621,7 +2621,7 @@ export default function Sales({ handleSidebar, showSidebar }) {
 
     }, [loading, first, rows]);
 
-    useEffect(() => {
+    {/* useEffect(() => {
         // if (salesData && allProdData && custData && courierList && roData) {
         if (allProdData && custData) {
             setLoading(false);
@@ -2634,10 +2634,11 @@ export default function Sales({ handleSidebar, showSidebar }) {
         // roData
     ]
     );
+    */}
 
-    if (isLoading) {
-        return;
-    }
+   // if (isLoading) {
+   //     return;
+  //  }
 
     return (
         <>
