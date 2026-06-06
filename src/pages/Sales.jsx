@@ -39,16 +39,20 @@ import ModalTextContent from '../elements/Modal/ModalTextContent.jsx';
 import EditReturnOrderModal from '../elements/Modal/EditReturnOrderModal.jsx';
 import { DataView } from 'primereact/dataview';
 import { Swiper, SwiperSlide } from 'swiper/react';
+import LoadingGif from '../assets/images/loading.gif';
 
 // Import Swiper styles
 import 'swiper/css';
 import useMediaQuery from '../hooks/useMediaQuery.js';
-
-const init = initialState => initialState;
+import { Skeleton } from 'primereact/skeleton';
 
 export default function Sales({ handleSidebar, showSidebar }) {
     const isMobile = useMediaQuery('(max-width: 768px)');
     const isMediumScr = useMediaQuery('(min-width: 768px) and (max-width: 1024px)');
+    const [lazyLoading, setLazyLoading] = useState(false);
+    const [lazyLoadingRO, setLazyLoadingRO] = useState(false);
+    const [lazyLoadingcanceled, setLazyLoadingCanceled] = useState(false);
+
     const toast = useRef(null);
     const toastUpload = useRef(null);
     const [progress, setProgress] = useState(0);
@@ -58,7 +62,7 @@ export default function Sales({ handleSidebar, showSidebar }) {
     const [isClicked, setClicked] = useState(false);
     const [isClickedProd, setClickedProd] = useState(false);
     const [isClose, setClose] = useState(false);
-    const [salesData, setSalesData] = useState();
+    // const [salesData, setSalesData] = useState();
     const [openTab, setOpenTab] = useState('salesListTab');
     const [salesListObj, setSalesList] = useState(null);
     const [showModal, setShowModal] = useState("");
@@ -68,6 +72,7 @@ export default function Sales({ handleSidebar, showSidebar }) {
     const [filterCourier, setFilteredCourier] = useState([]);
     const [filterProd, setFilteredProd] = useState([]);
     const [salesDataArr, setSalesDataArr] = useState([]);
+    const [stateAddSalesTab, setStateAddSalesTab] = useState(false);
     const [custData, setCustData] = useState(null);
     const [courierList, setCourierList] = useState(null);
     const [openDropdown, setopenDropdown] = useState(false);
@@ -82,21 +87,31 @@ export default function Sales({ handleSidebar, showSidebar }) {
     const [openPopupCourier, setOpenPopupCourier] = useState(false);
     const [confirmVal, setConfirm] = useState(false);
     const [dupeSalesData, setDupeSalesData] = useState("");
-
-    const initialState = {
-        results: [],
-        loading: true,
+    const [lazyState, setLazyState] = useState({
         first: 0,
         rows: 10,
         page: 1,
-    };
-    const [totalRecordGlobal, settotalRecordGlobal] = useState(10);
+    });
+    const [lazyStateRO, setLazyStateRO] = useState({
+        first: 0,
+        rows: 10,
+        page: 1,
+    });
+    const [lazyStateCanceled, setLazyStateCanceled] = useState({
+        first: 0,
+        rows: 10,
+        page: 1,
+    });
+    const [totalRecordSales, setTotalRecordSales] = useState(10);
+    const [totalRecordRO, setTotalRecordRO] = useState(10);
+    const [totalRecordCanceled, setTotalRecordCanceled] = useState(10);
+    const [salesData, setSalesData] = useState(null || []);
 
-    const [lazyLoading, setLazyLoading] = useState(false);
+    // const [lazyLoading, setLazyLoading] = useState(false);
     const [salesComplete, setSalesComplete] = useState(null);
-    const [salesCanceled, setSalesCanceled] = useState(null);
+    const [salesCanceled, setSalesCanceled] = useState(null || []);
     const [salesMain, setSalesMain] = useState([]);
-    const [roData, setROData] = useState(null);
+    const [roData, setROData] = useState(null || []);
     const [showToast, setShowToast] = useState(false);
     const [cantCanceled, setCantCanceled] = useState(false);
     const [mergeOrderInv, setMergeOrderInv] = useState(false);
@@ -156,46 +171,29 @@ export default function Sales({ handleSidebar, showSidebar }) {
         }
     });
 
-    const reducer = (state, { type, payload }) => {
-        switch (type) {
-            case "onPage":
-                return { ...state, loading: true, first: payload.first };
-                break;
-            case "dataLoaded":
-                return { ...state, loading: false, results: payload };
-                break;
-
-            default:
-                throw new Error();
-                break;
-        }
+    const onPage = (event) => {
+        setLazyState(event);
+    };
+    const onPageRO = (event) => {
+        setLazyStateRO(event);
+    };
+    const onPageCanceled = (event) => {
+        setLazyStateCanceled(event);
     };
 
-    const [state, dispatch] = useReducer(reducer, initialState, init);
-    const { results, loading, first, rows } = state;
-
-    const fetchAllSales = async (start, end) => {
-        await axiosPrivate.get("/sales/lazy-data", {
-            params: {
-                offset: start,
-                rowsPerPage: end
-            }
-        })
-            .then(response => {
-                // setSalesData(response.data.rows);
-                // setDupeSalesData(response.data.rows);
-                // settotalRecordGlobal(response.data.totalData);
-
+    const fetchAllSales = async () => {
+        await axiosPrivate.get("/sales")
+            .then(resp => {
                 // filtering
-                let tmp = [...response.data.rows];
-                const totalRecord = response.data.totalData;
+                let tmp = [...resp.data];
+                // const totalRecord = resp.data.totalData;
                 const mainFilter = dataStatic.orderStatus;
                 let getMain = tmp.filter(e => mainFilter.includes(e.order_status));
                 // let getComplete = tmp.filter(e => e.order_status === "completed");
                 let getCanceled = tmp.filter(e => e.order_status === "canceled");
-                console.log(getMain)
-                settotalRecordGlobal(response.data.totalData);
-                dispatch({ type: "dataLoaded", payload: response.data.rows });
+                // console.log(getMain)
+                // setTotalRecordSales(response.data.totalData);
+                // dispatch({ type: "dataLoaded", payload: response.data.rows });
                 // return response.data;
                 // // sorting maindata to descending by createdAt
                 // let getMainSorted;
@@ -230,6 +228,23 @@ export default function Sales({ handleSidebar, showSidebar }) {
             )
         // }
     }
+    // const fetchAllCanceledSales = async () => {
+    //     await axiosPrivate.get(`http://localhost:5056/sales/order-status`, { params: { order_status: "canceled" } })
+    //         .then(resp => {
+    //             setSalesCanceled(resp.data);
+    //         })
+    //         .catch(error => {
+    //             toast.current.show({
+    //                 severity: "error",
+    //                 summary: "Failed",
+    //                 detail: "Error when get sales data",
+    //                 life: 3000,
+    //             });
+    //             return [];
+    //         }
+    //         )
+    //     // }
+    // }
 
     const fetchAllRO = async () => {
         await axiosPrivate.get("/ro")
@@ -247,7 +262,7 @@ export default function Sales({ handleSidebar, showSidebar }) {
     }
 
     const fetchAllCust = async () => {
-        await axiosPrivate.get("/customers")
+        await axiosPrivate.get("/pure-customers")
             .then(response => {
                 setCustData(response.data);
             })
@@ -1334,13 +1349,14 @@ export default function Sales({ handleSidebar, showSidebar }) {
     }, [custTypeFilter])
 
     useEffect(() => {
-        //     // fetchAllSales();
+        // fetchAllSales();
+        // fetchAllCanceledSales();
         //     // fetchAllCourier();
         //     // fetchCustType();
         //     // fetchStatus();
         fetchAllCust();
         fetchAllProd();
-        //     // fetchAllRO();
+        fetchAllRO();
     }, [])
 
     // useEffect(() => {
@@ -1439,10 +1455,6 @@ export default function Sales({ handleSidebar, showSidebar }) {
             </div>
         );
     };
-
-    const lazyPage = (e) => {
-        console.log(e)
-    }
 
     const returnOrderHeader = () => {
         return (
@@ -1713,6 +1725,17 @@ export default function Sales({ handleSidebar, showSidebar }) {
     const formatedReturnDate = (rowData) => {
         return <span>{ConvertDate.convertToFullDate(rowData.return_date, "/")}</span>;
     };
+
+    const onRowClick = ({ data, index }) => {
+        data.invoice ?
+            toast.current.show({
+                severity: "error",
+                summary: "Error",
+                detail: "Tidak dapat mengubah order jika sudah masuk invoice",
+                life: 3000,
+            })
+            : handleModalWData(e, { endpoint: "sales", id: data.order_id, action: 'update', ...data })
+    }
 
     const actionCell = (rowData, rowIndex) => {
         return (
@@ -2201,141 +2224,227 @@ export default function Sales({ handleSidebar, showSidebar }) {
     }
 
     const itemTemplate = (rowData, index) => {
-        return (
-            <div className="col-12" key={rowData.order_id} style={{ position: 'relative' }}>
-                <div className='flex flex-column xl:align-items-start gap-2 static-shadow'
-                    style={{
-                        backgroundColor: '#F8F9FD',
-                        padding: '1rem',
-                        boxShadow: '1px 1px 7px #9a9acc1a',
-                        borderRadius: '9px',
-                        position: 'relative'
-                    }}
-                    aria-label="salesEditModal"
-                    onClick={(e) => handleModalWData(e, { endpoint: "sales", id: rowData.order_id, action: 'update', ...rowData })}
-                >
+        if (lazyLoading) {
+            return
+            (
+                <>
+                    <div className="col-12" key={rowData.order_id} style={{ position: 'relative' }}>
+                        <Skeleton className='flex flex-column xl:align-items-start gap-2 static-shadow'
+                            style={{
+                                // backgroundColor: '#F8F9FD',
+                                padding: '1rem',
+                                boxShadow: '1px 1px 7px #9a9acc1a',
+                                borderRadius: '9px',
+                                position: 'relative'
+                            }}
+                        >
 
-                    <div className="flex align-items-center gap-3"
-                        style={{
-                            textTransform: 'capitalize',
-                            paddingBottom: '.75rem',
-                            borderBottom: '1px solid rgba(146, 146, 146, .2509803922)'
-                        }}
-                    >
-                        <span className="user-img" style={{ marginRight: 0 }}>
-                            <img
-                                src={
-                                    rowData.img ? rowData.img
-                                        : `https://res.cloudinary.com/du3qbxrmb/image/upload/v1751378806/no-img_u5jpuh.jpg`
-                                }
-                                alt=""
-                            />
-                        </span>
-                        <div style={{ width: '80%' }}>
-                            <p style={{ marginBottom: 0, fontSize: 15, fontWeight: 600 }}>{rowData.order_id}</p>
-                            <p style={{ marginBottom: 0, fontSize: 13, color: '#7d8086' }}>{ConvertDate.LocaleStringDate(rowData.order_date)}</p>
-                            <div className='flex flex-row gap-2' style={{ fontSize: 13, marginTop: '.5rem' }}>
-                                <span className={`badge badge-${rowData.order_type == "walk-in" ? 'primary'
-                                    : rowData.order_type == "delivery" ? "warning"
-                                        : ""} light`}
-                                >
-                                    {
-                                        rowData.order_type
-                                    }
-                                </span>
-                                <span className={`badge badge-${rowData.order_status == "completed" ? 'success'
-                                    : rowData.order_status == "pending" ? "secondary"
-                                        : rowData.order_status == "in-delivery" ? "warning"
-                                            : rowData.order_status == "canceled" ? "danger"
-                                                : rowData.order_status == "confirmed" ? "primary"
-                                                    : ""} light`}
-                                >
-                                    {
-                                        rowData.order_status == "completed" ? 'selesai'
-                                            : rowData.order_status == "pending" ? 'pending'
-                                                : rowData.order_status == "in-delivery" ? 'in-delivery'
-                                                    : rowData.order_status == "canceled" ? 'batal'
-                                                        : rowData.order_status == "confirmed" ? 'dikonfirmasi'
-                                                            : ""
-                                    }
-                                </span>
-                                {rowData.invoice ?
-                                    (
-                                        <span className="verified-inv">
+                            <Skeleton className="flex align-items-center gap-3"
+                                style={{
+                                    textTransform: 'capitalize',
+                                    paddingBottom: '.75rem',
+                                    borderBottom: '1px solid rgba(146, 146, 146, .2509803922)'
+                                }}
+                            >
+                                <Skeleton className="user-img" style={{ marginRight: 0 }}></Skeleton>
+                                <div style={{ width: '80%' }}>
+                                    <Skeleton style={{ marginBottom: 0 }}></Skeleton>
+                                    <Skeleton></Skeleton>
+                                    <div className='flex flex-row gap-2' style={{ fontSize: 13, marginTop: '.5rem' }}>
+                                        <Skeleton className={`badge`}></Skeleton>
+                                        <Skeleton className={`badge`}></Skeleton>
+                                        <Skeleton className="verified-inv">
                                             <i className='bx bx-check-shield'></i>
-                                        </span>
-                                    ) : (
-                                        <span className="unverified-inv">
-                                            <i className='bx bx-shield-x'></i>
-                                        </span>
-                                    )
-                                }
+                                        </Skeleton>
+                                    </div>
+                                </div>
+                            </Skeleton>
+                            <div className="flex flex-column gap-1"
+                                style={{
+                                    textTransform: 'capitalize',
+                                }}
+                            >
+                                <div className="flex flex-row justify-content-between">
+                                    <p style={{ marginBottom: 0, fontSize: 14, color: '#7d8086' }}>Pelanggan:</p>
+                                    <Skeleton style={{ marginBottom: 0, fontSize: 14 }}></Skeleton>
+                                </div>
+                                <div className="flex flex-row justify-content-between">
+                                    <p style={{ marginBottom: 0, fontSize: 14, color: '#7d8086' }}>Total order:</p>
+                                    <Skeleton style={{ marginBottom: 0, fontSize: 14, textAlign: 'right' }}></Skeleton>
+                                </div>
+                                <div className="flex flex-row justify-content-between">
+                                    <p style={{ marginBottom: 0, fontSize: 14, color: '#7d8086' }}>Tipe pembayaran:</p>
+                                    <p style={{ marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right' }}>
+                                        <Skeleton className={`badge `}></Skeleton>
+                                    </p>
+                                </div>
+                            </div>
+                        </Skeleton>
+                        <Dropdown style={{ position: 'absolute', top: 10, right: 9, padding: '1rem 1rem .5rem 1rem' }}>
+                            {/* <Dropdown.Toggle as={CustomToggle.CustomToggle1} id="dropdown-custom-components" ></Dropdown.Toggle>
+                            <Dropdown.Menu align={"end"}>
+                                <Dropdown.Item eventKey="1" as="button"
+                                    aria-label="salesEditModal"
+                                    onClick={(e) => handleModalWData(e, { endpoint: "sales", id: rowData.order_id, action: 'update', ...rowData })}
+                                >
+                                    <i className='bx bxs-edit'></i> Ubah order
+                                </Dropdown.Item>
+                                <Dropdown.Item eventKey="1" as="button"
+                                    aria-label="cancelSalesModal"
+                                    onClick={(e) => handleModalWData(
+                                        e,
+                                        {
+                                            endpoint: "sales",
+                                            id: rowData.order_id,
+                                            action: 'canceled',
+                                            items: { ...rowData }
+                                        }
+                                    )}
+                                >
+                                    <i className='bx bx-trash'></i> Batalkan order
+                                </Dropdown.Item>
+                            </Dropdown.Menu> */}
+                        </Dropdown>
+                    </div>
+                </>
+            )
+        } else {
+            return (
+                <div className="col-12" key={rowData.order_id} style={{ position: 'relative' }}>
+                    <div className='flex flex-column xl:align-items-start gap-2 static-shadow'
+                        style={{
+                            backgroundColor: '#F8F9FD',
+                            padding: '1rem',
+                            boxShadow: '1px 1px 7px #9a9acc1a',
+                            borderRadius: '9px',
+                            position: 'relative'
+                        }}
+                        aria-label="salesEditModal"
+                        onClick={(e) => handleModalWData(e, { endpoint: "sales", id: rowData.order_id, action: 'update', ...rowData })}
+                    >
 
+                        <div className="flex align-items-center gap-3"
+                            style={{
+                                textTransform: 'capitalize',
+                                paddingBottom: '.75rem',
+                                borderBottom: '1px solid rgba(146, 146, 146, .2509803922)'
+                            }}
+                        >
+                            <se className="user-img" style={{ marginRight: 0 }}>
+                                <img
+                                    src={
+                                        rowData.img ? rowData.img
+                                            : `https://res.cloudinary.com/du3qbxrmb/image/upload/v1751378806/no-img_u5jpuh.jpg`
+                                    }
+                                    alt=""
+                                />
+                            </se>
+                            <div style={{ width: '80%' }}>
+                                <p style={{ marginBottom: 0, fontSize: 15, fontWeight: 600 }}>{rowData.order_id}</p>
+                                <p style={{ marginBottom: 0, fontSize: 13, color: '#7d8086' }}>{ConvertDate.LocaleStringDate(rowData.order_date)}</p>
+                                <div className='flex flex-row gap-2' style={{ fontSize: 13, marginTop: '.5rem' }}>
+                                    <span className={`badge badge-${rowData.order_type == "walk-in" ? 'primary'
+                                        : rowData.order_type == "delivery" ? "warning"
+                                            : ""} light`}
+                                    >
+                                        {
+                                            rowData.order_type
+                                        }
+                                    </span>
+                                    <span className={`badge badge-${rowData.order_status == "completed" ? 'success'
+                                        : rowData.order_status == "pending" ? "secondary"
+                                            : rowData.order_status == "in-delivery" ? "warning"
+                                                : rowData.order_status == "canceled" ? "danger"
+                                                    : rowData.order_status == "confirmed" ? "primary"
+                                                        : ""} light`}
+                                    >
+                                        {
+                                            rowData.order_status == "completed" ? 'selesai'
+                                                : rowData.order_status == "pending" ? 'pending'
+                                                    : rowData.order_status == "in-delivery" ? 'in-delivery'
+                                                        : rowData.order_status == "canceled" ? 'batal'
+                                                            : rowData.order_status == "confirmed" ? 'dikonfirmasi'
+                                                                : ""
+                                        }
+                                    </span>
+                                    {rowData.invoice ?
+                                        (
+                                            <span className="verified-inv">
+                                                <i className='bx bx-check-shield'></i>
+                                            </span>
+                                        ) : (
+                                            <span className="unverified-inv">
+                                                <i className='bx bx-shield-x'></i>
+                                            </span>
+                                        )
+                                    }
+
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex flex-column gap-1"
+                            style={{
+                                textTransform: 'capitalize',
+                            }}
+                        >
+                            <div className="flex flex-row justify-content-between">
+                                <p style={{ marginBottom: 0, fontSize: 14, color: '#7d8086' }}>Pelanggan:</p>
+                                <p style={{ marginBottom: 0, fontSize: 14, color: '#7d8086' }}>{rowData.customer_id ? `${rowData.customer?.name}` : `guest.name (non-member)`}</p>
+                            </div>
+                            <div className="flex flex-row justify-content-between">
+                                <p style={{ marginBottom: 0, fontSize: 14, color: '#7d8086' }}>Total order:</p>
+                                <p style={{ marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right' }}>
+                                    <NumberFormat intlConfig={{
+                                        value: rowData.grandtotal,
+                                        locale: "id-ID",
+                                        style: "currency",
+                                        currency: "IDR",
+                                    }}
+                                    />
+                                </p>
+                            </div>
+                            <div className="flex flex-row justify-content-between">
+                                <p style={{ marginBottom: 0, fontSize: 14, color: '#7d8086' }}>Tipe pembayaran:</p>
+                                <p style={{ marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right' }}>
+                                    <span className={`badge badge-${rowData.payment_type == "bayar nanti" ? 'danger'
+                                        : rowData.payment_type == "lunas" ? "primary"
+                                            : rowData.payment_type == "sebagian" ? "warning"
+                                                : ""} light`}
+                                    >
+                                        {rowData.payment_type}
+                                    </span>
+                                </p>
                             </div>
                         </div>
                     </div>
-                    <div className="flex flex-column gap-1"
-                        style={{
-                            textTransform: 'capitalize',
-                        }}
-                    >
-                        <div className="flex flex-row justify-content-between">
-                            <p style={{ marginBottom: 0, fontSize: 14, color: '#7d8086' }}>Pelanggan:</p>
-                            <p style={{ marginBottom: 0, fontSize: 14, color: '#7d8086' }}>{rowData.customer_id ? `${rowData.customer?.name}` : `guest.name (non-member)`}</p>
-                        </div>
-                        <div className="flex flex-row justify-content-between">
-                            <p style={{ marginBottom: 0, fontSize: 14, color: '#7d8086' }}>Total order:</p>
-                            <p style={{ marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right' }}>
-                                <NumberFormat intlConfig={{
-                                    value: rowData.grandtotal,
-                                    locale: "id-ID",
-                                    style: "currency",
-                                    currency: "IDR",
-                                }}
-                                />
-                            </p>
-                        </div>
-                        <div className="flex flex-row justify-content-between">
-                            <p style={{ marginBottom: 0, fontSize: 14, color: '#7d8086' }}>Tipe pembayaran:</p>
-                            <p style={{ marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right' }}>
-                                <span className={`badge badge-${rowData.payment_type == "bayar nanti" ? 'danger'
-                                    : rowData.payment_type == "lunas" ? "primary"
-                                        : rowData.payment_type == "sebagian" ? "warning"
-                                            : ""} light`}
-                                >
-                                    {rowData.payment_type}
-                                </span>
-                            </p>
-                        </div>
-                    </div>
+                    <Dropdown drop={index == custData.length - 1 ? "up" : "down"} style={{ position: 'absolute', top: 10, right: 9, padding: '1rem 1rem .5rem 1rem' }}>
+                        <Dropdown.Toggle as={CustomToggle.CustomToggle1} id="dropdown-custom-components" ></Dropdown.Toggle>
+                        <Dropdown.Menu align={"end"}>
+                            <Dropdown.Item eventKey="1" as="button"
+                                aria-label="salesEditModal"
+                                onClick={(e) => handleModalWData(e, { endpoint: "sales", id: rowData.order_id, action: 'update', ...rowData })}
+                            >
+                                <i className='bx bxs-edit'></i> Ubah order
+                            </Dropdown.Item>
+                            <Dropdown.Item eventKey="1" as="button"
+                                aria-label="cancelSalesModal"
+                                onClick={(e) => handleModalWData(
+                                    e,
+                                    {
+                                        endpoint: "sales",
+                                        id: rowData.order_id,
+                                        action: 'canceled',
+                                        items: { ...rowData }
+                                    }
+                                )}
+                            >
+                                <i className='bx bx-trash'></i> Batalkan order
+                            </Dropdown.Item>
+                        </Dropdown.Menu>
+                    </Dropdown>
                 </div>
-                <Dropdown drop={index == custData.length - 1 ? "up" : "down"} style={{ position: 'absolute', top: 10, right: 9, padding: '1rem 1rem .5rem 1rem' }}>
-                    <Dropdown.Toggle as={CustomToggle.CustomToggle1} id="dropdown-custom-components" ></Dropdown.Toggle>
-                    <Dropdown.Menu align={"end"}>
-                        <Dropdown.Item eventKey="1" as="button"
-                            aria-label="salesEditModal"
-                            onClick={(e) => handleModalWData(e, { endpoint: "sales", id: rowData.order_id, action: 'update', ...rowData })}
-                        >
-                            <i className='bx bxs-edit'></i> Ubah order
-                        </Dropdown.Item>
-                        <Dropdown.Item eventKey="1" as="button"
-                            aria-label="cancelSalesModal"
-                            onClick={(e) => handleModalWData(
-                                e,
-                                {
-                                    endpoint: "sales",
-                                    id: rowData.order_id,
-                                    action: 'canceled',
-                                    items: { ...rowData }
-                                }
-                            )}
-                        >
-                            <i className='bx bx-trash'></i> Batalkan order
-                        </Dropdown.Item>
-                    </Dropdown.Menu>
-                </Dropdown>
-            </div>
-        );
+            )
+        }
     };
 
     const listTemplate = (items) => {
@@ -2344,6 +2453,7 @@ export default function Sales({ handleSidebar, showSidebar }) {
         let list = items.map((sales, index) => {
             return itemTemplate(sales, index);
         });
+
 
         return (
             <>
@@ -2582,6 +2692,92 @@ export default function Sales({ handleSidebar, showSidebar }) {
         );
     };
 
+    const lazyLoad = async () => {
+        setLazyLoading(true);
+
+        const start = lazyState.first;
+        const end = lazyState.first + lazyState.rows;
+        await axiosPrivate.get("/sales/lazy-data", {
+            params: {
+                offset: start,
+                rowsPerPage: end
+            }
+        })
+            .then(response => {
+                setTotalRecordSales(response.data.totalData);
+                setSalesData(response.data.rows);
+                setLazyLoading(false);
+            })
+            .catch(error => {
+                toast.current.show({
+                    severity: "error",
+                    summary: "Failed",
+                    detail: "Error when get sales data",
+                    life: 3000,
+                });
+                return [];
+            }
+            )
+    }
+
+    const lazyLoadCanceled = async () => {
+        setLazyLoadingCanceled(true);
+
+        const start = lazyState.first;
+        const end = lazyState.first + lazyState.rows;
+        await axiosPrivate.get("/sales/lazy/order-status", {
+            params: {
+                offset: start,
+                rowsPerPage: end,
+                order_status: "canceled"
+            }
+        })
+            .then(response => {
+                console.log(response)
+                setTotalRecordCanceled(response.data.totalData);
+                setSalesCanceled(response.data.rows);
+                setLazyLoadingCanceled(false);
+            })
+            .catch(error => {
+                toast.current.show({
+                    severity: "error",
+                    summary: "Failed",
+                    detail: "Error when get return order data",
+                    life: 3000,
+                });
+                return [];
+            }
+            )
+    }
+
+    const lazyLoadRO = async () => {
+        setLazyLoadingRO(true);
+
+        const start = lazyState.first;
+        const end = lazyState.first + lazyState.rows;
+        await axiosPrivate.get("/sales/lazy-data", {
+            params: {
+                offset: start,
+                rowsPerPage: end
+            }
+        })
+            .then(response => {
+                setTotalRecordRO(response.data.totalData);
+                setROData(response.data.rows);
+                setLazyLoadingRO(false);
+            })
+            .catch(error => {
+                toast.current.show({
+                    severity: "error",
+                    summary: "Failed",
+                    detail: "Error when get canceled sales data",
+                    life: 3000,
+                });
+                return [];
+            }
+            )
+    }
+
     useEffect(() => {
         initFilters();
     }, []);
@@ -2602,29 +2798,28 @@ export default function Sales({ handleSidebar, showSidebar }) {
         }
     }, [cantCanceled]);
 
+    // useEffect(() => {
+    //     if (loading) {
+    //         lazyLoad();
+    //     }
+
+    // }, [loading, first, rows]);
     useEffect(() => {
-        if (loading) {
-            // console.log("dipanggil")
-            setTimeout(() => {
-                const start = first;
-                const end = first + rows;
-                console.log("start => ", start);
-                console.log("end => ", end);
-                const data = fetchAllSales(start, end);
-                console.log(data)
-                // // start == 0 && setSalesData(data);
-                // console.log(data)
-                // console.log(totalRecord)
-                dispatch({ type: "dataLoaded", payload: data.rows });
-            }, 50);
-        }
+        lazyLoad();
+    }, [lazyState]);
 
-    }, [loading, first, rows]);
+    // useEffect(() => {
+    //     lazyLoadRO();
+    // }, [lazyStateRO]);
 
- useEffect(() => {
+    useEffect(() => {
+        lazyLoadCanceled();
+    }, [lazyStateCanceled]);
+
+    useEffect(() => {
         // if (salesData && allProdData && custData && courierList && roData) {
         if (allProdData && custData) {
-            setLoading(false);
+            setStateAddSalesTab(true);
         }
     }, [
         // salesData,
@@ -2635,9 +2830,9 @@ export default function Sales({ handleSidebar, showSidebar }) {
     ]
     );
 
-   // if (isLoading) {
-   //     return;
-  //  }
+    // if (isLoading) {
+    //     return;
+    // }
 
     return (
         <>
@@ -2728,9 +2923,10 @@ export default function Sales({ handleSidebar, showSidebar }) {
                                         (
                                             <DataTable
                                                 className="p-datatable"
-                                                value={results}
+                                                value={salesData}
                                                 size="normal"
                                                 removableSort
+                                                onRowClick={onRowClick}
                                                 // stripedRows
                                                 // selectionMode={"checkbox"}
                                                 // selection={selectedSales}
@@ -2758,11 +2954,12 @@ export default function Sales({ handleSidebar, showSidebar }) {
                                                 header={tableHeader}
                                                 paginator
                                                 lazy
-                                                loading={loading}
-                                                first={first}
-                                                onPage={(e) => dispatch({ type: "onPage", payload: e })}
-                                                totalRecords={totalRecordGlobal}
-                                                rows={rows}
+                                                // loading={}
+                                                first={lazyState.first}
+                                                // onPage={(e) => dispatch({ type: "onPage", payload: e })}
+                                                onPage={onPage}
+                                                totalRecords={totalRecordSales}
+                                                rows={10}
                                                 stripedRows
                                             >
                                                 <Column
@@ -2877,7 +3074,7 @@ export default function Sales({ handleSidebar, showSidebar }) {
                                                     style={{ textTransform: "capitalize" }}
                                                 ></Column>
                                             </DataTable>
-                                    ) :
+                                        ) :
                                         (
                                             <>
                                                 <div
@@ -2917,441 +3114,215 @@ export default function Sales({ handleSidebar, showSidebar }) {
                                                         <i className="bx bxs-file-plus"></i> import
                                                     </button>
                                                 </div>
-                                                <DataView value={salesMain} dataKey='order_id' paginator paginatorPosition='bottom' rows={10} listTemplate={listTemplate} style={{ marginTop: '.5rem' }} />
+                                                <DataView value={salesData} dataKey='order_id' paginator totalRecords={totalRecordSales} paginatorPosition='bottom' lazy first={lazyState.first} rows={10} onPage={onPage} listTemplate={listTemplate} style={{ marginTop: '.5rem' }} />
                                             </>
                                         )
                                     }
-
-                                    {/* <div className="table-responsive mt-4">
-                                            <table className="table" id="advancedTablesWFixedHeader" data-table-search="true"
-                                                data-table-sort="true" data-table-checkbox="true">
-                                                <thead>
-                                                    <tr>
-                                                        <th scope="col">
-                                                            <input className="form-check-input checkbox-primary checkbox-all"
-                                                                type="checkbox" />
-                                                        </th>
-                                                        <th scope="col" className="head-w-icon sorting" aria-label="product Name">
-                                                            Order ID
-                                                            <span className="sort-icon"></span>
-                                                        </th>
-                                                        <th scope="col" className="head-w-icon sorting" aria-label="category">
-                                                            Order Date
-                                                            <span className="sort-icon"></span>
-                                                        </th>
-                                                        <th scope="col" className="head-w-icon sorting" aria-label="variant">
-                                                            Customer Name
-                                                            <span className="sort-icon"></span>
-                                                        </th> 
-                                                        <th scope="col" className="head-w-icon sorting" aria-label="sub variant">
-                                                            Customer type
-                                                            <span className="sort-icon"></span>
-                                                        </th>
-                                                        <th scope="col" className="head-w-icon sorting" aria-label="sub variant">
-                                                            Order type
-                                                            <span className="sort-icon"></span>
-                                                        </th>
-                                                        <th scope="col" className="head-w-icon sorting" aria-label="qty">
-                                                            Total
-                                                            <span className="sort-icon"></span>
-                                                        </th>
-                                                        <th scope="col" className="head-w-icon sorting" aria-label="source">
-                                                            source
-                                                            <span className="sort-icon"></span>
-                                                        </th>
-                                                        <th scope="col" className="head-w-icon sorting" aria-label="sku">
-                                                            Status
-                                                            <span className="sort-icon"></span>
-                                                        </th>
-                                                        <th scope="col" aria-label="total">
-                                                            type
-                                                        </th>
-                                                        <th scope="col">Action</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody id="custListRender">
-                                                    {dupeSalesData ? 
-                                                        ( 
-                                                            dupeSalesData.map((sales, idx) => {
-                                                                console.log(sales)
-                                                                return (
-                                                                    <tr key={`sales-list- ${idx}`}>
-                                                                        <th scope="row">
-                                                                            <input className="form-check-input checkbox-primary checkbox-single" type="checkbox" value="" />
-                                                                        </th>
-                                                                        <td>{sales.order_id}</td>
-                                                                        <td>{ConvertDate.convertToFullDate(sales.order_date, "/")}</td>
-                                                                        <td style={{textTransform:'capitalize'}}>{sales.customer.name}</td>
-                                                                        <td style={{textTransform:'capitalize'}}>{sales.customer.cust_type}</td>
-                                                                        <td style={{textTransform:'capitalize'}}>{sales.order_type}</td>
-                                                                        <td>
-                                                                            <NumberFormat intlConfig={{
-                                                                                value: sales.grandtotal, 
-                                                                                locale: "id-ID",
-                                                                                style: "currency", 
-                                                                                currency: "IDR",
-                                                                            }} />
-                                                                        </td>
-                                                                        <td style={{textTransform:'capitalize'}}>{sales.source}</td>
-                                                                        <td style={{textTransform:'capitalize'}}>
-                                                                            <span className={`badge badge-${
-                                                                                sales.order_status == "completed" ? 'success'
-                                                                                : sales.order_status == "pending" ? "secondary" 
-                                                                                : sales.order_status == "in-delivery" ? "warning" 
-                                                                                : sales.order_status == "canceled" ? "danger" 
-                                                                                : ""} light`}
-                                                                            >
-                                                                                {
-                                                                                    sales.order_status == "completed" ? 'completed'
-                                                                                    : sales.order_status == "pending" ? 'pending'
-                                                                                    : sales.order_status == "in-delivery" ? 'in-delivery'
-                                                                                    : sales.order_status == "canceled" ? 'canceled'
-                                                                                    : ""
-                                                                                }                                                                                
-                                                                            </span>
-                                                                        </td>
-                                                                        <td style={{textTransform:'capitalize'}}>
-                                                                            <span className={`badge badge-${
-                                                                                sales.payment_type == "unpaid" ? 'danger'
-                                                                                : sales.payment_type == "paid"? "primary"
-                                                                                : sales.payment_type == "partial"? "warning"
-                                                                                : ""} light`}
-                                                                            >
-                                                                                {sales.payment_type }                                                                                
-                                                                            </span>
-                                                                        </td>
-                                                                        <td>
-                                                                            <Dropdown drop={idx == salesData.length - 1 ? "up" : "down"}>
-                                                                                <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components" ></Dropdown.Toggle>
-
-                                                                                <Dropdown.Menu align={"end"}>
-                                                                                    <Dropdown.Item eventKey="1" as="button" aria-label="salesEditModal" onClick={(e) => handleModalWData(e, {endpoint: "sales", id: sales.order_id, action: 'update', ...sales})}>
-                                                                                        <i className='bx bxs-edit'></i> Edit sales
-                                                                                    </Dropdown.Item>
-                                                                                    <Dropdown.Item eventKey="1" as="button" aria-label="cancelSalesModal" onClick={(e) => handleModalWData(
-                                                                                        e, 
-                                                                                        {
-                                                                                            endpoint: "sales", 
-                                                                                            id: sales.order_id, 
-                                                                                            action: 'canceled',
-                                                                                            data: {...sales}
-                                                                                        })}>
-                                                                                        <i className='bx bx-trash'></i> Cancel sales
-                                                                                    </Dropdown.Item>
-                                                                                </Dropdown.Menu>
-                                                                            </Dropdown>
-                                                                        </td>
-                                                                    </tr>
-                                                                )
-                                                            })
-                                                            
-                                                        ):""
-                                                    }
-                                                </tbody>
-                                            </table>
-                                            <div className="table-end d-flex justify-content-between">
-                                                <p className="table-data-capt" id="tableCaption"></p>
-                                                <ul className="basic-pagination" id="paginationBtnRender"></ul>
-                                            </div>
-                                        </div> */}
-                                    {/* <!-- mobile list -->
-                                        <div className="mobile-list-wrap">
-                                            <div className="mobile-list" id="custLists">
-                                                <div className="list-item mt-3">
-                                                    <div className="modal-area" data-bs-toggle="modal"
-                                                        data-bs-target="#custDetailModal">
-                                                        <div className="list-img">
-                                                            <img src="../assets/images/Avatar 1.jpg" alt="user-img">
-                                                        </div>
-                                                        <div className="list-content">
-                                                            <h4 className="list-title">Kiya</h4>
-                                                            <p className="list-sub-title">cust091</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="list-badge primary">
-                                                        <p className="badge-text">Delivery Order</p>
-                                                    </div>
-                                                    <div className="more-opt" data-bs-toggle="dropdown" aria-expanded="false">
-                                                        <i className='bx bx-dots-horizontal-rounded'></i>
-                                                    </div>
-                                                    <ul className="dropdown-menu dropdown-menu-end">
-                                                        <li>
-                                                            <button className="dropdown-item" type="button" data-bs-toggle="modal"
-                                                                data-bs-target="#editCustModal">
-                                                                <i className='bx bxs-edit'></i> Edit
-                                                            </button>
-                                                        </li>
-                                                        <li>
-                                                            <button className="dropdown-item" type="button" data-bs-toggle="modal"
-                                                                data-bs-target="#dangerModal">
-                                                                <i className='bx bx-trash'></i> Delete
-                                                            </button>
-                                                        </li>
-                                                    </ul>
-                                                </div>
-                                                <div className="list-item mt-3">
-                                                    <div className="modal-area" data-bs-toggle="modal"
-                                                        data-bs-target="#custDetailModal">
-                                                        <div className="list-img">
-                                                            <img src="../assets/images/Avatar 1.jpg" alt="user-img">
-                                                        </div>
-                                                        <div className="list-content">
-                                                            <h4 className="list-title">Kiya</h4>
-                                                            <p className="list-sub-title">cust091</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="list-badge primary">
-                                                        <p className="badge-text">Delivery Order</p>
-                                                    </div>
-                                                    <div className="more-opt" data-bs-toggle="dropdown" aria-expanded="false">
-                                                        <i className='bx bx-dots-horizontal-rounded'></i>
-                                                    </div>
-                                                    <ul className="dropdown-menu dropdown-menu-end">
-                                                        <li>
-                                                            <button className="dropdown-item" type="button" data-bs-toggle="modal"
-                                                                data-bs-target="#editCustModal">
-                                                                <i className='bx bxs-edit'></i> Edit
-                                                            </button>
-                                                        </li>
-                                                        <li>
-                                                            <button className="dropdown-item" type="button" data-bs-toggle="modal"
-                                                                data-bs-target="#dangerModal">
-                                                                <i className='bx bx-trash'></i> Delete
-                                                            </button>
-                                                        </li>
-                                                    </ul>
-                                                </div>
-                                                <div className="list-item mt-3">
-                                                    <div className="modal-area" data-bs-toggle="modal"
-                                                        data-bs-target="#custDetailModal">
-                                                        <div className="list-img">
-                                                            <img src="../assets/images/Avatar 1.jpg" alt="user-img">
-                                                        </div>
-                                                        <div className="list-content">
-                                                            <h4 className="list-title">Kiya</h4>
-                                                            <p className="list-sub-title">cust091</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="list-badge primary">
-                                                        <p className="badge-text">Delivery Order</p>
-                                                    </div>
-                                                    <div className="more-opt" data-bs-toggle="dropdown" aria-expanded="false">
-                                                        <i className='bx bx-dots-horizontal-rounded'></i>
-                                                    </div>
-                                                    <ul className="dropdown-menu dropdown-menu-end">
-                                                        <li>
-                                                            <button className="dropdown-item" type="button" data-bs-toggle="modal"
-                                                                data-bs-target="#editCustModal">
-                                                                <i className='bx bxs-edit'></i> Edit
-                                                            </button>
-                                                        </li>
-                                                        <li>
-                                                            <button className="dropdown-item" type="button" data-bs-toggle="modal"
-                                                                data-bs-target="#dangerModal">
-                                                                <i className='bx bx-trash'></i> Delete
-                                                            </button>
-                                                        </li>
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                        </div> */}
                                 </div>
                             </div>
                             <div className="tabs-content" style={openTab === "addSalesTab" ? { display: "block" } : { display: "none" }}>
                                 <div className="card card-table add-on-shadow">
-                                    <p className="card-title mb-3">tambah order</p>
-                                    <Accordion defaultActiveKey={['0', '1']} alwaysOpen className="accordion accordion-w-icon">
-                                        <form autoComplete='off'>
-                                            <Accordion.Item eventKey="0">
-                                                <Accordion.Header>
-                                                    <i className='bx bx-info-circle'></i>Informasi pelanggan
-                                                </Accordion.Header>
-                                                <Accordion.Body className='mt-1'>
-                                                    <div className='mt-3 mb-4'>
-                                                        <Row className='mb-4' style={{ rowGap: '1.5rem' }}>
-                                                            <Col lg={3} sm={12}>
-                                                                {/* start: this is helper */}
-                                                                <InputWLabel
-                                                                    type="text"
-                                                                    name="customer_id"
-                                                                    require={false}
-                                                                    register={register}
-                                                                    errors={errors}
-                                                                    display={false}
-                                                                />
-                                                                {/* end: helper for validate */}
-
-                                                                <div style={{ position: 'relative' }}>
-                                                                    <InputWLabel
-                                                                        label="nama pelanggan"
-                                                                        type="text"
-                                                                        name="name"
-                                                                        placeholder={guestMode ? "Ketik nama pelanggan..." : "Cari dan pilih nama pelanggan..."}
-                                                                        onChange={() => !guestMode && handleFilterCust()}
-                                                                        onFocus={() => !guestMode && handleAutoComplete(getValues('name'))}
-                                                                        onKeyDown={() => !guestMode && handleKeyDown}
-                                                                        require={true}
-                                                                        register={register}
-                                                                        errors={errors}
-                                                                        textStyle={'capitalize'}
-                                                                    />
-
-                                                                    {/* popup autocomplete */}
-                                                                    <div className="popup-element" aria-expanded={openPopup} ref={refToThis}>
-                                                                        {filterCust && filterCust.length > 0 ?
-                                                                            filterCust.map((e, idx) => {
-                                                                                return (
-                                                                                    <div key={`cust-${idx}`} className="res-item" onClick={() =>
-                                                                                        handleChooseCust({
-                                                                                            ...e
-                                                                                        })}>{e.name}</div>
-                                                                                )
-                                                                            }) : ""
-                                                                        }
-                                                                    </div>
-                                                                </div>
-                                                                <InputWLabel
-                                                                    label={"mode tamu"}
-                                                                    type={'switch'}
-                                                                    name={'guest_mode'}
-                                                                    style={{ alignItems: 'center', marginTop: '1rem' }}
-                                                                    defaultChecked={false}
-                                                                    onChange={(e) => {
-                                                                        setValue('guest_mode', e.target.checked);
-                                                                        setGuestMode(e.target.checked);
-                                                                        setValue("name", "");
-                                                                        setCust(null);
-                                                                        setPaidData(null);
-                                                                    }}
-                                                                    register={register}
-                                                                    require={false}
-                                                                    errors={errors}
-                                                                />
-                                                            </Col>
-                                                            <Col lg={3} md={6} sm={12}>
-                                                                <InputWLabel
-                                                                    label="tanggal order"
-                                                                    type="date"
-                                                                    name="order_date"
-                                                                    defaultValue={getValues('order_date')}
-                                                                    register={register}
-                                                                    require={true}
-                                                                    errors={errors}
-                                                                />
-                                                            </Col>
-                                                            <Col lg={3} md={6} sm={12}>
-                                                                <InputWSelect
-                                                                    label={'Order type'}
-                                                                    name="order_type"
-                                                                    selectLabel="Pilih jenis order"
-                                                                    options={dataStatic.orderTypeList}
-                                                                    optionKeys={["id", "type"]}
-                                                                    value={(selected) => {
-                                                                        setValue('order_type', selected.value);
-                                                                        selected.value != "" ? clearErrors("order_type") : null;
-                                                                        setResetInputWSelect(false);
-                                                                        selected.value == "delivery" ? setDelivSwitch(true) : setDelivSwitch(false);
-                                                                    }}
-                                                                    resetController={resetInputWSelect}
-                                                                    require={true}
-                                                                    register={register}
-                                                                    errors={errors}
-                                                                />
-                                                            </Col>
-                                                        </Row>
-                                                        <Collapse in={getValues('order_type') == 'delivery'}>
-                                                            <Row style={{ gap: '1.5rem' }}>
-                                                                <Col lg={3} sm={12}>
-                                                                    <InputWLabel
-                                                                        label={"Tentukan pengiriman sekarang"}
-                                                                        type={'switch'}
-                                                                        name={'deliv_switch'}
-                                                                        style={{ alignItems: 'center' }}
-                                                                        defaultChecked={true}
-                                                                        onChange={(e) => { setValue('deliv_switch', e.target.checked); setDelivSwitch(e.target.checked) }}
-                                                                        register={register}
-                                                                        require={false}
-                                                                        errors={errors}
-                                                                    />
-                                                                </Col>
-                                                            </Row>
-                                                        </Collapse>
-                                                        <Collapse in={delivSwitch == true}>
-                                                            <Row className='mt-4' style={{ gap: '1.5rem' }}>
-                                                                <Col lg={3} sm={12}>
-                                                                    <div style={{ position: 'relative' }}>
+                                    {!stateAddSalesTab ?
+                                        <>
+                                            <div style={{ width: '100%', height: 350, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                                <img src={LoadingGif} width={45} height={45}></img>
+                                            </div>
+                                        </>
+                                        :
+                                        <>
+                                            <p className="card-title mb-3">tambah order</p>
+                                            <Accordion defaultActiveKey={['0', '1']} alwaysOpen className="accordion accordion-w-icon">
+                                                <form autoComplete='off'>
+                                                    <Accordion.Item eventKey="0">
+                                                        <Accordion.Header>
+                                                            <i className='bx bx-info-circle'></i>Informasi pelanggan
+                                                        </Accordion.Header>
+                                                        <Accordion.Body className='mt-1'>
+                                                            <div className='mt-3 mb-4'>
+                                                                <Row className='mb-4' style={{ rowGap: '1.5rem' }}>
+                                                                    <Col lg={3} sm={12}>
+                                                                        {/* start: this is helper */}
                                                                         <InputWLabel
-                                                                            label="Courier Name"
                                                                             type="text"
-                                                                            name="courier_name"
-                                                                            placeholder="Search courier name..."
-                                                                            onChange={handleFilterCourier}
-                                                                            onFocus={() => handleAutoCompleteCourier(getValues('courier_name'))}
-                                                                            onKeyDown={handleKeyDownCourier}
-                                                                            require={delivSwitch ? true : false}
+                                                                            name="customer_id"
+                                                                            require={false}
                                                                             register={register}
                                                                             errors={errors}
-                                                                            textStyle={'capitalize'}
+                                                                            display={false}
                                                                         />
+                                                                        {/* end: helper for validate */}
 
-                                                                        {/* popup autocomplete */}
-                                                                        <div className="popup-element" aria-expanded={openPopupCourier} ref={refToCourier}>
-                                                                            {filterCourier && filterCourier.length > 0 ?
-                                                                                filterCourier.map((e, idx) => {
-                                                                                    return (
-                                                                                        <div key={`cust-${idx}`} className="res-item" onClick={() =>
-                                                                                            handleChooseCourier({
-                                                                                                ...e
-                                                                                            })}>{e.user_name}</div>
-                                                                                    )
-                                                                                }) : ""
-                                                                            }
+                                                                        <div style={{ position: 'relative' }}>
+                                                                            <InputWLabel
+                                                                                label="nama pelanggan"
+                                                                                type="text"
+                                                                                name="name"
+                                                                                placeholder={guestMode ? "Ketik nama pelanggan..." : "Cari dan pilih nama pelanggan..."}
+                                                                                onChange={() => !guestMode && handleFilterCust()}
+                                                                                onFocus={() => !guestMode && handleAutoComplete(getValues('name'))}
+                                                                                onKeyDown={() => !guestMode && handleKeyDown}
+                                                                                require={true}
+                                                                                register={register}
+                                                                                errors={errors}
+                                                                                textStyle={'capitalize'}
+                                                                            />
+
+                                                                            {/* popup autocomplete */}
+                                                                            <div className="popup-element" aria-expanded={openPopup} ref={refToThis}>
+                                                                                {filterCust && filterCust.length > 0 ?
+                                                                                    filterCust.map((e, idx) => {
+                                                                                        return (
+                                                                                            <div key={`cust-${idx}`} className="res-item" onClick={() =>
+                                                                                                handleChooseCust({
+                                                                                                    ...e
+                                                                                                })}>{e.name}</div>
+                                                                                        )
+                                                                                    }) : ""
+                                                                                }
+                                                                            </div>
                                                                         </div>
-                                                                    </div>
-                                                                </Col>
-                                                                <Col lg={2} sm={12}>
-                                                                    <InputWLabel
-                                                                        label="tanggal pengiriman"
-                                                                        type="date"
-                                                                        name="ship_date"
-                                                                        defaultValue={getValues('ship_date')}
-                                                                        register={register}
-                                                                        require={delivSwitch ? true : false}
-                                                                        errors={errors}
-                                                                    />
-                                                                </Col>
-                                                                <Col lg={3} sm={12}>
-                                                                    <InputWLabel
-                                                                        label="alamat pengiriman"
-                                                                        as="textarea"
-                                                                        name="delivery_address"
-                                                                        register={register}
-                                                                        require={false}
-                                                                        errors={errors}
-                                                                    />
-                                                                </Col>
-                                                            </Row>
-                                                        </Collapse>
-                                                        <Row className='mt-4'>
-                                                            <Col lg={3} sm={12}>
-                                                                <InputWLabel
-                                                                    label="catatan"
-                                                                    as="textarea"
-                                                                    name="note"
-                                                                    register={register}
-                                                                    require={false}
-                                                                    errors={errors}
-                                                                />
-                                                            </Col>
-                                                        </Row>
+                                                                        <InputWLabel
+                                                                            label={"mode tamu"}
+                                                                            type={'switch'}
+                                                                            name={'guest_mode'}
+                                                                            style={{ alignItems: 'center', marginTop: '1rem' }}
+                                                                            defaultChecked={false}
+                                                                            onChange={(e) => {
+                                                                                setValue('guest_mode', e.target.checked);
+                                                                                setGuestMode(e.target.checked);
+                                                                                setValue("name", "");
+                                                                                setCust(null);
+                                                                                setPaidData(null);
+                                                                            }}
+                                                                            register={register}
+                                                                            require={false}
+                                                                            errors={errors}
+                                                                        />
+                                                                    </Col>
+                                                                    <Col lg={3} md={6} sm={12}>
+                                                                        <InputWLabel
+                                                                            label="tanggal order"
+                                                                            type="date"
+                                                                            name="order_date"
+                                                                            defaultValue={getValues('order_date')}
+                                                                            register={register}
+                                                                            require={true}
+                                                                            errors={errors}
+                                                                        />
+                                                                    </Col>
+                                                                    <Col lg={3} md={6} sm={12}>
+                                                                        <InputWSelect
+                                                                            label={'Order type'}
+                                                                            name="order_type"
+                                                                            selectLabel="Pilih jenis order"
+                                                                            options={dataStatic.orderTypeList}
+                                                                            optionKeys={["id", "type"]}
+                                                                            value={(selected) => {
+                                                                                setValue('order_type', selected.value);
+                                                                                selected.value != "" ? clearErrors("order_type") : null;
+                                                                                setResetInputWSelect(false);
+                                                                                selected.value == "delivery" ? setDelivSwitch(true) : setDelivSwitch(false);
+                                                                            }}
+                                                                            resetController={resetInputWSelect}
+                                                                            require={true}
+                                                                            register={register}
+                                                                            errors={errors}
+                                                                        />
+                                                                    </Col>
+                                                                </Row>
+                                                                <Collapse in={getValues('order_type') == 'delivery'}>
+                                                                    <Row style={{ gap: '1.5rem' }}>
+                                                                        <Col lg={3} sm={12}>
+                                                                            <InputWLabel
+                                                                                label={"Tentukan pengiriman sekarang"}
+                                                                                type={'switch'}
+                                                                                name={'deliv_switch'}
+                                                                                style={{ alignItems: 'center' }}
+                                                                                defaultChecked={true}
+                                                                                onChange={(e) => { setValue('deliv_switch', e.target.checked); setDelivSwitch(e.target.checked) }}
+                                                                                register={register}
+                                                                                require={false}
+                                                                                errors={errors}
+                                                                            />
+                                                                        </Col>
+                                                                    </Row>
+                                                                </Collapse>
+                                                                <Collapse in={delivSwitch == true}>
+                                                                    <Row className='mt-4' style={{ gap: '1.5rem' }}>
+                                                                        <Col lg={3} sm={12}>
+                                                                            <div style={{ position: 'relative' }}>
+                                                                                <InputWLabel
+                                                                                    label="Courier Name"
+                                                                                    type="text"
+                                                                                    name="courier_name"
+                                                                                    placeholder="Search courier name..."
+                                                                                    onChange={handleFilterCourier}
+                                                                                    onFocus={() => handleAutoCompleteCourier(getValues('courier_name'))}
+                                                                                    onKeyDown={handleKeyDownCourier}
+                                                                                    require={delivSwitch ? true : false}
+                                                                                    register={register}
+                                                                                    errors={errors}
+                                                                                    textStyle={'capitalize'}
+                                                                                />
 
-                                                    </div>
+                                                                                {/* popup autocomplete */}
+                                                                                <div className="popup-element" aria-expanded={openPopupCourier} ref={refToCourier}>
+                                                                                    {filterCourier && filterCourier.length > 0 ?
+                                                                                        filterCourier.map((e, idx) => {
+                                                                                            return (
+                                                                                                <div key={`cust-${idx}`} className="res-item" onClick={() =>
+                                                                                                    handleChooseCourier({
+                                                                                                        ...e
+                                                                                                    })}>{e.user_name}</div>
+                                                                                            )
+                                                                                        }) : ""
+                                                                                    }
+                                                                                </div>
+                                                                            </div>
+                                                                        </Col>
+                                                                        <Col lg={2} sm={12}>
+                                                                            <InputWLabel
+                                                                                label="tanggal pengiriman"
+                                                                                type="date"
+                                                                                name="ship_date"
+                                                                                defaultValue={getValues('ship_date')}
+                                                                                register={register}
+                                                                                require={delivSwitch ? true : false}
+                                                                                errors={errors}
+                                                                            />
+                                                                        </Col>
+                                                                        <Col lg={3} sm={12}>
+                                                                            <InputWLabel
+                                                                                label="alamat pengiriman"
+                                                                                as="textarea"
+                                                                                name="delivery_address"
+                                                                                register={register}
+                                                                                require={false}
+                                                                                errors={errors}
+                                                                            />
+                                                                        </Col>
+                                                                    </Row>
+                                                                </Collapse>
+                                                                <Row className='mt-4'>
+                                                                    <Col lg={3} sm={12}>
+                                                                        <InputWLabel
+                                                                            label="catatan"
+                                                                            as="textarea"
+                                                                            name="note"
+                                                                            register={register}
+                                                                            require={false}
+                                                                            errors={errors}
+                                                                        />
+                                                                    </Col>
+                                                                </Row>
+
+                                                            </div>
 
 
-                                                    {/* <AutoComplete show={} data={} /> */}
-                                                    {/* </div> */}
+                                                            {/* <AutoComplete show={} data={} /> */}
+                                                            {/* </div> */}
 
-                                                    {/* <div className="col-lg-12 col-sm-12 col-md-12 col-12">
+                                                            {/* <div className="col-lg-12 col-sm-12 col-md-12 col-12">
                                                             <label htmlFor="productName">product name</label>
                                                             <div className="d-flex">
                                                                     <div className="form-switch">
@@ -3412,16 +3383,16 @@ export default function Sales({ handleSidebar, showSidebar }) {
                                                                 </div>
                                                             </div> */}
 
-                                                    {/* </div>   */}
-                                                </Accordion.Body>
-                                            </Accordion.Item>
-                                            <Accordion.Item eventKey="1">
-                                                <Accordion.Header>
-                                                    <i className='bx bx-cube-alt'></i>Tambah produk
-                                                </Accordion.Header>
-                                                <Accordion.Body>
-                                                    {/* <p className="card-title mb-3 mt-1">Sales products</p> */}
-                                                    {/* <div className="col-lg-6 col-sm-12 col-md-12 col-12">
+                                                            {/* </div>   */}
+                                                        </Accordion.Body>
+                                                    </Accordion.Item>
+                                                    <Accordion.Item eventKey="1">
+                                                        <Accordion.Header>
+                                                            <i className='bx bx-cube-alt'></i>Tambah produk
+                                                        </Accordion.Header>
+                                                        <Accordion.Body>
+                                                            {/* <p className="card-title mb-3 mt-1">Sales products</p> */}
+                                                            {/* <div className="col-lg-6 col-sm-12 col-md-12 col-12">
                                                             <div className="d-flex flex-fill gap-3 flex-wrap">
                                                                 <div>
                                                                     <InputWLabel 
@@ -3465,556 +3436,289 @@ export default function Sales({ handleSidebar, showSidebar }) {
                                                                 </div>
                                                             </div>
                                                         </div> */}
-                                                    <div className="add-product-control mt-3 mb-4" >
-                                                        <div className='col-lg-4 col-md-6 col-sm-12'>
-                                                            <InputWLabel
-                                                                label="tambah produk"
-                                                                type="text"
-                                                                name="salesProduct"
-                                                                placeholder="cari nama produk..."
-                                                                onChange={handleSearchProd}
-                                                                onFocus={handleSearchProd}
-                                                                onKeyDown={keyDownSearchProd}
-                                                                style={{ width: 'inherit', textTransform: 'capitalize' }}
-                                                                register={register}
-                                                                require={false}
-                                                                errors={errors}
-                                                                autoComplete={"off"}
-                                                            // disabled={editMode ? false : true}  
-                                                            />
-                                                            {/* popup autocomplete */}
-                                                            <div className="popup-element" aria-expanded={openPopupProd} ref={refToProd}>
-                                                                {filterProd && filterProd.length > 0 ?
-                                                                    filterProd.map((e, idx) => {
-                                                                        return (
-                                                                            <div key={`product-${e.product_id}`} className="res-item" onClick={() =>
-
-                                                                                handleChooseProd({
-                                                                                    product_id: e.product_id,
-                                                                                    product_name: e.product_name,
-                                                                                    variant: e.variant,
-                                                                                    img: e.img,
-                                                                                    product_cost: e.product_cost,
-                                                                                    sell_price: e.sell_price,
-                                                                                    discount: e.discount
-                                                                                })}
-                                                                            >{e.variant !== "" ? e.product_name + " " + e.variant : e.product_name}</div>
-                                                                        )
-                                                                    }) : ""
-                                                                }
-                                                            </div>
-                                                        </div>
-
-                                                        <div className='qty-add-btn-group'>
-                                                            {/* <div> */}
-                                                            {/* <Form.Label className="mb-1">qty</Form.Label> */}
-                                                            <QtyButton
-                                                                min={0}
-                                                                max={999}
-                                                                name={`qty-add-product`}
-                                                                width={"180px"}
-                                                                returnValue={(e) => setQtyVal(e)}
-                                                                value={qtyVal}
-                                                                // disabled={editMode ? false : true}  
-                                                                label={"qty"}
-                                                            />
-                                                            {/* </div> */}
-                                                            {/* <div className='align-self-end'> */}
-                                                            <button className={`btn btn-primary qty-add-btn`} onClick={(e) => { e.preventDefault(); addToSalesData() }}><i className="bx bx-plus"></i></button>
-                                                            {/* </div> */}
-                                                        </div>
-                                                    </div>
-
-
-                                                    {!isMobile && !isMediumScr ?
-                                                        (
-                                                            <div className="table-responsive mt-4">
-                                                                <table className="table">
-                                                                    <thead>
-                                                                        <tr>
-                                                                            <th scope="col" aria-label="product desc">
-                                                                                produk
-                                                                            </th>
-                                                                            <th scope="col" aria-label="product variant">
-                                                                                varian
-                                                                            </th>
-                                                                            <th scope="col" aria-label="qty">
-                                                                                qty
-                                                                            </th>
-                                                                            <th scope="col" aria-label="product price">
-                                                                                harga
-                                                                            </th>
-                                                                            <th scope="col" aria-label="product price">
-                                                                                diskon
-                                                                            </th>
-                                                                            <th scope="col" aria-label="total">
-                                                                                total
-                                                                            </th>
-                                                                            <th scope="col" aria-label="action">
-                                                                                aksi
-                                                                            </th>
-                                                                        </tr>
-                                                                    </thead>
-                                                                    <tbody>
-                                                                        {salesItems && salesItems.length > 0 ?
-                                                                            salesItems.map((item, idx) => {
+                                                            <div className="add-product-control mt-3 mb-4" >
+                                                                <div className='col-lg-4 col-md-6 col-sm-12'>
+                                                                    <InputWLabel
+                                                                        label="tambah produk"
+                                                                        type="text"
+                                                                        name="salesProduct"
+                                                                        placeholder="cari nama produk..."
+                                                                        onChange={handleSearchProd}
+                                                                        onFocus={handleSearchProd}
+                                                                        onKeyDown={keyDownSearchProd}
+                                                                        style={{ width: 'inherit', textTransform: 'capitalize' }}
+                                                                        register={register}
+                                                                        require={false}
+                                                                        errors={errors}
+                                                                        autoComplete={"off"}
+                                                                    // disabled={editMode ? false : true}  
+                                                                    />
+                                                                    {/* popup autocomplete */}
+                                                                    <div className="popup-element" aria-expanded={openPopupProd} ref={refToProd}>
+                                                                        {filterProd && filterProd.length > 0 ?
+                                                                            filterProd.map((e, idx) => {
                                                                                 return (
-                                                                                    <tr key={idx}>
-                                                                                        <td className="data-img" style={{ textTransform: 'capitalize' }}>
-                                                                                            <span className="user-img">
-                                                                                                <img src={item.img} alt="prod-img" />
-                                                                                            </span>{item.product_name}
-                                                                                        </td>
-                                                                                        <td>{item.variant}</td>
-                                                                                        <td>
-                                                                                            <QtyButton
-                                                                                                min={1}
-                                                                                                max={999}
-                                                                                                name={`qty-product`}
-                                                                                                id="qtyItem"
-                                                                                                value={item.quantity}
-                                                                                                returnValue={(e) => { handleEdit(e, idx); handleUpdateEndNote() }}
-                                                                                                width={'150px'}
-                                                                                            />
-                                                                                        </td>
-                                                                                        <td>
-                                                                                            <NumberFormat intlConfig={{
-                                                                                                value: item.sell_price,
-                                                                                                locale: "id-ID",
-                                                                                                style: "currency",
-                                                                                                currency: "IDR",
-                                                                                            }}
-                                                                                            />
-                                                                                        </td>
-                                                                                        <td>
-                                                                                            <NumberFormat intlConfig={{
-                                                                                                value: item.discount,
-                                                                                                locale: "id-ID",
-                                                                                                style: "currency",
-                                                                                                currency: "IDR",
-                                                                                            }} v
-                                                                                            />
-                                                                                        </td>
-                                                                                        <td>
-                                                                                            <NumberFormat intlConfig={{
-                                                                                                value: (Number(item.quantity) * Number(item.sell_price)) - (Number(item.quantity) * Number(item.discount)),
-                                                                                                locale: "id-ID",
-                                                                                                style: "currency",
-                                                                                                currency: "IDR",
-                                                                                            }}
-                                                                                            />
-                                                                                        </td>
-                                                                                        <td>
-                                                                                            <span className="table-btn del-table-data" onClick={() => { delSalesItems(idx) }}>
-                                                                                                <i className='bx bx-trash'></i>
-                                                                                            </span>
-                                                                                        </td>
-                                                                                    </tr>
+                                                                                    <div key={`product-${e.product_id}`} className="res-item" onClick={() =>
+
+                                                                                        handleChooseProd({
+                                                                                            product_id: e.product_id,
+                                                                                            product_name: e.product_name,
+                                                                                            variant: e.variant,
+                                                                                            img: e.img,
+                                                                                            product_cost: e.product_cost,
+                                                                                            sell_price: e.sell_price,
+                                                                                            discount: e.discount
+                                                                                        })}
+                                                                                    >{e.variant !== "" ? e.product_name + " " + e.variant : e.product_name}</div>
                                                                                 )
-                                                                            })
-                                                                            : ""}
-                                                                        {salesItems && salesItems.length > 0 && salesEndNote ?
-                                                                            <>
-                                                                                <tr className="endnote-row">
-                                                                                    <td colSpan="2" className="endnote-row-title">items</td>
-                                                                                    <td colSpan="5">{salesEndNote.totalQty}</td>
+                                                                            }) : ""
+                                                                        }
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className='qty-add-btn-group'>
+                                                                    {/* <div> */}
+                                                                    {/* <Form.Label className="mb-1">qty</Form.Label> */}
+                                                                    <QtyButton
+                                                                        min={0}
+                                                                        max={999}
+                                                                        name={`qty-add-product`}
+                                                                        width={"180px"}
+                                                                        returnValue={(e) => setQtyVal(e)}
+                                                                        value={qtyVal}
+                                                                        // disabled={editMode ? false : true}  
+                                                                        label={"qty"}
+                                                                    />
+                                                                    {/* </div> */}
+                                                                    {/* <div className='align-self-end'> */}
+                                                                    <button className={`btn btn-primary qty-add-btn`} onClick={(e) => { e.preventDefault(); addToSalesData() }}><i className="bx bx-plus"></i></button>
+                                                                    {/* </div> */}
+                                                                </div>
+                                                            </div>
+
+
+                                                            {!isMobile && !isMediumScr ?
+                                                                (
+                                                                    <div className="table-responsive mt-4">
+                                                                        <table className="table">
+                                                                            <thead>
+                                                                                <tr>
+                                                                                    <th scope="col" aria-label="product desc">
+                                                                                        produk
+                                                                                    </th>
+                                                                                    <th scope="col" aria-label="product variant">
+                                                                                        varian
+                                                                                    </th>
+                                                                                    <th scope="col" aria-label="qty">
+                                                                                        qty
+                                                                                    </th>
+                                                                                    <th scope="col" aria-label="product price">
+                                                                                        harga
+                                                                                    </th>
+                                                                                    <th scope="col" aria-label="product price">
+                                                                                        diskon
+                                                                                    </th>
+                                                                                    <th scope="col" aria-label="total">
+                                                                                        total
+                                                                                    </th>
+                                                                                    <th scope="col" aria-label="action">
+                                                                                        aksi
+                                                                                    </th>
                                                                                 </tr>
-                                                                                <tr className="endnote-row">
-                                                                                    <td colSpan="5" className="endnote-row-title">subtotal</td>
-                                                                                    <td colSpan="2" style={{ fontWeight: 500 }}>
-                                                                                        <NumberFormat intlConfig={{
-                                                                                            value: salesEndNote.subtotal,
-                                                                                            locale: "id-ID",
-                                                                                            style: "currency",
-                                                                                            currency: "IDR",
-                                                                                        }}
-                                                                                        />
-                                                                                    </td>
-                                                                                </tr>
-                                                                                <tr className="endnote-row">
-                                                                                    <td colSpan="5" className="endnote-row-title">add more discount</td>
-                                                                                    <td colSpan="2" style={{ fontWeight: 500 }}>
-                                                                                        {salesDisc ?
-                                                                                            salesDisc.discType == "percent" ?
-                                                                                                (
-                                                                                                    <>
+                                                                            </thead>
+                                                                            <tbody>
+                                                                                {salesItems && salesItems.length > 0 ?
+                                                                                    salesItems.map((item, idx) => {
+                                                                                        return (
+                                                                                            <tr key={idx}>
+                                                                                                <td className="data-img" style={{ textTransform: 'capitalize' }}>
+                                                                                                    <span className="user-img">
+                                                                                                        <img src={item.img} alt="prod-img" />
+                                                                                                    </span>{item.product_name}
+                                                                                                </td>
+                                                                                                <td>{item.variant}</td>
+                                                                                                <td>
+                                                                                                    <QtyButton
+                                                                                                        min={1}
+                                                                                                        max={999}
+                                                                                                        name={`qty-product`}
+                                                                                                        id="qtyItem"
+                                                                                                        value={item.quantity}
+                                                                                                        returnValue={(e) => { handleEdit(e, idx); handleUpdateEndNote() }}
+                                                                                                        width={'150px'}
+                                                                                                    />
+                                                                                                </td>
+                                                                                                <td>
+                                                                                                    <NumberFormat intlConfig={{
+                                                                                                        value: item.sell_price,
+                                                                                                        locale: "id-ID",
+                                                                                                        style: "currency",
+                                                                                                        currency: "IDR",
+                                                                                                    }}
+                                                                                                    />
+                                                                                                </td>
+                                                                                                <td>
+                                                                                                    <NumberFormat intlConfig={{
+                                                                                                        value: item.discount,
+                                                                                                        locale: "id-ID",
+                                                                                                        style: "currency",
+                                                                                                        currency: "IDR",
+                                                                                                    }} v
+                                                                                                    />
+                                                                                                </td>
+                                                                                                <td>
+                                                                                                    <NumberFormat intlConfig={{
+                                                                                                        value: (Number(item.quantity) * Number(item.sell_price)) - (Number(item.quantity) * Number(item.discount)),
+                                                                                                        locale: "id-ID",
+                                                                                                        style: "currency",
+                                                                                                        currency: "IDR",
+                                                                                                    }}
+                                                                                                    />
+                                                                                                </td>
+                                                                                                <td>
+                                                                                                    <span className="table-btn del-table-data" onClick={() => { delSalesItems(idx) }}>
+                                                                                                        <i className='bx bx-trash'></i>
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        )
+                                                                                    })
+                                                                                    : ""}
+                                                                                {salesItems && salesItems.length > 0 && salesEndNote ?
+                                                                                    <>
+                                                                                        <tr className="endnote-row">
+                                                                                            <td colSpan="2" className="endnote-row-title">items</td>
+                                                                                            <td colSpan="5">{salesEndNote.totalQty}</td>
+                                                                                        </tr>
+                                                                                        <tr className="endnote-row">
+                                                                                            <td colSpan="5" className="endnote-row-title">subtotal</td>
+                                                                                            <td colSpan="2" style={{ fontWeight: 500 }}>
+                                                                                                <NumberFormat intlConfig={{
+                                                                                                    value: salesEndNote.subtotal,
+                                                                                                    locale: "id-ID",
+                                                                                                    style: "currency",
+                                                                                                    currency: "IDR",
+                                                                                                }}
+                                                                                                />
+                                                                                            </td>
+                                                                                        </tr>
+                                                                                        <tr className="endnote-row">
+                                                                                            <td colSpan="5" className="endnote-row-title">add more discount</td>
+                                                                                            <td colSpan="2" style={{ fontWeight: 500 }}>
+                                                                                                {salesDisc ?
+                                                                                                    salesDisc.discType == "percent" ?
+                                                                                                        (
+                                                                                                            <>
+                                                                                                                <NumberFormat
+                                                                                                                    intlConfig={{
+                                                                                                                        value: salesDisc ? (salesDisc.value * Number(salesEndNote.subtotal) / 100) : 0,
+                                                                                                                        locale: "id-ID",
+                                                                                                                        style: "currency",
+                                                                                                                        currency: "IDR",
+                                                                                                                    }}
+                                                                                                                    style={{ marginRight: '2rem' }}
+                                                                                                                />
+                                                                                                                <span>{`(${salesDisc.value}%)`}</span>
+                                                                                                            </>
+                                                                                                        ) :
+                                                                                                        (
+                                                                                                            <NumberFormat
+                                                                                                                intlConfig={{
+                                                                                                                    value: salesDisc.value,
+                                                                                                                    locale: "id-ID",
+                                                                                                                    style: "currency",
+                                                                                                                    currency: "IDR",
+                                                                                                                }}
+                                                                                                                style={{ marginRight: '2rem' }}
+                                                                                                            />
+                                                                                                        )
+                                                                                                    : (
                                                                                                         <NumberFormat
                                                                                                             intlConfig={{
-                                                                                                                value: salesDisc ? (salesDisc.value * Number(salesEndNote.subtotal) / 100) : 0,
+                                                                                                                value: 0,
                                                                                                                 locale: "id-ID",
                                                                                                                 style: "currency",
                                                                                                                 currency: "IDR",
                                                                                                             }}
                                                                                                             style={{ marginRight: '2rem' }}
                                                                                                         />
-                                                                                                        <span>{`(${salesDisc.value}%)`}</span>
-                                                                                                    </>
-                                                                                                ) :
-                                                                                                (
-                                                                                                    <NumberFormat
-                                                                                                        intlConfig={{
-                                                                                                            value: salesDisc.value,
-                                                                                                            locale: "id-ID",
-                                                                                                            style: "currency",
-                                                                                                            currency: "IDR",
-                                                                                                        }}
-                                                                                                        style={{ marginRight: '2rem' }}
-                                                                                                    />
-                                                                                                )
-                                                                                            : (
+                                                                                                    )
+                                                                                                }
+                                                                                                <span className="endnote-row-action">
+                                                                                                    <span className="table-btn edit-table-data" aria-label='addDiscount' onClick={(e) => handleModal(e)}>
+                                                                                                        <i className='bx bx-cog'></i>
+                                                                                                    </span>
+                                                                                                </span>
+                                                                                            </td>
+                                                                                        </tr>
+                                                                                        <tr className="endnote-row">
+                                                                                            <td colSpan="5" className="endnote-row-title">total</td>
+                                                                                            <td colSpan="2" >
+                                                                                                <NumberFormat intlConfig={{
+                                                                                                    value: salesEndNote.grandtotal,
+                                                                                                    locale: "id-ID",
+                                                                                                    style: "currency",
+                                                                                                    currency: "IDR",
+                                                                                                }}
+                                                                                                />
+                                                                                            </td>
+                                                                                        </tr>
+                                                                                        <tr className="endnote-row">
+                                                                                            <td colSpan="5" className="endnote-row-title">paid & payment type</td>
+                                                                                            <td colSpan="2">
                                                                                                 <NumberFormat
                                                                                                     intlConfig={{
-                                                                                                        value: 0,
+                                                                                                        value: paidData ? paidData.amountOrigin : 0,
                                                                                                         locale: "id-ID",
                                                                                                         style: "currency",
                                                                                                         currency: "IDR",
                                                                                                     }}
                                                                                                     style={{ marginRight: '2rem' }}
                                                                                                 />
-                                                                                            )
-                                                                                        }
-                                                                                        <span className="endnote-row-action">
-                                                                                            <span className="table-btn edit-table-data" aria-label='addDiscount' onClick={(e) => handleModal(e)}>
-                                                                                                <i className='bx bx-cog'></i>
-                                                                                            </span>
-                                                                                        </span>
-                                                                                    </td>
-                                                                                </tr>
-                                                                                <tr className="endnote-row">
-                                                                                    <td colSpan="5" className="endnote-row-title">total</td>
-                                                                                    <td colSpan="2" >
-                                                                                        <NumberFormat intlConfig={{
-                                                                                            value: salesEndNote.grandtotal,
-                                                                                            locale: "id-ID",
-                                                                                            style: "currency",
-                                                                                            currency: "IDR",
-                                                                                        }}
-                                                                                        />
-                                                                                    </td>
-                                                                                </tr>
-                                                                                <tr className="endnote-row">
-                                                                                    <td colSpan="5" className="endnote-row-title">paid & payment type</td>
-                                                                                    <td colSpan="2">
-                                                                                        <NumberFormat
-                                                                                            intlConfig={{
-                                                                                                value: paidData ? paidData.amountOrigin : 0,
-                                                                                                locale: "id-ID",
-                                                                                                style: "currency",
-                                                                                                currency: "IDR",
-                                                                                            }}
-                                                                                            style={{ marginRight: '2rem' }}
-                                                                                        />
-                                                                                        <span style={{ textTransform: 'capitalize', fontWeight: 500 }}>{`${paidData ? '~ ' + paidData.payment_type : ""}`}</span>
-                                                                                        <span className="endnote-row-action">
-                                                                                            <span className="table-btn edit-table-data" aria-label="createPayment" onClick={handleModal}>
-                                                                                                <i className='bx bx-cog'></i>
-                                                                                            </span>
-                                                                                        </span>
-                                                                                    </td>
-                                                                                </tr>
-                                                                                <tr className="endnote-row">
-                                                                                    <td colSpan="5" className="endnote-row-title">remaining payment</td>
-                                                                                    <td colSpan="2">
-                                                                                        <NumberFormat intlConfig={{
-                                                                                            value: salesEndNote.remaining_payment,
-                                                                                            locale: "id-ID",
-                                                                                            style: "currency",
-                                                                                            currency: "IDR",
-                                                                                        }}
-                                                                                        />
-                                                                                    </td>
-                                                                                </tr>
-                                                                            </>
-                                                                            : ""}
-                                                                    </tbody>
-                                                                </table>
-                                                            </div>
-                                                        ) :
-                                                        (
-                                                            <DataView value={salesItems} listTemplate={orderListTemplate} emptyMessage=' '></DataView>
-                                                        )
-                                                    }
-                                                </Accordion.Body>
-                                            </Accordion.Item>
-                                            <div className={`wrapping-table-btn ${isMobile && isMediumScr ? 'mt-4' : 'mt-5'}`}>
-                                                <button type="button" className="add-btn btn btn-primary btn-w-icon" onClick={handleSubmit(onSubmitSales, onError)}>
-                                                    submit
-                                                </button>
-                                            </div>
-                                        </form>
-                                    </Accordion>
+                                                                                                <span style={{ textTransform: 'capitalize', fontWeight: 500 }}>{`${paidData ? '~ ' + paidData.payment_type : ""}`}</span>
+                                                                                                <span className="endnote-row-action">
+                                                                                                    <span className="table-btn edit-table-data" aria-label="createPayment" onClick={handleModal}>
+                                                                                                        <i className='bx bx-cog'></i>
+                                                                                                    </span>
+                                                                                                </span>
+                                                                                            </td>
+                                                                                        </tr>
+                                                                                        <tr className="endnote-row">
+                                                                                            <td colSpan="5" className="endnote-row-title">remaining payment</td>
+                                                                                            <td colSpan="2">
+                                                                                                <NumberFormat intlConfig={{
+                                                                                                    value: salesEndNote.remaining_payment,
+                                                                                                    locale: "id-ID",
+                                                                                                    style: "currency",
+                                                                                                    currency: "IDR",
+                                                                                                }}
+                                                                                                />
+                                                                                            </td>
+                                                                                        </tr>
+                                                                                    </>
+                                                                                    : ""}
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </div>
+                                                                ) :
+                                                                (
+                                                                    <DataView value={salesItems} listTemplate={orderListTemplate} emptyMessage=' '></DataView>
+                                                                )
+                                                            }
+                                                        </Accordion.Body>
+                                                    </Accordion.Item>
+                                                    <div className={`wrapping-table-btn ${isMobile && isMediumScr ? 'mt-4' : 'mt-5'}`}>
+                                                        <button type="button" className="add-btn btn btn-primary btn-w-icon" onClick={handleSubmit(onSubmitSales, onError)}>
+                                                            submit
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            </Accordion>
+                                        </>
+                                    }
+
                                 </div>
                             </div>
-                            {/* <div className="tabs-content" style={openTab === "completeTab" ? {display: "block"} : {display: "none"}}>
-                                    <div className="card card-table add-on-shadow">
-                                        {!isMobile && !isMediumScr ? (
-                                        <div className="mt-4">
-                                            <DataTable
-                                                className="p-datatable"
-                                                value={salesComplete}
-                                                size="normal"
-                                                removableSort
-                                                stripedRows
-                                                // selectionMode={"checkbox"}
-                                                // selection={selectedSales}
-                                                // onSelectionChange={(e) => {
-                                                //     setSelectedSales(e.value);
-                                                // }}
-                                                dataKey="order_id"
-                                                tableStyle={{ minWidth: "50rem" }}
-                                                filters={salesFilters}
-                                                filterDisplay='menu'
-                                                globalFilterFields={[
-                                                    "order_id",
-                                                    "order_date",
-                                                    "customer.name",
-                                                    "order_type",
-                                                    "grandtotal",
-                                                    "source",
-                                                    "order_status",
-                                                    "payment_type",
-                                                ]}
-                                                emptyMessage={emptyStateHandler}
-                                                onFilter={(e) => setSalesFilters(e.filters)}
-                                                header={tableHeader2}
-                                                paginator
-                                                totalRecordGlobal={totalRecordGlobal}
-                                                rows={50}
-                                            >
-                                            <Column
-                                                selectionMode="multiple"
-                                                headerStyle={{ width: "3.5rem" }}
-                                            ></Column>
-                                            <Column
-                                                field="order_id"
-                                                header="Order ID"
-                                                sortable
-                                                headerStyle={{fontSize:13.5}}
-                                                bodyStyle={{ textTransform: "capitalize",fontSize:14 }}
-                                                style={{ textTransform: "capitalize" }}
-                                            ></Column>
-                                            <Column
-                                                field="order_date"
-                                                header="tanggal"
-                                                body={formatedOrderDate}
-                                                dataType='date'
-                                                filter 
-                                                headerStyle={{fontSize:13.5}}
-                                                bodyStyle={{ textTransform: "capitalize",fontSize:14 }}
-                                                filterPlaceholder="Type a date"
-                                                style={{ textTransform: "capitalize" }}
-                                            ></Column>
-                                            <Column
-                                                field="customer.name"
-                                                header="pelanggan"
-                                                filter 
-                                                headerStyle={{fontSize:13.5}}
-                                                bodyStyle={{ textTransform: "capitalize",fontSize:14 }}
-                                                filterPlaceholder="Search by customer name"
-                                                style={{ textTransform: "capitalize" }}
-                                            ></Column>
-                                            <Column
-                                                field="order_type"
-                                                header="jenis order"
-                                                filter 
-                                                showFilterMenu={false}
-                                                filterMenuStyle={{ width: '100%' }}
-                                                filterPlaceholder={"order type"}
-                                                headerStyle={{fontSize:13.5}}
-                                                bodyStyle={primeTableBodyStyle}
-                                                style={{ textTransform: 'capitalize' }}
-                                            ></Column>
-                                            <Column
-                                                field="grandtotal"
-                                                header="Total"
-                                                body={formatedGrandtotal}
-                                                headerStyle={{fontSize:13.5}}
-                                                bodyStyle={primeTableBodyStyle}
-                                                sortable 
-                                                style={{ textTransform: "capitalize" }}
-                                            ></Column>
-                                            <Column
-                                                field="source"
-                                                header="sumber"
-                                                headerStyle={{fontSize:13.5}}
-                                                bodyStyle={primeTableBodyStyle}
-                                                filter
-                                                showFilterMenu={false}
-                                                filterMenuStyle={{ width: 'inherit' }}
-                                                style={{ textTransform: "capitalize" }}
-                                            ></Column>
-                                            <Column
-                                                field="payment_type"
-                                                header="pembayaran"
-                                                body={paymentTypeCell}
-                                                headerStyle={{fontSize:13.5}}
-                                                bodyStyle={primeTableBodyStyle}
-                                                filter
-                                                style={{ textTransform: "capitalize" }}
-                                            ></Column>
-                                            <Column
-                                                field="order_status"
-                                                header="status"
-                                                body={statusCell}
-                                                headerStyle={{fontSize:13.5}}
-                                                bodyStyle={primeTableBodyStyle}
-                                                filter
-                                                showFilterMenu={false} 
-                                                filterMenuStyle={{ width: '100%' }}
-                                                filterElement={statusRowFilter}
-                                                style={{ textTransform: "capitalize" }}
-                                            ></Column>
-                                            <Column
-                                                field=""
-                                                header="aksi"
-                                                headerStyle={{fontSize:13.5}}
-                                                bodyStyle={{fontSize:14}}
-                                                body={(rowData, rowIndex) => actionCell(rowData, rowIndex)}
-                                                style={{ textTransform: "capitalize" }}
-                                            ></Column>
-                                            </DataTable>
-                                        </div>
-                                        ):(
-                                            <>
-                                            <div
-                                                className="wrapping-table-btn flex gap-3 justify-content-end"
-                                                style={{ width: "100%", height: "inherit" }}
-                                            >
-                                                <Dropdown drop={"down"}>
-                                                    <Dropdown.Toggle variant="primary" style={{ height: "100%" }}>
-                                                        <i className="bx bx-download"></i> export
-                                                    </Dropdown.Toggle>
-                                                    <Dropdown.Menu align={"end"}>
-                                                    <Dropdown.Item
-                                                        eventKey="1"
-                                                        as="button"
-                                                        aria-label="viewInvModal"
-                                                        onClick={(e) =>
-                                                            handleModal(e, { id: inv.invoice_id, items: { ...inv } })
-                                                        }
-                                                    >
-                                                        <i className="bx bx-show"></i> PDF (.pdf)
-                                                    </Dropdown.Item>
-                                                    <Dropdown.Item
-                                                        eventKey="1"
-                                                        as="button"
-                                                        aria-label="editInvModal"
-                                                        onClick={(e) => handleModal(e, inv.invoice_id)}
-                                                    >
-                                                        <i className="bx bxs-edit"></i> Microsoft Excel (.xlsx)
-                                                    </Dropdown.Item>
-                                                    </Dropdown.Menu>
-                                                </Dropdown>
-                                                <button
-                                                    type="button"
-                                                    className=" btn btn-primary btn-w-icon"
-                                                    style={{ height: "100%" }}
-                                                >
-                                                    <i className="bx bxs-file-plus"></i> import
-                                                </button>
-                                            </div>
-                                            <DataView value={salesComplete} listTemplate={listTemplate} style={{marginTop: '.5rem'}} emptyMessage=' ' />
-                                            </>
-
-                                        )}
-                                        {/* <div className="table-responsive mt-4">
-                                            <table className="table" id="custTypeList" data-table-search="true"
-                                                data-table-sort="true" data-table-checkbox="true">
-                                                <thead>
-                                                    <tr>
-                                                        <th scope="col">
-                                                            <input className="form-check-input checkbox-primary checkbox-all"
-                                                                type="checkbox" />
-                                                        </th>
-                                                        <th scope="col" className="head-w-icon sorting" aria-label="product Name">
-                                                            order id
-                                                            <span className="sort-icon"></span>
-                                                        </th>
-                                                        <th scope="col" className="head-w-icon sorting" aria-label="category">
-                                                            order Date
-                                                            <span className="sort-icon"></span>
-                                                        </th>
-                                                        <th scope="col" className="head-w-icon sorting" aria-label="variant">
-                                                            Customer Name
-                                                            <span className="sort-icon"></span>
-                                                        </th> 
-                                                        <th scope="col" className="head-w-icon sorting" aria-label="sub variant">
-                                                            Customer type
-                                                            <span className="sort-icon"></span>
-                                                        </th>
-                                                        <th scope="col" className="head-w-icon sorting" aria-label="qty">
-                                                            Total
-                                                            <span className="sort-icon"></span>
-                                                        </th>
-                                                        <th scope="col" className="head-w-icon sorting" aria-label="sku">
-                                                            Status
-                                                            <span className="sort-icon"></span>
-                                                        </th>
-                                                        
-                                                        <th scope="col">Action</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody id="">
-                                                    {salesComplete ? 
-                                                        ( 
-                                                            salesComplete.map((sales, idx) => {
-                                                                return (
-                                                                    <tr key={`sales-list- ${idx}`}>
-                                                                        <th scope="row">
-                                                                            <input className="form-check-input checkbox-primary checkbox-single" type="checkbox" value="" />
-                                                                        </th>
-                                                                        <td>{sales.order_id}</td>
-                                                                        <td>{ConvertDate.convertToFullDate(sales.order_date, "/")}</td>
-                                                                        <td style={{textTransform:'capitalize'}}>{sales.customer.name}</td>
-                                                                        <td style={{textTransform:'capitalize'}}>{sales.customer.cust_type}</td>
-                                                                        <td>
-                                                                            <NumberFormat intlConfig={{
-                                                                                value: sales.grandtotal, 
-                                                                                locale: "id-ID",
-                                                                                style: "currency", 
-                                                                                currency: "IDR",
-                                                                            }} />
-                                                                        </td>
-                                                                        <td style={{textTransform:'capitalize'}}>
-                                                                            <span className={`badge badge-${
-                                                                                sales.order_status == "completed" ? 'success'
-                                                                                : sales.order_status == "pending" ? "secondary" 
-                                                                                : sales.order_status == "in-delivery" ? "warning" 
-                                                                                : sales.order_status == "canceled" ? "danger" 
-                                                                                : ""} light`}
-                                                                            >
-                                                                                {
-                                                                                    sales.order_status == "completed" ? 'completed'
-                                                                                    : sales.order_status == "pending" ? 'pending'
-                                                                                    : sales.order_status == "in-delivery" ? 'in-delivery'
-                                                                                    : sales.order_status == "canceled" ? 'canceled'
-                                                                                    : ""
-                                                                                }                                                                                
-                                                                            </span>
-                                                                        </td>
-                                                                        <td>
-                                                                            <span className="table-btn detail-table-data" aria-label="salesDetailModal" onClick={(e) => handleModalWData(e, sales ? sales.id : null)}>
-                                                                                <i className='bx bx-show'></i>
-                                                                            </span>
-                                                                            <span className="table-btn edit-table-data" aria-label="salesEditModal" onClick={(e) => handleModalWData(e, sales ? sales.id : null)}>
-                                                                                <i className='bx bxs-edit'></i></span>
-                                                                            <span className="table-btn del-table-data" aria-label="cancelSalesModal" onClick={(e) => handleModalWData(e, {endpoint: "sales", id: sales.id})}><i className='bx bx-trash'></i></span>
-                                                                        </td>
-                                                                    </tr>
-                                                                )
-                                                            })
-                                                            
-                                                        ):""
-                                                    }
-                                                </tbody>
-                                            </table>
-                                            <div className="table-end d-flex justify-content-between">
-                                                <p className="table-data-capt" id="tableCaption"></p>
-                                                <ul className="basic-pagination" id="paginationBtnRender"></ul>
-                                            </div>
-                                        </div> */}
-                            {/* </div>
-                                </div>  */}
                             <div className="tabs-content" style={openTab === "returnTab" ? { display: "block" } : { display: "none" }}>
                                 <div className="card card-table add-on-shadow">
                                     {!isMobile && !isMediumScr ?
@@ -4027,6 +3731,7 @@ export default function Sales({ handleSidebar, showSidebar }) {
                                                     removableSort
                                                     dataKey="order_id"
                                                     tableStyle={{ minWidth: "50rem" }}
+                                                    lazy
                                                     // filters={salesFilters}
                                                     filterDisplay='menu'
                                                     globalFilterFields={[
@@ -4041,8 +3746,11 @@ export default function Sales({ handleSidebar, showSidebar }) {
                                                     onFilter={(e) => setSalesFilters(e.filters)}
                                                     header={returnOrderHeader}
                                                     paginator
-                                                    totalRecordGlobal={totalRecordGlobal}
-                                                    rows={15}
+                                                    first={lazyStateRO.first}
+                                                    totalRecords={totalRecordRO}
+                                                    loading={lazyLoadingRO}
+                                                    onPage={onPageRO}
+                                                    rows={10}
                                                 >
                                                     <Column
                                                         selectionMode="multiple"
@@ -4182,10 +3890,6 @@ export default function Sales({ handleSidebar, showSidebar }) {
                                             </>
                                         )
                                     }
-
-
-
-
                                 </div>
                             </div>
                             <div className="tabs-content" style={openTab === "canceledTab" ? { display: "block" } : { display: "none" }}>
@@ -4198,6 +3902,7 @@ export default function Sales({ handleSidebar, showSidebar }) {
                                                 size="normal"
                                                 removableSort
                                                 stripedRows
+                                                lazy
                                                 // selectionMode={"checkbox"}
                                                 // selection={selectedSales}
                                                 // onSelectionChange={(e) => {
@@ -4221,8 +3926,12 @@ export default function Sales({ handleSidebar, showSidebar }) {
                                                 onFilter={(e) => setSalesFilters(e.filters)}
                                                 header={tableHeader2}
                                                 paginator
-                                                totalRecordGlobal={totalRecordGlobal}
-                                                rows={50}
+                                                lazy
+                                                first={lazyStateCanceled.first}
+                                                totalRecords={totalRecordCanceled}
+                                                onPage={onPageCanceled}
+                                                loading={lazyLoadingcanceled}
+                                                rows={10}
                                             >
                                                 <Column
                                                     selectionMode="multiple"
@@ -4357,102 +4066,23 @@ export default function Sales({ handleSidebar, showSidebar }) {
                                                     <i className="bx bxs-file-plus"></i> import
                                                 </button>
                                             </div>
-                                            <DataView value={salesCanceled} dataKey='order_id' listTemplate={listTemplate} paginator paginatorPosition='bottom' rows={10} style={{ marginTop: '.5rem' }} emptyMessage=' ' />
+                                            <DataView
+                                                value={salesCanceled}
+                                                dataKey='order_id'
+                                                listTemplate={listTemplate}
+                                                paginator
+                                                paginatorPosition='bottom'
+                                                lazy
+                                                first={lazyStateCanceled.first}
+                                                totalRecords={totalRecordCanceled}
+                                                onPage={onPageCanceled}
+                                                loading={lazyLoadingcanceled}
+                                                rows={10}
+                                                style={{ marginTop: '.5rem' }}
+                                                emptyMessage='data not available'
+                                            />
                                         </>
                                     )}
-
-                                    {/* <div className="table-responsive mt-4">
-                                            <table className="table" id="custTypeList" data-table-search="true"
-                                                data-table-sort="true" data-table-checkbox="true">
-                                                <thead>
-                                                    <tr>
-                                                        <th scope="col">
-                                                            <input className="form-check-input checkbox-primary checkbox-all"
-                                                                type="checkbox" />
-                                                        </th>
-                                                        <th scope="col" className="head-w-icon sorting" aria-label="product Name">
-                                                            order id
-                                                            <span className="sort-icon"></span>
-                                                        </th>
-                                                        <th scope="col" className="head-w-icon sorting" aria-label="category">
-                                                            order Date
-                                                            <span className="sort-icon"></span>
-                                                        </th>
-                                                        <th scope="col" className="head-w-icon sorting" aria-label="variant">
-                                                            Customer Name
-                                                            <span className="sort-icon"></span>
-                                                        </th> 
-                                                        <th scope="col" className="head-w-icon sorting" aria-label="sub variant">
-                                                            Customer type
-                                                            <span className="sort-icon"></span>
-                                                        </th>
-                                                        <th scope="col" className="head-w-icon sorting" aria-label="qty">
-                                                            Total
-                                                            <span className="sort-icon"></span>
-                                                        </th>
-                                                        <th scope="col" className="head-w-icon sorting" aria-label="sku">
-                                                            Status
-                                                            <span className="sort-icon"></span>
-                                                        </th>
-                                                        <th scope="col">Action</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody id="">
-                                                    {salesCanceled ? 
-                                                        ( 
-                                                            salesCanceled.map((sales, idx) => {
-                                                                return (
-                                                                    <tr key={`sales-list- ${idx}`}>
-                                                                        <th scope="row">
-                                                                            <input className="form-check-input checkbox-primary checkbox-single" type="checkbox" value="" />
-                                                                        </th>
-                                                                        <td>{sales.order_id}</td>
-                                                                        <td>{ConvertDate.convertToFullDate(sales.order_date, "/")}</td>
-                                                                        <td style={{textTransform:'capitalize'}}>{sales.customer.name}</td>
-                                                                        <td style={{textTransform:'capitalize'}}>{sales.customer.cust_type}</td>
-                                                                        <td>
-                                                                            <NumberFormat intlConfig={{
-                                                                                value: sales.grandtotal, 
-                                                                                locale: "id-ID",
-                                                                                style: "currency", 
-                                                                                currency: "IDR",
-                                                                            }} />
-                                                                        </td>
-                                                                        <td style={{textTransform:'capitalize'}}>
-                                                                            <span className={`badge badge-${
-                                                                                sales.order_status == "completed" ? 'success'
-                                                                                : sales.order_status == "pending" ? "secondary" 
-                                                                                : sales.order_status == "in-delivery" ? "warning" 
-                                                                                : sales.order_status == "canceled" ? "danger" 
-                                                                                : ""} light`}
-                                                                            >
-                                                                                {
-                                                                                    sales.order_status == "completed" ? 'completed'
-                                                                                    : sales.order_status == "pending" ? 'pending'
-                                                                                    : sales.order_status == "in-delivery" ? 'in-delivery'
-                                                                                    : sales.order_status == "canceled" ? 'canceled'
-                                                                                    : ""
-                                                                                }                                                                                
-                                                                            </span>
-                                                                        </td>
-                                                                        <td>
-                                                                            <span className="table-btn edit-table-data" aria-label="salesEditModal" onClick={(e) => handleModalWData(e, sales ? sales.id : null)}>
-                                                                                <i className='bx bxs-edit'></i></span>
-                                                                            <span className="table-btn del-table-data" aria-label="deleteSalesModal" onClick={(e) => handleModalWData(e, {endpoint: "sales", id: sales.id})}><i className='bx bx-trash'></i></span>
-                                                                        </td>
-                                                                    </tr>
-                                                                )
-                                                            })
-                                                            
-                                                        ):""
-                                                    }
-                                                </tbody>
-                                            </table>
-                                            <div className="table-end d-flex justify-content-between">
-                                                <p className="table-data-capt" id="tableCaption"></p>
-                                                <ul className="basic-pagination" id="paginationBtnRender"></ul>
-                                            </div>
-                                        </div> */}
                                 </div>
                             </div>
                         </div>
