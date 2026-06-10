@@ -95,18 +95,27 @@ export default function Sales({ handleSidebar, showSidebar }) {
         sortOrder: null,
         filters: {
             global: { value: '', matchMode: FilterMatchMode.CONTAINS }
-
         }
     });
     const [lazyStateRO, setLazyStateRO] = useState({
         first: 0,
         rows: 10,
         page: 1,
+        sortField: null,
+        sortOrder: null,
+        filters: {
+            global: { value: '', matchMode: FilterMatchMode.CONTAINS }
+        }
     });
     const [lazyStateCanceled, setLazyStateCanceled] = useState({
         first: 0,
         rows: 10,
         page: 1,
+        sortField: null,
+        sortOrder: null,
+        filters: {
+            global: { value: '', matchMode: FilterMatchMode.CONTAINS }
+        }
     });
     const [totalRecordSales, setTotalRecordSales] = useState(10);
     const [totalRecordRO, setTotalRecordRO] = useState(10);
@@ -143,6 +152,7 @@ export default function Sales({ handleSidebar, showSidebar }) {
     const [selectedSales, setSelectedSales] = useState(null);
     const [salesFilters, setSalesFilters] = useState(null);
     const [globalFilterValue, setGlobalFilterValue] = useState("");
+    const [activeSearch, setActiveSearch] = useState("");
     const [debouncedTerm, setDebouncedTerm] = useState("");
     const [salesFiltersMobile, setSalesFiltersMobile] = useState(null);
     const [mobileFilterValue, setMobileFilterValue] = useState("");
@@ -1366,7 +1376,7 @@ export default function Sales({ handleSidebar, showSidebar }) {
         //     // fetchStatus();
         fetchAllCust();
         fetchAllProd();
-        fetchAllRO();
+        // fetchAllRO();
     }, [])
 
     useEffect(() => {
@@ -1395,14 +1405,37 @@ export default function Sales({ handleSidebar, showSidebar }) {
     }, [globalFilterValue]);
 
     useEffect(() => {
-        // if (debouncedTerm) {
-        let _lazyState = { ...lazyState };
+        let _lazyState;
+        switch (activeSearch) {
+            case "allSales":
+                _lazyState = { ...lazyState };
 
-        _lazyState.filters.global.value = debouncedTerm;
-        _lazyState.first = 0; // CRITICAL: Reset pagination view to page 1 for new searches
-        _lazyState.page = 1;
-        setLazyState(_lazyState);
-        // }
+                _lazyState.filters.global.value = debouncedTerm;
+                _lazyState.first = 0; // CRITICAL: Reset pagination view to page 1 for new searches
+                _lazyState.page = 1;
+                setLazyState(_lazyState);
+                break;
+            case "roSales":
+                _lazyState = { ...lazyStateRO };
+
+                _lazyState.filters.global.value = debouncedTerm;
+                _lazyState.first = 0;
+                _lazyState.page = 1;
+                setLazyStateRO(_lazyState);
+                break;
+            case "canceledSales":
+                _lazyState = { ...lazyStateCanceled };
+
+                _lazyState.filters.global.value = debouncedTerm;
+                _lazyState.first = 0;
+                _lazyState.page = 1;
+                setLazyStateCanceled(_lazyState);
+                break;
+            default:
+                break;
+        }
+        setActiveSearch("");
+
     }, [debouncedTerm]);
 
     const tableHeader = (e) => {
@@ -1417,7 +1450,8 @@ export default function Sales({ handleSidebar, showSidebar }) {
                             type="text"
                             className="form-control input-w-icon-right"
                             value={globalFilterValue}
-                            onChange={(e) => setGlobalFilterValue(e.target.value)}
+                            aria-label="allSales"
+                            onChange={onGlobalFilterChange}
                             placeholder="Keyword Search"
                         />
                     </div>
@@ -1500,6 +1534,7 @@ export default function Sales({ handleSidebar, showSidebar }) {
                             type="text"
                             className="form-control input-w-icon-right"
                             value={globalFilterValue}
+                            aria-label="roSales"
                             onChange={onGlobalFilterChange}
                             placeholder="Keyword Search"
                         />
@@ -1592,6 +1627,7 @@ export default function Sales({ handleSidebar, showSidebar }) {
                             type="text"
                             className="form-control input-w-icon-right"
                             value={globalFilterValue}
+                            aria-label="canceledSales"
                             onChange={onGlobalFilterChange}
                             placeholder="Keyword Search"
                         />
@@ -1661,9 +1697,16 @@ export default function Sales({ handleSidebar, showSidebar }) {
 
     const clearFilter = () => {
         initFilters();
+        // allSales
         const _lazyState = { ...lazyState };
         _lazyState.filters.global.value = '';
         setLazyState(_lazyState);
+        const _lazyStateRO = { ...lazyStateRO };
+        _lazyState.filters.global.value = '';
+        setLazyStateRO(_lazyState);
+        const _lazyStateCanceled = { ...lazyStateCanceled };
+        _lazyState.filters.global.value = '';
+        setLazyStateCanceled(_lazyState);
     };
 
     const onFilterSales = (event) => {
@@ -1672,26 +1715,8 @@ export default function Sales({ handleSidebar, showSidebar }) {
     };
 
     const onGlobalFilterChange = (e) => {
-        const value = e.target.value;
-        let timer;
-        // let _filters = { ...salesFilters };
-
-        // _filters["global"].value = value;
-        // console.log(_filters)
-
-        // setSalesFilters(_filters);
-        // setGlobalFilterValue(value);
-
-        let _lazyState = { ...lazyState };
-
-        _lazyState.filters.global.value = value;
-        _lazyState.first = 0; // CRITICAL: Reset pagination view to page 1 for new searches
-
-
-        clearTimeout(timer);
-        timer = setTimeout(() => {
-            setLazyState(_lazyState);
-        }, 400);
+        setActiveSearch(e.currentTarget.ariaLabel);
+        setGlobalFilterValue(e.target.value);
     };
 
     const initFilters = () => {
@@ -2751,8 +2776,7 @@ export default function Sales({ handleSidebar, showSidebar }) {
 
     const lazyLoad = async () => {
         setLazyLoading(true);
-        // const start = lazyState.first;
-        // const end = lazyState.first + lazyState.rows;
+
         const queryParams = {
             first: lazyState.first,
             rows: lazyState.rows,
@@ -2761,10 +2785,8 @@ export default function Sales({ handleSidebar, showSidebar }) {
             globalFilter: lazyState.filters.global.value
         };
 
-        await axiosPrivate.get("sales/lazy-data", {
+        await axiosPrivate.get("/sales/lazy-data", {
             params: {
-                // offset: start,
-                // rowsPerPage: end
                 ...queryParams
             }
         })
@@ -2788,17 +2810,21 @@ export default function Sales({ handleSidebar, showSidebar }) {
     const lazyLoadCanceled = async () => {
         setLazyLoadingCanceled(true);
 
-        const start = lazyStateCanceled.first;
-        const end = lazyStateCanceled.first + lazyStateCanceled.rows;
+        const query = {
+            first: lazyStateCanceled.first,
+            rows: lazyStateCanceled.rows,
+            sortField: lazyStateCanceled.sortField,
+            sortOrder: lazyStateCanceled.sortOrder,
+            globalFilter: lazyStateCanceled.filters.global.value,
+            order_status: "canceled"
+        }
+
         await axiosPrivate.get("/sales/lazy/order-status", {
             params: {
-                offset: start,
-                rowsPerPage: end,
-                order_status: "canceled"
+                ...query
             }
         })
             .then(response => {
-                console.log(response)
                 setTotalRecordCanceled(response.data.totalData);
                 setSalesCanceled(response.data.rows);
                 setLazyLoadingCanceled(false);
@@ -2818,12 +2844,16 @@ export default function Sales({ handleSidebar, showSidebar }) {
     const lazyLoadRO = async () => {
         setLazyLoadingRO(true);
 
-        const start = lazyStateRO.first;
-        const end = lazyStateRO.first + lazyStateRO.rows;
-        await axiosPrivate.get("/sales/lazy-data", {
+        const query = {
+            first: lazyStateRO.first,
+            rows: lazyStateRO.rows,
+            sortField: lazyStateRO.sortField,
+            sortOrder: lazyStateRO.sortOrder,
+            globalFilter: lazyStateRO.filters.global.value
+        };
+        await axiosPrivate.get("/ro-lazy", {
             params: {
-                offset: start,
-                rowsPerPage: end
+                ...query
             }
         })
             .then(response => {
@@ -2835,7 +2865,7 @@ export default function Sales({ handleSidebar, showSidebar }) {
                 toast.current.show({
                     severity: "error",
                     summary: "Failed",
-                    detail: "Error when get canceled sales data",
+                    detail: "Error when get RO data",
                     life: 3000,
                 });
                 return [];
@@ -2861,19 +2891,13 @@ export default function Sales({ handleSidebar, showSidebar }) {
         }
     }, [cantCanceled]);
 
-    // useEffect(() => {
-    //     if (loading) {
-    //         lazyLoad();
-    //     }
-
-    // }, [loading, first, rows]);
     useEffect(() => {
         lazyLoad();
     }, [lazyState]);
 
-    // useEffect(() => {
-    //     lazyLoadRO();
-    // }, [lazyStateRO]);
+    useEffect(() => {
+        lazyLoadRO();
+    }, [lazyStateRO]);
 
     useEffect(() => {
         lazyLoadCanceled();
@@ -2909,79 +2933,30 @@ export default function Sales({ handleSidebar, showSidebar }) {
                             <div className="tabs">
                                 <div className={`tab-indicator ${openTab === "salesListTab" ? "active" : ""}`}
                                     id='salesListTab'
-                                    onClick={(e) => handleClick(e)}
+                                    onClick={(e) => { setGlobalFilterValue(""); handleClick(e); clearFilter() }}
                                 >
                                     <span className="tab-title">Penjualan</span>
                                 </div>
                                 <div className={`tab-indicator ${openTab === "addSalesTab" ? "active" : ""}`}
                                     id='addSalesTab'
-                                    onClick={(e) => handleClick(e)}
+                                    onClick={(e) => { setGlobalFilterValue(""); handleClick(e); clearFilter() }}
                                 >
                                     <span className="tab-title">Tambah data </span>
                                 </div>
-                                {/* <div className={`tab-indicator ${openTab === "completeTab" ? "active" : ""}`} 
-                                        id='completeTab' 
-                                        onClick={(e) => handleClick(e)}>
-                                        <span className="tab-title">selesai</span>
-                                    </div> */}
                                 <div className={`tab-indicator ${openTab === "returnTab" ? "active" : ""}`}
                                     id='returnTab'
-                                    onClick={(e) => handleClick(e)}>
+                                    onClick={(e) => { setGlobalFilterValue(""); handleClick(e); clearFilter() }}>
                                     <span className="tab-title">pengembalian</span>
                                 </div>
                                 <div className={`tab-indicator ${openTab === "canceledTab" ? "active" : ""}`}
                                     id='canceledTab'
-                                    onClick={(e) => handleClick(e)}>
+                                    onClick={(e) => { setGlobalFilterValue(""); handleClick(e); clearFilter() }}>
                                     <span className="tab-title">dibatalkan</span>
                                 </div>
 
                             </div>
                             <div className="tabs-content" style={openTab === "salesListTab" ? { display: "block" } : { display: "none" }}>
                                 <div className="card card-table add-on-shadow">
-                                    {/* <div className="wrapping-table-btn">
-                                            <span className="selected-row-stat">
-                                                <p className="total-row-selected"></p>
-                                                <button type="button" className=" btn btn-danger btn-w-icon">
-                                                    <i className='bx bx-trash'></i>Delete selected row
-                                                </button>
-                                            </span>
-                                            <button type="button" className="btn btn-light light"><i className='bx bx-filter-alt'></i>
-                                            </button>
-                                            <button type="button" className="btn btn-light light"><i className='bx bx-printer'></i>
-                                            </button>
-                                            <div className="btn-group">
-                                                <button type="button" className="btn btn-primary btn-w-icon dropdown-toggle"
-                                                    data-bs-toggle="dropdown" aria-expanded="false">
-                                                    <i className='bx bx-download'></i> export
-                                                </button>
-                                                <ul className="dropdown-menu">
-                                                    <li><a className="dropdown-item" href="#">PDF (.pdf)</a></li>
-                                                    <li><a className="dropdown-item" href="#">Microsoft Excel (.xlsx)</a></li>
-                                                </ul>
-                                            </div>
-                                            <button type="button" className=" btn btn-primary btn-w-icon">
-                                                <i className='bx bxs-file-plus'></i> import
-                                            </button>
-                                        </div>
-                                        <p className="card-title">filter</p>
-                                        <div className="filter-area">
-                                            <div className="table-search">
-                                                <div className="input-group-right">
-                                                    <span className="input-group-icon input-icon-right"><i
-                                                            className="zwicon-search"></i></span>
-                                                    <input type="text" className="form-control input-w-icon-right"
-                                                        placeholder="Search customer..." />
-                                                </div>
-                                            </div>
-                                            <InputWSelect
-                                                name="custTypeFilter"
-                                                selectLabel="Select customer type"
-                                                options={[{id: "member", value: "member"}, {id:"non-member", value:"non-member"}]}
-                                                optionKeys={["id", "value"]}
-                                                value={(selected) => setCustTypeFilter(selected)}
-                                            />
-                                        </div> */}
-
                                     {!isMobile && !isMediumScr ?
                                         (
                                             <DataTable
@@ -3182,6 +3157,8 @@ export default function Sales({ handleSidebar, showSidebar }) {
                                         )
                                     }
                                 </div>
+                                {/* sales edit modal */}
+                                <SalesEditModal show={showModal === "salesEditModal" ? true : false} onHide={handleCloseModal} data={showModal == "salesEditModal" ? salesListObj : ""} />
                             </div>
                             <div className="tabs-content" style={openTab === "addSalesTab" ? { display: "block" } : { display: "none" }}>
                                 <div className="card card-table add-on-shadow">
@@ -3794,8 +3771,6 @@ export default function Sales({ handleSidebar, showSidebar }) {
                                                     removableSort
                                                     dataKey="order_id"
                                                     tableStyle={{ minWidth: "50rem" }}
-                                                    lazy
-                                                    // filters={salesFilters}
                                                     filterDisplay='menu'
                                                     globalFilterFields={[
                                                         "return_order_id",
@@ -3809,10 +3784,12 @@ export default function Sales({ handleSidebar, showSidebar }) {
                                                     onFilter={(e) => setSalesFilters(e.filters)}
                                                     header={returnOrderHeader}
                                                     paginator
-                                                    first={lazyStateRO.first}
+                                                    filters={lazyStateRO.filters}
+                                                    lazy
+                                                    first={lazyLoadingRO.first}
                                                     totalRecords={totalRecordRO}
-                                                    loading={lazyLoadingRO}
                                                     onPage={onPageRO}
+                                                    loading={lazyLoadingRO}
                                                     rows={10}
                                                 >
                                                     <Column
@@ -3965,7 +3942,7 @@ export default function Sales({ handleSidebar, showSidebar }) {
                                                 size="normal"
                                                 removableSort
                                                 stripedRows
-                                                lazy
+                                                onRowClick={onRowClick}
                                                 // selectionMode={"checkbox"}
                                                 // selection={selectedSales}
                                                 // onSelectionChange={(e) => {
@@ -4167,96 +4144,92 @@ export default function Sales({ handleSidebar, showSidebar }) {
                             (
                                 <EditReturnOrderModal show={showModal === "roEditModal" ? true : false} data={showModal == "roEditModal" ? salesListObj : ""} onHide={handleCloseModal} />
                             )
-                            : showModal === "salesEditModal" ?
+                            : showModal === "cancelSalesModal" ?
                                 (
-                                    <SalesEditModal show={showModal === "salesEditModal" ? true : false} onHide={handleCloseModal} data={showModal == "salesEditModal" ? salesListObj : ""} />
+                                    <ConfirmModal show={showModal === "cancelSalesModal" ? true : false} onHide={handleCloseModal}
+                                        data={showModal === "cancelSalesModal" ? salesListObj : ""}
+                                        msg={"Yakin untuk membatalkan order ini?"}
+                                        returnValue={(value) => { setCantCanceled(value); console.log(value) }}
+                                        returnAct={(act) => {
+                                            act ? setRefetch(true)
+                                                : setRefetch(false);
+                                        }}
+                                    />
                                 )
-                                : showModal === "cancelSalesModal" ?
+                                : showModal === "roCancelModal" ?
                                     (
-                                        <ConfirmModal show={showModal === "cancelSalesModal" ? true : false} onHide={handleCloseModal}
-                                            data={showModal === "cancelSalesModal" ? salesListObj : ""}
-                                            msg={"Yakin untuk membatalkan order ini?"}
-                                            returnValue={(value) => { setCantCanceled(value); console.log(value) }}
-                                            returnAct={(act) => {
-                                                act ? setRefetch(true)
-                                                    : setRefetch(false);
-                                            }}
+                                        <ConfirmModal show={showModal === "roCancelModal" ? true : false} onHide={handleCloseModal}
+                                            data={showModal === "roCancelModal" ? salesListObj : ""}
+                                            msg={"Yakin untuk membatalkan pengembalian ini?"}
                                         />
                                     )
-                                    : showModal === "roCancelModal" ?
+                                    : showModal === "warningCancelModal" ?
                                         (
-                                            <ConfirmModal show={showModal === "roCancelModal" ? true : false} onHide={handleCloseModal}
-                                                data={showModal === "roCancelModal" ? salesListObj : ""}
-                                                msg={"Yakin untuk membatalkan pengembalian ini?"}
+                                            <ConfirmModal show={showModal === "warningCancelModal" ? true : false} onHide={handleCloseModal}
+                                                data={showModal === "warningCancelModal" ? salesListObj : ""}
+                                                msg={
+                                                    <p style={{ marginBottom: 0 }}>
+                                                        Tidak dapat membatalkan order ini, karena hanya satu-satunya order di invoice dan terdapat pembayaran yang belum penuh.<br />
+                                                        Coba hapus pembayaran yang terkait terlebih dahulu lalu coba lagi.
+                                                    </p>
+                                                }
+                                                returnValue={(value) => { setCantCanceled(value) }}
                                             />
                                         )
-                                        : showModal === "warningCancelModal" ?
+
+                                        : showModal === "existInvOrderModal" ?
                                             (
-                                                <ConfirmModal show={showModal === "warningCancelModal" ? true : false} onHide={handleCloseModal}
-                                                    data={showModal === "warningCancelModal" ? salesListObj : ""}
+                                                <ConfirmModal show={showModal === "existInvOrderModal" ? true : false} onHide={handleCloseModal}
+                                                    data={showModal === "existInvOrderModal" ? salesListObj : ""}
                                                     msg={
                                                         <p style={{ marginBottom: 0 }}>
-                                                            Tidak dapat membatalkan order ini, karena hanya satu-satunya order di invoice dan terdapat pembayaran yang belum penuh.<br />
-                                                            Coba hapus pembayaran yang terkait terlebih dahulu lalu coba lagi.
+                                                            Ada invoice dengan pelanggan yang sama, mau ditambahkan ke invoice?
                                                         </p>
                                                     }
-                                                    returnValue={(value) => { setCantCanceled(value) }}
+                                                    returnValue={(value) => { setMergeOrderInv(value) }}
                                                 />
                                             )
-
-                                            : showModal === "existInvOrderModal" ?
+                                            : showModal === "confirmationModal" ?
                                                 (
-                                                    <ConfirmModal show={showModal === "existInvOrderModal" ? true : false} onHide={handleCloseModal}
-                                                        data={showModal === "existInvOrderModal" ? salesListObj : ""}
-                                                        msg={
-                                                            <p style={{ marginBottom: 0 }}>
-                                                                Ada invoice dengan pelanggan yang sama, mau ditambahkan ke invoice?
-                                                            </p>
-                                                        }
-                                                        returnValue={(value) => { setMergeOrderInv(value) }}
+                                                    <ConfirmModal show={showModal === "confirmationModal" ? true : false} onHide={handleCloseModal}
+                                                        data={showModal === "confirmationModal" ? salesListObj : ""}
+                                                        msg={modalMsg}
+                                                        returnValue={(confirm) => { setConfirm(confirm) }}
                                                     />
                                                 )
-                                                : showModal === "confirmationModal" ?
+                                                : showModal === "addDiscount" ?
                                                     (
-                                                        <ConfirmModal show={showModal === "confirmationModal" ? true : false} onHide={handleCloseModal}
-                                                            data={showModal === "confirmationModal" ? salesListObj : ""}
-                                                            msg={modalMsg}
-                                                            returnValue={(confirm) => { setConfirm(confirm) }}
-                                                        />
+                                                        <DiscountModal show={showModal === "addDiscount" ? true : false} onHide={handleCloseModal} totalCart={salesEndNote ? salesEndNote.subtotal : 0} returnVal={(val) => { setSalesDisc(val) }} />
                                                     )
-                                                    : showModal === "addDiscount" ?
+                                                    : showModal === "createPayment" ?
                                                         (
-                                                            <DiscountModal show={showModal === "addDiscount" ? true : false} onHide={handleCloseModal} totalCart={salesEndNote ? salesEndNote.subtotal : 0} returnVal={(val) => { setSalesDisc(val) }} />
+                                                            <CreatePayment
+                                                                show={showModal === "createPayment" ? true : false}
+                                                                onHide={handleCloseModal}
+                                                                source={'order'}
+                                                                data={salesListObj}
+                                                                totalCart={showModal === "createPayment" && salesEndNote ? salesEndNote.grandtotal : ""}
+                                                                returnValue={(paymentData) => { setPaidData(paymentData) }}
+                                                            />
                                                         )
-                                                        : showModal === "createPayment" ?
+
+                                                        : showModal === "viewReasonReturn" ?
                                                             (
-                                                                <CreatePayment
-                                                                    show={showModal === "createPayment" ? true : false}
+                                                                <ModalTextContent
+                                                                    show={showModal === "viewReasonReturn" ? true : false}
                                                                     onHide={handleCloseModal}
-                                                                    source={'order'}
-                                                                    data={salesListObj}
-                                                                    totalCart={showModal === "createPayment" && salesEndNote ? salesEndNote.grandtotal : ""}
-                                                                    returnValue={(paymentData) => { setPaidData(paymentData) }}
+                                                                    data={showModal === "viewReasonReturn" ? salesListObj : null}
                                                                 />
                                                             )
-
-                                                            : showModal === "viewReasonReturn" ?
+                                                            : showModal === "viewReturnMethod" ?
                                                                 (
                                                                     <ModalTextContent
-                                                                        show={showModal === "viewReasonReturn" ? true : false}
+                                                                        show={showModal === "viewReturnMethod" ? true : false}
                                                                         onHide={handleCloseModal}
-                                                                        data={showModal === "viewReasonReturn" ? salesListObj : null}
+                                                                        data={showModal === "viewReturnMethod" ? salesListObj : null}
                                                                     />
                                                                 )
-                                                                : showModal === "viewReturnMethod" ?
-                                                                    (
-                                                                        <ModalTextContent
-                                                                            show={showModal === "viewReturnMethod" ? true : false}
-                                                                            onHide={handleCloseModal}
-                                                                            data={showModal === "viewReturnMethod" ? salesListObj : null}
-                                                                        />
-                                                                    )
-                                                                    : ""
+                                                                : ""
             }
 
             {/* toast area */}
