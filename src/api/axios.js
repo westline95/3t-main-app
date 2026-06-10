@@ -7,8 +7,13 @@ export default axios.create({
     baseURL: BASE_URL
 });
 
+const clientTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone; 
+
 export const axiosPrivate = axios.create({
     baseURL: BASE_URL,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+        'Content-Type': 'application/json',
+        'x-client-timezone': clientTimezone
+    },
     withCredentials: true
 });

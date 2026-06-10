@@ -91,6 +91,12 @@ export default function Sales({ handleSidebar, showSidebar }) {
         first: 0,
         rows: 10,
         page: 1,
+        sortField: null,
+        sortOrder: null,
+        filters: {
+            global: { value: '', matchMode: FilterMatchMode.CONTAINS }
+
+        }
     });
     const [lazyStateRO, setLazyStateRO] = useState({
         first: 0,
@@ -137,6 +143,7 @@ export default function Sales({ handleSidebar, showSidebar }) {
     const [selectedSales, setSelectedSales] = useState(null);
     const [salesFilters, setSalesFilters] = useState(null);
     const [globalFilterValue, setGlobalFilterValue] = useState("");
+    const [debouncedTerm, setDebouncedTerm] = useState("");
     const [salesFiltersMobile, setSalesFiltersMobile] = useState(null);
     const [mobileFilterValue, setMobileFilterValue] = useState("");
     const [refetch, setRefetch] = useState(false);
@@ -642,8 +649,10 @@ export default function Sales({ handleSidebar, showSidebar }) {
                                 setShowModal("existInvOrderModal");
                             }
 
-                            fetchAllSales();
-                            fetchAllRO();
+                            // fetchAllSales();
+                            // fetchAllRO();
+                            // refetch
+                            setRefetch(true);
                             resp.data.customer_id && fetchDetailedCust(resp.data.customer_id);
                         })
                         .catch(err => {
@@ -655,8 +664,9 @@ export default function Sales({ handleSidebar, showSidebar }) {
                             });
                         })
                 } else {
-                    fetchAllSales();
-                    fetchAllRO();
+                    // fetchAllSales();
+                    // fetchAllRO();
+                    setRefetch(true);
                     !guestMode && fetchDetailedCust(resp.data.customer_id);
                 }
 
@@ -1359,19 +1369,41 @@ export default function Sales({ handleSidebar, showSidebar }) {
         fetchAllRO();
     }, [])
 
-    // useEffect(() => {
-    //     if (refetch) {
-    //         fetchAllSales();
-    //         fetchAllCourier();
-    //         // fetchCustType();
-    //         // fetchStatus();
-    //         fetchAllCust();
-    //         fetchAllProd();
-    //         fetchAllRO();
-    //         setShowModal("");
-    //         setRefetch(false);
-    //     }
-    // }, [refetch]);
+    useEffect(() => {
+        if (refetch) {
+            // fetchAllSales();
+            // fetchAllCourier();
+            // // fetchCustType();
+            // // fetchStatus();
+            // fetchAllCust();
+            // fetchAllProd();
+            // fetchAllRO();
+            lazyLoad();  //sales data
+            lazyLoadRO(); //RO
+            lazyLoadCanceled(); //sales canceled
+            setShowModal("");
+            setRefetch(false);
+        }
+    }, [refetch]);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedTerm(globalFilterValue);
+        }, 500); // 500ms delay
+
+        return () => clearTimeout(timer); // Cleanup and clear timer if user types again
+    }, [globalFilterValue]);
+
+    useEffect(() => {
+        // if (debouncedTerm) {
+        let _lazyState = { ...lazyState };
+
+        _lazyState.filters.global.value = debouncedTerm;
+        _lazyState.first = 0; // CRITICAL: Reset pagination view to page 1 for new searches
+        _lazyState.page = 1;
+        setLazyState(_lazyState);
+        // }
+    }, [debouncedTerm]);
 
     const tableHeader = (e) => {
         return (
@@ -1385,7 +1417,7 @@ export default function Sales({ handleSidebar, showSidebar }) {
                             type="text"
                             className="form-control input-w-icon-right"
                             value={globalFilterValue}
-                            onChange={onGlobalFilterChange}
+                            onChange={(e) => setGlobalFilterValue(e.target.value)}
                             placeholder="Keyword Search"
                         />
                     </div>
@@ -1623,18 +1655,43 @@ export default function Sales({ handleSidebar, showSidebar }) {
         );
     };
 
+    useEffect(() => {
+        initFilters();
+    }, []);
+
     const clearFilter = () => {
         initFilters();
+        const _lazyState = { ...lazyState };
+        _lazyState.filters.global.value = '';
+        setLazyState(_lazyState);
+    };
+
+    const onFilterSales = (event) => {
+        event['first'] = 0;
+        setLazyState(event);
     };
 
     const onGlobalFilterChange = (e) => {
         const value = e.target.value;
-        let _filters = { ...salesFilters };
+        let timer;
+        // let _filters = { ...salesFilters };
 
-        _filters["global"].value = value;
+        // _filters["global"].value = value;
+        // console.log(_filters)
 
-        setSalesFilters(_filters);
-        setGlobalFilterValue(value);
+        // setSalesFilters(_filters);
+        // setGlobalFilterValue(value);
+
+        let _lazyState = { ...lazyState };
+
+        _lazyState.filters.global.value = value;
+        _lazyState.first = 0; // CRITICAL: Reset pagination view to page 1 for new searches
+
+
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+            setLazyState(_lazyState);
+        }, 400);
     };
 
     const initFilters = () => {
@@ -1734,7 +1791,7 @@ export default function Sales({ handleSidebar, showSidebar }) {
                 detail: "Tidak dapat mengubah order jika sudah masuk invoice",
                 life: 3000,
             })
-            : handleModalWData(e, { endpoint: "sales", id: data.order_id, action: 'update', ...data })
+            : handleModalWData({ currentTarget: { ariaLabel: "salesEditModal" } }, { endpoint: "sales", id: data.order_id, action: 'update', ...data })
     }
 
     const actionCell = (rowData, rowIndex) => {
@@ -2694,13 +2751,21 @@ export default function Sales({ handleSidebar, showSidebar }) {
 
     const lazyLoad = async () => {
         setLazyLoading(true);
+        // const start = lazyState.first;
+        // const end = lazyState.first + lazyState.rows;
+        const queryParams = {
+            first: lazyState.first,
+            rows: lazyState.rows,
+            sortField: lazyState.sortField,
+            sortOrder: lazyState.sortOrder,
+            globalFilter: lazyState.filters.global.value
+        };
 
-        const start = lazyState.first;
-        const end = lazyState.first + lazyState.rows;
-        await axiosPrivate.get("/sales/lazy-data", {
+        await axiosPrivate.get("sales/lazy-data", {
             params: {
-                offset: start,
-                rowsPerPage: end
+                // offset: start,
+                // rowsPerPage: end
+                ...queryParams
             }
         })
             .then(response => {
@@ -2723,8 +2788,8 @@ export default function Sales({ handleSidebar, showSidebar }) {
     const lazyLoadCanceled = async () => {
         setLazyLoadingCanceled(true);
 
-        const start = lazyState.first;
-        const end = lazyState.first + lazyState.rows;
+        const start = lazyStateCanceled.first;
+        const end = lazyStateCanceled.first + lazyStateCanceled.rows;
         await axiosPrivate.get("/sales/lazy/order-status", {
             params: {
                 offset: start,
@@ -2753,8 +2818,8 @@ export default function Sales({ handleSidebar, showSidebar }) {
     const lazyLoadRO = async () => {
         setLazyLoadingRO(true);
 
-        const start = lazyState.first;
-        const end = lazyState.first + lazyState.rows;
+        const start = lazyStateRO.first;
+        const end = lazyStateRO.first + lazyStateRO.rows;
         await axiosPrivate.get("/sales/lazy-data", {
             params: {
                 offset: start,
@@ -2778,9 +2843,7 @@ export default function Sales({ handleSidebar, showSidebar }) {
             )
     }
 
-    useEffect(() => {
-        initFilters();
-    }, []);
+
 
     useEffect(() => {
         if (cantCanceled) {
@@ -2936,7 +2999,7 @@ export default function Sales({ handleSidebar, showSidebar }) {
                                                 dataKey="order_id"
                                                 style={{ marginTop: '1.5rem' }}
                                                 tableStyle={{ minWidth: "50rem" }}
-                                                filters={salesFilters}
+                                                filters={lazyState.filters}
                                                 filterDisplay='menu'
                                                 globalFilterFields={[
                                                     "order_id",
@@ -2950,7 +3013,7 @@ export default function Sales({ handleSidebar, showSidebar }) {
                                                 ]}
 
                                                 emptyMessage={emptyStateHandler}
-                                                onFilter={(e) => setSalesFilters(e.filters)}
+                                                onFilter={onFilterSales}
                                                 header={tableHeader}
                                                 paginator
                                                 lazy
