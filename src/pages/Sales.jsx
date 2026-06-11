@@ -3152,7 +3152,19 @@ export default function Sales({ handleSidebar, showSidebar }) {
                                                         <i className="bx bxs-file-plus"></i> import
                                                     </button>
                                                 </div>
-                                                <DataView value={salesData} dataKey='order_id' paginator totalRecords={totalRecordSales} paginatorPosition='bottom' lazy first={lazyState.first} rows={10} onPage={onPage} listTemplate={listTemplate} style={{ marginTop: '.5rem' }} />
+                                                <DataView
+                                                    value={salesData}
+                                                    dataKey='order_id'
+                                                    paginator
+                                                    totalRecords={totalRecordSales}
+                                                    paginatorPosition='bottom'
+                                                    lazy
+                                                    first={lazyState.first}
+                                                    rows={10}
+                                                    onPage={onPage}
+                                                    listTemplate={listTemplate}
+                                                    style={{ marginTop: '.5rem' }}
+                                                />
                                             </>
                                         )
                                     }
