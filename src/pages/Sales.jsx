@@ -121,6 +121,7 @@ export default function Sales({ handleSidebar, showSidebar }) {
     const [totalRecordRO, setTotalRecordRO] = useState(10);
     const [totalRecordCanceled, setTotalRecordCanceled] = useState(10);
     const [salesData, setSalesData] = useState(null || []);
+    const [salesDataView, setSalesDataView] = useState(null || []);
 
     // const [lazyLoading, setLazyLoading] = useState(false);
     const [salesComplete, setSalesComplete] = useState(null);
@@ -191,11 +192,34 @@ export default function Sales({ handleSidebar, showSidebar }) {
     const onPage = (event) => {
         setLazyState(event);
     };
+    const onPageView = (event) => {
+        let _lazyState;
+        _lazyState = { ...lazyState };
+        _lazyState.first = event.first;
+        _lazyState.page = event.page;
+        setLazyState(_lazyState);
+    }; 
+    
     const onPageRO = (event) => {
         setLazyStateRO(event);
     };
+    const onPageViewRO = (event) => {
+        let _lazyState;
+        _lazyState = { ...lazyStateRO };
+        _lazyState.first = event.first;
+        _lazyState.page = event.page;
+        setLazyStateRO(_lazyState);
+    };
+    
     const onPageCanceled = (event) => {
         setLazyStateCanceled(event);
+    };
+    const onPageViewCanceled = (event) => {
+        let _lazyState;
+        _lazyState = { ...lazyStateCanceled };
+        _lazyState.first = event.first;
+        _lazyState.page = event.page;
+        setLazyStateCanceled(_lazyState);
     };
 
     const fetchAllSales = async () => {
@@ -1700,13 +1724,19 @@ export default function Sales({ handleSidebar, showSidebar }) {
         // allSales
         const _lazyState = { ...lazyState };
         _lazyState.filters.global.value = '';
+        _lazyState.first = 0;
+        _lazyState.page = 1;
         setLazyState(_lazyState);
         const _lazyStateRO = { ...lazyStateRO };
-        _lazyState.filters.global.value = '';
-        setLazyStateRO(_lazyState);
+        _lazyStateRO.filters.global.value = '';
+        _lazyStateRO.first = 0;
+        _lazyStateRO.page = 1;
+        setLazyStateRO(_lazyStateRO);
         const _lazyStateCanceled = { ...lazyStateCanceled };
-        _lazyState.filters.global.value = '';
-        setLazyStateCanceled(_lazyState);
+        _lazyStateCanceled.filters.global.value = '';
+        _lazyStateCanceled.first = 0;
+        _lazyStateCanceled.page = 1;
+        setLazyStateCanceled(_lazyStateCanceled);
     };
 
     const onFilterSales = (event) => {
@@ -1857,20 +1887,19 @@ export default function Sales({ handleSidebar, showSidebar }) {
     };
 
     const returnOrderActionCell = (rowData, rowIndex) => {
-        console.log(rowData)
         return (
             <Dropdown drop={rowIndex == roData.length - 1 ? "up" : "down"}>
                 <Dropdown.Toggle as={CustomToggle.CustomToggle1} id="dropdown-custom-components" ></Dropdown.Toggle>
 
                 <Dropdown.Menu align={"end"}>
-                    {rowData.status?.toLowerCase() !== "dikonfirmasi" ?
-                        (
-                            <>
                                 <Dropdown.Item eventKey={rowIndex} as="button" aria-label="roEditModal"
                                     onClick={(e) => handleModalWData(e, { id: rowData.return_order_id, ro: { ...rowData } })}
                                 >
                                     <i className='bx bxs-edit'></i> Edit pengembalian
                                 </Dropdown.Item>
+                    {rowData.status?.toLowerCase() !== "dikonfirmasi" ?
+                        (
+                            <>
                                 <Dropdown.Item eventKey={rowIndex} as="button" aria-label="roCancelModal" onClick={(e) => handleModalWData(
                                     e,
                                     {
@@ -2081,10 +2110,10 @@ export default function Sales({ handleSidebar, showSidebar }) {
                             textTransform: 'capitalize',
                         }}
                     >
-                        {/* <div className="flex flex-row justify-content-between">
-                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Pelanggan:</p>
-                    <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>{rowData.customer_id ? `${rowData.customer?.name} (${rowData.customer_id})` : `guest.name (non-member)`}</p>
-                </div> */}
+                        <div className="flex flex-row justify-content-between">
+                            <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>Pelanggan:</p>
+                            <p style={{marginBottom: 0, fontSize: 14, color: '#7d8086'}}>{rowData.customer_id ? `${rowData.customer?.name}` : `guest.name (non-member)`}</p>
+                        </div>
                         <div className="flex flex-row justify-content-between">
                             <p style={{ marginBottom: 0, fontSize: 14, color: '#7d8086' }}>Total refund:</p>
                             <p style={{ marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right' }}>
@@ -2284,249 +2313,142 @@ export default function Sales({ handleSidebar, showSidebar }) {
         );
     };
 
-    const mobileFilterFunc = (e, dataSource) => {
-        setMobileFilterValue(e.target.value);
-        e.target.value == "" ? setMobileSearchMode(false) : setMobileSearchMode(true);
-
-        if (dataSource == "mainData") {
-            const value = e.target.value.toLowerCase();
-            console.log(value)
-            const filtered = salesMain.filter(item => {
-                console.log(item)
-                const query = value;
-                return (
-                    item.customer.name.toLowerCase().includes(query) ||
-                    item.order_id.toLowerCase().includes(query)
-                );
-            });
-            console.log(filtered)
-            setSalesFilters(filtered);
-
-        }
-    }
-
     const itemTemplate = (rowData, index) => {
-        if (lazyLoading) {
-            return
-            (
-                <>
-                    <div className="col-12" key={rowData.order_id} style={{ position: 'relative' }}>
-                        <Skeleton className='flex flex-column xl:align-items-start gap-2 static-shadow'
-                            style={{
-                                // backgroundColor: '#F8F9FD',
-                                padding: '1rem',
-                                boxShadow: '1px 1px 7px #9a9acc1a',
-                                borderRadius: '9px',
-                                position: 'relative'
-                            }}
-                        >
+        return (
+            <div className="col-12" key={rowData.order_id} style={{ position: 'relative' }}>
+                <div className='flex flex-column xl:align-items-start gap-2 static-shadow'
+                    style={{
+                        backgroundColor: '#F8F9FD',
+                        padding: '1rem',
+                        boxShadow: '1px 1px 7px #9a9acc1a',
+                        borderRadius: '9px',
+                        position: 'relative'
+                    }}
+                    aria-label="salesEditModal"
+                    onClick={(e) => handleModalWData(e, { endpoint: "sales", id: rowData.order_id, action: 'update', ...rowData })}
+                >
 
-                            <Skeleton className="flex align-items-center gap-3"
-                                style={{
-                                    textTransform: 'capitalize',
-                                    paddingBottom: '.75rem',
-                                    borderBottom: '1px solid rgba(146, 146, 146, .2509803922)'
-                                }}
-                            >
-                                <Skeleton className="user-img" style={{ marginRight: 0 }}></Skeleton>
-                                <div style={{ width: '80%' }}>
-                                    <Skeleton style={{ marginBottom: 0 }}></Skeleton>
-                                    <Skeleton></Skeleton>
-                                    <div className='flex flex-row gap-2' style={{ fontSize: 13, marginTop: '.5rem' }}>
-                                        <Skeleton className={`badge`}></Skeleton>
-                                        <Skeleton className={`badge`}></Skeleton>
-                                        <Skeleton className="verified-inv">
-                                            <i className='bx bx-check-shield'></i>
-                                        </Skeleton>
-                                    </div>
-                                </div>
-                            </Skeleton>
-                            <div className="flex flex-column gap-1"
-                                style={{
-                                    textTransform: 'capitalize',
-                                }}
-                            >
-                                <div className="flex flex-row justify-content-between">
-                                    <p style={{ marginBottom: 0, fontSize: 14, color: '#7d8086' }}>Pelanggan:</p>
-                                    <Skeleton style={{ marginBottom: 0, fontSize: 14 }}></Skeleton>
-                                </div>
-                                <div className="flex flex-row justify-content-between">
-                                    <p style={{ marginBottom: 0, fontSize: 14, color: '#7d8086' }}>Total order:</p>
-                                    <Skeleton style={{ marginBottom: 0, fontSize: 14, textAlign: 'right' }}></Skeleton>
-                                </div>
-                                <div className="flex flex-row justify-content-between">
-                                    <p style={{ marginBottom: 0, fontSize: 14, color: '#7d8086' }}>Tipe pembayaran:</p>
-                                    <p style={{ marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right' }}>
-                                        <Skeleton className={`badge `}></Skeleton>
-                                    </p>
-                                </div>
-                            </div>
-                        </Skeleton>
-                        <Dropdown style={{ position: 'absolute', top: 10, right: 9, padding: '1rem 1rem .5rem 1rem' }}>
-                            {/* <Dropdown.Toggle as={CustomToggle.CustomToggle1} id="dropdown-custom-components" ></Dropdown.Toggle>
-                            <Dropdown.Menu align={"end"}>
-                                <Dropdown.Item eventKey="1" as="button"
-                                    aria-label="salesEditModal"
-                                    onClick={(e) => handleModalWData(e, { endpoint: "sales", id: rowData.order_id, action: 'update', ...rowData })}
-                                >
-                                    <i className='bx bxs-edit'></i> Ubah order
-                                </Dropdown.Item>
-                                <Dropdown.Item eventKey="1" as="button"
-                                    aria-label="cancelSalesModal"
-                                    onClick={(e) => handleModalWData(
-                                        e,
-                                        {
-                                            endpoint: "sales",
-                                            id: rowData.order_id,
-                                            action: 'canceled',
-                                            items: { ...rowData }
-                                        }
-                                    )}
-                                >
-                                    <i className='bx bx-trash'></i> Batalkan order
-                                </Dropdown.Item>
-                            </Dropdown.Menu> */}
-                        </Dropdown>
-                    </div>
-                </>
-            )
-        } else {
-            return (
-                <div className="col-12" key={rowData.order_id} style={{ position: 'relative' }}>
-                    <div className='flex flex-column xl:align-items-start gap-2 static-shadow'
+                    <div className="flex align-items-center gap-3"
                         style={{
-                            backgroundColor: '#F8F9FD',
-                            padding: '1rem',
-                            boxShadow: '1px 1px 7px #9a9acc1a',
-                            borderRadius: '9px',
-                            position: 'relative'
+                            textTransform: 'capitalize',
+                            paddingBottom: '.75rem',
+                            borderBottom: '1px solid rgba(146, 146, 146, .2509803922)'
                         }}
-                        aria-label="salesEditModal"
-                        onClick={(e) => handleModalWData(e, { endpoint: "sales", id: rowData.order_id, action: 'update', ...rowData })}
                     >
-
-                        <div className="flex align-items-center gap-3"
-                            style={{
-                                textTransform: 'capitalize',
-                                paddingBottom: '.75rem',
-                                borderBottom: '1px solid rgba(146, 146, 146, .2509803922)'
-                            }}
-                        >
-                            <se className="user-img" style={{ marginRight: 0 }}>
-                                <img
-                                    src={
-                                        rowData.img ? rowData.img
-                                            : `https://res.cloudinary.com/du3qbxrmb/image/upload/v1751378806/no-img_u5jpuh.jpg`
-                                    }
-                                    alt=""
-                                />
-                            </se>
-                            <div style={{ width: '80%' }}>
-                                <p style={{ marginBottom: 0, fontSize: 15, fontWeight: 600 }}>{rowData.order_id}</p>
-                                <p style={{ marginBottom: 0, fontSize: 13, color: '#7d8086' }}>{ConvertDate.LocaleStringDate(rowData.order_date)}</p>
-                                <div className='flex flex-row gap-2' style={{ fontSize: 13, marginTop: '.5rem' }}>
-                                    <span className={`badge badge-${rowData.order_type == "walk-in" ? 'primary'
-                                        : rowData.order_type == "delivery" ? "warning"
-                                            : ""} light`}
-                                    >
-                                        {
-                                            rowData.order_type
-                                        }
-                                    </span>
-                                    <span className={`badge badge-${rowData.order_status == "completed" ? 'success'
-                                        : rowData.order_status == "pending" ? "secondary"
-                                            : rowData.order_status == "in-delivery" ? "warning"
-                                                : rowData.order_status == "canceled" ? "danger"
-                                                    : rowData.order_status == "confirmed" ? "primary"
-                                                        : ""} light`}
-                                    >
-                                        {
-                                            rowData.order_status == "completed" ? 'selesai'
-                                                : rowData.order_status == "pending" ? 'pending'
-                                                    : rowData.order_status == "in-delivery" ? 'in-delivery'
-                                                        : rowData.order_status == "canceled" ? 'batal'
-                                                            : rowData.order_status == "confirmed" ? 'dikonfirmasi'
-                                                                : ""
-                                        }
-                                    </span>
-                                    {rowData.invoice ?
-                                        (
-                                            <span className="verified-inv">
-                                                <i className='bx bx-check-shield'></i>
-                                            </span>
-                                        ) : (
-                                            <span className="unverified-inv">
-                                                <i className='bx bx-shield-x'></i>
-                                            </span>
-                                        )
-                                    }
-
-                                </div>
-                            </div>
+                        <div className="user-img" style={{ marginRight: 0 }}>
+                            <img
+                                src={
+                                    rowData.img ? rowData.img
+                                        : `https://res.cloudinary.com/du3qbxrmb/image/upload/v1751378806/no-img_u5jpuh.jpg`
+                                }
+                                alt=""
+                            />
                         </div>
-                        <div className="flex flex-column gap-1"
-                            style={{
-                                textTransform: 'capitalize',
-                            }}
-                        >
-                            <div className="flex flex-row justify-content-between">
-                                <p style={{ marginBottom: 0, fontSize: 14, color: '#7d8086' }}>Pelanggan:</p>
-                                <p style={{ marginBottom: 0, fontSize: 14, color: '#7d8086' }}>{rowData.customer_id ? `${rowData.customer?.name}` : `guest.name (non-member)`}</p>
-                            </div>
-                            <div className="flex flex-row justify-content-between">
-                                <p style={{ marginBottom: 0, fontSize: 14, color: '#7d8086' }}>Total order:</p>
-                                <p style={{ marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right' }}>
-                                    <NumberFormat intlConfig={{
-                                        value: rowData.grandtotal,
-                                        locale: "id-ID",
-                                        style: "currency",
-                                        currency: "IDR",
-                                    }}
-                                    />
-                                </p>
-                            </div>
-                            <div className="flex flex-row justify-content-between">
-                                <p style={{ marginBottom: 0, fontSize: 14, color: '#7d8086' }}>Tipe pembayaran:</p>
-                                <p style={{ marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right' }}>
-                                    <span className={`badge badge-${rowData.payment_type == "bayar nanti" ? 'danger'
-                                        : rowData.payment_type == "lunas" ? "primary"
-                                            : rowData.payment_type == "sebagian" ? "warning"
-                                                : ""} light`}
-                                    >
-                                        {rowData.payment_type}
-                                    </span>
-                                </p>
+                        <div style={{ width: '80%' }}>
+                            <p style={{ marginBottom: 0, fontSize: 15, fontWeight: 600 }}>{rowData.order_id}</p>
+                            <p style={{ marginBottom: 0, fontSize: 13, color: '#7d8086' }}>{ConvertDate.LocaleStringDate(rowData.order_date)}</p>
+                            <div className='flex flex-row gap-2' style={{ fontSize: 13, marginTop: '.5rem' }}>
+                                <span className={`badge badge-${rowData.order_type == "walk-in" ? 'primary'
+                                    : rowData.order_type == "delivery" ? "warning"
+                                        : ""} light`}
+                                >
+                                    {
+                                        rowData.order_type
+                                    }
+                                </span>
+                                <span className={`badge badge-${rowData.order_status == "completed" ? 'success'
+                                    : rowData.order_status == "pending" ? "secondary"
+                                        : rowData.order_status == "in-delivery" ? "warning"
+                                            : rowData.order_status == "canceled" ? "danger"
+                                                : rowData.order_status == "confirmed" ? "primary"
+                                                    : ""} light`}
+                                >
+                                    {
+                                        rowData.order_status == "completed" ? 'selesai'
+                                            : rowData.order_status == "pending" ? 'pending'
+                                                : rowData.order_status == "in-delivery" ? 'in-delivery'
+                                                    : rowData.order_status == "canceled" ? 'batal'
+                                                        : rowData.order_status == "confirmed" ? 'dikonfirmasi'
+                                                            : ""
+                                    }
+                                </span>
+                                {rowData.invoice ?
+                                    (
+                                        <span className="verified-inv">
+                                            <i className='bx bx-check-shield'></i>
+                                        </span>
+                                    ) : (
+                                        <span className="unverified-inv">
+                                            <i className='bx bx-shield-x'></i>
+                                        </span>
+                                    )
+                                }
+
                             </div>
                         </div>
                     </div>
-                    <Dropdown drop={index == custData.length - 1 ? "up" : "down"} style={{ position: 'absolute', top: 10, right: 9, padding: '1rem 1rem .5rem 1rem' }}>
-                        <Dropdown.Toggle as={CustomToggle.CustomToggle1} id="dropdown-custom-components" ></Dropdown.Toggle>
-                        <Dropdown.Menu align={"end"}>
-                            <Dropdown.Item eventKey="1" as="button"
-                                aria-label="salesEditModal"
-                                onClick={(e) => handleModalWData(e, { endpoint: "sales", id: rowData.order_id, action: 'update', ...rowData })}
-                            >
-                                <i className='bx bxs-edit'></i> Ubah order
-                            </Dropdown.Item>
-                            <Dropdown.Item eventKey="1" as="button"
-                                aria-label="cancelSalesModal"
-                                onClick={(e) => handleModalWData(
-                                    e,
-                                    {
-                                        endpoint: "sales",
-                                        id: rowData.order_id,
-                                        action: 'canceled',
-                                        items: { ...rowData }
-                                    }
-                                )}
-                            >
-                                <i className='bx bx-trash'></i> Batalkan order
-                            </Dropdown.Item>
-                        </Dropdown.Menu>
-                    </Dropdown>
+                    <div className="flex flex-column gap-1"
+                        style={{
+                            textTransform: 'capitalize',
+                        }}
+                    >
+                        <div className="flex flex-row justify-content-between">
+                            <p style={{ marginBottom: 0, fontSize: 14, color: '#7d8086' }}>Pelanggan:</p>
+                            <p style={{ marginBottom: 0, fontSize: 14, color: '#7d8086' }}>{rowData.customer_id ? `${rowData.customer?.name}` : `guest.name (non-member)`}</p>
+                        </div>
+                        <div className="flex flex-row justify-content-between">
+                            <p style={{ marginBottom: 0, fontSize: 14, color: '#7d8086' }}>Total order:</p>
+                            <p style={{ marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right' }}>
+                                <NumberFormat intlConfig={{
+                                    value: rowData.grandtotal,
+                                    locale: "id-ID",
+                                    style: "currency",
+                                    currency: "IDR",
+                                }}
+                                />
+                            </p>
+                        </div>
+                        <div className="flex flex-row justify-content-between">
+                            <p style={{ marginBottom: 0, fontSize: 14, color: '#7d8086' }}>Tipe pembayaran:</p>
+                            <p style={{ marginBottom: 0, fontSize: 14, color: '#7d8086', textAlign: 'right' }}>
+                                <span className={`badge badge-${rowData.payment_type == "bayar nanti" ? 'danger'
+                                    : rowData.payment_type == "lunas" ? "primary"
+                                        : rowData.payment_type == "sebagian" ? "warning"
+                                            : ""} light`}
+                                >
+                                    {rowData.payment_type}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
                 </div>
-            )
-        }
+                <Dropdown drop={index == custData.length - 1 ? "up" : "down"} style={{ position: 'absolute', top: 10, right: 9, padding: '1rem 1rem .5rem 1rem' }}>
+                    <Dropdown.Toggle as={CustomToggle.CustomToggle1} id="dropdown-custom-components" ></Dropdown.Toggle>
+                    <Dropdown.Menu align={"end"}>
+                        <Dropdown.Item eventKey="1" as="button"
+                            aria-label="salesEditModal"
+                            onClick={(e) => handleModalWData(e, { endpoint: "sales", id: rowData.order_id, action: 'update', ...rowData })}
+                        >
+                            <i className='bx bxs-edit'></i> Ubah order
+                        </Dropdown.Item>
+                        <Dropdown.Item eventKey="1" as="button"
+                            aria-label="cancelSalesModal"
+                            onClick={(e) => handleModalWData(
+                                e,
+                                {
+                                    endpoint: "sales",
+                                    id: rowData.order_id,
+                                    action: 'canceled',
+                                    items: { ...rowData }
+                                }
+                            )}
+                        >
+                            <i className='bx bx-trash'></i> Batalkan order
+                        </Dropdown.Item>
+                    </Dropdown.Menu>
+                </Dropdown>
+            </div>
+        )
     };
 
     const listTemplate = (items) => {
@@ -2539,41 +2461,8 @@ export default function Sales({ handleSidebar, showSidebar }) {
 
         return (
             <>
-                <div className="flex flex-column gap-2" style={{ width: "100%" }}>
-                    <div className="flex gap-3 align-items-center mb-4" style={{ width: "100%" }}>
-                        <div className="input-group-right" style={{ width: "100%" }}>
-                            {mobileSearchMode ?
-                                (
-                                    <span className="input-group-icon input-icon-right"
-                                        onClick={() => {
-                                            setMobileFilterValue('');
-                                            setMobileSearchMode(false);
-                                            mobileSearchInput.current.focus();
-                                        }}
-                                    >
-                                        <i className='bx bx-x'></i>
-                                    </span>
-                                ) : (
-                                    <span className="input-group-icon input-icon-right">
-                                        <i className="zwicon-search"></i>
-                                    </span>
-                                )
-                            }
-                            <input
-                                ref={mobileSearchInput}
-                                type="text"
-                                className="form-control input-w-icon-right"
-                                // value={mobileFilterValue}
-                                // onChange={mobileFilterFunc}
-                                value={mobileFilterValue}
-                                onChange={(e) => mobileFilterFunc(e, "mainData")}
-                                placeholder="Keyword Search"
-                            // onKeyDown={() => setMobileSearchMode(true)}
-                            />
-                        </div>
-                    </div>
-                </div>
                 <div className="grid gap-1">{list}</div>
+            
             </>
         );
     };
@@ -2588,69 +2477,6 @@ export default function Sales({ handleSidebar, showSidebar }) {
 
         return (
             <>
-                <div className="flex flex-column gap-2" style={{ width: "100%" }}>
-
-                    <div className="flex gap-3 align-items-center mb-4" style={{ width: "100%" }}>
-                        <div className="input-group-right" style={{ width: "100%" }}>
-                            {mobileSearchMode ?
-                                (
-                                    <span className="input-group-icon input-icon-right"
-                                        onClick={() => {
-                                            setMobileFilterValue('');
-                                            setMobileSearchMode(false);
-                                            mobileSearchInput.current.focus();
-                                        }}
-                                    >
-                                        <i className='bx bx-x'></i>
-                                    </span>
-                                ) : (
-                                    <span className="input-group-icon input-icon-right">
-                                        <i className="zwicon-search"></i>
-                                    </span>
-                                )
-                            }
-                            <input
-                                ref={mobileSearchInput}
-                                type="text"
-                                className="form-control input-w-icon-right"
-                                value={mobileFilterValue}
-                                onChange={mobileFilterFunc}
-                                placeholder="Keyword Search"
-                            // onKeyDown={() => setMobileSearchMode(true)}
-                            />
-                        </div>
-                        {/* <button
-                type="button"
-                className="btn btn-primary btn-w-icon"
-                style={{ fontWeight: 500 }}
-                onClick={clearFilter}
-            >
-                <i className="bx bx-filter-alt" style={{ fontSize: "24px" }}></i>
-                Clear filter
-            </button> */}
-                        {/* <div
-                className="selected-row-stat"
-                style={{
-                height: "inherit",
-                display:
-                    selectedCusts && selectedCusts.length > 0 ? "block" : "none",
-                }}
-            >
-                <p className="total-row-selected"></p>
-                <button
-                type="button"
-                className=" btn btn-danger btn-w-icon"
-                style={{ height: "100%" }}
-                onClick={selectedToDelete}
-                >
-                <i className="bx bx-trash" style={{ fontSize: "24px" }}></i>Delete
-                selected row
-                </button>
-            </div> */}
-                    </div>
-
-
-                </div>
                 <div className="grid gap-1">{list}</div>
             </>
         );
@@ -2784,7 +2610,6 @@ export default function Sales({ handleSidebar, showSidebar }) {
             sortOrder: lazyState.sortOrder,
             globalFilter: lazyState.filters.global.value
         };
-
         await axiosPrivate.get("/sales/lazy-data", {
             params: {
                 ...queryParams
@@ -2793,6 +2618,7 @@ export default function Sales({ handleSidebar, showSidebar }) {
             .then(response => {
                 setTotalRecordSales(response.data.totalData);
                 setSalesData(response.data.rows);
+                setSalesDataView(response.data.rows);
                 setLazyLoading(false);
             })
             .catch(error => {
@@ -3152,8 +2978,44 @@ export default function Sales({ handleSidebar, showSidebar }) {
                                                         <i className="bx bxs-file-plus"></i> import
                                                     </button>
                                                 </div>
+                                                <div className="flex flex-column gap-2" style={{ width: "100%" }}>
+                                                    <div className="flex gap-3 align-items-center mb-4" style={{ width: "100%" }}>
+                                                        <div className="input-group-right" style={{ width: "100%" }}>
+                                                            {mobileSearchMode ?
+                                                                (
+                                                                    <span className="input-group-icon input-icon-right"
+                                                                        onClick={() => {
+                                                                            setGlobalFilterValue("");
+                                                                            clearFilter();
+                                                                            setMobileSearchMode(false);
+                                                                            mobileSearchInput.current.focus();
+                                                                        }}
+                                                                    >
+                                                                        <i className='bx bx-x'></i>
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="input-group-icon input-icon-right">
+                                                                        <i className="zwicon-search"></i>
+                                                                    </span>
+                                                                )
+                                                            }
+                                                            <input
+                                                                ref={mobileSearchInput}
+                                                                type="text"
+                                                                className="form-control input-w-icon-right"
+                                                                aria-label='allSales'
+                                                                value={globalFilterValue}
+                                                                onChange={onGlobalFilterChange}
+                                                                // value={mobileFilterValue}
+                                                                // onChange={(e) => mobileFilterFunc(e, "mainData")}
+                                                                placeholder="Keyword Search"
+                                                                onKeyDown={() => setMobileSearchMode(true)}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
                                                 <DataView
-                                                    value={salesData}
+                                                    value={salesDataView}
                                                     dataKey='order_id'
                                                     paginator
                                                     totalRecords={totalRecordSales}
@@ -3161,8 +3023,9 @@ export default function Sales({ handleSidebar, showSidebar }) {
                                                     lazy
                                                     first={lazyState.first}
                                                     rows={10}
-                                                    onPage={onPage}
+                                                    onPage={onPageView}
                                                     listTemplate={listTemplate}
+                                                    loading={lazyLoading}
                                                     style={{ marginTop: '.5rem' }}
                                                 />
                                             </>
@@ -3367,75 +3230,7 @@ export default function Sales({ handleSidebar, showSidebar }) {
                                                                         />
                                                                     </Col>
                                                                 </Row>
-
                                                             </div>
-
-
-                                                            {/* <AutoComplete show={} data={} /> */}
-                                                            {/* </div> */}
-
-                                                            {/* <div className="col-lg-12 col-sm-12 col-md-12 col-12">
-                                                            <label htmlFor="productName">product name</label>
-                                                            <div className="d-flex">
-                                                                    <div className="form-switch">
-                                                                        <input type='checkbox' className="form-check-input switch-primary" />
-                                                                        <label className="mx-2" htmlFor="newCustomer">No</label>
-                                                                    </div>
-                                                            </div>
-                                                            </div>
-                                                            new cust option 
-                                                            <div className="col-lg-12 col-sm-12 col-md-12 col-12">
-                                                                <div className="row gy-3">
-                                                                    <div className="col-lg-3 col-sm-6 col-md-6 col-12">
-                                                                        <InputWLabel
-                                                                            label="customer name"
-                                                                            type="text" 
-                                                                            name="custName" 
-                                                                            placeholder="Jane Doe" 
-                                                                            register={register}
-                                                                            require={true}
-                                                                            errors={errors}
-                                                                        />
-                                                                    </div>
-                                                                    <div className="col-lg-3 col-sm-6 col-md-6 col-12">
-                                                                        <InputWSelect
-                                                                            name="custType"
-                                                                            selectLabel="Select customer type"
-                                                                            options={["member", "non-members"]}
-                                                                            value={(selected) => console.log(selected)}
-                                                                        />
-                                                                    </div>
-                                                                    <div className="col-lg-3 col-sm-6 col-md-6 col-12">
-                                                                        <InputWLabel 
-                                                                            label="Customer email" 
-                                                                            type="email"
-                                                                            name="salesNewCustMail" 
-                                                                            placeholder="customer@mail.com" 
-                                                                        />
-                                                                        <InputWLabel
-                                                                            label="customer email"
-                                                                            type="email" 
-                                                                            name="name" 
-                                                                            placeholder="Jane Doe" 
-                                                                            register={register}
-                                                                            require={true}
-                                                                            errors={errors}
-                                                                        />
-                                                                    </div>
-                                                                    <div className="col-lg-3 col-sm-6 col-md-6 col-12">
-                                                                        <label htmlFor="newcustphone">Phone</label>
-                                                                        <div className="input-group-left">
-                                                                            <span
-                                                                                className="input-group-w-text fw-semibold">+62</span>
-                                                                            <input type="text"
-                                                                                className="form-control input-w-text-left"
-                                                                                id="custPhone" placeholder="8xxxxxxxxxx"/>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div> */}
-
-                                                            {/* </div>   */}
                                                         </Accordion.Body>
                                                     </Accordion.Item>
                                                     <Accordion.Item eventKey="1">
@@ -3443,51 +3238,6 @@ export default function Sales({ handleSidebar, showSidebar }) {
                                                             <i className='bx bx-cube-alt'></i>Tambah produk
                                                         </Accordion.Header>
                                                         <Accordion.Body>
-                                                            {/* <p className="card-title mb-3 mt-1">Sales products</p> */}
-                                                            {/* <div className="col-lg-6 col-sm-12 col-md-12 col-12">
-                                                            <div className="d-flex flex-fill gap-3 flex-wrap">
-                                                                <div>
-                                                                    <InputWLabel 
-                                                                        label="add product"
-                                                                        type="text"
-                                                                        name="salesProduct" 
-                                                                        placeholder="Search product name..." 
-                                                                        onChange={handleSearchProd}
-                                                                        onFocus={handleSearchProd}
-                                                                        onKeyDown={keyDownSearchProd}
-                                                                        style={{width: '100%', textTransform:'capitalize'}}
-                                                                        register={register}
-                                                                        require={false}
-                                                                        errors={errors}
-                                                                        
-                                                                    />
-                                                                    <div className="popup-element" aria-expanded={openPopupProd} ref={refToProd}>
-                                                                        {filterProd && filterProd.length > 0 ? 
-                                                                            filterProd.map((e,idx) => {
-                                                                                return (
-                                                                                    <div key={`cust-${idx}`} className="res-item" onClick={() => 
-                                                                                        handleChooseProd({ 
-                                                                                            product_id: e.product_id, 
-                                                                                            product_name: e.product_name, 
-                                                                                            variant: e.variant, 
-                                                                                            img:e.img, 
-                                                                                            product_cost: e.product_cost , 
-                                                                                            sell_price: e.sell_price, 
-                                                                                            discount: e.discount 
-                                                                                        })}
-                                                                                    >{e. variant !== "" ? e.product_name + " " + e.variant : e.product_name}</div>
-                                                                                )
-                                                                            }) : ""
-                                                                        }
-                                                                    </div>  
-                                                                </div>
-
-                                                                    <QtyButton min={0} max={999} label={"qty"}  name={`qty-product`} id="qtyItem" width={"180px"} returnValue={(e) => {setQtyVal(Number(e)); console.log(e)}} value={qtyVal} />
-                                                                <div className='align-self-end mt-1'>
-                                                                    <span className="btn btn-primary" onClick={() => {addToSalesData(); setQtyVal(0)}}><i className="bx bx-plus" style={{width:24, height:24}}></i></span>
-                                                                </div>
-                                                            </div>
-                                                        </div> */}
                                                             <div className="add-product-control mt-3 mb-4" >
                                                                 <div className='col-lg-4 col-md-6 col-sm-12'>
                                                                     <InputWLabel
@@ -3938,7 +3688,55 @@ export default function Sales({ handleSidebar, showSidebar }) {
                                                         pengembalian
                                                     </button>
                                                 </div>
-                                                <DataView value={roData} dataKey='ro_id' listTemplate={listROTemplate} paginator paginatorPosition='bottom' rows={10} style={{ marginTop: '.5rem' }} emptyMessage=' ' />
+                                                <div className="flex flex-column gap-2" style={{ width: "100%" }}>
+                                                    <div className="flex gap-3 align-items-center mb-4" style={{ width: "100%" }}>
+                                                        <div className="input-group-right" style={{ width: "100%" }}>
+                                                            {mobileSearchMode ?
+                                                                (
+                                                                    <span className="input-group-icon input-icon-right"
+                                                                        onClick={() => {
+                                                                            setGlobalFilterValue("");
+                                                                            clearFilter();
+                                                                            setMobileSearchMode(false);
+                                                                            mobileSearchInput.current.focus();
+                                                                        }}
+                                                                    >
+                                                                        <i className='bx bx-x'></i>
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="input-group-icon input-icon-right">
+                                                                        <i className="zwicon-search"></i>
+                                                                    </span>
+                                                                )
+                                                            }
+                                                            <input
+                                                                ref={mobileSearchInput}
+                                                                type="text"
+                                                                className="form-control input-w-icon-right"
+                                                                aria-label='roSales'
+                                                                value={globalFilterValue}
+                                                                onChange={onGlobalFilterChange}
+                                                                placeholder="Keyword Search"
+                                                                onKeyDown={() => setMobileSearchMode(true)}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <DataView 
+                                                    value={roData} 
+                                                    dataKey='ro_id' 
+                                                    listTemplate={listROTemplate} 
+                                                    paginator 
+                                                    paginatorPosition='bottom' 
+                                                    rows={10} 
+                                                    style={{ marginTop: '.5rem' }} 
+                                                    emptyMessage=' '
+                                                    lazy
+                                                    totalRecords={totalRecordRO} 
+                                                    first={lazyStateRO.first}
+                                                    onPage={onPageViewRO}
+                                                    loading={lazyLoadingRO}
+                                                />
                                             </>
                                         )
                                     }
@@ -4118,6 +3916,40 @@ export default function Sales({ handleSidebar, showSidebar }) {
                                                     <i className="bx bxs-file-plus"></i> import
                                                 </button>
                                             </div>
+                                            <div className="flex flex-column gap-2" style={{ width: "100%" }}>
+                                                    <div className="flex gap-3 align-items-center mb-4" style={{ width: "100%" }}>
+                                                        <div className="input-group-right" style={{ width: "100%" }}>
+                                                            {mobileSearchMode ?
+                                                                (
+                                                                    <span className="input-group-icon input-icon-right"
+                                                                        onClick={() => {
+                                                                            setGlobalFilterValue("");
+                                                                            clearFilter();
+                                                                            setMobileSearchMode(false);
+                                                                            mobileSearchInput.current.focus();
+                                                                        }}
+                                                                    >
+                                                                        <i className='bx bx-x'></i>
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="input-group-icon input-icon-right">
+                                                                        <i className="zwicon-search"></i>
+                                                                    </span>
+                                                                )
+                                                            }
+                                                            <input
+                                                                ref={mobileSearchInput}
+                                                                type="text"
+                                                                className="form-control input-w-icon-right"
+                                                                aria-label='canceledSales'
+                                                                value={globalFilterValue}
+                                                                onChange={onGlobalFilterChange}
+                                                                placeholder="Keyword Search"
+                                                                onKeyDown={() => setMobileSearchMode(true)}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             <DataView
                                                 value={salesCanceled}
                                                 dataKey='order_id'
@@ -4127,7 +3959,7 @@ export default function Sales({ handleSidebar, showSidebar }) {
                                                 lazy
                                                 first={lazyStateCanceled.first}
                                                 totalRecords={totalRecordCanceled}
-                                                onPage={onPageCanceled}
+                                                onPage={onPageViewCanceled}
                                                 loading={lazyLoadingcanceled}
                                                 rows={10}
                                                 style={{ marginTop: '.5rem' }}

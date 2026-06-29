@@ -71,7 +71,7 @@ export default function CreateInv({ show, onHide, returnAct }){
     }
 
     const fetchAllCust = async () => {
-        await axiosPrivate.get("/customers")
+        await axiosPrivate.get("/pure-customers")
             .then(resp => {
                 setCustData(resp.data);
             })
@@ -242,7 +242,7 @@ export default function CreateInv({ show, onHide, returnAct }){
     };
     
     const fetchSalesbyOneCustUnpaid = async () => {
-        await axiosPrivate.get("/sales/cust/paytype", { params: { 
+        await axiosPrivate.get("http://localhost:5056/sales/cust/paytype", { params: { 
             custid: chooseCust.customer_id, 
             paytype:'bayar nanti'
         } })
@@ -286,6 +286,7 @@ export default function CreateInv({ show, onHide, returnAct }){
     }
 
     const onSubmit = async (formData) => {
+        console.log(choosedOrderId.length > 0)
         if(choosedOrderId.length > 0 ){
             let pay_type = 'bayar nanti';
             let modelInv = {
@@ -330,11 +331,20 @@ export default function CreateInv({ show, onHide, returnAct }){
 
             fetchInsertInv(modelInv, paymentIDs, totalPaymentInvNull);
             // fetchSumOrder(formData.customer_id, pay_type, modelInv);
+        } else {
+            toast.current.show({
+                severity: "error",
+                summary: "Error",
+                detail: 'Tidak dapat membuat invoice kosong! Pilih minimal 1 order',
+                life: 3000,
+            });
         }
+        setControlUiBtn(false);
     };
 
     const onError = () => {
         console.log(errors)
+        
     }
 
     const handleClickSelect = (ref) => {
@@ -497,10 +507,11 @@ export default function CreateInv({ show, onHide, returnAct }){
     },[]);
 
     useEffect(() => {
-        if(ordersByCust && custData && sevenDaysAdded){
+        // if(ordersByCust && custData && sevenDaysAdded){
+        if(custData){
             setIsLoading(false);
         }
-    },[ordersByCust, custData, sevenDaysAdded])
+    },[custData])
 
     useEffect(() => {
         if(isLoading){
@@ -510,11 +521,11 @@ export default function CreateInv({ show, onHide, returnAct }){
 
     return(
         <>
-        <Modal dialogClassName={isMobile || isMediumScr ? 'modal-xl' : 'modal-90w'} show={show} onHide={onHide} scrollable={true} centered={true}>
+        <Modal dialogClassName={isMobile || isMediumScr ? 'modal-xl' : 'modal-90w'} show={isLoading ? false : show} onHide={onHide} scrollable={true} centered={true}>
             <Modal.Header closeButton>
                 <Modal.Title>Buat invoice</Modal.Title>
             </Modal.Header>
-            <Modal.Body style={{overflowY: 'unset', height: 'fit-content'}}>
+            <Modal.Body style={{overflowY: 'auto', height: 'fit-content'}}>
                 <form className="row mb-4" style={{gap: isMobile || isMediumScr ? '0.25rem' : '0'}}>
                     <div className="col-lg-4 col-sm-12 col-md-12 col-12">
                         <div style={{position:'relative'}}>

@@ -62,7 +62,6 @@ export default function EditReturnOrderModal({ show, onHide, data }){
                 let orderItem = [...choosedRowItem];
                 if(orderItem.length > 0) {
                     let filteringRO = orderItem.filter(({return_order_item}) => return_order_item !== null);
-                    console.log(filteringRO)
                     return filteringRO;
                 } else {
                     return null;
@@ -74,7 +73,6 @@ export default function EditReturnOrderModal({ show, onHide, data }){
             return null;
         }
     });
-    console.log(data)
     const [ filterCust, setFilteredCust ] = useState([]);
     const [ choosedOrderId, setChoosedOrderId ] = useState([]);
     const [ choosedOrder, setChoosedOrder ] = useState([]);
@@ -220,7 +218,6 @@ export default function EditReturnOrderModal({ show, onHide, data }){
             id: chooseCust.customer_id, 
         } })
         .then(resp => {
-            console.log(resp.data)
             if(resp.data){
                 if(resp.data.length > 0){
                     let filteringOrder = resp.data.filter(({return_order_id}) => return_order_id == null);
@@ -261,7 +258,6 @@ export default function EditReturnOrderModal({ show, onHide, data }){
 
                         axiosPrivate.patch(`/sales/update/ro/${resp1.data.order_id}`, roID)
                         .then(resp3 =>{
-                            console.log(resp3)
                             if(resp3.data){
                                 toast.current.show({
                                     severity: "success",
@@ -292,7 +288,6 @@ export default function EditReturnOrderModal({ show, onHide, data }){
                 .catch(err2 => {
                     axiosPrivate.delete(`/ro?id=${resp1.data.return_order_id}`)
                     .then(resp4 => {
-                        console.log(resp4)
                         toast.current.show({
                             severity: "error",
                             summary: "Gagal",
@@ -366,7 +361,6 @@ export default function EditReturnOrderModal({ show, onHide, data }){
             axiosPrivate.post("/order-credit", JSON.stringify(nextOrderAddOn))
             .then(resp2 => {
                 if(resp2.data){
-                    console.log(resp2.data);
                     toast.current.show({
                         severity: "success",
                         summary: "Sukses",
@@ -397,7 +391,6 @@ export default function EditReturnOrderModal({ show, onHide, data }){
      const fetchDetailedCust = async(custID) => {
         await axiosPrivate.get(`/customer/detail?custid=${custID}`)
         .then(resp => {
-            console.log(resp.data)
             const sales = resp.data.sales ? resp.data.sales[0] : null;
             const debt = resp.data.debt ? resp.data.debt[0] : null;
 
@@ -464,7 +457,6 @@ export default function EditReturnOrderModal({ show, onHide, data }){
                         }})
                         .then(resp3 => {
                             if(resp3.data){
-                                console.log(data.ro.order.invoice)
                                 if(data.ro.order.invoice){
                                     const payments = data.ro.order.invoice?.payments?.length > 0 ? data.ro.order.invoice?.payments.reduce((prev, curr) => prev + Number(curr.amount_paid),0) : 0;
                                     let invUpdate = {};
@@ -529,8 +521,6 @@ export default function EditReturnOrderModal({ show, onHide, data }){
 
     const fetchUpdateInv = async(invID, invUpdate) => {
         let invUpdateBody = JSON.stringify(invUpdate);
-        console.log(data)
-        console.log(invID)
         // await axiosPrivate.put("/inv", invUpdateBody, {params: {id: invID}})
         await axiosPrivate.patch("/inv/payment", invUpdateBody, {params: {id: invID}})
         .then(resp => {
@@ -587,7 +577,7 @@ export default function EditReturnOrderModal({ show, onHide, data }){
             setChoosedOrder(filteringOrder);
         }
     };
-    console.log(data)
+
     const onSubmit = async (formData) => {
         let roItemModel = [];
         let returnOrderModel = {
@@ -902,7 +892,6 @@ export default function EditReturnOrderModal({ show, onHide, data }){
     };
 
     const returnQty = (rowData, options) => {
-        console.log(rowData)
         return(
             rowData.returnValue ?
                 <p key={options.rowIndex} style={{marginBottom:0}}>{Number(rowData.returnValue)}</p>
@@ -916,7 +905,7 @@ export default function EditReturnOrderModal({ show, onHide, data }){
                 min={1} max={Number(options.rowData.quantity)} name={`qty-product`} width={"180px"} 
                 value={options.rowData.returnValue ? options.rowData.returnValue.toString() : qtyVal} 
                 returnValue={(e) => {setQtyVal(e);options.rowData.returnValue = e}}
-                onChange={(e) => {options.editorCallback(e.value);console.log(e)}} 
+                onChange={(e) => {options.editorCallback(e.value)}} 
             />
         )
     };
@@ -1030,126 +1019,88 @@ export default function EditReturnOrderModal({ show, onHide, data }){
 
     const orderTemplate = (rowData, index) => {
         return (
-        <div className='card static-shadow' key={index} >
-            <Swiper initialSlide={0} slidesPerView={'auto'} preventClicks={false} preventClicksPropagation={false} simulateTouch={false} style={{width:'100%', height:'auto'}}>
-                {/* <SwiperSlide style={{width: '70px'}}>
-                    <div className='mobile-swiper-content-left warning' onClick={() => {setEditableMobile((p) => !p)}}>
-                        <i className='bx bx-pencil'></i>
-                    </div>
-                </SwiperSlide> */}
-                <SwiperSlide style={{width: '100%'}}>
-                    <div className='flex flex-column xl:align-items-start gap-3'
+        <div className='card static-shadow' key={index} >          
+            <div style={{width: '100%'}}>
+                <div className='flex flex-column xl:align-items-start gap-3'
+                    style={{
+                        backgroundColor: '#ffffff',
+                        padding: '1rem',
+                        boxShadow: '1px 1px 7px #9a9acc1a',
+                        borderRadius: '9px',
+                        position:'relative',
+                        width:'100%',
+                        minHeight:'125px'
+                    }}
+                >
+                
+                    <div className="flex align-items-center gap-3" 
                         style={{
-                            backgroundColor: '#ffffff',
-                            padding: '1rem',
-                            boxShadow: '1px 1px 7px #9a9acc1a',
-                            borderRadius: '9px',
-                            position:'relative',
-                            width:'100%',
-                            minHeight:'125px'
+                            textTransform: 'capitalize', 
                         }}
                     >
-                    
-                        <div className="flex align-items-center gap-3" 
-                            style={{
-                                textTransform: 'capitalize', 
-                            }}
-                        >
-                            {/* checkbox */}
-                            <InputWLabel 
-                                type="checkbox"
-                                name={`ro_item-${index}`}
-                                onChange={(e) => {handleChoosedRO({originalEvent: e, checked: e.target.checked, value: rowData})}} 
-                                register={register}
-                                require={false}
-                                checked={selectedProducts.find(({item_id}) => rowData.item_id == item_id ? true : false)}
-                            />
-                            <div className='flex flex-column' style={{width: '80%'}}>
-                                <div className='mb-1'>
-                                    <p style={{marginBottom: 0, fontSize: 14, fontWeight: 600, maxWidth: '100px'}}>{`${rowData.product.product_name}`}</p>
-                                    <p style={{marginBottom: 0, fontSize: 11, color: '#7d8086', maxWidth: '100px'}}>
-                                        {`Variant: ${rowData.product.variant}`}
-                                    </p>
-                                </div>
+                        {/* checkbox */}
+                        <InputWLabel 
+                            type="checkbox"
+                            name={`ro_item-${index}`}
+                            onChange={(e) => {handleChoosedRO({originalEvent: e, checked: e.target.checked, value: rowData})}} 
+                            register={register}
+                            require={false}
+                            checked={selectedProducts.find(({item_id}) => rowData.item_id == item_id ? true : false)}
+                        />
+                        <div className='flex flex-column' style={{width: '80%'}}>
+                            <div className='mb-1'>
+                                <p style={{marginBottom: 0, fontSize: 14, fontWeight: 600, maxWidth: '100px'}}>{`${rowData.product.product_name}`}</p>
+                                <p style={{marginBottom: 0, fontSize: 11, color: '#7d8086', maxWidth: '100px'}}>
+                                    {`Variant: ${rowData.product.variant}`}
+                                </p>
                             </div>
-                                
-
                         </div>
-                            <div className="return-reason" style={{width:'100%'}}>
-                            <InputWSelect
-                                // label={'alasan pengembalian'}
-                                name={`reason-${index}`}
-                                // position={choosedRowItem.length - 1 > 1 ? row.rowIndex == choosedRowItem.length - 1 ? "top" : "bottom" : "bottom"}
-                                selectLabel="Alasan pengembalian"
-                                options={dataStatic.returnReasonList}
-                                optionKeys={["id", "type"]}
-                                value={(selected) => {
-                                    setValue(`reason-${index}`, selected.value);
-                                    setValue(`reason_id-${index}`, selected.id);
-                                    // selected.value != "" ? clearErrors("reason") : null;
-                                    rowData.reason = selected.value;
-                                    rowData.reason_id = selected.id;
-                                    // console.log(editableData)
-                                    // selected.value != null ? setReasonVal(true):setReasonVal(false);
-                                }}
-                                defaultValue={rowData.reason_id}
-                                defaultValueKey={'id'}
-                                // disabled={editableMobile ? false : true}
-                                // onChange={(e) => editorCallback(e.value)}
-                                require={false}
-                                register={register}
-                                errors={errors}
-                            />
-                            {/* <Dropdown value={getValues('reason')} onChange={(e) => setValue('reason', e.value)} options={dataStatic.returnReasonList} optionLabel="type" placeholder="Select a reason" 
-                                    className="w-full" 
-                                /> */}
                             
-                            {/* <InputWSelect
-                                // label={'alasan pengembalian'}
-                                name="reason"
-                                // position={choosedRowItem.length - 1 > 1 ? row.rowIndex == choosedRowItem.length - 1 ? "top" : "bottom" : "bottom"}
-                                selectLabel="Pilih alasan pengembalian"
-                                options={dataStatic.returnReasonList}
-                                optionKeys={["id", "type"]}
-                                value={(selected) => {
-                                    setValue('reason', selected.value);
-                                    setValue('reason_id', selected.id);
-                                    selected.value != "" ? clearErrors("reason") : null;
-                                    options.rowData.reason = selected.value;
-                                    options.rowData.reason_id = selected.id;
-                                }}
-                                onChange={(e) => options.editorCallback(e.value)}
-                                require={false}
-                                register={register}
-                                errors={errors}
-                            /> */}
-                        </div>
-                        <div className='mb-2' style={{position:'absolute',right:16, bottom: 60}}>
-                            <div className="order-qty-btn">
-                                <QtyButton 
-                                    min={0} 
-                                    max={Number(rowData.quantity)} 
-                                    name={`qty-product-${index}`} 
-                                    // id="qtyItem" 
-                                    value={rowData.returnValue && rowData.returnValue} 
-                                    returnValue={(e) => {rowData.returnValue = e}} 
-                                    size={100} 
-                                    // disabled={editableMobile ? false : true}
-                                />
-                            </div>
-                            {/* <button type="button" className="btn btn-warning btn-w-icon"><i className='bx bx-pencil'></i>Edit order</button> */}
-                        
-                        </div>
 
                     </div>
-                </SwiperSlide>
-                {/* <SwiperSlide style={{width: '70px'}}>
-                    <div className='mobile-swiper-content-right danger' onClick={() => {delSalesItems(index)}}>
-                        <i className='bx bx-trash'></i>
+                        <div className="return-reason" style={{width:'100%'}}>
+                        <InputWSelect
+                            name={`reason-${index}`}
+                            // position={choosedRowItem.length - 1 > 1 ? row.rowIndex == choosedRowItem.length - 1 ? "top" : "bottom" : "bottom"}
+                            selectLabel="Alasan pengembalian"
+                            options={dataStatic.returnReasonList}
+                            optionKeys={["id", "type"]}
+                            value={(selected) => {
+                                setValue(`reason-${index}`, selected.value);
+                                setValue(`reason_id-${index}`, selected.id);
+                                // selected.value != "" ? clearErrors("reason") : null;
+                                rowData.reason = selected.value;
+                                rowData.reason_id = selected.id;
+                                // console.log(editableData)
+                                // selected.value != null ? setReasonVal(true):setReasonVal(false);
+                            }}
+                            defaultValue={rowData.reason_id}
+                            defaultValueKey={'id'}
+                            // disabled={editableMobile ? false : true}
+                            // onChange={(e) => editorCallback(e.value)}
+                            require={false}
+                            register={register}
+                            errors={errors}
+                        />
                     </div>
-                </SwiperSlide> */}
-            </Swiper>
-            
+                    <div className='mb-2' style={{position:'absolute',right:16, bottom: 60}}>
+                        <div className="order-qty-btn">
+                            <QtyButton 
+                                min={0} 
+                                max={Number(rowData.quantity)} 
+                                name={`qty-product-${index}`} 
+                                // id="qtyItem" 
+                                value={rowData.returnValue ? rowData.returnValue : 0} 
+                                returnValue={(e) => {rowData.returnValue = e}} 
+                                size={100} 
+                                // disabled={editableMobile ? false : true}
+                            />
+                        </div>
+                    
+                    </div>
+
+                </div>
+            </div>            
         </div>
         );
     };
@@ -1181,10 +1132,6 @@ export default function EditReturnOrderModal({ show, onHide, data }){
             fetchSalesbyCust();
         }
     },[chooseCust]);
-
-    useEffect(() => {
-        console.log(returnItem)
-    },[returnItem])
     
     useEffect(() => {
         fetchAllCust();
@@ -1202,8 +1149,6 @@ export default function EditReturnOrderModal({ show, onHide, data }){
             return;
         }
     },[isLoading]);
-    console.log(isMobile)
-    console.log(isMediumScr)
 
     return(
         <>

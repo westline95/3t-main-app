@@ -53,6 +53,7 @@ export default function QtyButton(props) {
     };
 
     const onChangeInput = (e) => {
+        console.log(e.target.value)
         let val1 = e.target.value.toString();
         let val2 = val1.replace(/,(\d+)$/,'.$1');
         let valFormatted = parseFloat(val2);
