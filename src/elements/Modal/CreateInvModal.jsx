@@ -242,7 +242,7 @@ export default function CreateInv({ show, onHide, returnAct }){
     };
     
     const fetchSalesbyOneCustUnpaid = async () => {
-        await axiosPrivate.get("http://localhost:5056/sales/cust/paytype", { params: { 
+        await axiosPrivate.get("/sales/cust/paytype", { params: { 
             custid: chooseCust.customer_id, 
             paytype:'bayar nanti'
         } })
