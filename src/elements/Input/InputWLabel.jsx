@@ -15,6 +15,8 @@ const InputWLabel =  forwardRef((props, ref) => {
         placeholder, 
         onChange, 
         value, 
+        minimum,
+        maximum,
         register,
         errors,
         disabled,
@@ -159,6 +161,23 @@ const InputWLabel =  forwardRef((props, ref) => {
                     />
                     
                 </>
+            ) : type == "date" ?
+            (
+                <>
+                    <Form.Label className="mb-1">{label}<span className="required-label" style={{ display: require ? 'inline' : 'none' }}>*</span></Form.Label>
+                    <Calendar showIcon 
+                        baseZIndex={999999} 
+                        name={name}
+                        dateFormat="dd/mm/yy"
+                        value={dateValue}
+                        minDate={minDate && minDate}
+                        // value={new Date(defaultValue)}
+                        disabled={disabled}
+                        // onChange={(e) => setDateValue(e.value)}
+                        {...register ? {...register(name, { required: require, onBlur: onBlur, ref: inputRef, onChange: onChange})} : ""}
+                    />
+                    
+                </>
             )
             : (<>
             {display != null || display != undefined ? 
@@ -170,6 +189,8 @@ const InputWLabel =  forwardRef((props, ref) => {
                         type={type} 
                         className={className}
                         name={name} 
+                        min={minimum}
+                        max={maximum}
                         placeholder={placeholder} 
                         disabled={disabled} 
                         style={style || styleInput} 
@@ -207,6 +228,8 @@ const InputWLabel =  forwardRef((props, ref) => {
                         type={type} 
                         className={className}
                         name={name} 
+                        min={minimum}
+                        max={maximum}
                         onChange={onChange}
                         placeholder={placeholder} 
                         disabled={disabled} 

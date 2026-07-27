@@ -194,25 +194,25 @@ const Sidebar = forwardRef(({show, clickedMenu}, ref) => {
                                 <div className="collapse show" data-bs-parent="hrmMenu" id="hrmMenus">
                                     <ul className="sidebar-menu">
                                         <li className="menus dropdown-control">
-                                            <Link to={"/hrm/department"} className='item-menu'>
+                                            <Link to={"/hrm/department"} className='item-menu' onClick={() => clickedMenu(true)}>
                                                 <i className='bx bx-git-branch'></i>
                                                 <span className="menu-label">department</span>
                                             </Link>
                                         </li>
                                         <li className="menus dropdown-control">
-                                            <Link to={"/hrm/employees"} className='item-menu'>
+                                            <Link to={"/hrm/employees"} className='item-menu' onClick={() => clickedMenu(true)}>
                                                 <i className='bx bx-user'></i>
                                                 <span className="menu-label">employees</span>
                                             </Link>
                                         </li>
                                         <li className="menus dropdown-control">
-                                            <Link to={"/hrm/leaves"} className='item-menu'>
+                                            <Link to={"/hrm/leaves"} className='item-menu' onClick={() => clickedMenu(true)}>
                                                 <i className='bx bxs-calendar-alt'></i>
-                                                <span className="menu-label">leaves</span>
+                                                <span className="menu-label">leaves & attendance</span>
                                             </Link>
                                         </li>
                                         <li className="menus dropdown-control" id="payrollMenus">
-                                            <a className="item-menus" onClick={(e) => collapseParentMenu ? setCollapseParentMenu(null) : setCollapseParentMenu("payrollMenus")}>
+                                            <a className="item-menus" onClick={(e) => {collapseParentMenu ? setCollapseParentMenu(null) : setCollapseParentMenu("payrollMenus");clickedMenu(true)}}>
                                                 <i className='bx bx-dollar'></i>
                                                 <span className="menu-label">payroll</span>
                                                 <i className='bx bxs-chevron-down'></i>
@@ -221,13 +221,19 @@ const Sidebar = forwardRef(({show, clickedMenu}, ref) => {
                                                 <div>
                                                     <ul className="sidebar-menu">
                                                         <li className="menus dropdown-control">
-                                                            <Link to={"/hrm/loan"} className='sub-item-menu-1'>
+                                                            <Link to={"/hrm/loan"} className='sub-item-menu-1' onClick={() => clickedMenu(true)}>
                                                                 <i className='bx bxs-circle'></i>
                                                                 <span className="menu-label">loan</span>
                                                             </Link>
                                                         </li>
                                                         <li className="menus dropdown-control">
-                                                            <Link to={"/hrm/payslip"} className='sub-item-menu-1'>
+                                                            <Link to={"/hrm/allowance"} className='sub-item-menu-1' onClick={() => clickedMenu(true)}>
+                                                                <i className='bx bxs-circle'></i>
+                                                                <span className="menu-label">allowance</span>
+                                                            </Link>
+                                                        </li>
+                                                        <li className="menus dropdown-control">
+                                                            <Link to={"/hrm/payslip"} className='sub-item-menu-1' onClick={() => clickedMenu(true)}>
                                                                 <i className='bx bxs-circle'></i>
                                                                 <span className="menu-label">payslip</span>
                                                             </Link>

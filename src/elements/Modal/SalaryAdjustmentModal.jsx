@@ -237,12 +237,12 @@ export default function SalaryAdjustmentModal({ show, onHide, data, returnAct })
         employee_id: formData.employee_id,
         salary_adj: {
           employee_id: formData.employee_id,
-          old_salary: Number(currSalarySetting.base_salary),
+          prev_salary: Number(currSalarySetting.base_salary),
           new_salary: Number(formData.new_salary),
           effective_date: formData.effective_date,
           approved_by: auth.name,
           notes: formData.notes,
-          old_status_uang_rokok: currSalarySetting.status_uang_rokok,
+          prev_status_uang_rokok: currSalarySetting.status_uang_rokok,
           new_status_uang_rokok: formData.status_uang_rokok,
         },
         salary_sett: {

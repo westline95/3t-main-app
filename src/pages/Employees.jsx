@@ -46,6 +46,8 @@ import SalarySettingModal from "../elements/Modal/SalarySettingModal.jsx";
 import SalaryAdjustmentModal from "../elements/Modal/SalaryAdjustmentModal.jsx";
 import EmptyState from "../State-pages/EmptyState.jsx";
 import CreateEmployeeAcc from "../elements/Modal/CreateEmployeeAcc.jsx";
+import { SpeedDial } from "primereact/speeddial";
+import { Tooltip } from "primereact/tooltip";
 
 // import EmptyState from "../../public/empty state transparent-bg.png"; 
 
@@ -452,7 +454,32 @@ export default function Employees({handleSidebar, showSidebar}) {
   const mobileFilterFunc = (e) => {
     setMobileFilterValue(e.target.value);
     e.target.value == "" ? setMobileSearchMode(false):setMobileSearchMode(true)
-  }
+  };
+
+
+  const items = [
+    {
+        label: 'Tambah Karyawan',
+        icon: 'bx bx-plus',
+        command: () => {
+            toast.current.show({ severity: 'info', summary: 'Add', detail: 'Data Added' });
+        }
+    },
+    {
+        label: 'Set Gaji Awal',
+        icon: 'bx bx-plus',
+        command: () => {
+            toast.current.show({ severity: 'success', summary: 'Update', detail: 'Data Updated' });
+        }
+    },
+    {
+        label: 'Tambah Penyesuaian Gaji',
+        icon: 'bx bx-plus',
+        command: () => {
+            toast.current.show({ severity: 'error', summary: 'Delete', detail: 'Data Deleted' });
+        }
+    },
+  ];
 
   useEffect(() => {
     fetchAllEmployee();
@@ -489,7 +516,7 @@ export default function Employees({handleSidebar, showSidebar}) {
 
   return (
     <>
-      <div className="container-fluid">
+      <div className="container-fluid" style={{position: 'relative'}}>
         <div
           className="wrapping-table-btn mt-4 flex gap-3 justify-content-end"
           style={{ width: "100%", height: "inherit" }}
@@ -565,7 +592,7 @@ export default function Employees({handleSidebar, showSidebar}) {
         <div className="profile-card-1-container mt-5">
           {employeeData && employeeData.length > 0 ? employeeData.map((employee, index) => {
             return(
-            <div key={index} className="profile-card-1 card" aria-label="viewEmployeeDetail" onClick={(e) => handleModal(e, employee)}>
+            <div key={index} className="profile-card-1 card" aria-label="viewEmployeeDetail" onClick={(e) => handleModal(e, employee.employee_id)}>
               <div className="profile-card-1-card-body">
                 <div className="wrapping-inline">
                   <div className="profile-img-wrap">
@@ -671,6 +698,11 @@ export default function Employees({handleSidebar, showSidebar}) {
           )}
         </div>
       </div>
+      {/* speed dial */}
+      <Tooltip target=".p-speeddial-quarter-circle .p-speeddial-action" position="left" />
+      <SpeedDial model={items} type="quarter-circle" direction="up-left" style={{ right: 20, bottom: 20 }} />
+      
+
       {/* modal area */}
       
       {showModal === "addEmployee" || showModal == "editEmployeeModal" ? (

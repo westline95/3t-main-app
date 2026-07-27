@@ -1049,7 +1049,7 @@ export default function Customers({handleSidebar, showSidebar}) {
                         ></Column>
                         <Column
                           field="name"
-                          header="Nama Pelanggan"
+                          header="Pelanggan"
                           body={cellWithImg}
                           bodyStyle={primeTableBodyStyle}
                           headerStyle={primeTableHeaderStyle}

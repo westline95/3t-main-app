@@ -112,7 +112,7 @@ export default function DepartmentModal({ show, onHide, data, returnAct }) {
     const onError = (errors) => {
         console.error(errors);
     }
-    console.log(data)
+
     useEffect(() => {
         if (data && data.action == "update") {
             setValue("department_name", data.rowData.department_name);

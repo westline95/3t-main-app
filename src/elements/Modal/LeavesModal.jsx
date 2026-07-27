@@ -16,7 +16,7 @@ import DropzoneFile from "../DropzoneFile";
 import dataStatic from "../../assets/js/dataStatic";
 import NumberFormat from "../Masking/NumberFormat";
 
-export default function SalarySettingModal({ show, onHide, data, returnAct }) {
+export default function LeavesModal({ show, onHide, data, returnAct }) {
   const axiosPrivate = useAxiosPrivate();
   const { auth } = useAuth();
   let locale = "id-ID";
@@ -30,7 +30,9 @@ export default function SalarySettingModal({ show, onHide, data, returnAct }) {
   const [ openPopup, setOpenPopup ] = useState(false);
   const [ filterName, setFilteredName ] = useState([]);
   const [ chooseEmployee, setEmployee] = useState(null);
-
+  
+  
+  const [ leave_types, setLeaveTypes ] = useState([]);
   const {
     register,
     handleSubmit,
@@ -122,7 +124,6 @@ export default function SalarySettingModal({ show, onHide, data, returnAct }) {
   //         fetchCustType();
   //     }
   // },[]);
-  console.log(data)
   const convertBase64 = (file) => {
     return new Promise((resolve, reject) => {
       const fileReader = new FileReader();
@@ -173,6 +174,26 @@ export default function SalarySettingModal({ show, onHide, data, returnAct }) {
       });
     });
   };
+
+  const fetchAllLeaveType = async () => {
+    await axiosPrivate.get("/leave-types/all")
+      .then(response => {
+        setLeaveTypes(response.data);
+        // let dupe = [...response.data];
+        // response.data.map((e, idx) => {
+        //     dupe[idx].fullProdName = e.product_name + " " + e.variant;
+        // })
+        // setAllProd(response.data);
+      })
+      .catch(error => {
+        toast.current.show({
+          severity: "error",
+          summary: "Failed",
+          detail: "Error when get leave type data",
+          life: 3000,
+        });
+      })
+    }
 
   const fetchInsertSalarySett = async(employeeData) =>{
     const body = JSON.stringify(employeeData);
@@ -334,6 +355,7 @@ export default function SalarySettingModal({ show, onHide, data, returnAct }) {
 
   useEffect(() => {
     fetchAllEmployee();
+    fetchAllLeaveType();
   },[]);
 
   // useEffect(() => {
@@ -359,7 +381,7 @@ export default function SalarySettingModal({ show, onHide, data, returnAct }) {
         centered={true}
       >
         <Modal.Header closeButton>
-          <Modal.Title>{data.action == "insert" ? "tambah" : "ubah"} pengaturan gaji karyawan</Modal.Title>
+          <Modal.Title>{data.action == "insert" ? "tambah" : "ubah"} cuti karyawan</Modal.Title>
         </Modal.Header>
           <Modal.Body>
             <form>
@@ -395,111 +417,54 @@ export default function SalarySettingModal({ show, onHide, data, returnAct }) {
                             )
                         }
                     </div>   
-                </div>
-                </div>
-                {/* <Collapse in={currSalarySetting != null}>
-                  <p className="modal-section-title">data aktif</p>
-                  <div className="col-lg-12 col-sm-12 col-12" style={{marginTop:0}}>
-                  <p className="modal-section-title mb-2">data aktif</p>
-                    <div className="modal-table-wrap">
-                      <div className="card card-table w-100 static-shadow" style={{padding: '1.5rem'}}>
-                        <p className="modal-section-title">Informasi gaji aktif</p>
-                          <div className="cards-info-group d-flex justify-content-between">
-                            <p className="label-text">mulai tanggal</p>
-                            <p className="cards-text">{currSalarySetting && ConvertDate.convertToFullDate(currSalarySetting.start_date, "/")}</p>
-                          </div>
-                          <div className="cards-info-group d-flex justify-content-between">
-                            <p className="label-text">berakhir tanggal</p>
-                            <p className="cards-text">{currSalarySetting && ConvertDate.convertToFullDate(currSalarySetting.end_date, "/")}</p>
-                          </div> 
-                          <div className="cards-info-group d-flex justify-content-between">
-                            <p className="label-text">tipe gaji</p>
-                            <p className="cards-text">{currSalarySetting && currSalarySetting.salary_type}</p>
-                          </div>
-                          <div className="cards-info-group d-flex justify-content-between">
-                            <p className="label-text">jumlah gaji</p>
-                            <p className="cards-text">
-                              <NumberFormat intlConfig={{
-                                value: currSalarySetting?.base_salary, 
-                                locale: "id-ID",
-                                style: "currency", 
-                                currency: "IDR",
-                              }} 
-                              />
-                            </p>
-                          </div>
-                          <div className="cards-info-group d-flex justify-content-between">
-                            <p className="label-text">status uang rokok</p>
-                            <div className="badge-wraping">
-                              <span className={`badge badge-${currSalarySetting?.status_uang_rokok ? 'success' : 'danger'} light`} style={{borderRadius: 17, textTransform:'capitalize'}}>
-                                {currSalarySetting?.status_uang_rokok ? "disimpan" : "tidak disimpan"}
-                              </span>
-                            </div>
-                          </div>
-                      </div>
-                    </div>
                   </div>
-                </Collapse> */}
-                {/* <p className="modal-section-title mt-2">data baru</p> */}
-                <div className="col-lg-6 col-sm-6 col-12">
-                  <InputGroup
-                    label="Jumlah gaji"
-                    groupLabel="Rp"
-                    type="text"
-                    position="left"
-                    name="base_salary_formated"
-                    mask={"currency"}
-                    returnValue={(value) => {
-                      setValue("base_salary", value.origin)
-                      setValue("base_salary_formated", value.formatted)
+                </div>
+                <div className="col-lg-12 col-sm-12 col-12">
+                  <InputWSelect
+                    label={"jenis cuti"}
+                    name="leaves_type"
+                    selectLabel="Pilih jenis cuti"
+                    options={leave_types}
+                    optionKeys={["leave_type_id", "Leave_type_name"]}
+                    value={(selected) => {
+                      setValue("leave_type_id", selected.id);
+                      setValue("Leave_type_name", selected.value);
+                      getValues("Leave_type_name") !== "" && clearErrors('Leave_type_name')
                     }}
-                    defaultValue={getValues('base_salary') ? Number(getValues('base_salary')) : "0"}
-                    require={true}
+                    defaultValue={data.rowData?.department_histories[0]?.department_id ?? ""}
+                    defaultValueKey={"leave_type_id"}
                     register={register}
+                    require={true}
                     errors={errors}
                   />
                 </div>
                 <div className="col-lg-6 col-sm-6 col-12">
                   <InputWLabel
-                    label="berlaku tanggal"
+                    label="Mulai tanggal"
                     type="date"
-                    name="effective_date"
+                    name="start_date"
                     defaultValue={selectedStartDate}
                     onChange={(e) => {
                       setSelectedStartDate(e.value);
-                      setValue("effective_date", e.value);
+                      setValue("start_date", e.value);
                     }}
                     register={register}
                     require={true}
                     errors={errors}
                   />
                 </div>
-                {/* <div className="col-lg-6 col-sm-6 col-12">
+                <div className="col-lg-6 col-sm-6 col-12">
                   <InputWLabel
                     label="berakhir tanggal"
                     type="date"
                     name="end_date"
-                    defaultValue={selectedEndDate}
-                    minDate={selectedStartDate}
+                    defaultValue={selectedStartDate}
                     onChange={(e) => {
-                      setSelectedEndDate(e.value);
-                      setValue("end_date",e.value);
+                      setSelectedStartDate(e.value);
+                      setValue("end_date", e.value);
                     }}
                     register={register}
                     require={true}
-                    errors={errors}
-                  />
-                </div> */}
-                <div className="mt-3" style={{textAlign: 'left'}}>
-                  <label className="mb-1">Status uang rokok</label>
-                  <InputWLabel 
-                    label={statusRokok ? 'disimpan' : 'tidak disimpan'}
-                    type={'switch'}
-                    name={'status_uang_rokok'}
-                    style={{alignItems:'center'}}
-                    onChange={(e) => {setValue('status_uang_rokok', e.target.checked);setStatusRokok(e.target.checked)}}
-                    register={register}
-                    require={false}
                     errors={errors}
                   />
                 </div>

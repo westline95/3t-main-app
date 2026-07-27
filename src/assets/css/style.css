@@ -4749,6 +4749,10 @@ tr.hover-row:hover > * {
   cursor: default;
 }
 
+.p-speeddial-button {
+  border-radius: 120%;
+}
+
 /* media queries for responsiveness */
 /* for mobile */
 

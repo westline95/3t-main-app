@@ -1346,7 +1346,7 @@ export default function Department({ handleSidebar, showSidebar }) {
                                                         }
                                                     >
                                                         <i className="bx bx-plus"></i>
-                                                        kategori
+                                                        departemen
                                                     </button>
                                                 </div>
                                                 <DataView

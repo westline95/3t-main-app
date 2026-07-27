@@ -12,6 +12,8 @@ import InputWLabel from "../Input/InputWLabel";
 import InputGroup from "../Input/InputGroup";
 import InputWSelect from "../Input/InputWSelect";
 import DropzoneFile from "../DropzoneFile";
+import DefaultAvatar from "../../../public/Avatar 2.jpg";
+
 
 export default function AddEmployeeModal({ show, onHide, data, returnAct }) {
   const axiosPrivate = useAxiosPrivate();
@@ -352,7 +354,7 @@ export default function AddEmployeeModal({ show, onHide, data, returnAct }) {
                   <label className="mb-1">Foto karyawan</label>
                   <DropzoneFile
                     name="img"
-                    defaultValue={!getValues('img') ? defaultAvatar : getValues('img')}
+                    defaultValue={!getValues('img') ? DefaultAvatar : getValues('img')}
                     require={false}
                     register={register}
                     error={errors}
@@ -436,7 +438,7 @@ export default function AddEmployeeModal({ show, onHide, data, returnAct }) {
                           setValue("hired_date", e.value);
                         }}
                         register={register}
-                        require={false}
+                        require={true}
                         errors={errors}
                       />
                     </div>

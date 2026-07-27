@@ -17,6 +17,7 @@ import Categories from "./pages/Categories";
 import Sidebar from "./parts/Sidebar";
 import { useState } from "react";
 import Employees from "./pages/Employees";
+import Leaves from "./pages/Leaves";
 import Department from "./pages/Department";
 import DeliveryEmployee from "./pages/DeliveryEmployee";
 
@@ -74,6 +75,9 @@ function App() {
                 </Route>
                 <Route element={<RequireAuth allowedRoles={[roleList.admin]} />}>
                   <Route path="hrm/employees" element={<Employees />} />
+                </Route>
+                <Route element={<RequireAuth allowedRoles={[roleList.admin]} />}>
+                  <Route path="hrm/leaves" element={<Leaves />} />
                 </Route>
                 <Route element={<RequireAuth allowedRoles={[roleList.admin]} />}>
                   <Route path="setting/app" element={<SettingApp />} />  

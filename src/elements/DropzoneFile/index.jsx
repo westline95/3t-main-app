@@ -10,7 +10,7 @@ export default function DropzoneFile({defaultValue, name, register, error, requi
 
     useEffect(() => {
         if(defaultValue){
-            if(defaultValue.includes("http")){
+            if(defaultValue.length !== 0 && defaultValue.includes("http")){
                 fetch(defaultValue)
                 .then(response => response.blob())
                 .then(blob => {
@@ -19,10 +19,10 @@ export default function DropzoneFile({defaultValue, name, register, error, requi
                     setFile(imgObj);
                 });
             } else {
-                setCheckFile(true);
-                setFile(defaultValue);
+                setCheckFile(false);
+                setFile(null);
             }
-        }
+        } 
     },[defaultValue])
 
     const dropzoneFile = (e) => {

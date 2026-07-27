@@ -58,7 +58,7 @@ export const CustomSelect = (props) => {
             });
         }
     };
-
+    console.log(options)
     const handleClickSelect = (ref) => {
         useEffect(() => {
             const handleClickOutside = (evt) => {
@@ -108,7 +108,6 @@ export const CustomSelect = (props) => {
             }
         } else if(defaultValue && defaultValue == "") {
             setValue(selectLabel);
-            console.log(matchValue);
         }
     },[defaultValue]);
 

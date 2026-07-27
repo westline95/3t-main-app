@@ -707,7 +707,7 @@ export default function DeliveryGroupReturnListModal({
 
   const fetchGetDG = async () => {
     await axiosPrivate
-      .get("http://localhost:5056/delivery-group/by/dgid-admin", {
+      .get("/delivery-group/by/dgid-admin", {
         params: { id: data.delivery_group_id },
       })
       .then((resp) => {
@@ -786,7 +786,7 @@ export default function DeliveryGroupReturnListModal({
 
   const fetchInsertDGLogs = async (bodyData) => {
     await axiosPrivate
-      .post("http://localhost:5056/add/dg-logs", bodyData)
+      .post("/add/dg-logs", bodyData)
       .then((resp) => {
         toast.current.show({
           severity: "success",
@@ -820,7 +820,7 @@ export default function DeliveryGroupReturnListModal({
   
   const fetchUpdateDGLogs = async (bodyData) => {
     await axiosPrivate
-      .put("http://localhost:5056/update/dg-logs", bodyData)
+      .put("/update/dg-logs", bodyData)
       .then((resp) => {
         toast.current.show({
           severity: "success",

@@ -270,7 +270,7 @@ export default function Sales({ handleSidebar, showSidebar }) {
         // }
     }
     // const fetchAllCanceledSales = async () => {
-    //     await axiosPrivate.get(`http://localhost:5056/sales/order-status`, { params: { order_status: "canceled" } })
+    //     await axiosPrivate.get(`/sales/order-status`, { params: { order_status: "canceled" } })
     //         .then(resp => {
     //             setSalesCanceled(resp.data);
     //         })
@@ -1715,13 +1715,8 @@ export default function Sales({ handleSidebar, showSidebar }) {
         );
     };
 
-    useEffect(() => {
-        initFilters();
-    }, []);
-
     const clearFilter = () => {
-        initFilters();
-        // allSales
+        setMobileSearchMode(false);
         const _lazyState = { ...lazyState };
         _lazyState.filters.global.value = '';
         _lazyState.first = 0;
@@ -1747,44 +1742,6 @@ export default function Sales({ handleSidebar, showSidebar }) {
     const onGlobalFilterChange = (e) => {
         setActiveSearch(e.currentTarget.ariaLabel);
         setGlobalFilterValue(e.target.value);
-    };
-
-    const initFilters = () => {
-        setSalesFilters({
-            global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-            order_id: {
-                operator: FilterOperator.AND,
-                constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
-            },
-            order_date: {
-                operator: FilterOperator.AND,
-                constraints: [{ value: null, matchMode: FilterMatchMode.DATE_IS }],
-            },
-            'customer.name': {
-                operator: FilterOperator.AND,
-                constraints: [{ value: null, matchMode: FilterMatchMode.IN }],
-            },
-            order_type: {
-                operator: FilterOperator.AND,
-                constraints: [{ value: null, matchMode: FilterMatchMode.IN }],
-            },
-            grandtotal: {
-                operator: FilterOperator.AND,
-                constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
-            },
-            source: {
-                operator: FilterOperator.AND,
-                constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
-            },
-            order_status: {
-                value: null, matchMode: FilterMatchMode.EQUALS
-            },
-            payment_type: {
-                operator: FilterOperator.AND,
-                constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
-            },
-        });
-        setGlobalFilterValue("");
     };
 
     const formatedGrandtotal = (rowData) => {

@@ -16,7 +16,7 @@ import DropzoneFile from "../DropzoneFile";
 import dataStatic from "../../assets/js/dataStatic";
 import NumberFormat from "../Masking/NumberFormat";
 
-export default function SalarySettingModal({ show, onHide, data, returnAct }) {
+export default function LeaveTypesModal({ show, onHide, data, returnAct }) {
   const axiosPrivate = useAxiosPrivate();
   const { auth } = useAuth();
   let locale = "id-ID";
@@ -29,8 +29,11 @@ export default function SalarySettingModal({ show, onHide, data, returnAct }) {
   const [isLoading, setLoading] = useState(true);
   const [ openPopup, setOpenPopup ] = useState(false);
   const [ filterName, setFilteredName ] = useState([]);
-  const [ chooseEmployee, setEmployee] = useState(null);
-
+  const [ chooseEmployee, setEmployee ] = useState(null);
+  const [ dayOfTol, setDayOfTol ] = useState(0);
+  
+  
+  const [ leave_types, setLeaveTypes ] = useState([]);
   const {
     register,
     handleSubmit,
@@ -44,16 +47,10 @@ export default function SalarySettingModal({ show, onHide, data, returnAct }) {
     formState: { errors },
   } = useForm({
     defaultValues: {
-      name: data.rowData?.name,
-      status_uang_rokok: data.action == "insert" ? false : data.rowData?.is_active,
-      // salary_type: data.rowData?.salary_type,
-      base_salary: data.rowData?.base_salary,
-      base_salary_formated: "0",
-      effective_date: data.rowData?.effective_date,
-      // end_date: data.rowData?.dob,
+      leave_type_name: data?.rowData?.leave_type_name,
+      day_of_tolerance: data?.rowData?.day_of_tolerance,
     },
   });
-
   const [showModal, setShowModal] = useState(false);
   const [statusRokok, setStatusRokok ] = useState(false);
   const [targetKey, setTarget] = useState("");
@@ -64,42 +61,10 @@ export default function SalarySettingModal({ show, onHide, data, returnAct }) {
     msg: "",
     title: "",
   });
-  const [custCategory, setCustCategory] = useState("");
-  const [custTypeData, setCustType] = useState(null);
   const [employeeData, setEmployeeData] = useState(null);
   const [sendTarget, setSendTarget] = useState(null);
-  const [selectedStartDate, setSelectedStartDate] = useState(null);
-  const [selectedDepartmentDate, setSelectedDepartmentDate] = useState(data.rowData?.department_histories[0]?.date ? new Date(data.rowData.department_histories[0].date) : null);
   const [ defaultAvatar, setDefaultAvatar ] = useState(data.img ? data.img : null)
   const [ currSalarySetting, setCurrSalarySetting ] = useState(null)
-
-  const femaleAvatar = `https://res.cloudinary.com/du3qbxrmb/image/upload/v1749183325/Avatar_1_hhww7p.jpg`;
-  const maleAvatar = `https://res.cloudinary.com/du3qbxrmb/image/upload/v1749183333/Avatar_2_zebyeg.jpg`;
-
-  const handleAvatar = (e) => {
-    if(e.target.value == 'female' && e.target.checked){
-        setDefaultAvatar(femaleAvatar);
-        setValue('img',femaleAvatar);
-    } else if(e.target.value == 'male' && e.target.checked){
-        setDefaultAvatar(maleAvatar);
-        setValue('img',maleAvatar);
-    } else {
-        reset('img'); 
-        setDefaultAvatar(null);
-    }
-  };
-
-  const fetchCustById = () => {
-    FetchApi.fetchCustByID(data.id)
-      .then((data) => {
-        // console.log(data[0].name)
-        setEmployeeData(data);
-      })
-      .catch((error) => {
-        setToastContent({ variant: "danger", msg: "Failed to update" });
-        setShowToast(true);
-      });
-  };
 
   // const fetchCustType = async() => {
   //     await axiosPrivate.get("/types")
@@ -121,22 +86,7 @@ export default function SalarySettingModal({ show, onHide, data, returnAct }) {
   //     if(data){
   //         fetchCustType();
   //     }
-  // },[]);
-  console.log(data)
-  const convertBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const fileReader = new FileReader();
-      fileReader.readAsDataURL(file);
-
-      fileReader.onload = () => {
-        resolve(fileReader.result);
-      };
-
-      fileReader.onerror = (error) => {
-        reject(error);
-      };
-    });
-  };
+  // },[])
 
   const returnSelectVal = (selected) => {
     setOrderTypeTmp(selected);
@@ -174,14 +124,30 @@ export default function SalarySettingModal({ show, onHide, data, returnAct }) {
     });
   };
 
-  const fetchInsertSalarySett = async(employeeData) =>{
-    const body = JSON.stringify(employeeData);
-    await axiosPrivate.post("/salary-setting", body)
+  const fetchAllLeaveType = async () => {
+    await axiosPrivate.get("/leave-types/all")
+      .then(response => {
+        setLeaveTypes(response.data);
+      })
+      .catch(error => {
+        toast.current.show({
+          severity: "error",
+          summary: "Failed",
+          detail: "Error when get leave type data",
+          life: 3000,
+        });
+      })
+    }
+
+  const fetchInsertLeaveType = async(leaveTypesData) =>{
+    const body = JSON.stringify(leaveTypesData);
+    await axiosPrivate.post("/leave-type/new", body)
     .then(resp => {
+      console.log(resp)
       toast.current.show({
         severity: "success",
         summary: "Sukses",
-        detail: "Berhasil menyimpan pengaturan gaji",
+        detail: "Berhasil menambah jenis cuti",
         life: 1500,
       });
       
@@ -195,20 +161,20 @@ export default function SalarySettingModal({ show, onHide, data, returnAct }) {
       toast.current.show({
         severity: "error",
         summary: "Gagal",
-        detail: "Gagal menyimpan pengaturan gaji",
+        detail: "Gagal menambah jenis cuti!",
         life: 3000,
       });
     })
   };
 
-  const fetchUpdateEmployee = async(employeeData) => {
-    const body = JSON.stringify(employeeData);
-    await axiosPrivate.put("/employee/update", body, {params: {id: data.rowData.employee_id}})
+  const fetchUpdateLeaveType = async(leaveTypesData) => {
+    const body = JSON.stringify(leaveTypesData);
+    await axiosPrivate.patch(`/leave-type/${data.id}`, body)
     .then(resp => {
       toast.current.show({
         severity: "success",
         summary: "Sukses",
-        detail: "Berhasil memperbarui karyawan",
+        detail: "Berhasil memperbarui jenis cuti",
         life: 1500,
       });
 
@@ -218,10 +184,11 @@ export default function SalarySettingModal({ show, onHide, data, returnAct }) {
       }, 1500);
     })
     .catch(err => {
+      setControlUiBtn(false);
       toast.current.show({
         severity: "error",
         summary: "Gagal",
-        detail: "Gagal memperbarui karyawan",
+        detail: "Gagal memperbarui jenis cuti",
         life: 3000,
       });
     })
@@ -229,24 +196,15 @@ export default function SalarySettingModal({ show, onHide, data, returnAct }) {
 
   const onSubmit = async(formData) => {
     if(data.action == "insert"){
-      const salary = {
-        salary: {...formData},
-        salaryAdj: {
-          employee_id: formData.employee_id,
-          prev_salary: 0,
-          new_salary: formData.base_salary,
-          effective_date: formData.effective_date,
-          approved_by: auth.name,
-          notes: formData.notes,
-          prev_status_uang_rokok: false,
-          new_status_uang_rokok: formData.status_uang_rokok,
-        }
-      }
-      // salary.salary.now_active = true;
-      
-      fetchInsertSalarySett(salary);
+      const leaveTypes = {
+        ...formData
+      }      
+      fetchInsertLeaveType(leaveTypes);
     } else {
-
+      const leaveTypes = {
+        ...formData
+      }  
+      fetchUpdateLeaveType(leaveTypes);
     }
   }
 
@@ -332,19 +290,17 @@ export default function SalarySettingModal({ show, onHide, data, returnAct }) {
     }
   }
 
+  const handleChangeInputNumber = (e) => {
+    const newValue = e.target.value === '' ? '' : Number(e.target.value);
+    setDayOfTol(newValue);
+  };
+
   useEffect(() => {
-    fetchAllEmployee();
-  },[]);
-
-  // useEffect(() => {
-  //   if(employeeData){
-  //     setLoading(false);
-  //   } 
-  // },[employeeData]);
-
-  // if(isLoading){
-  //   return;
-  // }
+    if (data && data.action == "update") {
+      setValue("leave_type_name", data.rowData?.leave_type_name);
+      setValue("day_of_tolerance", Number(data.rowData?.day_of_tolerance));
+    }
+  }, [data])
 
   return (
     <>
@@ -359,7 +315,7 @@ export default function SalarySettingModal({ show, onHide, data, returnAct }) {
         centered={true}
       >
         <Modal.Header closeButton>
-          <Modal.Title>{data.action == "insert" ? "tambah" : "ubah"} pengaturan gaji karyawan</Modal.Title>
+          <Modal.Title>{data.action == "insert" ? "tambah" : "ubah"} jenis cuti</Modal.Title>
         </Modal.Header>
           <Modal.Body>
             <form>
@@ -367,142 +323,32 @@ export default function SalarySettingModal({ show, onHide, data, returnAct }) {
                 <div className="col-lg-12 col-sm-12 col-12">
                   <div style={{position:'relative'}}>
                     <InputWLabel 
-                        label="nama karyawan" 
+                        label="Jenis cuti" 
                         type="text"
-                        name="name" 
-                        placeholder="Search employee name..." 
-                        onChange={handleFilterName}
-                        onFocus={handleFilterName}
-                        onKeyDown={handleKeyDown}
+                        name="leave_type_name" 
+                        placeholder="nama jenis cuti..." 
                         require={true}
                         register={register}
                         errors={errors} 
                         textStyle={'capitalize'}
                         autoComplete={"off"}
-                    />
-                    {/* popup autocomplete */}
-                    <div className="popup-element" aria-expanded={openPopup} ref={refToThis}>
-                        {filterName && filterName.length > 0 ? 
-                            filterName.map((e,idx) => {
-                              return (
-                                    <div key={`employee-${idx}`} className="res-item" onClick={() => 
-                                        handleChooseEmployee({ 
-                                          ...e
-                                    })}>{e.name}</div>
-                                )
-                            }) : (
-                              <div className="res-item">Tidak ada data</div>
-                            )
-                        }
-                    </div>   
-                </div>
-                </div>
-                {/* <Collapse in={currSalarySetting != null}>
-                  <p className="modal-section-title">data aktif</p>
-                  <div className="col-lg-12 col-sm-12 col-12" style={{marginTop:0}}>
-                  <p className="modal-section-title mb-2">data aktif</p>
-                    <div className="modal-table-wrap">
-                      <div className="card card-table w-100 static-shadow" style={{padding: '1.5rem'}}>
-                        <p className="modal-section-title">Informasi gaji aktif</p>
-                          <div className="cards-info-group d-flex justify-content-between">
-                            <p className="label-text">mulai tanggal</p>
-                            <p className="cards-text">{currSalarySetting && ConvertDate.convertToFullDate(currSalarySetting.start_date, "/")}</p>
-                          </div>
-                          <div className="cards-info-group d-flex justify-content-between">
-                            <p className="label-text">berakhir tanggal</p>
-                            <p className="cards-text">{currSalarySetting && ConvertDate.convertToFullDate(currSalarySetting.end_date, "/")}</p>
-                          </div> 
-                          <div className="cards-info-group d-flex justify-content-between">
-                            <p className="label-text">tipe gaji</p>
-                            <p className="cards-text">{currSalarySetting && currSalarySetting.salary_type}</p>
-                          </div>
-                          <div className="cards-info-group d-flex justify-content-between">
-                            <p className="label-text">jumlah gaji</p>
-                            <p className="cards-text">
-                              <NumberFormat intlConfig={{
-                                value: currSalarySetting?.base_salary, 
-                                locale: "id-ID",
-                                style: "currency", 
-                                currency: "IDR",
-                              }} 
-                              />
-                            </p>
-                          </div>
-                          <div className="cards-info-group d-flex justify-content-between">
-                            <p className="label-text">status uang rokok</p>
-                            <div className="badge-wraping">
-                              <span className={`badge badge-${currSalarySetting?.status_uang_rokok ? 'success' : 'danger'} light`} style={{borderRadius: 17, textTransform:'capitalize'}}>
-                                {currSalarySetting?.status_uang_rokok ? "disimpan" : "tidak disimpan"}
-                              </span>
-                            </div>
-                          </div>
-                      </div>
-                    </div>
+                    />   
                   </div>
-                </Collapse> */}
-                {/* <p className="modal-section-title mt-2">data baru</p> */}
-                <div className="col-lg-6 col-sm-6 col-12">
-                  <InputGroup
-                    label="Jumlah gaji"
-                    groupLabel="Rp"
-                    type="text"
-                    position="left"
-                    name="base_salary_formated"
-                    mask={"currency"}
-                    returnValue={(value) => {
-                      setValue("base_salary", value.origin)
-                      setValue("base_salary_formated", value.formatted)
-                    }}
-                    defaultValue={getValues('base_salary') ? Number(getValues('base_salary')) : "0"}
-                    require={true}
-                    register={register}
-                    errors={errors}
-                  />
                 </div>
-                <div className="col-lg-6 col-sm-6 col-12">
-                  <InputWLabel
-                    label="berlaku tanggal"
-                    type="date"
-                    name="effective_date"
-                    defaultValue={selectedStartDate}
-                    onChange={(e) => {
-                      setSelectedStartDate(e.value);
-                      setValue("effective_date", e.value);
-                    }}
-                    register={register}
-                    require={true}
-                    errors={errors}
-                  />
-                </div>
-                {/* <div className="col-lg-6 col-sm-6 col-12">
-                  <InputWLabel
-                    label="berakhir tanggal"
-                    type="date"
-                    name="end_date"
-                    defaultValue={selectedEndDate}
-                    minDate={selectedStartDate}
-                    onChange={(e) => {
-                      setSelectedEndDate(e.value);
-                      setValue("end_date",e.value);
-                    }}
-                    register={register}
-                    require={true}
-                    errors={errors}
-                  />
-                </div> */}
-                <div className="mt-3" style={{textAlign: 'left'}}>
-                  <label className="mb-1">Status uang rokok</label>
+                <div className="col-lg-12 col-sm-12 col-12">
                   <InputWLabel 
-                    label={statusRokok ? 'disimpan' : 'tidak disimpan'}
-                    type={'switch'}
-                    name={'status_uang_rokok'}
-                    style={{alignItems:'center'}}
-                    onChange={(e) => {setValue('status_uang_rokok', e.target.checked);setStatusRokok(e.target.checked)}}
+                    label="toleransi hari" 
+                    type="number"
+                    minimum={1}
+                    name="day_of_tolerance" 
+                    placeholder="1" 
+                    require={true}
                     register={register}
-                    require={false}
-                    errors={errors}
-                  />
-                </div>
+                    errors={errors} 
+                    textStyle={'capitalize'}
+                    autoComplete={"off"}
+                  />   
+                  </div>
               </div>
             </form>
           </Modal.Body>
