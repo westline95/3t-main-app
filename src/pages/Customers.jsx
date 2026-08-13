@@ -201,7 +201,7 @@ export default function Customers({handleSidebar, showSidebar}) {
 
   const fetchAllCust = async () => {
     await axiosPrivate
-      .get("/customers")
+      .get("/pure-customers")
       .then((response) => {
         setCustData(response.data);
         setTotalRecords(response.data.length);
