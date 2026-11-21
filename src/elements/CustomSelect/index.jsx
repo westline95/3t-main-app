@@ -58,7 +58,7 @@ export const CustomSelect = (props) => {
             });
         }
     };
-    console.log(options)
+
     const handleClickSelect = (ref) => {
         useEffect(() => {
             const handleClickOutside = (evt) => {
@@ -94,11 +94,11 @@ export const CustomSelect = (props) => {
         measureElement();
     }
     
-    
     useEffect(() => {
         if(defaultValue && defaultValue !== ""){
             const getMatch = options?.find((e) => e[defaultValueKey] == defaultValue);
             const duplicate = {...getMatch};
+
             if(duplicate.length == 0) {
                 setValue(selectLabel);
                 selectedOption({id: '', value: ''})

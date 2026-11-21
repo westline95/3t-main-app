@@ -21,14 +21,12 @@ export default function InputWSelect(props) {
     const [selected2, selectedVal2] = useState({id: "", value: ""});
     const returnValue = (data) => {
         selectedVal2(data);
-        console.log(data)
         if(typeof props.value === "function"){
             return props.value(data);
         } else {
 
         }
     };
-
 
     return(
         <>
@@ -57,9 +55,11 @@ export default function InputWSelect(props) {
             // id='tess'
             // onChange={selectOrigin} 
             name={props.name}
-            defaultValue={selected2.value}
-            {...props.register ? {...props.register(props.name, { 
-                    required: props.require ? "This field is required" :''
+            // defaultValue={selected2.value}
+            value={selected2.value}
+            {...props.register ? 
+                {...props.register(props.name, { 
+                    required: props.require && "This field is required"
                 }
             )} : ""}
             style={{display: "none"}}

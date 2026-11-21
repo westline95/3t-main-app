@@ -41,6 +41,8 @@ const InputWLabel =  forwardRef((props, ref) => {
         inputWidth,
         display,
         minDate,
+        maxDate,
+        showButtonBar,
         onClick,
         fontSize
     } = props;
@@ -49,8 +51,13 @@ const InputWLabel =  forwardRef((props, ref) => {
     const [ dateValue, setDateValue ] = useState(null);
 
     useEffect(() => {
-        if(type === 'date' && defaultValue){
-            setDateValue(defaultValue);
+        if(type === 'date'){
+            console.log(defaultValue)
+            if(defaultValue !== null || defaultValue !== ""){
+                setDateValue(defaultValue);
+            } else {
+                setDateValue(null);
+            }
         }
     },[defaultValue])
 
@@ -154,31 +161,24 @@ const InputWLabel =  forwardRef((props, ref) => {
                         dateFormat="dd/mm/yy"
                         value={dateValue}
                         minDate={minDate && minDate}
+                        maxDate={maxDate && maxDate}
                         // value={new Date(defaultValue)}
                         disabled={disabled}
+                        showButtonBar={showButtonBar}
                         // onChange={(e) => setDateValue(e.value)}
-                        {...register ? {...register(name, { required: require, onBlur: onBlur, ref: inputRef, onChange: onChange})} : ""}
+                        {...register ? {...register(name, { 
+                            required: require ? "This field is required" :'', 
+                            onBlur: onBlur, 
+                            ref: inputRef, 
+                            onChange: onChange
+                        })} : ""}
                     />
+                    {register && errors 
+                        ? errors[name] && <span className="field-msg-invalid">{errors[name].message}</span>
+                        : ""}
                     
                 </>
-            ) : type == "date" ?
-            (
-                <>
-                    <Form.Label className="mb-1">{label}<span className="required-label" style={{ display: require ? 'inline' : 'none' }}>*</span></Form.Label>
-                    <Calendar showIcon 
-                        baseZIndex={999999} 
-                        name={name}
-                        dateFormat="dd/mm/yy"
-                        value={dateValue}
-                        minDate={minDate && minDate}
-                        // value={new Date(defaultValue)}
-                        disabled={disabled}
-                        // onChange={(e) => setDateValue(e.value)}
-                        {...register ? {...register(name, { required: require, onBlur: onBlur, ref: inputRef, onChange: onChange})} : ""}
-                    />
-                    
-                </>
-            )
+            ) 
             : (<>
             {display != null || display != undefined ? 
                 (
@@ -293,5 +293,6 @@ InputWLabel.propTypes = {
     autoComplete: propTypes.string,
     style: propTypes.any,
     maxLength: propTypes.number,
-    inputWidth: propTypes.any
+    inputWidth: propTypes.any,
+    showButtonBar: propTypes.bool
 }

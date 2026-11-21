@@ -115,7 +115,7 @@ export default function DepartmentModal({ show, onHide, data, returnAct }) {
 
     useEffect(() => {
         if (data && data.action == "update") {
-            setValue("department_name", data.rowData.department_name);
+            setValue("department_name", data.rowData?.department_name);
         }
     }, [data])
 

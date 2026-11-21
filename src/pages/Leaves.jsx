@@ -120,10 +120,7 @@ export default function Leaves({ handleSidebar, showSidebar }) {
         formState: { errors },
     } = useForm({
         defaultValues: {
-            customer_id: '',
-            order_date: new Date(),
-            ship_date: new Date(),
-            order_type: ''
+
         }
     });
 
@@ -137,23 +134,6 @@ export default function Leaves({ handleSidebar, showSidebar }) {
         _lazyState.page = event.page;
         setLazyState(_lazyState);
     }; 
-
-
-    const fetchAllCust = async () => {
-        await axiosPrivate.get("/pure-customers")
-            .then(response => {
-                setCustData(response.data);
-            })
-            .catch(error => {
-                toast.current.show({
-                    severity: "error",
-                    summary: "Failed",
-                    detail: "Error when get customer data",
-                    life: 3000,
-                });
-            }
-            )
-    };
 
     const fetchAllLeaveType = async () => {
         await axiosPrivate.get("/leave-types/all")
@@ -169,159 +149,6 @@ export default function Leaves({ handleSidebar, showSidebar }) {
                 });
             })
     }
-
-    const fetchInsertSales = async (body, deliveryModel) => {
-        salesItems.map(e => {
-            e.discount_prod_rec = e.discount;
-        });
-
-        let bodyData = JSON.stringify({
-            sales: body,
-            order_items: salesItems,
-            delivery: deliveryModel,
-            paidData: paidData ? paidData : null,
-            guest_mode: guestMode
-        });
-        // let deliveryBody;
-        await axiosPrivate.post("/sales/write", bodyData)
-            .then(resp => {
-                console.log(resp.data)
-                toast.current.show({
-                    severity: "success",
-                    summary: "Sukses",
-                    detail: "Order baru berhasil dibuat",
-                    life: 3500,
-                });
-                // // check if customer has order credit with order id null
-                // axiosPrivate.get(`/orders-credit/available/${resp.data.customer_id}`)
-                // .then(resp1 => {
-                //     if(resp1.data.length > 0){
-                //         // update order credits => order id to current order id
-                //         const order_credit_id = resp1.data[0].order_credit_id;
-                //         const order_id = JSON.stringify({order_id: resp.data.order_id});
-                //         axiosPrivate.patch(`/order-credit/${order_credit_id}`, order_id)
-                //         .then(resp2 => {
-                //             toast.current.show({
-                //                 severity: "success",
-                //                 summary: "Sukses",
-                //                 detail: "order kredit ditambahkan",
-                //                 life: 3500,
-                //             });
-
-                //         })
-                //         .catch(err2 => {
-                //             toast.current.show({
-                //                 severity: "error",
-                //                 summary: "Failed",
-                //                 detail: `Failed to update order credit`,
-                //                 life: 3000,
-                //             });
-                //         })
-                //     }
-                // })
-                // .catch(err1 => {
-                //     console.error('something error in order credit');
-                // })
-
-                // salesItems.map(e => {
-                //     e.order_id = resp.data.order_id;
-                //     e.discount_prod_rec = e.discount;
-                // });
-
-                // if(resp.data.order_type == 'delivery' && deliveryModel.courier_id !== "" || deliveryModel.courier_id){
-                //     let delivery = {
-                //         order_id: resp.data.order_id,
-                //         courier_id: deliveryModel.courier_id,
-                //         courier_name: deliveryModel.courier_name,
-                //         delivery_address: deliveryModel.delivery_address,
-                //         ship_date: deliveryModel.ship_date
-                //     }
-                //     deliveryBody = JSON.stringify(delivery);
-                // } 
-                if (resp.data.order_credit && resp.data.order_credit.length > 0) {
-                    setCurrOrderCredit(resp.data.order_credit[0].return_order.refund_total);
-                }
-
-                setCurrentOrder(resp.data.order);
-                setDiscVal(resp.data.order.order_discount ? Number(resp.data.order.order_discount) : 0);
-                // updateTotalSalesCust(resp.data);
-                reset();
-                setResetInputWSelect(true);
-                setValue('order_type', '');
-                setSalesItems([]);
-                // setAddOrderItem(true);
-                if (resp.data.checkInv) {
-                    axiosPrivate.get("/inv/check", { params: { custid: resp.data.order.customer_id, ispaid: false, type: "bayar nanti" } })
-                        .then(resp2 => {
-                            if (resp2.data && resp2.data.length > 0) {
-                                let orderId = JSON.parse(resp2.data[0].order_id);
-                                let newOrderId = [...orderId, resp.data.order.order_id];
-                                let totalPayment = 0;
-
-                                if (resp2.data[0].payments && resp2.data[0].payments.length > 0) {
-                                    totalPayment = resp2.data[0].payments.reduce((prev, curr) => prev + Number(curr.amount_paid), 0);
-                                }
-
-                                let modelInv = {
-                                    order_id: JSON.stringify(newOrderId),
-                                    subtotal: Number(resp2.data[0].subtotal) + Number(data.subtotal),
-                                    amount_due: Number(resp2.data[0].amount_due) + Number(data.grandtotal) + (currOrderCredit ? Number(currOrderCredit) : 0),
-                                    total_discount: Number(resp2.data[0].total_discount) + Number(discVal),
-                                    // remaining_payment: Number(resp.data[0].remaining_payment) + Number(data.grandtotal),
-                                    remaining_payment: (Number(resp2.data[0].remaining_payment) + Number(data.grandtotal) + (currOrderCredit ? Number(currOrderCredit) : 0)) - totalPayment,
-                                };
-                                setExistInv({ invId: resp2.data[0].invoice_id, invData: modelInv });
-                                setSalesList({ endpoint: 'inv', action: 'warning', items: { ...resp2.data[0] } });
-                                setShowModal("existInvOrderModal");
-                            }
-
-                            // fetchAllSales();
-                            // fetchAllRO();
-                            // refetch
-                            setRefetch(true);
-                            resp.data.customer_id && fetchDetailedCust(resp.data.customer_id);
-                        })
-                        .catch(err => {
-                            toast.current.show({
-                                severity: "error",
-                                summary: "Failed",
-                                detail: `Failed to check invoice`,
-                                life: 3000,
-                            });
-                        })
-                } else {
-                    // fetchAllSales();
-                    // fetchAllRO();
-                    setRefetch(true);
-                    !guestMode && fetchDetailedCust(resp.data.customer_id);
-                }
-
-                if (resp.data.delivery) {
-                    toast.current.show({
-                        severity: "success",
-                        summary: "Success",
-                        detail: "Delivery created",
-                        life: 3500,
-                    });
-                }
-                // return fetchInsertMultipleOrderItem(resp.data.order_id, salesItems);            
-            })
-            // .then(orderItemResp => {
-            //     if(deliveryBody){
-            //         fetchCreateDelivery(deliveryBody);
-            //     }
-
-            // })
-            .catch(error => {
-                console.log(error)
-                toast.current.show({
-                    severity: "error",
-                    summary: "Failed",
-                    detail: `Failed to add new data: ${error}`,
-                    life: 3000,
-                });
-            })
-    };
 
     const fetchDelLeaveType = async(id) => {
         await axiosPrivate.delete(`/leave-type/del/${id}`)
@@ -344,47 +171,20 @@ export default function Leaves({ handleSidebar, showSidebar }) {
         })
     };
 
-    const handleModalWData = (e, dataToSend, leavesDataProd) => {
-        let data;
-        switch (e.currentTarget.ariaLabel) {
-            case "salesDetailModal":
-                data = {
-                    origin: dataToSend,
-                    // items: leavesDataProd != null ? JSON.parse(leavesDataProd) : leavesDataProd
-                }
-                setSalesList(dataToSend);
-                setShowModal("salesDetailModal");
-                break;
-            case "salesEditModal":
-                // items: leavesDataProd != null ? JSON.parse(leavesDataProd) : leavesDataProd
-                setSalesList(dataToSend);
-                setShowModal("salesEditModal");
-                break;
-            case "cancelSalesModal":
-
-                setSalesList(dataToSend);
-                // console.log(data)
-                setShowModal("cancelSalesModal");
-                break;
-            case "custTypeModal":
-                setShowModal("custTypeModal");
-                break;
-            case "roEditModal":
-                setShowModal("roEditModal");
-                setSalesList(dataToSend);
-                break;
-            case "roCancelModal":
-                setShowModal("roCancelModal");
-                setSalesList(dataToSend);
-                break;
-        }
-    }
-
     const handleModal = (e, modalData) => {
         switch (e.currentTarget.ariaLabel) {
             case 'addLeaves':
                 setModalData(modalData);
                 setShowModal("addLeaves");
+                break;
+            case 'editLeave':
+                setModalData(modalData);
+                setShowModal("editLeave");
+                break;
+             case 'confirmDelLeave':
+                setModalData(modalData);
+                setModalMsg(`Yakin ingin menghapus cuti ini?`);
+                setShowModal("confirmDelLeave");
                 break;
             case 'addLeaveTypes':
                 setModalData(modalData);
@@ -398,17 +198,6 @@ export default function Leaves({ handleSidebar, showSidebar }) {
                 setModalData(modalData);
                 setModalMsg(`Yakin ingin menghapus jenis cuti ini?`);
                 setShowModal("confirmDelLT");
-                break;
-            case 'createPayment':
-                let data = {
-                    action: 'insert',
-                    guest_mode: guestMode
-                }
-                setSalesList(data);
-                setShowModal("createPayment");
-                break;
-            case 'returnOrderModal':
-                setShowModal("returnOrderModal");
                 break;
         }
     }
@@ -499,116 +288,8 @@ export default function Leaves({ handleSidebar, showSidebar }) {
         }
     }, [chooseCust]);
 
-
-    const handleEdit = (val, idx) => {
-        let duplicate = [...salesItems];
-        duplicate[idx].quantity = val;
-        setSalesItems(duplicate);
-
-    }
-
-    const delSalesItems = (idx) => {
-        salesItems.splice(idx, 1);
-        handleUpdateEndNote();
-    }
-
     const handleCloseModal = () => {
         setShowModal("");
-    }
-
-    const onSubmitSales = (formData, e) => {
-        if (!salesItems || salesItems.length < 1) {
-            toast.current.show({
-                severity: "error",
-                summary: "Error",
-                detail: "Tambahkan produk terlebih dahulu",
-                life: 3500,
-            });
-        } else {
-            let objStr;
-            let grandQty = 0;
-            let subtotal = 0;
-
-            if (paidData) {
-                objStr = [...salesItems];
-
-                objStr.forEach((e) => {
-                    subtotal += Number(e.sell_price) * e.quantity
-                    grandQty += Number(e.quantity)
-                });
-
-                let forming = {
-                    order_date: formData.order_date,
-                    order_type: formData.order_type,
-                    note: formData.note,
-                    source: 'main',
-                    subtotal: salesEndNote ? salesEndNote.subtotal : null,
-                    grandtotal: salesEndNote ? salesEndNote.grandtotal : null,
-                    order_discount: discVal,
-                }
-
-                !guestMode ? forming.customer_id = formData.customer_id : forming.guest_name = formData.name;
-
-                let deliveryModel = null;
-                if (delivSwitch) {
-                    deliveryModel = {
-                        courier_id: formData.courier_id,
-                        courier_name: formData.courier_name,
-                        ship_date: formData.ship_date,
-                        delivery_address: formData.delivery_address,
-                    }
-                }
-
-                if (formData.order_type == "walk-in") {
-                    forming.shipped_date = formData.order_date;
-                }
-
-                if (paidData.payment_type == "lunas") {
-                    let modified = {
-                        ...forming,
-                        order_status: "completed",
-                        payment_type: paidData.payment_type,
-                        is_complete: true,
-                    }
-                    fetchInsertSales(modified, deliveryModel);
-
-                } else if (paidData.payment_type == "sebagian") {
-                    let modified = {
-                        ...forming,
-                        order_status: "pending",
-                        payment_type: paidData.payment_type,
-                        is_complete: false,
-                    }
-                    fetchInsertSales(modified, deliveryModel);
-                    // fetchInvStatusCust(false, e.customer_id, paidData.payment_type);
-                } else if (paidData.payment_type == "bayar nanti") {
-                    if (Number(chooseCust.total_debt) > Number(chooseCust.debt_limit) && !confirmVal) {
-                        let send = { endpoint: "sales", action: 'warning', data: forming };
-
-                        setSalesList(send);
-                        setModalMsg(`Pelanggan ini sudah mencapai limit!`);
-                        setShowModal('confirmationModal');
-
-                    } else {
-                        let modified = {
-                            ...forming,
-                            order_status: "pending",
-                            payment_type: paidData.payment_type,
-                            is_complete: false,
-                        }
-                        fetchInsertSales(modified, deliveryModel);
-                        // fetchInvStatusCust(false, e.customer_id, paidData.payment_type);
-                    }
-                }
-            } else {
-                toast.current.show({
-                    severity: "error",
-                    summary: "Error",
-                    detail: "Please set payment data",
-                    life: 3500,
-                });
-            }
-        }
     }
 
     useEffect(() => {
@@ -636,21 +317,17 @@ export default function Leaves({ handleSidebar, showSidebar }) {
         //     // fetchAllCourier();
         //     // fetchCustType();
         //     // fetchStatus();
-        fetchAllCust();
         fetchAllLeaveType();
         // fetchAllRO();
     }, [])
 
     useEffect(() => {
         if (refetch) {
-            // fetchAllSales();
-            // fetchAllCourier();
-            // // fetchCustType();
-            // // fetchStatus();
-            // fetchAllCust();
-            // fetchAllRO();
+            // lazyLoad();  //sales data
+            // lazyLoadCanceled(); //sales canceled
             lazyLoad();  //sales data
-            lazyLoadCanceled(); //sales canceled
+            fetchAllLeaveType(); //recalling leave types data
+            
             setShowModal("");
             setRefetch(false);
         }
@@ -765,17 +442,7 @@ export default function Leaves({ handleSidebar, showSidebar }) {
                         <i className="bx bx-plus"></i>
                         Cuti Karyawan
                     </button>
-                    {/* cuti karyawan modal */}
-                    <LeavesModal
-                        show={showModal === "addLeaves" ? true : false}
-                        onHide={handleCloseModal}
-                        data={showModal === "addLeaves" ? modalData : ""}
-                        returnAct={(act) => 
-                        act == true ? setRefetch(true) 
-                        : act == "empty" ? setRefetch("empty")
-                        : setRefetch(false)
-                        }
-                    />
+                    
                 </div>
             </div>
         );
@@ -954,8 +621,11 @@ export default function Leaves({ handleSidebar, showSidebar }) {
         )
     }
 
-    const formatedOrderDate = (rowData) => {
-        return <span>{ConvertDate.convertToFullDate(rowData.order_date, "/")}</span>;
+    const formatedStartDate = (rowData) => {
+        return <span>{ConvertDate.convertToFullDate(rowData.start_date, "/")}</span>;
+    };
+    const formatedEndDate = (rowData) => {
+        return <span>{ConvertDate.convertToFullDate(rowData.end_date, "/")}</span>;
     };
 
     const customerOrGuestName = (rowData) => {
@@ -970,17 +640,52 @@ export default function Leaves({ handleSidebar, showSidebar }) {
         return <span>{ConvertDate.convertToFullDate(rowData.return_date, "/")}</span>;
     };
 
-    const onRowClick = ({ data, index }) => {
-        data.invoice ?
-            toast.current.show({
-                severity: "error",
-                summary: "Error",
-                detail: "Tidak dapat mengubah order jika sudah masuk invoice",
-                life: 3000,
-            })
-            : handleModalWData({ currentTarget: { ariaLabel: "salesEditModal" } }, { endpoint: "sales", id: data.order_id, action: 'update', ...data })
+    const onLeaveRowClick = ({ data, index }) => {
+        // data.invoice ?
+        //     toast.current.show({
+        //         severity: "error",
+        //         summary: "Error",
+        //         detail: "Tidak dapat mengubah order jika sudah masuk invoice",
+        //         life: 3000,
+        //     })
+        //     : 
+            handleModalWData({ currentTarget: { ariaLabel: "leavesModal" } }, { endpoint: "leave", id: data.emp_leave_id, action: 'update', ...data })
     }
 
+    const actionCell1 = (rowData, rowIndex) => {
+        return (
+            <div style={{ display: "inline-flex" }}>
+                <span
+                    className="table-btn edit-table-data"
+                    aria-label="editLeave"
+                    onClick={(e) => {
+                        handleModal(e, {
+                            id: rowData.emp_leave_id,
+                            action: "update",
+                            rowData,
+                        });
+                    }}
+                >
+                    <i className="bx bxs-edit"></i>
+                </span>
+                <span
+                    className="table-btn del-table-data"
+                    aria-label="confirmDelLeave"
+                    onClick={(e) =>
+                        handleModal(e, {
+                            endpoint: "leave",
+                            id: rowData.emp_leave_id,
+                            action: "delete",
+                        })
+                    }
+                >
+                    <i className="bx bx-trash"></i>
+                </span>
+                
+            </div>
+           
+        );
+    };
     const actionCell3 = (rowData, rowIndex) => {
         return (
             <div style={{ display: "inline-flex" }}>
@@ -1018,40 +723,24 @@ export default function Leaves({ handleSidebar, showSidebar }) {
 
     const statusCell = (rowData) => {
         return (
-            <span className={`badge badge-${rowData.order_status == "completed" ? 'success'
-                : rowData.order_status == "pending" ? "secondary"
-                    : rowData.order_status == "in-delivery" ? "warning"
-                        : rowData.order_status == "canceled" ? "danger"
-                            : rowData.order_status == "confirmed" ? "primary"
+            <span className={`badge badge-${rowData.status == "ended" ? 'primary'
+                : rowData.status == "pending" ? "secondary"
+                    : rowData.status == "in-leave" ? "warning"
+                        : rowData.status == "rejected" ? "danger"
+                            // : rowData.order_status == "confirmed" ? "primary"
                                 : ""} light`}
             >
                 {
-                    rowData.order_status == "completed" ? 'selesai'
-                        : rowData.order_status == "pending" ? 'pending'
-                            : rowData.order_status == "in-delivery" ? 'in-delivery'
-                                : rowData.order_status == "canceled" ? 'batal'
-                                    : rowData.order_status == "confirmed" ? 'dikonfirmasi'
+                    rowData.status == "ended" ? 'berakhir'
+                        : rowData.status == "pending" ? 'pending'
+                            : rowData.status == "in-leave" ? 'dalam masa cuti'
+                                : rowData.status == "rejected" ? 'ditolak'
+                                    // : rowData.order_status == "confirmed" ? 'dikonfirmasi'
                                         : ""
                 }
             </span>
         )
     };
-
-    const invoiced = (rowData) => {
-
-        return (
-            rowData.invoice ?
-                (
-                    <span className="verified-inv">
-                        <i className='bx bx-check-shield' ></i>
-                    </span>
-                ) : (
-                    <span className="unverified-inv">
-                        <i className='bx bx-shield-x'></i>
-                    </span>
-                )
-        )
-    }
 
     const returnStatusCell = (rowData) => {
         return (
@@ -1438,6 +1127,7 @@ export default function Leaves({ handleSidebar, showSidebar }) {
             }
         })
             .then(response => {
+                console.log(response)
                 setTotalRecord(response.data.totalData);
                 setLeavesData(response.data.rows);
                 setLeavesDataView(response.data.rows);
@@ -1509,237 +1199,23 @@ export default function Leaves({ handleSidebar, showSidebar }) {
                     <div className="col-lg-12 col-sm-12 col-md-12 col-12">
                         <div className="basic-tabs">
                             <div className="tabs">
-                                <div className={`tab-indicator ${openTab === "leavesTab" ? "active" : ""}`}
-                                    id='leavesTab'
-                                    onClick={(e) => { setGlobalFilterValue(""); handleClick(e); clearFilter() }}
-                                >
-                                    <span className="tab-title">Cuti karyawan</span>
-                                </div>
                                 <div className={`tab-indicator ${openTab === "attendanceTab" ? "active" : ""}`}
                                     id='attendanceTab'
                                     onClick={(e) => { setGlobalFilterValue(""); handleClick(e); clearFilter() }}
                                 >
                                     <span className="tab-title">Absensi Karyawan </span>
                                 </div>
+                                <div className={`tab-indicator ${openTab === "leavesTab" ? "active" : ""}`}
+                                    id='leavesTab'
+                                    onClick={(e) => { setGlobalFilterValue(""); handleClick(e); clearFilter() }}
+                                >
+                                    <span className="tab-title">Cuti karyawan</span>
+                                </div>
                                 <div className={`tab-indicator ${openTab === "leaveTypesTab" ? "active" : ""}`}
                                     id='leaveTypesTab'
                                     onClick={(e) => { setGlobalFilterValue(""); handleClick(e); clearFilter() }}
                                 >
                                     <span className="tab-title">Jenis cuti</span>
-                                </div>
-                            </div>
-                            <div className="tabs-content" style={openTab === "leavesTab" ? { display: "block" } : { display: "none" }}>
-                                <div className="card card-table add-on-shadow" style={{paddingTop: 0}}>
-                                    {!isMobile && !isMediumScr ?
-                                        (
-                                            <DataTable
-                                                className="p-datatable"
-                                                value={leavesData}
-                                                size="normal"
-                                                removableSort
-                                                onRowClick={onRowClick}
-                                                // stripedRows
-                                                // selectionMode={"checkbox"}
-                                                // selection={selectedSales}
-                                                // onSelectionChange={(e) => {
-                                                //     setSelectedSales(e.value);
-                                                // }}
-                                                dataKey="emp_leave_id"
-                                                style={{ marginTop: '1.5rem' }}
-                                                tableStyle={{ minWidth: "50rem" }}
-                                                filters={lazyState.filters}
-                                                filterDisplay='menu'
-                                                globalFilterFields={[
-                                                    "employee_id",
-                                                    "leave_type",
-                                                    "start_date",
-                                                    "end_date",
-                                                    "status",
-                                                    "approved_by",
-                                                ]}
-
-                                                emptyMessage={emptyStateHandler}
-                                                onFilter={onFilterSales}
-                                                header={tableHeader}
-                                                paginator
-                                                lazy
-                                                // loading={}
-                                                first={lazyState.first}
-                                                // onPage={(e) => dispatch({ type: "onPage", payload: e })}
-                                                onPage={onPage}
-                                                totalRecords={totalRecord}
-                                                rows={10}
-                                                stripedRows
-                                            >
-                                                <Column
-                                                    selectionMode="multiple"
-                                                    headerStyle={{ width: "3.5rem" }}
-                                                ></Column>
-                                                <Column
-                                                    field="employee_id"
-                                                    header="Karyawan"
-                                                    sortable
-                                                    severity
-                                                    body={empWithImg}
-                                                    headerStyle={primeTableHeaderStyle}
-                                                    bodyStyle={primeTableBodyStyle}
-                                                    style={{ textTransform: "capitalize" }}
-                                                ></Column>
-                                                <Column
-                                                    field="leave_type"
-                                                    header="jenis cuti"
-                                                    filter
-                                                    headerStyle={primeTableHeaderStyle}
-                                                    showFilterMenu={false}
-                                                    filterMenuStyle={{ width: '100%' }}
-                                                    filterPlaceholder={"order type"}
-                                                    bodyStyle={primeTableBodyStyle}
-                                                    style={{ textTransform: 'capitalize' }}
-                                                ></Column>
-                                                <Column
-                                                    field="start_date"
-                                                    header="mulai"
-                                                    body={formatedOrderDate}
-                                                    dataType='date'
-                                                    filter
-                                                    headerStyle={primeTableHeaderStyle}
-                                                    bodyStyle={{ fontSize: 14 }}
-                                                    filterPlaceholder="Type a date"
-                                                    style={{ textTransform: "capitalize" }}
-                                                ></Column>
-                                                <Column
-                                                    field="end_date"
-                                                    header="berakhir"
-                                                    body={formatedOrderDate}
-                                                    dataType='date'
-                                                    filter
-                                                    headerStyle={primeTableHeaderStyle}
-                                                    bodyStyle={{ fontSize: 14 }}
-                                                    filterPlaceholder="Type a date"
-                                                    style={{ textTransform: "capitalize" }}
-                                                ></Column>
-                                                <Column
-                                                    field="status"
-                                                    header="status"
-                                                    body={statusCell}
-                                                    bodyStyle={primeTableBodyStyle}
-                                                    filter
-                                                    headerStyle={primeTableHeaderStyle}
-                                                    showFilterMenu={false}
-                                                    filterMenuStyle={{ width: '100%' }}
-                                                    filterElement={statusRowFilter}
-                                                    style={{ textTransform: "capitalize" }}
-                                                ></Column>
-                                                 <Column
-                                                    field="approved_by"
-                                                    header="disetujui oleh"
-                                                    sortable
-                                                    severity
-                                                    headerStyle={primeTableHeaderStyle}
-                                                    bodyStyle={primeTableBodyStyle}
-                                                    style={{ textTransform: "capitalize" }}
-                                                ></Column>
-                                                <Column
-                                                    field=""
-                                                    header="aksi"
-                                                    headerStyle={primeTableHeaderStyle}
-                                                    body={(rowData, rowIndex) => actionCell(rowData, rowIndex)}
-                                                    style={{ textTransform: "capitalize" }}
-                                                ></Column>
-                                            </DataTable>
-                                        ) :
-                                        (
-                                            <>
-                                                <div
-                                                    className="wrapping-table-btn flex gap-3 justify-content-end"
-                                                    style={{ width: "100%", height: "inherit" }}
-                                                >
-                                                    <Dropdown drop={"down"}>
-                                                        <Dropdown.Toggle variant="primary" style={{ height: "100%" }}>
-                                                            <i className="bx bx-download"></i> export
-                                                        </Dropdown.Toggle>
-                                                        <Dropdown.Menu align={"end"}>
-                                                            <Dropdown.Item
-                                                                eventKey="1"
-                                                                as="button"
-                                                                aria-label="viewInvModal"
-                                                                onClick={(e) =>
-                                                                    handleModal(e, { id: inv.invoice_id, items: { ...inv } })
-                                                                }
-                                                            >
-                                                                <i className="bx bx-show"></i> PDF (.pdf)
-                                                            </Dropdown.Item>
-                                                            <Dropdown.Item
-                                                                eventKey="1"
-                                                                as="button"
-                                                                aria-label="editInvModal"
-                                                                onClick={(e) => handleModal(e, inv.invoice_id)}
-                                                            >
-                                                                <i className="bx bxs-edit"></i> Microsoft Excel (.xlsx)
-                                                            </Dropdown.Item>
-                                                        </Dropdown.Menu>
-                                                    </Dropdown>
-                                                    <button
-                                                        type="button"
-                                                        className=" btn btn-primary btn-w-icon"
-                                                        style={{ height: "100%" }}
-                                                    >
-                                                        <i className="bx bxs-file-plus"></i> import
-                                                    </button>
-                                                </div>
-                                                <div className="flex flex-column gap-2" style={{ width: "100%" }}>
-                                                    <div className="flex gap-3 align-items-center mb-4" style={{ width: "100%" }}>
-                                                        <div className="input-group-right" style={{ width: "100%" }}>
-                                                            {mobileSearchMode ?
-                                                                (
-                                                                    <span className="input-group-icon input-icon-right"
-                                                                        onClick={() => {
-                                                                            setGlobalFilterValue("");
-                                                                            clearFilter();
-                                                                            setMobileSearchMode(false);
-                                                                            mobileSearchInput.current.focus();
-                                                                        }}
-                                                                    >
-                                                                        <i className='bx bx-x'></i>
-                                                                    </span>
-                                                                ) : (
-                                                                    <span className="input-group-icon input-icon-right">
-                                                                        <i className="zwicon-search"></i>
-                                                                    </span>
-                                                                )
-                                                            }
-                                                            <input
-                                                                ref={mobileSearchInput}
-                                                                type="text"
-                                                                className="form-control input-w-icon-right"
-                                                                aria-label='allSales'
-                                                                value={globalFilterValue}
-                                                                onChange={onGlobalFilterChange}
-                                                                // value={mobileFilterValue}
-                                                                // onChange={(e) => mobileFilterFunc(e, "mainData")}
-                                                                placeholder="Keyword Search"
-                                                                onKeyDown={() => setMobileSearchMode(true)}
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <DataView
-                                                    value={leavesDataView}
-                                                    dataKey='order_id'
-                                                    paginator
-                                                    totalRecords={totalRecord}
-                                                    paginatorPosition='bottom'
-                                                    lazy
-                                                    first={lazyState.first}
-                                                    rows={10}
-                                                    onPage={onPageView}
-                                                    listTemplate={listTemplate}
-                                                    loading={lazyLoading}
-                                                    style={{ marginTop: '.5rem' }}
-                                                />
-                                            </>
-                                        )
-                                    }
                                 </div>
                             </div>
                             <div className="tabs-content" style={openTab === "attendanceTab" ? { display: "block" } : { display: "none" }}>
@@ -1963,6 +1439,220 @@ export default function Leaves({ handleSidebar, showSidebar }) {
                                     } */}
                                 </div>
                             </div>
+                            <div className="tabs-content" style={openTab === "leavesTab" ? { display: "block" } : { display: "none" }}>
+                                <div className="card card-table add-on-shadow" style={{paddingTop: 0}}>
+                                    {!isMobile && !isMediumScr ?
+                                        (
+                                            <DataTable
+                                                className="p-datatable"
+                                                value={leavesData}
+                                                size="normal"
+                                                removableSort
+                                                onRowClick={onLeaveRowClick}
+                                                // stripedRows
+                                                // selectionMode={"checkbox"}
+                                                // selection={selectedSales}
+                                                // onSelectionChange={(e) => {
+                                                //     setSelectedSales(e.value);
+                                                // }}
+                                                dataKey="emp_leave_id"
+                                                style={{ marginTop: '1.5rem' }}
+                                                tableStyle={{ minWidth: "50rem" }}
+                                                filters={lazyState.filters}
+                                                filterDisplay='menu'
+                                                globalFilterFields={[
+                                                    "employee_id",
+                                                    // "leave_type",
+                                                    "start_date",
+                                                    "end_date",
+                                                    "status",
+                                                    "approved_by",
+                                                ]}
+
+                                                emptyMessage={emptyStateHandler}
+                                                onFilter={onFilterSales}
+                                                header={tableHeader}
+                                                paginator
+                                                lazy
+                                                // loading={}
+                                                first={lazyState.first}
+                                                // onPage={(e) => dispatch({ type: "onPage", payload: e })}
+                                                onPage={onPage}
+                                                totalRecords={totalRecord}
+                                                rows={10}
+                                                stripedRows
+                                            >
+                                                {/* <Column
+                                                    selectionMode="multiple"
+                                                    headerStyle={{ width: "3.5rem" }}
+                                                ></Column> */}
+                                                <Column
+                                                    field="employee_id"
+                                                    header="Karyawan"
+                                                    sortable
+                                                    severity
+                                                    body={empWithImg}
+                                                    headerStyle={primeTableHeaderStyle}
+                                                    bodyStyle={primeTableBodyStyle}
+                                                    style={{ textTransform: "capitalize" }}
+                                                ></Column>
+                                                <Column
+                                                    field="leave_type.leave_type_name"
+                                                    header="jenis cuti"
+                                                    filter
+                                                    headerStyle={primeTableHeaderStyle}
+                                                    showFilterMenu={false}
+                                                    filterMenuStyle={{ width: '100%' }}
+                                                    filterPlaceholder={"order type"}
+                                                    bodyStyle={primeTableBodyStyle}
+                                                    style={{ textTransform: 'capitalize' }}
+                                                ></Column>
+                                                <Column
+                                                    field="start_date"
+                                                    header="mulai"
+                                                    body={formatedStartDate}
+                                                    dataType='date'
+                                                    filter
+                                                    headerStyle={primeTableHeaderStyle}
+                                                    bodyStyle={{ fontSize: 14 }}
+                                                    filterPlaceholder="Type a date"
+                                                    style={{ textTransform: "capitalize" }}
+                                                ></Column>
+                                                <Column
+                                                    field="end_date"
+                                                    header="berakhir"
+                                                    body={formatedEndDate}
+                                                    dataType='date'
+                                                    filter
+                                                    headerStyle={primeTableHeaderStyle}
+                                                    bodyStyle={{ fontSize: 14 }}
+                                                    filterPlaceholder="Type a date"
+                                                    style={{ textTransform: "capitalize" }}
+                                                ></Column>
+                                                <Column
+                                                    field="status"
+                                                    header="status"
+                                                    body={statusCell}
+                                                    bodyStyle={primeTableBodyStyle}
+                                                    filter
+                                                    headerStyle={primeTableHeaderStyle}
+                                                    showFilterMenu={false}
+                                                    filterMenuStyle={{ width: '100%' }}
+                                                    filterElement={statusRowFilter}
+                                                    style={{ textTransform: "capitalize" }}
+                                                ></Column>
+                                                 <Column
+                                                    field="approved_by"
+                                                    header="disetujui oleh"
+                                                    sortable
+                                                    severity
+                                                    headerStyle={primeTableHeaderStyle}
+                                                    bodyStyle={primeTableBodyStyle}
+                                                    style={{ textTransform: "capitalize" }}
+                                                ></Column>
+                                                <Column
+                                                    field=""
+                                                    header="aksi"
+                                                    headerStyle={primeTableHeaderStyle}
+                                                    body={(rowData, rowIndex) => actionCell1(rowData, rowIndex)}
+                                                    style={{ textTransform: "capitalize" }}
+                                                ></Column>
+                                            </DataTable>
+                                        ) :
+                                        (
+                                            <>
+                                                <div
+                                                    className="wrapping-table-btn flex gap-3 justify-content-end"
+                                                    style={{ width: "100%", height: "inherit" }}
+                                                >
+                                                    <Dropdown drop={"down"}>
+                                                        <Dropdown.Toggle variant="primary" style={{ height: "100%" }}>
+                                                            <i className="bx bx-download"></i> export
+                                                        </Dropdown.Toggle>
+                                                        <Dropdown.Menu align={"end"}>
+                                                            <Dropdown.Item
+                                                                eventKey="1"
+                                                                as="button"
+                                                                aria-label="viewInvModal"
+                                                                onClick={(e) =>
+                                                                    handleModal(e, { id: inv.invoice_id, items: { ...inv } })
+                                                                }
+                                                            >
+                                                                <i className="bx bx-show"></i> PDF (.pdf)
+                                                            </Dropdown.Item>
+                                                            <Dropdown.Item
+                                                                eventKey="1"
+                                                                as="button"
+                                                                aria-label="editInvModal"
+                                                                onClick={(e) => handleModal(e, inv.invoice_id)}
+                                                            >
+                                                                <i className="bx bxs-edit"></i> Microsoft Excel (.xlsx)
+                                                            </Dropdown.Item>
+                                                        </Dropdown.Menu>
+                                                    </Dropdown>
+                                                    <button
+                                                        type="button"
+                                                        className=" btn btn-primary btn-w-icon"
+                                                        style={{ height: "100%" }}
+                                                    >
+                                                        <i className="bx bxs-file-plus"></i> import
+                                                    </button>
+                                                </div>
+                                                <div className="flex flex-column gap-2" style={{ width: "100%" }}>
+                                                    <div className="flex gap-3 align-items-center mb-4" style={{ width: "100%" }}>
+                                                        <div className="input-group-right" style={{ width: "100%" }}>
+                                                            {mobileSearchMode ?
+                                                                (
+                                                                    <span className="input-group-icon input-icon-right"
+                                                                        onClick={() => {
+                                                                            setGlobalFilterValue("");
+                                                                            clearFilter();
+                                                                            setMobileSearchMode(false);
+                                                                            mobileSearchInput.current.focus();
+                                                                        }}
+                                                                    >
+                                                                        <i className='bx bx-x'></i>
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="input-group-icon input-icon-right">
+                                                                        <i className="zwicon-search"></i>
+                                                                    </span>
+                                                                )
+                                                            }
+                                                            <input
+                                                                ref={mobileSearchInput}
+                                                                type="text"
+                                                                className="form-control input-w-icon-right"
+                                                                aria-label='allSales'
+                                                                value={globalFilterValue}
+                                                                onChange={onGlobalFilterChange}
+                                                                // value={mobileFilterValue}
+                                                                // onChange={(e) => mobileFilterFunc(e, "mainData")}
+                                                                placeholder="Keyword Search"
+                                                                onKeyDown={() => setMobileSearchMode(true)}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <DataView
+                                                    value={leavesDataView}
+                                                    dataKey='order_id'
+                                                    paginator
+                                                    totalRecords={totalRecord}
+                                                    paginatorPosition='bottom'
+                                                    lazy
+                                                    first={lazyState.first}
+                                                    rows={10}
+                                                    onPage={onPageView}
+                                                    listTemplate={listTemplate}
+                                                    loading={lazyLoading}
+                                                    style={{ marginTop: '.5rem' }}
+                                                />
+                                            </>
+                                        )
+                                    }
+                                </div>
+                            </div>
                             <div className="tabs-content" style={openTab === "leaveTypesTab" ? { display: "block" } : { display: "none" }}>
                                 <div className="card card-table add-on-shadow" style={{paddingTop: 0}}>
                                     {!isMobile && !isMediumScr ? 
@@ -2008,10 +1698,10 @@ export default function Leaves({ handleSidebar, showSidebar }) {
                                             body={formatedNumber}
                                             // style={{ textTransform: "uppercase" }}
                                         ></Column>
-                                        <Column
+                                        {/* <Column
                                             field="status"
                                             header="status"
-                                        ></Column>
+                                        ></Column> */}
                                         <Column
                                             field=""
                                             header="aksi"
@@ -2095,7 +1785,22 @@ export default function Leaves({ handleSidebar, showSidebar }) {
             </div >
             {/* </main> */}
 
-            {
+
+            {/* MODAL */}
+            {showModal === "addLeaves" || showModal === "editLeave" ?
+            // cuti karyawan modal 
+            (
+                <LeavesModal
+                    show={true}
+                    onHide={handleCloseModal}
+                    data={modalData}
+                    returnAct={(act) => 
+                    act == true ? setRefetch(true) 
+                    : act == "empty" ? setRefetch("empty")
+                    : setRefetch(false)
+                    }
+                />
+            ):
             showModal === "warningCancelModal" ?
             (
                 <ConfirmModal show={showModal === "warningCancelModal" ? true : false} onHide={handleCloseModal}

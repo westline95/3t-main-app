@@ -6,6 +6,7 @@ import Logo from "../assets/images/Logo_WA-removebg-preview.png";
 import NumberFormat from '../elements/Masking/NumberFormat.jsx';
 
 const colorAccent = "#081f5c";
+const colorAccent2 = "#fafbfdb0";
 
 const invoiceStyle = StyleSheet.create({
     page: {
@@ -241,6 +242,25 @@ const invoiceStyle = StyleSheet.create({
     },
     orderNumberTabText: {
         color: '#ffffff',
+        fontWeight: 600,
+    },
+    orderNoteTab:{
+        backgroundColor: colorAccent2,
+        borderTopLeftRadius: 0,
+        borderTopRightRadius: 0,
+        width: '100%',
+        paddingVertical: '35px',
+        paddingHorizontal: '65px',
+        display: "flex", //?????
+        flexDirection: "row", //?????
+        flexWrap: "wrap",//?????
+    },
+    orderNoteTabText: {
+        // width: "100%",
+        textOverflow: "ellipsis", //?????
+        // paddingVertical: '35px',
+        // paddingHorizontal: '65px',
+        color: '#000000',
         fontWeight: 600,
     },
     rowHead:{
@@ -518,6 +538,9 @@ export default function InvoiceDoc({data, ref}) {
                             <View style={{...invoiceStyle.table}} key={`transaction-table-${idx}`}>
                                 <View style={invoiceStyle.orderNumberTab} wrap={false}>
                                     <View style={{...invoiceStyle.orderNumberTabText}}><Text>order ID: {sales.order_id}</Text></View>
+                                </View>
+                                <View style={invoiceStyle.orderNoteTab} wrap={true}>
+                                    <View style={{...invoiceStyle.orderNoteTabText}} wrap={true}><Text wrap={true}>catatan: {sales.note}</Text></View>
                                 </View>
                                 <View style={invoiceStyle.thead} wrap={false}>
                                     <View style={invoiceStyle.rowHead} wrap={false}>

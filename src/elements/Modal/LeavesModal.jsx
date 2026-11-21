@@ -30,32 +30,8 @@ export default function LeavesModal({ show, onHide, data, returnAct }) {
   const [ openPopup, setOpenPopup ] = useState(false);
   const [ filterName, setFilteredName ] = useState([]);
   const [ chooseEmployee, setEmployee] = useState(null);
-  
-  
   const [ leave_types, setLeaveTypes ] = useState([]);
-  const {
-    register,
-    handleSubmit,
-    watch,
-    control,
-    reset,
-    setValue,
-    getValues,
-    clearErrors,
-    setError,
-    formState: { errors },
-  } = useForm({
-    defaultValues: {
-      name: data.rowData?.name,
-      status_uang_rokok: data.action == "insert" ? false : data.rowData?.is_active,
-      // salary_type: data.rowData?.salary_type,
-      base_salary: data.rowData?.base_salary,
-      base_salary_formated: "0",
-      effective_date: data.rowData?.effective_date,
-      // end_date: data.rowData?.dob,
-    },
-  });
-
+  const [ defaultData, setDefault ] = useState(data?.rowData ? {...data.rowData} : null);
   const [showModal, setShowModal] = useState(false);
   const [statusRokok, setStatusRokok ] = useState(false);
   const [targetKey, setTarget] = useState("");
@@ -71,73 +47,34 @@ export default function LeavesModal({ show, onHide, data, returnAct }) {
   const [employeeData, setEmployeeData] = useState(null);
   const [sendTarget, setSendTarget] = useState(null);
   const [selectedStartDate, setSelectedStartDate] = useState(null);
-  const [selectedDepartmentDate, setSelectedDepartmentDate] = useState(data.rowData?.department_histories[0]?.date ? new Date(data.rowData.department_histories[0].date) : null);
-  const [ defaultAvatar, setDefaultAvatar ] = useState(data.img ? data.img : null)
+  const [tomorrowStartDate, setTomorrowStartDate] = useState(null);
+  const [selectedEndDate, setSelectedEndDate] = useState(null);
+  // const [resetInputWSelect, setResetInputWSelect] = useState(false);
+  // const [selectedDepartmentDate, setSelectedDepartmentDate] = useState(data.rowData?.department_histories[0]?.date ? new Date(data.rowData.department_histories[0].date) : null);
   const [ currSalarySetting, setCurrSalarySetting ] = useState(null)
-
-  const femaleAvatar = `https://res.cloudinary.com/du3qbxrmb/image/upload/v1749183325/Avatar_1_hhww7p.jpg`;
-  const maleAvatar = `https://res.cloudinary.com/du3qbxrmb/image/upload/v1749183333/Avatar_2_zebyeg.jpg`;
-
-  const handleAvatar = (e) => {
-    if(e.target.value == 'female' && e.target.checked){
-        setDefaultAvatar(femaleAvatar);
-        setValue('img',femaleAvatar);
-    } else if(e.target.value == 'male' && e.target.checked){
-        setDefaultAvatar(maleAvatar);
-        setValue('img',maleAvatar);
-    } else {
-        reset('img'); 
-        setDefaultAvatar(null);
-    }
-  };
-
-  const fetchCustById = () => {
-    FetchApi.fetchCustByID(data.id)
-      .then((data) => {
-        // console.log(data[0].name)
-        setEmployeeData(data);
-      })
-      .catch((error) => {
-        setToastContent({ variant: "danger", msg: "Failed to update" });
-        setShowToast(true);
-      });
-  };
-
-  // const fetchCustType = async() => {
-  //     await axiosPrivate.get("/types")
-  //     .then((response) => {
-  //         setCustType(response.data);
-  //         console.log(response.data)
-  //     })
-  //     .catch((error) => {
-  //         console.error(error)
-  //         setToastContent({
-  //         variant: "danger",
-  //         msg: "Error when get customer data!",
-  //         });
-  //         setShowToast(true);
-  //     });
-  // };
-
-  // useEffect(() => {
-  //     if(data){
-  //         fetchCustType();
-  //     }
-  // },[]);
-  const convertBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const fileReader = new FileReader();
-      fileReader.readAsDataURL(file);
-
-      fileReader.onload = () => {
-        resolve(fileReader.result);
-      };
-
-      fileReader.onerror = (error) => {
-        reject(error);
-      };
-    });
-  };
+  const {
+    register,
+    handleSubmit,
+    watch,
+    control,
+    reset,
+    setValue,
+    getValues,
+    clearErrors,
+    setError,
+    trigger,
+    formState: { errors },
+  } = useForm({
+        defaultValues: {
+          employee_id: data.rowData?.employee_id,
+          name: data.rowData?.employee?.name,
+          leave_type_id: data.rowData?.leave_type_id,
+          leave_type_name: data.rowData?.leave_type.leave_type_name,
+          start_date: data.rowData?.start_date ? new Date(data.rowData.start_date) : null,
+          end_date: data.rowData?.end_date ? new Date(data.rowData.end_date) : null,
+          status: data.rowData?.status,
+        },
+  });
 
   const returnSelectVal = (selected) => {
     setOrderTypeTmp(selected);
@@ -158,8 +95,9 @@ export default function LeavesModal({ show, onHide, data, returnAct }) {
     }})
     .then((response) => {
       if(response.data && response.data.length > 0){
-        const fiteredNoBaseSalary = response.data.filter(({salary_settings}) => salary_settings.length == 0);
-        setEmployeeData(fiteredNoBaseSalary);
+        console.log(response.data)
+        // const fiteredNoBaseSalary = response.data.filter(({salary_settings}) => salary_settings.length == 0);
+        setEmployeeData(response.data);
       } else {
         // setEmployeeData(null);
         return returnAct("empty");
@@ -178,6 +116,7 @@ export default function LeavesModal({ show, onHide, data, returnAct }) {
   const fetchAllLeaveType = async () => {
     await axiosPrivate.get("/leave-types/all")
       .then(response => {
+        console.log(response.data)
         setLeaveTypes(response.data);
         // let dupe = [...response.data];
         // response.data.map((e, idx) => {
@@ -195,14 +134,14 @@ export default function LeavesModal({ show, onHide, data, returnAct }) {
       })
     }
 
-  const fetchInsertSalarySett = async(employeeData) =>{
-    const body = JSON.stringify(employeeData);
-    await axiosPrivate.post("/salary-setting", body)
+  const fetchInsertLeave = async(leaveData) =>{
+    const body = JSON.stringify(leaveData);
+    await axiosPrivate.post("http://localhost:5056/leaves/new", body)
     .then(resp => {
       toast.current.show({
         severity: "success",
         summary: "Sukses",
-        detail: "Berhasil menyimpan pengaturan gaji",
+        detail: "Berhasil menambahkan cuti karyawan",
         life: 1500,
       });
       
@@ -216,20 +155,20 @@ export default function LeavesModal({ show, onHide, data, returnAct }) {
       toast.current.show({
         severity: "error",
         summary: "Gagal",
-        detail: "Gagal menyimpan pengaturan gaji",
+        detail: "Gagal menambahkan cuti karyawan",
         life: 3000,
       });
     })
   };
 
-  const fetchUpdateEmployee = async(employeeData) => {
-    const body = JSON.stringify(employeeData);
-    await axiosPrivate.put("/employee/update", body, {params: {id: data.rowData.employee_id}})
+  const fetchUpdateLeave = async(leaveData) => {
+    const body = JSON.stringify(leaveData);
+    await axiosPrivate.put("http://localhost:5056/leaves/update", body, {params: {id: data.rowData.emp_leave_id}})
     .then(resp => {
       toast.current.show({
         severity: "success",
         summary: "Sukses",
-        detail: "Berhasil memperbarui karyawan",
+        detail: "Berhasil memperbarui cuti",
         life: 1500,
       });
 
@@ -242,7 +181,7 @@ export default function LeavesModal({ show, onHide, data, returnAct }) {
       toast.current.show({
         severity: "error",
         summary: "Gagal",
-        detail: "Gagal memperbarui karyawan",
+        detail: "Gagal memperbarui cuti",
         life: 3000,
       });
     })
@@ -250,24 +189,21 @@ export default function LeavesModal({ show, onHide, data, returnAct }) {
 
   const onSubmit = async(formData) => {
     if(data.action == "insert"){
-      const salary = {
-        salary: {...formData},
-        salaryAdj: {
-          employee_id: formData.employee_id,
-          prev_salary: 0,
-          new_salary: formData.base_salary,
-          effective_date: formData.effective_date,
-          approved_by: auth.name,
-          notes: formData.notes,
-          prev_status_uang_rokok: false,
-          new_status_uang_rokok: formData.status_uang_rokok,
-        }
+      setControlUiBtn(false);
+      const leaves = {
+        ...formData,
+        approved_by: auth.name,
+        status: "in-leave".toLowerCase()
       }
-      // salary.salary.now_active = true;
-      
-      fetchInsertSalarySett(salary);
+      fetchInsertLeave(leaves);
+    } else if (data.action == "update"){
+      setControlUiBtn(false);
+      const leaves = {
+        ...formData,
+        approved_by: auth.name,
+      }
+      fetchUpdateLeave(leaves);
     } else {
-
     }
   }
 
@@ -303,14 +239,14 @@ export default function LeavesModal({ show, onHide, data, returnAct }) {
 
   const handleAutoComplete = (employeeName) => {
     if(employeeData && employeeName !== ""){
-      let filteredCust = employeeData.filter(item => item.name.includes(employeeName.toLowerCase()));
-      if(filteredCust.length === 0){
+      let filtered = employeeData.filter(item => item.name.includes(employeeName.toLowerCase()));
+      if(filtered.length === 0){
         setOpenPopup(false);
-        setFilteredName(filteredCust);
-        setError("name", { type: 'required', message: "Customer name error!" });
+        setFilteredName(filtered);
+        setError("name", { type: 'required', message: "Employee name error!" });
       } else {
         setOpenPopup(true);
-        setFilteredName(filteredCust);
+        setFilteredName(filtered);
         clearErrors("name");
       }
     } else if(!employeeName || employeeName === ""){
@@ -351,22 +287,44 @@ export default function LeavesModal({ show, onHide, data, returnAct }) {
       // setChoosedOrder([]);
       // checkboxSingle.current = [];
     }
+  };
+
+  const add1dayAfter = (startDate) => {
+    let tomorrow = new Date(startDate);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      return tomorrow;
   }
 
   useEffect(() => {
-    fetchAllEmployee();
-    fetchAllLeaveType();
+    if(selectedStartDate){
+      let tomorrow = add1dayAfter(selectedStartDate);
+      setTomorrowStartDate(tomorrow);
+    }
+  },[selectedStartDate])
+
+  useEffect(() => {
+    if(data && data?.action == "update"){
+      setSelectedStartDate(new Date(data.rowData?.start_date)); 
+      setSelectedEndDate(new Date(data.rowData?.end_date)); 
+    }
+  },[data])
+
+  useEffect(() => {
+    if(data){
+      fetchAllEmployee();
+      fetchAllLeaveType();
+    }
   },[]);
 
-  // useEffect(() => {
-  //   if(employeeData){
-  //     setLoading(false);
-  //   } 
-  // },[employeeData]);
+  useEffect(() => {
+    if (leave_types && employeeData) {
+      setLoading(false);
+    }
+  }, [leave_types, employeeData]);
 
-  // if(isLoading){
-  //   return;
-  // }
+  if (isLoading) {
+    return;
+  }
 
   return (
     <>
@@ -422,17 +380,21 @@ export default function LeavesModal({ show, onHide, data, returnAct }) {
                 <div className="col-lg-12 col-sm-12 col-12">
                   <InputWSelect
                     label={"jenis cuti"}
-                    name="leaves_type"
+                    name={"leave_type_name"}
                     selectLabel="Pilih jenis cuti"
                     options={leave_types}
-                    optionKeys={["leave_type_id", "Leave_type_name"]}
+                    optionKeys={["leave_type_id", "leave_type_name"]}
+                    defaultValue={getValues('leave_type_name')}
+                    defaultValueKey={"leave_type_name"}
                     value={(selected) => {
+                      setValue('leave_type_name', selected.value);
                       setValue("leave_type_id", selected.id);
-                      setValue("Leave_type_name", selected.value);
-                      getValues("Leave_type_name") !== "" && clearErrors('Leave_type_name')
+                      selected.value != "" ? clearErrors("leave_type_name") : null;
+                      // setResetInputWSelect(false);
                     }}
-                    defaultValue={data.rowData?.department_histories[0]?.department_id ?? ""}
-                    defaultValueKey={"leave_type_id"}
+                    // resetController={resetInputWSelect}
+                    defaultValue={getValues("leave_type_name")}
+                    defaultValueKey={"leave_type_name"}
                     register={register}
                     require={true}
                     errors={errors}
@@ -442,15 +404,17 @@ export default function LeavesModal({ show, onHide, data, returnAct }) {
                   <InputWLabel
                     label="Mulai tanggal"
                     type="date"
-                    name="start_date"
-                    defaultValue={selectedStartDate}
+                    name={'start_date'}
                     onChange={(e) => {
-                      setSelectedStartDate(e.value);
+                      setSelectedStartDate(e.value); 
+                      // ^^--helper for detect change in start date => able to set min date in end date to tomorrow //to avoid conflict between add and edit action
                       setValue("start_date", e.value);
+                      setSelectedEndDate(null); 
                     }}
                     register={register}
                     require={true}
                     errors={errors}
+                    defaultValue={selectedStartDate}
                   />
                 </div>
                 <div className="col-lg-6 col-sm-6 col-12">
@@ -458,14 +422,16 @@ export default function LeavesModal({ show, onHide, data, returnAct }) {
                     label="berakhir tanggal"
                     type="date"
                     name="end_date"
-                    defaultValue={selectedStartDate}
+                    minDate={tomorrowStartDate}
                     onChange={(e) => {
-                      setSelectedStartDate(e.value);
                       setValue("end_date", e.value);
+                      setSelectedEndDate(e.value);
                     }}
+                    disabled={getValues("start_date") == null ? true : false}
                     register={register}
                     require={true}
                     errors={errors}
+                    defaultValue={selectedEndDate}
                   />
                 </div>
               </div>

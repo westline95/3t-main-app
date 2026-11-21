@@ -750,11 +750,14 @@ export default function InvoiceModal({show, onHide, data}) {
                                     {salesList ? (salesList.map((sales, idx) => {
                                         return(
                                         <>
-                                        <table className="table" key={`transaction-table-${idx}`} id='tes'>
+                                        <table className="table" key={`transaction-table-${idx}`} id='transactionTable'>
                                             <thead>
                                                 <tr className='order-number-tab'>
                                                     <th className='inv-tab-info'>Order ID:</th>
                                                     <th className='inv-tab-info'>{sales.order_id}</th>
+                                                </tr>
+                                                <tr className='order-note-tab'>
+                                                    <th className='inv-tab-note' colSpan={8}>{`catatan: ${sales.note}`}</th>
                                                 </tr>
                                                 <tr>
                                                     <th>tanggal</th>
@@ -774,7 +777,9 @@ export default function InvoiceModal({show, onHide, data}) {
                                                                     <td rowSpan={`${sales.order_items.length}`}>{ConvertDate.convertToFullDate(sales.order_date,"/")}</td>
                                                                 ):''
                                                             }
-                                                            <td>{`${orderItem.product.product_name}  ${orderItem.product.variant}`}</td>
+                                                            <td>
+                                                                {`${orderItem.product.product_name}  ${orderItem.product.variant}`}
+                                                            </td>
                                                             <td>{orderItem.return_order_item ? 
                                                                 `${Number(orderItem.quantity)} (-${Number(orderItem.return_order_item.quantity)})`
                                                                 : `${Number(orderItem.quantity)}`

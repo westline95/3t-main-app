@@ -84,9 +84,9 @@ export default function SalesEditModal({ show, onHide, data }) {
     } = useForm({
         defaultValues: {
             customer_id: data?.customer?.customer_id,
-            name: data.customer.name,
+            name: data?.customer?.name,
             order_date: data.order_date ? new Date(data.order_date) : null,
-            order_type: data.order_type
+            order_type: data?.order_type
         }
     });
 
