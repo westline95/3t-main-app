@@ -148,6 +148,7 @@ const unitOfProduct = [
     {id: 2, type: "pcs"},
     {id: 3, type: "kg"},
     {id: 4, type: "gr"},
+    {id: 5, type: "karung"},
 ];
 
 const invPayMethod = [
